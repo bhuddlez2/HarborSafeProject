@@ -23,7 +23,7 @@ export default function Home() {
       z-50 ensures it sits above other content, 
       */}
       <nav
-        className="bg-[#5C0F8B] h-[90px] flex items-center justify-between px-8 fixed top-0 left-0 right-0 z-50"
+        className="bg-brand h-[90px] flex items-center justify-between px-8 fixed top-0 left-0 right-0 z-50"
       >
         {/* HarborSafe logo on the left side of the navbar */}
         <div className="flex items-center gap-4">
@@ -37,27 +37,27 @@ export default function Home() {
 
         <div className="flex items-center gap-10 mr-32">
           <a href="#home" className="text-white font-bold group relative">
-            <span className="block bg-white text-[#5C0F8B] px-4 py-2 rounded-full transition-all duration-300">
+            <span className="block bg-white text-brand px-4 py-2 rounded-full transition-all duration-300">
               Home
               </span>
           </a>
           <a href="#about" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-[#5C0F8B] transition-all duration-300">
+            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               About
               </span>
           </a>
           <a href="#services" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-[#5C0F8B] transition-all duration-300">
+            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               Get Support
               </span>
           </a>
           <a href="#donate" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-[#5C0F8B] transition-all duration-300">
+            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               Give Support
               </span>
           </a>
           <a href="#resources" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-[#5C0F8B] transition-all duration-300">
+            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               Resources
               </span>
           </a>
