@@ -1,14 +1,18 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat, Nunito } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// font weights: 400 = Regular, 700 = Bold, 800 = Extra Bold
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  weights: ["400", "800"], // 400 = Regular, 800 = Extra Bold
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// font weights: 700 = Bold
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
+  weights: ["700"], // 700 = Bold
 });
 
 export const metadata = {
@@ -20,7 +24,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${montserrat.variable} ${nunito.variable} h-full antialiased light`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
