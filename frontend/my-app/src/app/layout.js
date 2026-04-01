@@ -5,14 +5,14 @@ import "./globals.css";
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
-  weights: ["400", "800"], // 400 = Regular, 800 = Extra Bold
+  weight: ["400", "800"], // 400 = Regular, 800 = Extra Bold
 });
 
 // font weights: 700 = Bold
 const nunito = Nunito({
   variable: "--font-nunito",
   subsets: ["latin"],
-  weights: ["700"], // 700 = Bold
+  weight: ["700"], // 700 = Bold
 });
 
 export const metadata = {
