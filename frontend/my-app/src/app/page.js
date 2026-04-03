@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 // Placeholder event data — replace with real content when available
 const events = [
@@ -47,7 +48,7 @@ export default function Home() {
       aria-label and title for accessibility and tooltip text
       */}
       <button
-        className="fixed top-[19px] right-4 z-[100] bg-red-600 hover:bg-white text-white hover:text-red-600 border-2 
+        className="fixed top-4.75 right-4 z-100 bg-red-600 hover:bg-white text-white hover:text-red-600 border-2 
         border-red-600 rounded-full px-6 py-2.5 shadow-lg transition-all hover:scale-110"
 
         aria-label="Quick exit button"
@@ -68,7 +69,7 @@ export default function Home() {
       z-50 ensures it sits above other content aka higher stack order 
       */}
       <nav
-        className="bg-brand h-[90px] flex items-center justify-between px-8 fixed top-0 left-0 right-0 z-50"
+        className="bg-brand h-22.5 flex items-center justify-between px-8 fixed top-0 left-0 right-0 z-50"
       >
         {/* 
         HarborSafe logo on the left side of the navbar
@@ -77,10 +78,11 @@ export default function Home() {
         h-20 w-20 for sizing, 
         */}
         <div className="flex items-center gap-4">
-          <img
+          <Image
             src="/HSHAC.svg"
             alt="Harbor Safe House and Advocacy Center Logo"
-            className="h-20 w-20"
+            width={80}
+            height={80}
           />
           {/* HSHAC text next to the logo, styled with white color and larger font size */}
           <span className="text-white text-xl">HSHAC</span>
@@ -145,7 +147,7 @@ export default function Home() {
       screen readers use it to identify the main content of the page,
       search engines use it to understand what the page is about,
       */}
-      <main className="pt-[90px]">
+      <main className="pt-22.5">
         {/*
         Hero section,
         id="home" so the Home nav link anchor scrolls here,
@@ -336,11 +338,13 @@ export default function Home() {
               to fix it the png will need to be cropped or exported without padding
               */}
               <div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src="/WeAreHere.png"
                   alt="Supportive hands"
-                  className="w-full rounded-lg shadow-lg"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  className="w-full h-auto rounded-lg shadow-lg"
                 />
               </div>
 
@@ -412,11 +416,13 @@ export default function Home() {
                 mb-6 for spacing between image and caption,
                 */}
                 <div className="mb-6">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/OurMission.png"
                     alt="Our Mission"
-                    className="w-full rounded-lg shadow-lg"
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    className="w-full h-auto rounded-lg shadow-lg"
                   />
                 </div>
                 {/* Mission caption */}
@@ -431,11 +437,13 @@ export default function Home() {
                 mb-6 for spacing between image and caption,
                 */}
                 <div className="mb-6">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/OurValues.png"
                     alt="Our Values"
-                    className="w-full rounded-lg shadow-lg"
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    className="w-full h-auto rounded-lg shadow-lg"
                   />
                 </div>
                 {/* Values caption */}
