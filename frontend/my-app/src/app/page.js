@@ -98,9 +98,9 @@ export default function Home() {
 
           {/* Navigation links on the right side of the navbar,
           flex and items-center for alignment, 
-          gap-10 for spacing between links, 
-          mr-32 for right margin to create space from the edge */}
-        <div className="flex items-center gap-10 mr-32">
+          gap-10 for spacing between links,
+          mr-8 for a small right margin from the edge */}
+        <div className="flex items-center gap-10 mr-8">
           {/* 
           Home link  
           text-white for link color,
