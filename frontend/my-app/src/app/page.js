@@ -1,3 +1,4 @@
+// necessary for useState and client-side interactivity in this component, server components cannot use state or event handlers
 "use client";
 
 import { useState } from "react";
