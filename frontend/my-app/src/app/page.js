@@ -41,7 +41,7 @@ export default function Home() {
       hover:bg-white and hover:text-red-600 to invert colors on hover,
       border-2 border-red-600 keeps the red border visible in both states,
       rounded-full for pill shape,
-      px-6 py-2.5 for padding,
+      px-10 py-4 for padding, text-lg font-semibold for larger bolder text,
       shadow-lg for depth,
       transition-all and hover:scale-110 for smooth scale animation on hover,
       onClick redirects to Google to quickly hide the page from view,
@@ -49,7 +49,7 @@ export default function Home() {
       */}
       <button
         className="fixed bottom-4 right-4 z-100 bg-red-600 hover:bg-white text-white hover:text-red-600 border-2
-        border-red-600 rounded-full px-6 py-2.5 shadow-lg transition-all hover:scale-110"
+        border-red-600 rounded-full px-10 py-4 text-lg font-semibold shadow-lg transition-all hover:scale-110"
 
         aria-label="Quick exit button"
         title="Quick Exit (exit to google)"
