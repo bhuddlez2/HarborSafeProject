@@ -398,8 +398,144 @@ export default function Home() {
               </div>
             </div>
 
+            {/*
+            Bottom row: Our Mission on the left, Our Values on the right,
+            mt-16 for spacing above to separate from the row above,
+            grid md:grid-cols-2 for two columns on medium screens and up,
+            gap-12 for spacing between columns
+            */}
+            <div className="mt-16 grid md:grid-cols-2 gap-12">
+
+              {/* Our Mission column, text-center to align image and caption */}
+              <div className="text-center">
+                {/*
+                mb-6 for spacing between image and caption,
+                */}
+                <div className="mb-6">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/OurMission.png"
+                    alt="Our Mission"
+                    className="w-full rounded-lg shadow-lg"
+                  />
+                </div>
+                {/* Mission caption */}
+                <p className="text-gray-700 leading-relaxed">
+                  Strengthening communities by providing a safe, caring place and high-quality advocacy for abuse victims.
+                </p>
+              </div>
+
+              {/* Our Values column, text-center to align image and caption */}
+              <div className="text-center">
+                {/*
+                mb-6 for spacing between image and caption,
+                */}
+                <div className="mb-6">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/OurValues.png"
+                    alt="Our Values"
+                    className="w-full rounded-lg shadow-lg"
+                  />
+                </div>
+                {/* Values caption */}
+                <p className="text-gray-700 leading-relaxed mb-6">
+                  Our internal compass steers us toward where we feel aligned with our true direction.
+                  At Harbor Safe House &amp; Advocacy Center our core values guide our work.
+                </p>
+                {/*
+                NESW core values list,
+                flex-wrap and justify-center so items wrap on smaller screens,
+                gap-4 for spacing between items,
+                text-left so the letter labels align with their value text
+                */}
+                <div className="flex flex-wrap justify-center gap-4 text-left">
+                  <div><span className="text-[#5C0F8B] font-bold">N-</span> Nurture</div>
+                  <div><span className="text-[#5C0F8B] font-bold">E-</span> Empower</div>
+                  <div><span className="text-[#5C0F8B] font-bold">S-</span> Strengthen</div>
+                  <div><span className="text-[#5C0F8B] font-bold">W-</span> Wholeness</div>
+                </div>
+              </div>
+
+            </div>
+
           </div>
         </section>
+
+        {/*
+        Footer,
+        bg-[#5C0F8B] for brand purple background,
+        text-white for all text inside,
+        py-12 px-4 for vertical padding and horizontal gutters
+        */}
+        <footer className="bg-[#5C0F8B] text-white py-12 px-4">
+
+          {/*
+          Two-column layout: hotline info on the left, social links on the right,
+          max-w-7xl mx-auto to match the width of the sections above,
+          grid md:grid-cols-2 for two columns on medium screens and up,
+          gap-8 for spacing between columns
+          */}
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
+
+            {/* Left column: crisis hotline heading and phone link */}
+            <div>
+              {/* mb-4 for spacing between heading and link below */}
+              <h3 className="font-semibold mb-4">24/7 Confidential Domestic Violence and Sexual Assault Crisis Hotline</h3>
+              <div className="space-y-3">
+                {/*
+                Phone link,
+                flex items-center gap-3 to align the icon and number side by side,
+                hover:text-purple-200 for a lighter purple on hover,
+                transition-colors for a smooth color change
+                */}
+                <a href="tel:423-476-3886" className="flex items-center gap-3 hover:text-purple-200 transition-colors">
+                  {/* Phone icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12 19.79 19.79 0 0 1 1.06 3.38 2 2 0 0 1 3.04 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>(423) 476-3886</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Right column: social media links */}
+            <div>
+              {/* mb-4 for spacing between heading and icons below */}
+              <h3 className="font-semibold mb-4">Connect With Us</h3>
+              {/*
+              flex gap-4 to lay the icons out in a row with spacing,
+              hover:text-purple-200 on each link for consistent hover color
+              */}
+              <div className="flex gap-4">
+                {/* Facebook */}
+                <a href="#" className="hover:text-purple-200 transition-colors" aria-label="Facebook">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                  </svg>
+                </a>
+                {/* Twitter */}
+                <a href="#" className="hover:text-purple-200 transition-colors" aria-label="Twitter">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+                  </svg>
+                </a>
+                {/* Instagram */}
+                <a href="#" className="hover:text-purple-200 transition-colors" aria-label="Instagram">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider line at the bottom of the footer, border-purple-700 for a subtle separator */}
+          <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-purple-700"></div>
+
+        </footer>
       </main>
     </div>
   );
