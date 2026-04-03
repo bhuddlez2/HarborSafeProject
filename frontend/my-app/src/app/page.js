@@ -339,7 +339,7 @@ export default function Home() {
               */}
               <div>
                 <Image
-                  src="/WeAreHere.png"
+                  src="/WeAreHere.svg"
                   alt="Supportive hands"
                   width={0}
                   height={0}
@@ -417,7 +417,7 @@ export default function Home() {
                 */}
                 <div className="mb-6">
                   <Image
-                    src="/OurMission.png"
+                    src="/OurMission.svg"
                     alt="Our Mission"
                     width={0}
                     height={0}
@@ -438,7 +438,7 @@ export default function Home() {
                 */}
                 <div className="mb-6">
                   <Image
-                    src="/OurValues.png"
+                    src="/OurValues.svg"
                     alt="Our Values"
                     width={0}
                     height={0}
