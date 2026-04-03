@@ -207,7 +207,7 @@ export default function Home() {
             Section heading,
             text-center and mb-12 to center it with spacing below
             */}
-            <h2 className="text-center mb-12">Upcoming Events</h2>
+            <h2 className="text-center mb-12 text-2xl font-semibold">Upcoming Events</h2>
 
             {/*
             Carousel wrapper,
@@ -309,6 +309,97 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/*
+        About section,
+        id="about" so the About nav link anchor scrolls here,
+        py-20 px-4 for vertical padding and horizontal gutters,
+        bg-white background
+        */}
+        <section className="py-20 px-4 bg-white">
+          <div className="max-w-7xl mx-auto">
+
+            {/*
+            Two-column row: WeAreHere image left, text content right,
+            grid md:grid-cols-2 for two columns on medium screens and up,
+            gap-12 for spacing between columns,
+            items-start so both columns align to the top
+            */}
+            <div className="grid md:grid-cols-2 gap-12 items-start">
+
+              {/*
+              Left column: WeAreHere image,
+              w-full stretches the image to fill the column width,
+              rounded-lg for rounded corners,
+              shadow-lg for a drop shadow,
+              NOTE: if white padding appears around the image it is baked into the png itself,
+              to fix it the png will need to be cropped or exported without padding
+              */}
+              <div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/WeAreHere.png"
+                  alt="Supportive hands"
+                  className="w-full rounded-lg shadow-lg"
+                />
+              </div>
+
+              {/*
+              Right column: heading, body copy, and hotline info,
+              space-y-6 for consistent vertical spacing between children
+              */}
+              <div className="space-y-6">
+
+                {/*
+                Section heading,
+                text-[#5C0F8B] for brand purple,
+                text-4xl for prominence,
+                text-center to match the Figma design,
+                mb-6 for spacing below before the body copy
+                */}
+                <h1 className="mb-6 text-[#5C0F8B] text-center text-4xl font-semibold">We Are Here to Help You.</h1>
+
+                {/* Body copy, leading-relaxed for comfortable line height */}
+                <p className="leading-relaxed text-gray-900 text-center mb-4">
+                  <strong className="text-[#5C0F8B]">The Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc.</strong>,
+                  provides a secure environment and a comprehensive range of holistic services for
+                  individuals and their children who are survivors of domestic violence and/or sexual
+                  assault. These services empower survivors by giving them the tools and support they
+                  need to rebuild their lives.
+                </p>
+
+                {/*
+                Hotline sub-section,
+                mt-16 pushes it further down to visually separate it from the body copy above
+                */}
+                <div className="mt-16">
+
+                  {/* Hotline heading, same brand color and size as the section heading above */}
+                  <h2 className="text-center mb-4 text-[#5C0F8B] text-4xl font-semibold">24/7 Confidential Hotline</h2>
+
+                  {/* Supporting italic description */}
+                  <p className="text-gray-900 italic text-center mb-4">
+                    Our advocates are available to talk with anyone who is experiencing domestic
+                    violence or sexual assault at any time, day or night.
+                  </p>
+
+                  {/*
+                  Phone and text links,
+                  hover:text-[#5C0F8B] highlights them in brand color on hover,
+                  transition-colors for a smooth color change
+                  */}
+                  <p className="text-center text-gray-900">
+                    <a href="tel:423-476-3886" className="hover:text-[#5C0F8B] transition-colors">Call (423) 476-3886</a>
+                    {" | "}
+                    <a href="sms:423-715-9614" className="hover:text-[#5C0F8B] transition-colors">Text (423) 715-9614</a>
+                  </p>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
       </main>
     </div>
   );
