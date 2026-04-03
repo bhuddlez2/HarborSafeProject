@@ -78,11 +78,19 @@ export default function Home() {
         h-20 w-20 for sizing, 
         */}
         <div className="flex items-center gap-4">
+          {/*
+          width and height match the SVG's actual intrinsic dimensions so Next.js
+          can calculate the correct aspect ratio,
+          h-20 sets the display height via CSS,
+          w-auto lets the width scale proportionally from that height
+          next.js gave a warning so width and hight were set to real values and then overridden with CSS to maintain the aspect ratio without distortion
+          */}
           <Image
-            src="/HSHAC.svg"
+            src="/HSHAC Black and White.svg"
             alt="Harbor Safe House and Advocacy Center Logo"
-            width={80}
-            height={80}
+            width={573}
+            height={514}
+            className="h-20 w-auto"
           />
           {/* HSHAC text next to the logo, styled with white color and larger font size */}
           <span className="text-white text-xl">HSHAC</span>
