@@ -364,16 +364,16 @@ export default function Home() {
 
                 {/*
                 Section heading,
-                text-[#5C0F8B] for brand purple,
+                text-brand purple,
                 text-4xl for prominence,
                 text-center to match the Figma design,
                 mb-6 for spacing below before the body copy
                 */}
-                <h1 className="mb-6 text-[#5C0F8B] text-center text-4xl font-semibold">We Are Here to Help You.</h1>
+                <h1 className="mb-6 text-brand text-center text-4xl font-semibold">We Are Here to Help You.</h1>
 
                 {/* Body copy, leading-relaxed for comfortable line height */}
                 <p className="leading-relaxed text-gray-900 text-center mb-4">
-                  <strong className="text-[#5C0F8B]">The Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc.</strong>,
+                  <strong className="text-brand">The Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc.</strong>,
                   provides a secure environment and a comprehensive range of holistic services for
                   individuals and their children who are survivors of domestic violence and/or sexual
                   assault. These services empower survivors by giving them the tools and support they
@@ -386,8 +386,8 @@ export default function Home() {
                 */}
                 <div className="mt-16">
 
-                  {/* Hotline heading, same brand color and size as the section heading above */}
-                  <h2 className="text-center mb-4 text-[#5C0F8B] text-4xl font-semibold">24/7 Confidential Hotline</h2>
+                  {/* Hotline heading, brand color and size as the section heading above */}
+                  <h2 className="text-center mb-4 text-brand text-4xl font-semibold">24/7 Confidential Hotline</h2>
 
                   {/* Supporting italic description */}
                   <p className="text-gray-900 italic text-center mb-4">
@@ -397,13 +397,13 @@ export default function Home() {
 
                   {/*
                   Phone and text links,
-                  hover:text-[#5C0F8B] highlights them in brand color on hover,
+                  hover:text-brand highlights them in brand color on hover,
                   transition-colors for a smooth color change
                   */}
                   <p className="text-center text-gray-900">
-                    <a href="tel:423-476-3886" className="hover:text-[#5C0F8B] transition-colors">Call (423) 476-3886</a>
+                    <a href="tel:423-476-3886" className="hover:text-brand transition-colors">Call (423) 476-3886</a>
                     {" | "}
-                    <a href="sms:423-715-9614" className="hover:text-[#5C0F8B] transition-colors">Text (423) 715-9614</a>
+                    <a href="sms:423-715-9614" className="hover:text-brand transition-colors">Text (423) 715-9614</a>
                   </p>
 
                 </div>
@@ -466,10 +466,10 @@ export default function Home() {
                 text-left so the letter labels align with their value text
                 */}
                 <div className="flex flex-wrap justify-center gap-4 text-left">
-                  <div><span className="text-[#5C0F8B] font-bold">N-</span> Nurture</div>
-                  <div><span className="text-[#5C0F8B] font-bold">E-</span> Empower</div>
-                  <div><span className="text-[#5C0F8B] font-bold">S-</span> Strengthen</div>
-                  <div><span className="text-[#5C0F8B] font-bold">W-</span> Wholeness</div>
+                  <div><span className="text-brand font-bold">N-</span> Nurture</div>
+                  <div><span className="text-brand font-bold">E-</span> Empower</div>
+                  <div><span className="text-brand font-bold">S-</span> Strengthen</div>
+                  <div><span className="text-brand font-bold">W-</span> Wholeness</div>
                 </div>
               </div>
 
@@ -480,11 +480,11 @@ export default function Home() {
 
         {/*
         Footer,
-        bg-[#5C0F8B] for brand purple background,
+        bg-brand for brand purple background,
         text-white for all text inside,
         py-12 px-4 for vertical padding and horizontal gutters
         */}
-        <footer className="bg-[#5C0F8B] text-white py-12 px-4">
+        <footer className="bg-brand text-white py-12 px-4">
 
           {/*
           Two-column layout: hotline info on the left, social links on the right,
@@ -525,19 +525,19 @@ export default function Home() {
               */}
               <div className="flex gap-4">
                 {/* Facebook */}
-                <a href="#" className="hover:text-purple-200 transition-colors" aria-label="Facebook">
+                <a href="https://www.facebook.com/HarborSafeHouse/" className="hover:text-purple-200 transition-colors" aria-label="Facebook">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                   </svg>
                 </a>
-                {/* Twitter */}
-                <a href="#" className="hover:text-purple-200 transition-colors" aria-label="Twitter">
+                {/* TikTok */}
+                <a href="https://www.tiktok.com/@harborsafehouse" className="hover:text-purple-200 transition-colors" aria-label="TikTok">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
                   </svg>
                 </a>
                 {/* Instagram */}
-                <a href="#" className="hover:text-purple-200 transition-colors" aria-label="Instagram">
+                <a href="https://www.instagram.com/harborsafehouse/" className="hover:text-purple-200 transition-colors" aria-label="Instagram">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                     <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
