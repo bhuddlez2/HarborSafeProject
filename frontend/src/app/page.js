@@ -1,7 +1,7 @@
 // necessary for useState and client-side interactivity in this component, server components cannot use state or event handlers
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
 
 // Placeholder event data — replace with real content when available
@@ -23,18 +23,25 @@ export default function Home() {
 
   /*
   showSafetyModal controls whether the security alert popup is visible,
-  modal - CSS, a state that excludes all other interactions until dismissed
-  uses a lazy initializer function instead of useEffect to avoid a cascading render warning,
-  the function runs once on the client during the first render to check localStorage,
-  typeof window === "undefined" guards against the server-side render pass where
-  localStorage does not exist,
-  returns true (show the modal) if the user has never dismissed it before,
-  returns false (skip the modal) if safetyModalDismissed is already stored
+  modal - a dialog that blocks all other interactions until dismissed,
+  initialized to false so the server-rendered HTML and the first client render match,
+  this prevents the React hydration mismatch error that occurs when server and client
+  produce different HTML — the server has no localStorage so it must start as false,
+  the useEffect below then checks localStorage after hydration and shows the modal if needed
   */
-  const [showSafetyModal, setShowSafetyModal] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !localStorage.getItem("safetyModalDismissed");
-  });
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+  /*
+  Checks localStorage after the component hydrates on the client,
+  if safetyModalDismissed has never been set the modal is shown,
+  this runs after the first render so the server and client HTML always match first,
+  empty dependency array means it only runs once on mount
+  */
+  useEffect(() => {
+    if (!localStorage.getItem("safetyModalDismissed")) {
+      startTransition(() => setShowSafetyModal(true));
+    }
+  }, []);
 
   /*
   Escape key quick-exit listener,
