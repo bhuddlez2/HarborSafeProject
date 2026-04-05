@@ -186,7 +186,7 @@ export default function Home() {
 
         aria-label="Quick exit button"
         title="Quick Exit (exit to google)"
-        onClick={() => window.location.href = 'https://www.google.com'}
+        onClick={() => window.location.replace('https://www.google.com')}
       >
         Exit Quickly
       </button>
