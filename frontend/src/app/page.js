@@ -22,25 +22,32 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   /*
-  showSafetyModal controls visibility of the security alert popup.
-  Defaults to false to avoid a flash on load — useEffect sets it to true
-  only if the user hasn't already dismissed it (checked via localStorage).
-  */
-  /*
-  Lazy initializer reads localStorage on first render so no useEffect is needed.
-  typeof window check guards against SSR where localStorage is unavailable.
+  showSafetyModal controls whether the security alert popup is visible,
+  modal - CSS, a state that excludes all other interactions until dismissed
+  uses a lazy initializer function instead of useEffect to avoid a cascading render warning,
+  the function runs once on the client during the first render to check localStorage,
+  typeof window === "undefined" guards against the server-side render pass where
+  localStorage does not exist,
+  returns true (show the modal) if the user has never dismissed it before,
+  returns false (skip the modal) if safetyModalDismissed is already stored
   */
   const [showSafetyModal, setShowSafetyModal] = useState(() => {
     if (typeof window === "undefined") return false;
     return !localStorage.getItem("safetyModalDismissed");
   });
 
-  // Pressing Escape immediately redirects to Google, matching the hotline site's quick-exit behavior.
+  /*
+  Escape key quick-exit listener,
+  listens on the keyup event instead of keydown because browsers cancel any navigation
+  that starts during the keydown phase of the Escape key,
+  by waiting for keyup the navigation fires after the browser's cancellation window has passed,
+  window.addEventListener attaches the listener globally so it works anywhere on the page,
+  the return function removes the listener when the component unmounts to prevent memory leaks,
+  empty dependency array means this runs once on mount and cleans up on unmount
+  */
   useEffect(() => {
     const handleKeyUp = (e) => {
       if (e.key === "Escape") {
-        // Use keyup instead of keydown — the browser cancels navigations triggered
-        // during keydown for Escape, but keyup fires after that cancellation window.
         window.location.href = "https://www.google.com";
       }
     };
@@ -48,6 +55,11 @@ export default function Home() {
     return () => window.removeEventListener("keyup", handleKeyUp);
   }, []);
 
+  /*
+  handleDismissSafetyModal is called when the user clicks OK on the security alert modal,
+  saves safetyModalDismissed to localStorage so the modal does not appear on future visits,
+  then hides the modal by setting showSafetyModal to false
+  */
   const handleDismissSafetyModal = () => {
     localStorage.setItem("safetyModalDismissed", "true");
     setShowSafetyModal(false);
@@ -66,14 +78,40 @@ export default function Home() {
   return (
     <div>
       {/*
-      Security Alert modal — shown once per browser session until dismissed.
-      Fixed overlay covers the entire viewport with a semi-transparent black background.
-      Conditionally rendered based on showSafetyModal state.
+      Security Alert modal,
+      only renders when showSafetyModal is true, which is on the first ever visit,
+      once the user clicks OK it is stored in localStorage and will not show again,
+      fixed inset-0 stretches the dark overlay across the entire viewport,
+      z-200 places it above the navbar (z-50) and exit button (z-100),
+      flex items-center justify-center centers the modal card both vertically and horizontally,
+      bg-black/60 creates a semi-transparent dark backdrop to focus attention on the modal,
+      px-4 adds horizontal padding so the card does not touch screen edges on small screens
       */}
       {showSafetyModal && (
         <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4">
+          {/*
+          Modal card,
+          bg-white for a clean white background,
+          rounded-lg for soft corners,
+          shadow-2xl for a strong drop shadow to lift it off the backdrop,
+          max-w-lg to cap the width so it does not stretch too wide on large screens,
+          w-full so it fills available space on small screens up to that max,
+          p-8 for generous internal padding
+          */}
           <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-8">
+            {/*
+            Modal heading,
+            text-2xl font-bold for prominence,
+            text-brand for the brand purple color,
+            mb-4 for spacing below before the first paragraph
+            */}
             <h2 className="text-2xl font-bold text-brand mb-4">Security Alert</h2>
+            {/*
+            Internet safety warning paragraph,
+            mb-3 for spacing below before the next paragraph,
+            the phone number is a clickable tel link styled in brand color
+            so users can tap it directly on mobile
+            */}
             <p className="text-gray-800 mb-3">
               Internet usage can be monitored and is impossible to erase completely. If you&apos;re
               concerned your internet usage might be monitored, call us at{" "}
@@ -82,6 +120,11 @@ export default function Home() {
               </a>
               .
             </p>
+            {/*
+            Quick exit instructions paragraph,
+            bold so it stands out as an important action the user can take,
+            kbd element is styled to look like a keyboard key for clarity
+            */}
             <p className="text-gray-800 mb-3">
               <strong>
                 Click the red &ldquo;Exit&rdquo; button in the lower-right corner or press{" "}
@@ -89,9 +132,23 @@ export default function Home() {
                 at any time to leave this site immediately.
               </strong>
             </p>
+            {/*
+            Emergency warning paragraph,
+            text-red-700 and font-semibold to make it visually urgent,
+            mb-6 for extra spacing above the OK button below
+            */}
             <p className="text-red-700 font-semibold mb-6">
               Please contact 911 if you feel you are in immediate danger or a life-threatening situation.
             </p>
+            {/*
+            OK dismiss button,
+            bg-brand text-white for brand styling,
+            px-8 py-3 for generous padding,
+            rounded-full for pill shape to match the site's button style,
+            hover:bg-purple-800 darkens the button on hover for feedback,
+            transition-all for a smooth color change,
+            onClick calls handleDismissSafetyModal which saves to localStorage and hides the modal
+            */}
             <button
               onClick={handleDismissSafetyModal}
               className="bg-brand text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-800 transition-all"
@@ -110,7 +167,7 @@ export default function Home() {
       hover:bg-white and hover:text-red-600 to invert colors on hover,
       border-2 border-red-600 keeps the red border visible in both states,
       rounded-full for pill shape,
-      px-10 py-4 for padding, text-lg font-semibold for larger bolder text,
+      px-14 py-5 for padding, text-xl font-semibold for larger bolder text,
       shadow-lg for depth,
       transition-all and hover:scale-110 for smooth scale animation on hover,
       onClick redirects to Google to quickly hide the page from view,
@@ -118,7 +175,7 @@ export default function Home() {
       */}
       <button
         className="fixed bottom-4 right-4 z-100 bg-red-600 hover:bg-white text-white hover:text-red-600 border-2
-        border-red-600 rounded-full px-10 py-4 text-lg font-semibold shadow-lg transition-all hover:scale-110"
+        border-red-600 rounded-full px-14 py-5 text-xl font-semibold shadow-lg transition-all hover:scale-110"
 
         aria-label="Quick exit button"
         title="Quick Exit (exit to google)"
