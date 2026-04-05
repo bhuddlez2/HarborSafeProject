@@ -1,6 +1,7 @@
 import { Montserrat, Nunito } from "next/font/google";
 import Navbar from "./components/Navbar";
 import ExitButton from "./components/ExitButton";
+import Footer from "./components/Footer";
 import "./globals.css";
 
 // font weights: 400 = Regular, 700 = Bold, 800 = Extra Bold
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
         <div className="pt-22.5 flex-1">
           {children}
         </div>
+        <Footer />
       </body>
     </html>
   );
