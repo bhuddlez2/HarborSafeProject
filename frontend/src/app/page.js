@@ -1,7 +1,7 @@
 // necessary for useState and client-side interactivity in this component, server components cannot use state or event handlers
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 // Placeholder event data — replace with real content when available
@@ -21,6 +21,38 @@ export default function Home() {
   */
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  /*
+  showSafetyModal controls visibility of the security alert popup.
+  Defaults to false to avoid a flash on load — useEffect sets it to true
+  only if the user hasn't already dismissed it (checked via localStorage).
+  */
+  /*
+  Lazy initializer reads localStorage on first render so no useEffect is needed.
+  typeof window check guards against SSR where localStorage is unavailable.
+  */
+  const [showSafetyModal, setShowSafetyModal] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem("safetyModalDismissed");
+  });
+
+  // Pressing Escape immediately redirects to Google, matching the hotline site's quick-exit behavior.
+  useEffect(() => {
+    const handleKeyUp = (e) => {
+      if (e.key === "Escape") {
+        // Use keyup instead of keydown — the browser cancels navigations triggered
+        // during keydown for Escape, but keyup fires after that cancellation window.
+        window.location.href = "https://www.google.com";
+      }
+    };
+    window.addEventListener("keyup", handleKeyUp);
+    return () => window.removeEventListener("keyup", handleKeyUp);
+  }, []);
+
+  const handleDismissSafetyModal = () => {
+    localStorage.setItem("safetyModalDismissed", "true");
+    setShowSafetyModal(false);
+  };
+
   // Move to previous event, wraps around from first to last
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? events.length - 1 : prev - 1));
@@ -33,6 +65,42 @@ export default function Home() {
 
   return (
     <div>
+      {/*
+      Security Alert modal — shown once per browser session until dismissed.
+      Fixed overlay covers the entire viewport with a semi-transparent black background.
+      Conditionally rendered based on showSafetyModal state.
+      */}
+      {showSafetyModal && (
+        <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-8">
+            <h2 className="text-2xl font-bold text-brand mb-4">Security Alert</h2>
+            <p className="text-gray-800 mb-3">
+              Internet usage can be monitored and is impossible to erase completely. If you&apos;re
+              concerned your internet usage might be monitored, call us at{" "}
+              <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">
+                (423) 476-3886
+              </a>
+              .
+            </p>
+            <p className="text-gray-800 mb-3">
+              <strong>
+                Click the red &ldquo;Exit&rdquo; button in the lower-right corner or press{" "}
+                <kbd className="bg-gray-100 border border-gray-300 rounded px-1 py-0.5 text-sm">Esc</kbd>{" "}
+                at any time to leave this site immediately.
+              </strong>
+            </p>
+            <p className="text-red-700 font-semibold mb-6">
+              Please contact 911 if you feel you are in immediate danger or a life-threatening situation.
+            </p>
+            <button
+              onClick={handleDismissSafetyModal}
+              className="bg-brand text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-800 transition-all"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
       {/*
       Quick exit button
       safety feature for users who need to leave the site quickly,
