@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 /*
 Navbar component,
@@ -10,6 +11,24 @@ server components are required to export metadata (page title, description etc),
 "use client" is declared here instead of layout.js so both can coexist
 */
 export default function Navbar() {
+  /*
+  usePathname returns the current URL path (e.g. "/about", "/resources"),
+  used to determine which nav link should appear active (white pill style),
+  re-runs automatically whenever the user navigates to a new page
+  */
+  const pathname = usePathname();
+
+  /*
+  navClass returns the correct className for a nav link span based on whether
+  its href matches the current pathname,
+  active link gets the solid white pill style,
+  inactive links get the transparent style with a white pill on hover
+  */
+  const navClass = (href) =>
+    pathname === href
+      ? "block bg-white text-brand px-4 py-2 rounded-full transition-all duration-300"
+      : "block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300";
+
   return (
     /*
     Navigation bar,
@@ -57,45 +76,20 @@ export default function Navbar() {
       mr-8 for a small right margin from the edge
       */}
       <div className="flex items-center gap-10 mr-8">
-        {/*
-        Home link,
-        text-white for link color,
-        font-bold for emphasis,
-        group and relative for styling the hover effect on the span inside
-        */}
         <Link href="/" className="text-white font-bold group relative">
-          {/*
-          The span inside the Home link is styled to create a pill-shaped background on hover,
-          block to make it a block element,
-          bg-white for background color,
-          text-brand for text color,
-          px-4 py-2 for padding,
-          rounded-full for fully rounded corners,
-          transition-all and duration-300 for smooth hover effect
-          */}
-          <span className="block bg-white text-brand px-4 py-2 rounded-full transition-all duration-300">
-            Home
-          </span>
+          <span className={navClass("/")}>Home</span>
         </Link>
         <Link href="/about" className="text-white font-bold group relative">
-          <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-            About
-          </span>
+          <span className={navClass("/about")}>About</span>
         </Link>
         <Link href="/get-support" className="text-white font-bold group relative">
-          <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-            Get Support
-          </span>
+          <span className={navClass("/get-support")}>Get Support</span>
         </Link>
         <Link href="/give-support" className="text-white font-bold group relative">
-          <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-            Give Support
-          </span>
+          <span className={navClass("/give-support")}>Give Support</span>
         </Link>
         <Link href="/resources" className="text-white font-bold group relative">
-          <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-            Resources
-          </span>
+          <span className={navClass("/resources")}>Resources</span>
         </Link>
         {/* Divider between navigation links and language switcher */}
         <div className="h-8 w-px bg-white"></div>
