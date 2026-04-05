@@ -175,13 +175,13 @@ export default function Home() {
       */}
       <button
         className="fixed bottom-4 right-4 z-100 bg-red-600 hover:bg-white text-white hover:text-red-600 border-2
-        border-red-600 rounded-full px-14 py-5 text-xl font-semibold shadow-lg transition-all hover:scale-110"
+        border-red-600 rounded-full px-20 py-5 text-2xl font-semibold shadow-lg transition-all hover:scale-110"
 
         aria-label="Quick exit button"
         title="Quick Exit (exit to google)"
         onClick={() => window.location.href = 'https://www.google.com'}
       >
-        Exit
+        Exit Quickly
       </button>
       {/* 
       navigation bar,
