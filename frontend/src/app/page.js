@@ -26,21 +26,20 @@ export default function Home() {
   modal - a dialog that blocks all other interactions until dismissed,
   initialized to false so the server-rendered HTML and the first client render match,
   this prevents the React hydration mismatch error that occurs when server and client
-  produce different HTML — the server has no localStorage so it must start as false,
-  the useEffect below then checks localStorage after hydration and shows the modal if needed
+  produce different HTML — the server runs without a browser so it must start as false,
+  the useEffect below sets it to true after hydration so it shows on every page load,
+  intentionally not stored in localStorage — the warning should appear every visit
+  so that any person using the browser sees it, not just the first user ever
   */
   const [showSafetyModal, setShowSafetyModal] = useState(false);
 
   /*
-  Checks localStorage after the component hydrates on the client,
-  if safetyModalDismissed has never been set the modal is shown,
-  this runs after the first render so the server and client HTML always match first,
-  empty dependency array means it only runs once on mount
+  Shows the security alert modal after the component hydrates on the client,
+  always shows regardless of previous visits — no localStorage check,
+  runs once on mount after the first render so server and client HTML match first
   */
   useEffect(() => {
-    if (!localStorage.getItem("safetyModalDismissed")) {
-      startTransition(() => setShowSafetyModal(true));
-    }
+    startTransition(() => setShowSafetyModal(true));
   }, []);
 
   /*
@@ -64,11 +63,10 @@ export default function Home() {
 
   /*
   handleDismissSafetyModal is called when the user clicks OK on the security alert modal,
-  saves safetyModalDismissed to localStorage so the modal does not appear on future visits,
-  then hides the modal by setting showSafetyModal to false
+  hides the modal by setting showSafetyModal to false,
+  intentionally does not store anything — the modal will show again on the next page load
   */
   const handleDismissSafetyModal = () => {
-    localStorage.setItem("safetyModalDismissed", "true");
     setShowSafetyModal(false);
   };
 
