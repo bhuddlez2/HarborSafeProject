@@ -65,8 +65,12 @@ export default function Navbar() {
           height={514}
           className="h-20 w-auto"
         />
-        {/* HSHAC text next to the logo, styled with white color and larger font size */}
-        <span className="text-white text-xl">HSHAC</span>
+        {/*
+        HSHAC abbreviation text next to the logo,
+        aria-label provides the full organization name for screen readers
+        so they announce it meaningfully instead of spelling out each letter
+        */}
+        <span className="text-white text-xl" aria-label="Harbor Safe House and Advocacy Center">HSHAC</span>
       </div>
 
       {/*
