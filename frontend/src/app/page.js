@@ -3,6 +3,7 @@
 
 import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 // Placeholder event data — replace with real content when available
 const events = [
@@ -93,7 +94,12 @@ export default function Home() {
       px-4 adds horizontal padding so the card does not touch screen edges on small screens
       */}
       {showSafetyModal && (
-        <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4">
+        <div
+          className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="safety-modal-heading"
+        >
           {/*
           Modal card,
           bg-white for a clean white background,
@@ -110,7 +116,7 @@ export default function Home() {
             text-brand for the brand purple color,
             mb-4 for spacing below before the first paragraph
             */}
-            <h2 className="text-2xl font-bold text-brand mb-4">Security Alert</h2>
+            <h2 id="safety-modal-heading" className="text-2xl font-bold text-brand mb-4">Security Alert</h2>
             {/*
             Internet safety warning paragraph,
             mb-3 for spacing below before the next paragraph,
@@ -201,6 +207,7 @@ export default function Home() {
       */}
       <nav
         className="bg-brand h-22.5 flex items-center justify-between px-8 fixed top-0 left-0 right-0 z-50"
+        aria-label="Main navigation"
       >
         {/* 
         HarborSafe logo on the left side of the navbar
@@ -238,40 +245,40 @@ export default function Home() {
           font-bold for emphasis, 
           group and relative for styling the hover effect on the span inside,
           */}
-          <a href="#home" className="text-white font-bold group relative">
+          <Link href="/" className="text-white font-bold group relative">
             {/*
             The span inside the Home link is styled to create a pill-shaped background on hover,
-            block to make it a block element, 
-            bg-white for background color, 
-            text-brand for text color, 
-            px-4 py-2 for padding, 
-            rounded-full for fully rounded corners, 
+            block to make it a block element,
+            bg-white for background color,
+            text-brand for text color,
+            px-4 py-2 for padding,
+            rounded-full for fully rounded corners,
             transition-all and duration-300 for smooth hover effect
              */}
             <span className="block bg-white text-brand px-4 py-2 rounded-full transition-all duration-300">
               Home
-              </span>
-          </a>
-          <a href="#about" className="text-white font-bold group relative">
+            </span>
+          </Link>
+          <Link href="/about" className="text-white font-bold group relative">
             <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               About
-              </span>
-          </a>
-          <a href="#services" className="text-white font-bold group relative">
+            </span>
+          </Link>
+          <Link href="/get-support" className="text-white font-bold group relative">
             <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               Get Support
-              </span>
-          </a>
-          <a href="#donate" className="text-white font-bold group relative">
+            </span>
+          </Link>
+          <Link href="/give-support" className="text-white font-bold group relative">
             <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               Give Support
-              </span>
-          </a>
-          <a href="#resources" className="text-white font-bold group relative">
+            </span>
+          </Link>
+          <Link href="/resources" className="text-white font-bold group relative">
             <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
               Resources
-              </span>
-          </a>
+            </span>
+          </Link>
           {/* Divider between navigation links and language switcher */}
           <div className="h-8 w-px bg-white"></div>
           {/* Language switcher */}
@@ -355,7 +362,7 @@ export default function Home() {
             relative so the prev/next buttons can be positioned outside the card area,
             max-w-2xl mx-auto to constrain and center the card
             */}
-            <div className="relative max-w-2xl mx-auto">
+            <div className="relative max-w-2xl mx-auto" aria-label="Displayed event">
 
               {/*
               Previous button,
@@ -615,7 +622,7 @@ export default function Home() {
         text-white for all text inside,
         py-12 px-4 for vertical padding and horizontal gutters
         */}
-        <footer className="bg-brand text-white py-12 px-4">
+        <footer className="bg-brand text-white py-12 px-4" aria-label="Site footer with contact information and social media links">
 
           {/*
           Two-column layout: hotline info on the left, social links on the right,

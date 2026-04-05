@@ -16,7 +16,7 @@ const nunito = Nunito({
 });
 
 export const metadata = {
-  title: "Harbor Safe House & Advocacy Center",
+  title: "Domestic Violence Support | Harbor Safe House & Advocacy Center",
   description: "Providing a safe, caring place and high-quality advocacy for survivors of domestic violence and sexual assault in the Cleveland, TN area.",
 };
 
