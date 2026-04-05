@@ -3,7 +3,7 @@
 
 export default function About() {
   return (
-    <main className="pt-22.5">
+    <main>
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-brand text-4xl font-semibold text-center mb-6">About Us</h1>
