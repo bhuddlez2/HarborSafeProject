@@ -1,5 +1,6 @@
 import { Montserrat, Nunito } from "next/font/google";
 import Navbar from "./components/Navbar";
+import ExitButton from "./components/ExitButton";
 import "./globals.css";
 
 // font weights: 400 = Regular, 700 = Bold, 800 = Extra Bold
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
         it renders on every page automatically since layout.js wraps all routes
         */}
         <Navbar />
+        <ExitButton />
         {/*
         pt-22.5 offsets the page content below the fixed navbar height,
         flex-1 lets the content area grow to fill the remaining viewport height
