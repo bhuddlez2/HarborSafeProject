@@ -67,10 +67,10 @@ export default function Navbar() {
         />
         {/*
         HSHAC abbreviation text next to the logo,
-        aria-label provides the full organization name for screen readers
-        so they announce it meaningfully instead of spelling out each letter
+        aria-hidden hides it from screen readers entirely since the logo image
+        directly to the left already announces the full organization name via its alt text
         */}
-        <span className="text-white text-xl" aria-label="Harbor Safe House and Advocacy Center">HSHAC</span>
+        <span className="text-white text-xl" aria-hidden="true">HSHAC</span>
       </div>
 
       {/*
