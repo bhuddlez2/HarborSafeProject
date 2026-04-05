@@ -7,7 +7,7 @@ export default function Resources() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-brand text-4xl font-semibold text-center mb-6">Resources</h1>
           <p className="text-gray-700 text-center leading-relaxed">
-            Content coming soon.
+            There is nothing here, yet....
           </p>
         </div>
       </section>
