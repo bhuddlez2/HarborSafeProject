@@ -1,8 +1,3 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  turbopack: {
-    root: './frontend',
-  },
-};
-
+const nextConfig = {};
 export default nextConfig;
