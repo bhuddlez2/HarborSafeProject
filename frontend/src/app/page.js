@@ -1,7 +1,7 @@
 // necessary for useState and client-side interactivity in this component, server components cannot use state or event handlers
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
 
 // Placeholder event data — replace with real content when available
@@ -21,6 +21,37 @@ export default function Home() {
   */
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  /*
+  showSafetyModal controls whether the security alert popup is visible,
+  modal - a dialog that blocks all other interactions until dismissed,
+  initialized to false so the server-rendered HTML and the first client render match,
+  this prevents the React hydration mismatch error that occurs when server and client
+  produce different HTML — the server runs without a browser so it must start as false,
+  the useEffect below sets it to true after hydration so it shows on every page load,
+  intentionally not stored in localStorage — the warning should appear every visit
+  so that any person using the browser sees it, not just the first user ever
+  */
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+  /*
+  Shows the security alert modal after the component hydrates on the client,
+  always shows regardless of previous visits — no localStorage check,
+  runs once on mount after the first render so server and client HTML match first
+  */
+  useEffect(() => {
+    startTransition(() => setShowSafetyModal(true));
+  }, []);
+
+
+  /*
+  handleDismissSafetyModal is called when the user clicks OK on the security alert modal,
+  hides the modal by setting showSafetyModal to false,
+  intentionally does not store anything — the modal will show again on the next page load
+  */
+  const handleDismissSafetyModal = () => {
+    setShowSafetyModal(false);
+  };
+
   // Move to previous event, wraps around from first to last
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? events.length - 1 : prev - 1));
@@ -34,129 +65,101 @@ export default function Home() {
   return (
     <div>
       {/*
+      Security Alert modal,
+      only renders when showSafetyModal is true, which is on the first ever visit,
+      once the user clicks OK it is stored in localStorage and will not show again,
+      fixed inset-0 stretches the dark overlay across the entire viewport,
+      z-200 places it above the navbar (z-50) and exit button (z-100),
+      flex items-center justify-center centers the modal card both vertically and horizontally,
+      bg-black/60 creates a semi-transparent dark backdrop to focus attention on the modal,
+      px-4 adds horizontal padding so the card does not touch screen edges on small screens
+      */}
+      {showSafetyModal && (
+        <div
+          className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="safety-modal-heading"
+        >
+          {/*
+          Modal card,
+          bg-white for a clean white background,
+          rounded-lg for soft corners,
+          shadow-2xl for a strong drop shadow to lift it off the backdrop,
+          max-w-lg to cap the width so it does not stretch too wide on large screens,
+          w-full so it fills available space on small screens up to that max,
+          p-8 for generous internal padding
+          */}
+          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-8">
+            {/*
+            Modal heading,
+            text-2xl font-bold for prominence,
+            text-brand for the brand purple color,
+            mb-4 for spacing below before the first paragraph
+            */}
+            <h2 id="safety-modal-heading" className="text-2xl font-bold text-brand mb-4">Security Alert</h2>
+            {/*
+            Internet safety warning paragraph,
+            mb-3 for spacing below before the next paragraph,
+            the phone number is a clickable tel link styled in brand color
+            so users can tap it directly on mobile
+            */}
+            <p className="text-gray-800 mb-3">
+              Internet usage can be monitored and is impossible to erase completely. If you&apos;re
+              concerned your internet usage might be monitored, call us at{" "}
+              <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">
+                (423) 476-3886
+              </a>
+              .
+            </p>
+            {/*
+            Quick exit instructions paragraph,
+            bold so it stands out as an important action the user can take,
+            kbd element is styled to look like a keyboard key for clarity
+            */}
+            <p className="text-gray-800 mb-3">
+              <strong>
+                Click the red &ldquo;Exit&rdquo; button in the lower-right corner or press{" "}
+                <kbd className="bg-gray-100 border border-gray-300 rounded px-1 py-0.5 text-sm">Esc</kbd>{" "}
+                at any time to leave this site immediately.
+              </strong>
+            </p>
+            {/*
+            Emergency warning paragraph,
+            text-red-700 and font-semibold to make it visually urgent,
+            mb-6 for extra spacing above the OK button below
+            */}
+            <p className="text-red-700 font-semibold mb-6">
+              Please contact 911 if you feel you are in immediate danger or a life-threatening situation.
+            </p>
+            {/*
+            OK dismiss button,
+            bg-brand text-white for brand styling,
+            px-8 py-3 for generous padding,
+            rounded-full for pill shape to match the site's button style,
+            hover:bg-purple-800 darkens the button on hover for feedback,
+            transition-all for a smooth color change,
+            onClick calls handleDismissSafetyModal which saves to localStorage and hides the modal
+            */}
+            <button
+              onClick={handleDismissSafetyModal}
+              className="bg-brand text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-800 transition-all"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      {/*
       Quick exit button
       safety feature for users who need to leave the site quickly,
-      fixed to the bottom right corner of the page so it is always visible,
-      z-[100] to ensure it sits above all other content including the navbar (higher stack order),
-      bg-red-600 for red background color to signal urgency,
-      hover:bg-white and hover:text-red-600 to invert colors on hover,
-      border-2 border-red-600 keeps the red border visible in both states,
-      rounded-full for pill shape,
-      px-10 py-4 for padding, text-lg font-semibold for larger bolder text,
-      shadow-lg for depth,
-      transition-all and hover:scale-110 for smooth scale animation on hover,
-      onClick redirects to Google to quickly hide the page from view,
-      aria-label and title for accessibility and tooltip text
-      */}
-      <button
-        className="fixed bottom-4 right-4 z-100 bg-red-600 hover:bg-white text-white hover:text-red-600 border-2
-        border-red-600 rounded-full px-10 py-4 text-lg font-semibold shadow-lg transition-all hover:scale-110"
-
-        aria-label="Quick exit button"
-        title="Quick Exit (exit to google)"
-        onClick={() => window.location.href = 'https://www.google.com'}
-      >
-        Exit
-      </button>
-      {/* 
-      navigation bar,
-      bg-[#5C0F8B] for background color,
-      h-[90px] for height,
-      flex and items-center for alignment, 
-      justify-between to space out logo and nav links,
-      px-8 for padding,  
-      fixed at the top, 
-      top left w for positioning, 
-      z-50 ensures it sits above other content aka higher stack order 
-      */}
-      <nav
-        className="bg-brand h-22.5 flex items-center justify-between px-8 fixed top-0 left-0 right-0 z-50"
-      >
-        {/* 
-        HarborSafe logo on the left side of the navbar
-        src points to the logo image, 
-        alt text for accessibility,
-        h-20 w-20 for sizing, 
-        */}
-        <div className="flex items-center gap-4">
-          {/*
-          width and height match the SVG's actual intrinsic dimensions so Next.js
-          can calculate the correct aspect ratio,
-          h-20 sets the display height via CSS,
-          w-auto lets the width scale proportionally from that height
-          next.js gave a warning so width and hight were set to real values and then overridden with CSS to maintain the aspect ratio without distortion
-          */}
-          <Image
-            src="/HSHAC Black and White.svg"
-            alt="Harbor Safe House and Advocacy Center Logo"
-            width={573}
-            height={514}
-            className="h-20 w-auto"
-          />
-          {/* HSHAC text next to the logo, styled with white color and larger font size */}
-          <span className="text-white text-xl">HSHAC</span>
-        </div>
-
-          {/* Navigation links on the right side of the navbar,
-          flex and items-center for alignment, 
-          gap-10 for spacing between links,
-          mr-8 for a small right margin from the edge */}
-        <div className="flex items-center gap-10 mr-8">
-          {/* 
-          Home link  
-          text-white for link color,
-          font-bold for emphasis, 
-          group and relative for styling the hover effect on the span inside,
-          */}
-          <a href="#home" className="text-white font-bold group relative">
-            {/*
-            The span inside the Home link is styled to create a pill-shaped background on hover,
-            block to make it a block element, 
-            bg-white for background color, 
-            text-brand for text color, 
-            px-4 py-2 for padding, 
-            rounded-full for fully rounded corners, 
-            transition-all and duration-300 for smooth hover effect
-             */}
-            <span className="block bg-white text-brand px-4 py-2 rounded-full transition-all duration-300">
-              Home
-              </span>
-          </a>
-          <a href="#about" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-              About
-              </span>
-          </a>
-          <a href="#services" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-              Get Support
-              </span>
-          </a>
-          <a href="#donate" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-              Give Support
-              </span>
-          </a>
-          <a href="#resources" className="text-white font-bold group relative">
-            <span className="block px-4 py-2 rounded-full hover:bg-white hover:text-brand transition-all duration-300">
-              Resources
-              </span>
-          </a>
-          {/* Divider between navigation links and language switcher */}
-          <div className="h-8 w-px bg-white"></div>
-          {/* Language switcher */}
-          <a href="#espanol" className="text-white text-sm hover:underline transition-all">
-            En Español
-            </a>
-        </div>
-      </nav>
-      {/* 
-      Page content below 
+      {/*
+      Page content,
       main stops the content from being hidden behind the fixed navbar,
       screen readers use it to identify the main content of the page,
-      search engines use it to understand what the page is about,
+      search engines use it to understand what the page is about
       */}
-      <main className="pt-22.5">
+      <main>
         {/*
         Hero section,
         id="home" so the Home nav link anchor scrolls here,
@@ -225,7 +228,7 @@ export default function Home() {
             relative so the prev/next buttons can be positioned outside the card area,
             max-w-2xl mx-auto to constrain and center the card
             */}
-            <div className="relative max-w-2xl mx-auto">
+            <div className="relative max-w-2xl mx-auto" aria-label="Displayed event">
 
               {/*
               Previous button,
@@ -479,80 +482,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/*
-        Footer,
-        bg-brand for brand purple background,
-        text-white for all text inside,
-        py-12 px-4 for vertical padding and horizontal gutters
-        */}
-        <footer className="bg-brand text-white py-12 px-4">
-
-          {/*
-          Two-column layout: hotline info on the left, social links on the right,
-          max-w-7xl mx-auto to match the width of the sections above,
-          grid md:grid-cols-2 for two columns on medium screens and up,
-          gap-8 for spacing between columns
-          */}
-          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
-
-            {/* Left column: crisis hotline heading and phone link */}
-            <div>
-              {/* mb-4 for spacing between heading and link below */}
-              <h3 className="font-semibold mb-4">24/7 Confidential Domestic Violence and Sexual Assault Crisis Hotline</h3>
-              <div className="space-y-3">
-                {/*
-                Phone link,
-                flex items-center gap-3 to align the icon and number side by side,
-                hover:text-purple-200 for a lighter purple on hover,
-                transition-colors for a smooth color change
-                */}
-                <a href="tel:423-476-3886" className="flex items-center gap-3 hover:text-purple-200 transition-colors">
-                  {/* Phone icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12 19.79 19.79 0 0 1 1.06 3.38 2 2 0 0 1 3.04 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                  <span>(423) 476-3886</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Right column: social media links */}
-            <div>
-              {/* mb-4 for spacing between heading and icons below */}
-              <h3 className="font-semibold mb-4">Connect With Us</h3>
-              {/*
-              flex gap-4 to lay the icons out in a row with spacing,
-              hover:text-purple-200 on each link for consistent hover color
-              */}
-              <div className="flex gap-4">
-                {/* Facebook */}
-                <a href="https://www.facebook.com/HarborSafeHouse/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Facebook">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                  </svg>
-                </a>
-                {/* TikTok */}
-                <a href="https://www.tiktok.com/@harborsafehouse" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="TikTok">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
-                  </svg>
-                </a>
-                {/* Instagram */}
-                <a href="https://www.instagram.com/harborsafehouse/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Instagram">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider line at the bottom of the footer, border-purple-700 for a subtle separator */}
-          <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-purple-700"></div>
-
-        </footer>
       </main>
     </div>
   );
