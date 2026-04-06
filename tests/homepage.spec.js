@@ -5,7 +5,7 @@ test.describe('Homepage', () => {
 
     test('page loads and has correct title', async ({ page }) => {
         await page.goto('/');
-        await expect(page).toHaveTitle(/Create Next App/);
+        await expect(page).toHaveTitle(/Harbor Safe/i);
     });
 
     test.skip('hero text is visible', async ({ page }) => {
