@@ -2,6 +2,7 @@
 node_modules/
 .pnp
 .pnp.*
+.pnp.js
 
 # Environment variables
 .env
@@ -36,3 +37,4 @@ backend/prisma/migrations/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+backend/prisma/migrations/
