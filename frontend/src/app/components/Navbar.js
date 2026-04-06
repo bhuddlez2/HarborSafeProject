@@ -70,7 +70,9 @@ export default function Navbar() {
         aria-hidden hides it from screen readers entirely since the logo image
         directly to the left already announces the full organization name via its alt text
         */}
-        <span className="text-white text-xl" aria-hidden="true">HSHAC</span>
+        <span className="text-white text-xl leading-tight" aria-hidden="true">
+          Harbor Safe House<br />and Advocacy Center
+        </span>
       </div>
 
       {/*
