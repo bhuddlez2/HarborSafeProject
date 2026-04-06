@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 .pnp
+.pnp.*
 .pnp.js
 
 # Environment variables
@@ -28,4 +29,12 @@ yarn-error.log*
 Thumbs.db
 
 # Prisma
+backend/prisma/migrations/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
 backend/prisma/migrations/
