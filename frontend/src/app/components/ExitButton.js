@@ -6,8 +6,11 @@ import { useEffect } from "react";
 ExitButton component,
 extracted into its own file so it renders on every page via layout.js,
 handles both the visible exit button and the Escape key listener,
-both redirect to Google using location.replace() which removes the site
-from the browser history so the back button cannot return to it
+navbar links use the replace prop so every page visit overwrites the previous
+history entry instead of pushing a new one, meaning only one site entry ever
+exists in the browser history at a time,
+exit then uses location.replace() to overwrite that single remaining entry
+with Google, so the back button cannot return to the site
 */
 export default function ExitButton() {
 
@@ -53,7 +56,7 @@ export default function ExitButton() {
       title="Quick Exit (exit to google)"
       onClick={() => window.location.replace("https://www.google.com")}
     >
-      Exit Quickly
+      Safe Exit
     </button>
   );
 }
