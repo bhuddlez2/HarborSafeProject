@@ -178,13 +178,13 @@ export default function Home() {
               <div className="space-y-2">
                 <button
                   onClick={handleDismissSafetyModal}
-                  className="w-full bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-white hover:text-brand cursor-pointer transition-all"
+                  className="hover:scale-105 w-full bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-white hover:text-brand cursor-pointer transition-all"
                 >
                   I understand — continue to site
                 </button>
                 <button
                   onClick={() => window.location.replace("https://www.google.com")}
-                  className="w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-red-600 hover:bg-white hover:text-red-600 transition-all cursor-pointer"
+                  className="hover:scale-105 w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-red-600 hover:bg-white hover:text-red-600 transition-all cursor-pointer"
                 >
                   Exit quickly now
                 </button>
