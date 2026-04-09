@@ -66,13 +66,13 @@ export default function Navbar() {
           className="h-20 w-auto"
         />
         {/*
-        HSHAC abbreviation text next to the logo,
-        aria-hidden hides it from screen readers entirely since the logo image
-        directly to the left already announces the full organization name via its alt text
+        HSHAC abbreviation and full name stacked,
+        text-white/60 lightens the full phrase so HSHAC reads as the primary label
         */}
-        <span className="text-white text-xl leading-tight">
-          Harbor Safe House<br />and Advocacy Center
-        </span>
+        <div className="flex flex-col leading-tight">
+          <span className="text-white text-xl font-bold">HSHAC</span>
+          <span className="text-white/90 text-sm">Harbor Safe House and Advocacy Center</span>
+        </div>
       </div>
 
       {/*
