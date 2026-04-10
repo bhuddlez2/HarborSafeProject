@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bhuddlez2/HarborSafeProject.git"
@@ -17,7 +22,12 @@
   },
   "homepage": "https://github.com/bhuddlez2/HarborSafeProject#readme",
   "devDependencies": {
+    "@next/eslint-plugin-next": "^16.2.2",
     "@playwright/test": "^1.59.1",
-    "@types/node": "^25.5.2"
+    "@types/node": "^25.5.2",
+    "eslint-plugin-playwright": "^2.10.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0"
   }
 }
