@@ -66,13 +66,13 @@ export default function Navbar() {
           className="h-20 w-auto"
         />
         {/*
-        HSHAC abbreviation text next to the logo,
-        aria-hidden hides it from screen readers entirely since the logo image
-        directly to the left already announces the full organization name via its alt text
+        HSHAC abbreviation and full name stacked,
+        text-white/60 lightens the full phrase so HSHAC reads as the primary label
         */}
-        <span className="text-white text-xl leading-tight" aria-hidden="true">
-          Harbor Safe House<br />and Advocacy Center
-        </span>
+        <div className="flex flex-col leading-tight">
+          <span className="text-white text-xl font-bold">HSHAC</span>
+          <span className="text-white/90 text-sm">Harbor Safe House and Advocacy Center</span>
+        </div>
       </div>
 
       {/*
@@ -80,21 +80,22 @@ export default function Navbar() {
       flex and items-center for alignment,
       gap-10 for spacing between links,
       mr-8 for a small right margin from the edge
+      added replace which calls history.replaceState(), which pops recent history entries.
       */}
       <div className="flex items-center gap-10 mr-8">
-        <Link href="/" className="text-white font-bold group relative">
+        <Link replace href="/" className="text-white font-bold group relative">
           <span className={navClass("/")}>Home</span>
         </Link>
-        <Link href="/about" className="text-white font-bold group relative">
+        <Link replace href="/about" className="text-white font-bold group relative">
           <span className={navClass("/about")}>About</span>
         </Link>
-        <Link href="/get-support" className="text-white font-bold group relative">
+        <Link replace href="/get-support" className="text-white font-bold group relative">
           <span className={navClass("/get-support")}>Get Support</span>
         </Link>
-        <Link href="/give-support" className="text-white font-bold group relative">
+        <Link replace href="/give-support" className="text-white font-bold group relative">
           <span className={navClass("/give-support")}>Give Support</span>
         </Link>
-        <Link href="/resources" className="text-white font-bold group relative">
+        <Link replace href="/resources" className="text-white font-bold group relative">
           <span className={navClass("/resources")}>Resources</span>
         </Link>
         {/* Divider between navigation links and language switcher */}
