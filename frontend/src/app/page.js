@@ -456,6 +456,70 @@ export default function Home() {
             </div>
 
             {/*
+            How we help section,
+            mt-16 for spacing above,
+            three service cards in a responsive grid
+            */}
+            <div className="mt-16">
+
+              {/* Section kicker and heading */}
+              <span className="inline-block text-xs font-semibold tracking-widest uppercase bg-purple-100 text-brand px-3 py-1 rounded-full mb-4">How we help</span>
+              <h2 className="text-3xl font-semibold text-brand mb-3">Comprehensive support for survivors</h2>
+              <p className="text-gray-600 leading-relaxed mb-10 max-w-xl">
+                We provide a secure environment and the tools survivors need to rebuild their lives — for individuals and their children.
+              </p>
+
+              {/*
+              Service cards grid,
+              grid-cols-1 on mobile, md:grid-cols-3 on medium screens and up,
+              gap-5 for spacing between cards
+              */}
+              <div className="grid md:grid-cols-3 gap-5">
+
+                {/* Emergency Shelter card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  {/* Icon box */}
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* home icon, feathericons.com */}
+                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9,22 9,12 15,12 15,22" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
+                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                </div>
+
+                {/* Counseling & Advocacy card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* message-square icon, feathericons.com */}
+                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
+                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                </div>
+
+                {/* 24/7 Crisis Line card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* clock icon, feathericons.com */}
+                      <circle cx="12" cy="12" r="10" /><polyline points="12,6 12,12 16,14" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">24/7 Crisis Line</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Trained advocates available any time — call or text, day or night, always free.</p>
+                  <a href="tel:423-476-3886" className="text-xs font-semibold text-brand hover:underline transition-all">Call now →</a>
+                </div>
+
+              </div>
+            </div>
+
+            {/*
             Mission and values row,
             mt-16 for spacing above,
             bg-gray-50 and border-y for a subtle section break,
