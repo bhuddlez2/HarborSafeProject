@@ -407,51 +407,33 @@ export default function Home() {
               */}
               <div className="space-y-6">
 
-                {/*
-                Section heading,
-                text-brand purple,
-                text-4xl for prominence,
-                text-center to match the Figma design,
-                mb-6 for spacing below before the body copy
-                */}
-                <h1 className="mb-6 text-brand text-center text-4xl font-semibold">We Are Here to Help You.</h1>
+                {/* Section heading above the testimonials */}
+                <h1 className="text-center text-brand text-4xl font-semibold">We Are Here to Help You.</h1>
 
-                {/* Body copy, leading-relaxed for comfortable line height */}
-                <p className="leading-relaxed text-gray-900 text-center mb-4">
-                  <strong className="text-brand">The Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc.</strong>,
-                  provides a secure environment and a comprehensive range of holistic services for
-                  individuals and their children who are survivors of domestic violence and/or sexual
-                  assault. These services empower survivors by giving them the tools and support they
-                  need to rebuild their lives.
-                </p>
-
-                {/*
-                Hotline sub-section,
-                mt-16 pushes it further down to visually separate it from the body copy above
-                */}
-                <div className="mt-16">
-
-                  {/* Hotline heading, brand color and size as the section heading above */}
-                  <h2 className="text-center mb-4 text-brand text-4xl font-semibold">24/7 Confidential Hotline</h2>
-
-                  {/* Supporting italic description */}
-                  <p className="text-gray-900 italic text-center mb-4">
-                    Our advocates are available to talk with anyone who is experiencing domestic
-                    violence or sexual assault at any time, day or night.
+                {/* First testimonial header and block */}
+                <h2 className="text-brand text-xl font-semibold mt-8">A Survivor&apos;s Story</h2>
+                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
+                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
+                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
+                    They were there for me when I had nowhere else to turn. I came in with nothing and
+                    left with the strength to rebuild my life. I will never forget what they did for
+                    me and my children.
                   </p>
-
-                  {/*
-                  Phone and text links,
-                  hover:text-brand highlights them in brand color on hover,
-                  transition-colors for a smooth color change
-                  */}
-                  <p className="text-center text-gray-900">
-                    <a href="tel:423-476-3886" className="hover:text-brand transition-colors">Call (423) 476-3886</a>
-                    {" | "}
-                    <a href="sms:423-715-9614" className="hover:text-brand transition-colors">Text (423) 715-9614</a>
-                  </p>
-
+                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
                 </div>
+
+                {/* Second testimonial header and block */}
+                <h2 className="text-brand text-xl font-semibold mt-8">Finding Safety &amp; Support</h2>
+                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
+                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
+                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
+                    The advocates here never made me feel judged. They listened, they helped me find
+                    housing, and they stood by me through the entire legal process. I finally felt safe
+                    for the first time in years.
+                  </p>
+                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
+                </div>
+
               </div>
             </div>
 
