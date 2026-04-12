@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 /*
 Navbar component,
@@ -19,6 +20,12 @@ export default function Navbar() {
   const pathname = usePathname();
 
   /*
+  menuOpen tracks whether the mobile dropdown is visible,
+  toggled by the hamburger button, closed automatically when a link is clicked
+  */
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  /*
   navClass returns the correct className for a nav link span based on whether
   its href matches the current pathname,
   active link gets the solid white pill style,
@@ -31,80 +38,124 @@ export default function Navbar() {
 
   return (
     /*
-    Navigation bar,
-    bg-brand for background color,
-    h-22.5 for height,
-    flex and items-center for alignment,
-    justify-between to space out logo and nav links,
-    px-8 for padding,
+    Navigation bar wrapper,
+    relative so the mobile dropdown can be positioned absolutely below it,
     fixed at the top so it stays visible while scrolling,
-    left-0 right-0 stretches it across the full width,
     z-50 ensures it sits above all page content
     */
-    <nav
-      className="bg-brand h-22.5 flex items-center justify-between px-8 fixed top-0 left-0 right-0 z-50"
-      aria-label="Main navigation"
-    >
-      {/*
-      Logo and HSHAC text on the left side of the navbar,
-      flex items-center gap-4 to align them side by side with spacing
-      */}
-      <div className="flex items-center gap-4">
-        {/*
-        width and height match the SVG's actual intrinsic dimensions so Next.js
-        can calculate the correct aspect ratio,
-        h-20 sets the display height via CSS,
-        w-auto lets the width scale proportionally from that height,
-        next.js gave a warning so width and height were set to real values and then
-        overridden with CSS to maintain the aspect ratio without distortion
-        */}
-        <Image
-          src="/HSHAC Black and White.svg"
-          alt="Harbor Safe House and Advocacy Center Logo"
-          width={573}
-          height={514}
-          className="h-20 w-auto"
-        />
-        {/*
-        HSHAC abbreviation and full name stacked,
-        text-white/60 lightens the full phrase so HSHAC reads as the primary label
-        */}
-        <div className="flex flex-col leading-tight">
-          <span className="text-white text-xl font-bold">HSHAC</span>
-          <span className="text-white/90 text-sm">Harbor Safe House and Advocacy Center</span>
+    <div className="fixed top-0 left-0 right-0 z-50">
+      <nav
+        className="bg-brand h-22.5 flex items-center justify-between px-12"
+        aria-label="Main navigation"
+      >
+        {/* Logo and HSHAC text on the left side of the navbar */}
+        <div className="flex items-center gap-4">
+          {/*
+          width and height match the SVG's actual intrinsic dimensions so Next.js
+          can calculate the correct aspect ratio,
+          h-20 sets the display height via CSS,
+          w-auto lets the width scale proportionally from that height
+          */}
+          <Image
+            src="/HSHAC Black and White.svg"
+            alt="Harbor Safe House and Advocacy Center Logo"
+            width={573}
+            height={514}
+            className="h-20 w-auto"
+          />
+          {/* HSHAC abbreviation and full name stacked */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-white text-xl font-bold">HSHAC</span>
+            <span className="text-white/90 text-sm">Harbor Safe House and Advocacy Center</span>
+          </div>
         </div>
-      </div>
+
+        {/*
+        Desktop nav links — hidden on small screens, visible from md breakpoint up,
+        gap-10 for spacing between links, mr-8 for a small right margin
+        */}
+        <div className="hidden md:flex items-center gap-10 mr-8">
+          <Link replace href="/" className="text-white font-bold">
+            <span className={navClass("/")}>Home</span>
+          </Link>
+          <Link replace href="/about" className="text-white font-bold">
+            <span className={navClass("/about")}>About</span>
+          </Link>
+          <Link replace href="/get-support" className="text-white font-bold">
+            <span className={navClass("/get-support")}>Get Support</span>
+          </Link>
+          <Link replace href="/give-support" className="text-white font-bold">
+            <span className={navClass("/give-support")}>Give Support</span>
+          </Link>
+          <Link replace href="/resources" className="text-white font-bold">
+            <span className={navClass("/resources")}>Resources</span>
+          </Link>
+          {/* Divider between navigation links and language switcher */}
+          <div className="h-8 w-px bg-white"></div>
+          {/* Language switcher */}
+          <a href="#espanol" className="text-white text-sm hover:underline transition-all">
+            En Español
+          </a>
+        </div>
+
+        {/*
+        Hamburger button — visible only on small screens (md:hidden),
+        toggles menuOpen state to show/hide the mobile dropdown,
+        aria-expanded communicates the open/closed state to screen readers
+        */}
+        <button
+          className="md:hidden text-white p-2"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label="Toggle navigation menu"
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? (
+            /* X icon when menu is open, feathericons.com */
+            <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-white stroke-2 fill-none">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            /* Hamburger icon when menu is closed, feathericons.com */
+            <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-white stroke-2 fill-none">
+              <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          )}
+        </button>
+      </nav>
 
       {/*
-      Navigation links on the right side of the navbar,
-      flex and items-center for alignment,
-      gap-10 for spacing between links,
-      mr-8 for a small right margin from the edge
-      added replace which calls history.replaceState(), which pops recent history entries.
+      Mobile dropdown menu,
+      only renders when menuOpen is true,
+      bg-brand matches the navbar background,
+      flex flex-col for a vertical list of links,
+      px-6 py-4 for internal padding,
+      border-t border-purple-700 for a subtle separator from the navbar above
       */}
-      <div className="flex items-center gap-10 mr-8">
-        <Link replace href="/" className="text-white font-bold group relative">
-          <span className={navClass("/")}>Home</span>
-        </Link>
-        <Link replace href="/about" className="text-white font-bold group relative">
-          <span className={navClass("/about")}>About</span>
-        </Link>
-        <Link replace href="/get-support" className="text-white font-bold group relative">
-          <span className={navClass("/get-support")}>Get Support</span>
-        </Link>
-        <Link replace href="/give-support" className="text-white font-bold group relative">
-          <span className={navClass("/give-support")}>Give Support</span>
-        </Link>
-        <Link replace href="/resources" className="text-white font-bold group relative">
-          <span className={navClass("/resources")}>Resources</span>
-        </Link>
-        {/* Divider between navigation links and language switcher */}
-        <div className="h-8 w-px bg-white"></div>
-        {/* Language switcher */}
-        <a href="#espanol" className="text-white text-sm hover:underline transition-all">
-          En Español
-        </a>
-      </div>
-    </nav>
+      {menuOpen && (
+        <div className="md:hidden bg-brand border-t border-purple-700 flex flex-col px-6 py-4 gap-2">
+          <Link replace href="/" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
+            <span className={navClass("/")}>Home</span>
+          </Link>
+          <Link replace href="/about" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
+            <span className={navClass("/about")}>About</span>
+          </Link>
+          <Link replace href="/get-support" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
+            <span className={navClass("/get-support")}>Get Support</span>
+          </Link>
+          <Link replace href="/give-support" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
+            <span className={navClass("/give-support")}>Give Support</span>
+          </Link>
+          <Link replace href="/resources" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
+            <span className={navClass("/resources")}>Resources</span>
+          </Link>
+          {/* Divider */}
+          <div className="h-px bg-purple-700 my-1"></div>
+          {/* Language switcher */}
+          <a href="#espanol" className="text-white text-sm hover:underline transition-all">
+            En Español
+          </a>
+        </div>
+      )}
+    </div>
   );
 }
