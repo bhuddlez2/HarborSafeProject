@@ -456,66 +456,58 @@ export default function Home() {
             </div>
 
             {/*
-            Bottom row: Our Mission on the left, Our Values on the right,
-            mt-16 for spacing above to separate from the row above,
+            Mission and values row,
+            mt-16 for spacing above,
+            bg-gray-50 and border-y for a subtle section break,
             grid md:grid-cols-2 for two columns on medium screens and up,
-            gap-12 for spacing between columns
+            gap-16 for generous spacing between columns,
+            py-16 px-8 for breathing room inside the section
             */}
-            <div className="mt-16 grid md:grid-cols-2 gap-12">
+            <div className="mt-16 bg-gray-50 border-y border-gray-200 rounded-lg py-16 px-8 grid md:grid-cols-2 gap-16 items-center">
 
-              {/* Our Mission column, text-center to align image and caption */}
-              <div className="text-center">
-                {/*
-                mb-6 for spacing between image and caption,
-                */}
-                <div className="mb-6">
-                  <Image
-                    src="/OurMission.svg"
-                    alt="Our Mission"
-                    width={0}
-                    height={0}
-                    sizes="100vw"
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
-                </div>
-                {/* Mission caption */}
-                <p className="text-gray-700 leading-relaxed">
-                  Strengthening communities by providing a safe, caring place and high-quality advocacy for abuse victims.
+              {/* Left column: kicker, heading, body, FRA footnote */}
+              <div>
+                {/* Kicker label */}
+                <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">Our mission</p>
+                {/* Mission heading */}
+                <h2 className="text-3xl font-semibold text-brand mb-6">Strengthening communities through safe, caring advocacy</h2>
+                {/* Mission body */}
+                <p className="text-gray-700 leading-relaxed mb-8">
+                  We provide a secure environment and comprehensive holistic services for individuals
+                  and their children who are survivors of domestic violence and/or sexual assault —
+                  giving them the tools and support they need to rebuild their lives.
                 </p>
+                {/*
+                FRA footnote,
+                border-t separates it visually from the body text,
+                pt-5 for spacing between the border and the text
+                */}
+                <div className="border-t border-gray-200 pt-5 text-sm text-gray-600">
+                  A program of <strong className="text-brand">Family Resource Agency, Inc.</strong> — Impacting Lives and Changing Communities Since 1972
+                </div>
               </div>
 
-              {/* Our Values column, text-center to align image and caption */}
-              <div className="text-center">
-                {/*
-                mb-6 for spacing between image and caption,
-                */}
-                <div className="mb-6">
-                  <Image
-                    src="/OurValues.svg"
-                    alt="Our Values"
-                    width={0}
-                    height={0}
-                    sizes="100vw"
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
-                </div>
-                {/* Values caption */}
-                <p className="text-gray-700 leading-relaxed mb-6">
-                  Our internal compass steers us toward where we feel aligned with our true direction.
-                  At Harbor Safe House &amp; Advocacy Center our core values guide our work.
-                </p>
-                {/*
-                NESW core values list,
-                flex-wrap and justify-center so items wrap on smaller screens,
-                gap-4 for spacing between items,
-                text-left so the letter labels align with their value text
-                */}
-                <div className="flex flex-wrap justify-center gap-4 text-left">
-                  <div><span className="text-brand font-bold">N-</span> Nurture</div>
-                  <div><span className="text-brand font-bold">E-</span> Empower</div>
-                  <div><span className="text-brand font-bold">S-</span> Strengthen</div>
-                  <div><span className="text-brand font-bold">W-</span> Wholeness</div>
-                </div>
+              {/*
+              Right column: 2x2 grid of NESW value cards,
+              gap-4 for spacing between cards,
+              each card has a large letter, value name, and short description
+              */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { letter: "N", word: "Nurture",    desc: "Caring for the whole person" },
+                  { letter: "E", word: "Empower",    desc: "Building strength & agency" },
+                  { letter: "S", word: "Strengthen", desc: "Supporting survivors & community" },
+                  { letter: "W", word: "Wholeness",  desc: "Healing through holistic care" },
+                ].map(({ letter, word, desc }) => (
+                  <div key={letter} className="bg-white border border-gray-200 rounded-lg p-5">
+                    {/* Large decorative letter */}
+                    <p className="text-4xl font-bold text-brand leading-none mb-2">{letter}</p>
+                    {/* Value name */}
+                    <p className="text-sm font-semibold text-brand mb-1">{word}</p>
+                    {/* Short description, gray-600 for contrast compliance */}
+                    <p className="text-xs text-gray-600">{desc}</p>
+                  </div>
+                ))}
               </div>
 
             </div>
