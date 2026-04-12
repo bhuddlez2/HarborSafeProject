@@ -252,6 +252,27 @@ export default function Home() {
         </section>
 
         {/*
+        Hotline strip,
+        sits directly below the hero,
+        bg-purple-50 for a light tinted background,
+        border-b border-purple-100 for a subtle separator below,
+        flex items-center justify-center gap-8 to lay out the three elements centered with spacing,
+        flex-wrap so it stacks gracefully on small screens
+        */}
+        <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
+          {/* Label */}
+          <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
+          {/* Call and text numbers with a divider between them */}
+          <div className="flex items-center gap-5">
+            <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
+            <span className="text-purple-300">|</span>
+            <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
+          </div>
+          {/* Supporting note */}
+          <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
+        </div>
+
+        {/*
         Upcoming Events section,
         py-16 px-4 for vertical and horizontal padding,
         bg-gray-50 for a light off-white background to visually separate it from the hero
