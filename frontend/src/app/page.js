@@ -252,6 +252,27 @@ export default function Home() {
         </section>
 
         {/*
+        Hotline strip,
+        sits directly below the hero,
+        bg-purple-50 for a light tinted background,
+        border-b border-purple-100 for a subtle separator below,
+        flex items-center justify-center gap-8 to lay out the three elements centered with spacing,
+        flex-wrap so it stacks gracefully on small screens
+        */}
+        <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
+          {/* Label */}
+          <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
+          {/* Call and text numbers with a divider between them */}
+          <div className="flex items-center gap-5">
+            <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
+            <span className="text-purple-300">|</span>
+            <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
+          </div>
+          {/* Supporting note */}
+          <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
+        </div>
+
+        {/*
         Upcoming Events section,
         py-16 px-4 for vertical and horizontal padding,
         bg-gray-50 for a light off-white background to visually separate it from the hero
@@ -407,115 +428,153 @@ export default function Home() {
               */}
               <div className="space-y-6">
 
-                {/*
-                Section heading,
-                text-brand purple,
-                text-4xl for prominence,
-                text-center to match the Figma design,
-                mb-6 for spacing below before the body copy
-                */}
-                <h1 className="mb-6 text-brand text-center text-4xl font-semibold">We Are Here to Help You.</h1>
+                {/* Section heading above the testimonials */}
+                <h1 className="text-center text-brand text-4xl font-semibold">We Are Here to Help You.</h1>
 
-                {/* Body copy, leading-relaxed for comfortable line height */}
-                <p className="leading-relaxed text-gray-900 text-center mb-4">
-                  <strong className="text-brand">The Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc.</strong>,
-                  provides a secure environment and a comprehensive range of holistic services for
-                  individuals and their children who are survivors of domestic violence and/or sexual
-                  assault. These services empower survivors by giving them the tools and support they
-                  need to rebuild their lives.
-                </p>
-
-                {/*
-                Hotline sub-section,
-                mt-16 pushes it further down to visually separate it from the body copy above
-                */}
-                <div className="mt-16">
-
-                  {/* Hotline heading, brand color and size as the section heading above */}
-                  <h2 className="text-center mb-4 text-brand text-4xl font-semibold">24/7 Confidential Hotline</h2>
-
-                  {/* Supporting italic description */}
-                  <p className="text-gray-900 italic text-center mb-4">
-                    Our advocates are available to talk with anyone who is experiencing domestic
-                    violence or sexual assault at any time, day or night.
+                {/* First testimonial header and block */}
+                <h2 className="text-brand text-xl font-semibold mt-8">A Survivor&apos;s Story</h2>
+                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
+                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
+                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
+                    They were there for me when I had nowhere else to turn. I came in with nothing and
+                    left with the strength to rebuild my life. I will never forget what they did for
+                    me and my children.
                   </p>
-
-                  {/*
-                  Phone and text links,
-                  hover:text-brand highlights them in brand color on hover,
-                  transition-colors for a smooth color change
-                  */}
-                  <p className="text-center text-gray-900">
-                    <a href="tel:423-476-3886" className="hover:text-brand transition-colors">Call (423) 476-3886</a>
-                    {" | "}
-                    <a href="sms:423-715-9614" className="hover:text-brand transition-colors">Text (423) 715-9614</a>
-                  </p>
-
+                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
                 </div>
+
+                {/* Second testimonial header and block */}
+                <h2 className="text-brand text-xl font-semibold mt-8">Finding Safety &amp; Support</h2>
+                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
+                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
+                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
+                    The advocates here never made me feel judged. They listened, they helped me find
+                    housing, and they stood by me through the entire legal process. I finally felt safe
+                    for the first time in years.
+                  </p>
+                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
+                </div>
+
               </div>
             </div>
 
             {/*
-            Bottom row: Our Mission on the left, Our Values on the right,
-            mt-16 for spacing above to separate from the row above,
-            grid md:grid-cols-2 for two columns on medium screens and up,
-            gap-12 for spacing between columns
+            How we help section,
+            mt-16 for spacing above,
+            three service cards in a responsive grid
             */}
-            <div className="mt-16 grid md:grid-cols-2 gap-12">
+            <div className="mt-16">
 
-              {/* Our Mission column, text-center to align image and caption */}
-              <div className="text-center">
-                {/*
-                mb-6 for spacing between image and caption,
-                */}
-                <div className="mb-6">
-                  <Image
-                    src="/OurMission.svg"
-                    alt="Our Mission"
-                    width={0}
-                    height={0}
-                    sizes="100vw"
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
+              {/* Section kicker and heading */}
+              <span className="inline-block text-xs font-semibold tracking-widest uppercase bg-purple-100 text-brand px-3 py-1 rounded-full mb-4">How we help</span>
+              <h2 className="text-3xl font-semibold text-brand mb-3">Comprehensive support for survivors</h2>
+              <p className="text-gray-600 leading-relaxed mb-10 max-w-xl">
+                We provide a secure environment and the tools survivors need to rebuild their lives — for individuals and their children.
+              </p>
+
+              {/*
+              Service cards grid,
+              grid-cols-1 on mobile, md:grid-cols-3 on medium screens and up,
+              gap-5 for spacing between cards
+              */}
+              <div className="grid md:grid-cols-3 gap-5">
+
+                {/* Emergency Shelter card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  {/* Icon box */}
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* home icon, feathericons.com */}
+                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9,22 9,12 15,12 15,22" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
+                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
-                {/* Mission caption */}
-                <p className="text-gray-700 leading-relaxed">
-                  Strengthening communities by providing a safe, caring place and high-quality advocacy for abuse victims.
+
+                {/* Counseling & Advocacy card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* message-square icon, feathericons.com */}
+                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
+                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                </div>
+
+                {/* 24/7 Crisis Line card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* clock icon, feathericons.com */}
+                      <circle cx="12" cy="12" r="10" /><polyline points="12,6 12,12 16,14" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">24/7 Crisis Line</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Trained advocates available any time — call or text, day or night, always free.</p>
+                  <a href="tel:423-476-3886" className="text-xs font-semibold text-brand hover:underline transition-all">Call now →</a>
+                </div>
+
+              </div>
+            </div>
+
+            {/*
+            Mission and values row,
+            mt-16 for spacing above,
+            bg-gray-50 and border-y for a subtle section break,
+            grid md:grid-cols-2 for two columns on medium screens and up,
+            gap-16 for generous spacing between columns,
+            py-16 px-8 for breathing room inside the section
+            */}
+            <div className="mt-16 bg-gray-50 border-y border-gray-200 rounded-lg py-16 px-8 grid md:grid-cols-2 gap-16 items-center">
+
+              {/* Left column: kicker, heading, body, FRA footnote */}
+              <div>
+                {/* Kicker label */}
+                <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">Our mission</p>
+                {/* Mission heading */}
+                <h2 className="text-3xl font-semibold text-brand mb-6">Strengthening communities through safe, caring advocacy</h2>
+                {/* Mission body */}
+                <p className="text-gray-700 leading-relaxed mb-8">
+                  We provide a secure environment and comprehensive holistic services for individuals
+                  and their children who are survivors of domestic violence and/or sexual assault —
+                  giving them the tools and support they need to rebuild their lives.
                 </p>
+                {/*
+                FRA footnote,
+                border-t separates it visually from the body text,
+                pt-5 for spacing between the border and the text
+                */}
+                <div className="border-t border-gray-200 pt-5 text-sm text-gray-600">
+                  A program of <strong className="text-brand">Family Resource Agency, Inc.</strong> — Impacting Lives and Changing Communities Since 1972
+                </div>
               </div>
 
-              {/* Our Values column, text-center to align image and caption */}
-              <div className="text-center">
-                {/*
-                mb-6 for spacing between image and caption,
-                */}
-                <div className="mb-6">
-                  <Image
-                    src="/OurValues.svg"
-                    alt="Our Values"
-                    width={0}
-                    height={0}
-                    sizes="100vw"
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
-                </div>
-                {/* Values caption */}
-                <p className="text-gray-700 leading-relaxed mb-6">
-                  Our internal compass steers us toward where we feel aligned with our true direction.
-                  At Harbor Safe House &amp; Advocacy Center our core values guide our work.
-                </p>
-                {/*
-                NESW core values list,
-                flex-wrap and justify-center so items wrap on smaller screens,
-                gap-4 for spacing between items,
-                text-left so the letter labels align with their value text
-                */}
-                <div className="flex flex-wrap justify-center gap-4 text-left">
-                  <div><span className="text-brand font-bold">N-</span> Nurture</div>
-                  <div><span className="text-brand font-bold">E-</span> Empower</div>
-                  <div><span className="text-brand font-bold">S-</span> Strengthen</div>
-                  <div><span className="text-brand font-bold">W-</span> Wholeness</div>
-                </div>
+              {/*
+              Right column: 2x2 grid of NESW value cards,
+              gap-4 for spacing between cards,
+              each card has a large letter, value name, and short description
+              */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { letter: "N", word: "Nurture",    desc: "Caring for the whole person" },
+                  { letter: "E", word: "Empower",    desc: "Building strength & agency" },
+                  { letter: "S", word: "Strengthen", desc: "Supporting survivors & community" },
+                  { letter: "W", word: "Wholeness",  desc: "Healing through holistic care" },
+                ].map(({ letter, word, desc }) => (
+                  <div key={letter} className="bg-white border border-gray-200 rounded-lg p-5">
+                    {/* Large decorative letter */}
+                    <p className="text-4xl font-bold text-brand leading-none mb-2">{letter}</p>
+                    {/* Value name */}
+                    <p className="text-sm font-semibold text-brand mb-1">{word}</p>
+                    {/* Short description, gray-600 for contrast compliance */}
+                    <p className="text-xs text-gray-600">{desc}</p>
+                  </div>
+                ))}
               </div>
 
             </div>
