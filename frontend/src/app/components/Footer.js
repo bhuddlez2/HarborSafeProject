@@ -84,7 +84,7 @@ export default function Footer() {
       {/*
       Combined logo below the divider,
       centered with mx-auto,
-      h-16 sets the display height, w-auto scales proportionally
+      h-40 sets the display height, w-auto scales proportionally
       */}
       <div className="max-w-7xl mx-auto mt-6">
         <Image
@@ -92,7 +92,7 @@ export default function Footer() {
           alt="Harbor Safe House and Advocacy Center — a program of Family Resource Agency, Inc."
           width={400}
           height={100}
-          className="h-32 w-auto"
+          className="h-40 w-auto rounded-2xl shadow-2xl"
         />
       </div>
 

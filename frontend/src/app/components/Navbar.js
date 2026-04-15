@@ -48,8 +48,8 @@ export default function Navbar() {
         className="bg-brand h-22.5 flex items-center justify-between px-12"
         aria-label="Main navigation"
       >
-        {/* Logo and HSHAC text on the left side of the navbar */}
-        <div className="flex items-center gap-4">
+        {/* Logo and HSHAC text on the left side of the navbar — clicking routes to home */}
+        <Link replace href="/" className="flex items-center gap-4">
           {/*
           width and height match the SVG's actual intrinsic dimensions so Next.js
           can calculate the correct aspect ratio,
@@ -68,7 +68,7 @@ export default function Navbar() {
             <span className="text-white text-xl font-bold">HSHAC</span>
             <span className="text-white/90 text-sm">Harbor Safe House and Advocacy Center</span>
           </div>
-        </div>
+        </Link>
 
         {/*
         Desktop nav links — hidden on small screens, visible from md breakpoint up,
