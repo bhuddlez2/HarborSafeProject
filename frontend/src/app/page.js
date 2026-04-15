@@ -4,23 +4,7 @@
 import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
 
-// Placeholder event data — replace with real content when available
-const events = [
-  { title: "Event 1", date: "April 5, 2026" },
-  { title: "Event 2", date: "April 12, 2026" },
-  { title: "Event 3", date: "April 20, 2026" },
-  { title: "Event 4", date: "April 27, 2026" },
-  { title: "Event 5", date: "May 3, 2026" },
-];
-
 export default function Home() {
-  /*
-  currentIndex tracks which event card is visible in the carousel,
-  starts at 0 (first event),
-  updated by the prev/next buttons and dot indicators
-  */
-  const [currentIndex, setCurrentIndex] = useState(0);
-
   /*
   showSafetyModal controls whether the security alert popup is visible,
   modal - a dialog that blocks all other interactions until dismissed,
@@ -50,16 +34,6 @@ export default function Home() {
   */
   const handleDismissSafetyModal = () => {
     setShowSafetyModal(false);
-  };
-
-  // Move to previous event, wraps around from first to last
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? events.length - 1 : prev - 1));
-  };
-
-  // Move to next event, wraps around from last to first
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev === events.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -271,121 +245,6 @@ export default function Home() {
           {/* Supporting note */}
           <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
         </div>
-
-        {/*
-        Upcoming Events section,
-        py-16 px-4 for vertical and horizontal padding,
-        bg-gray-50 for a light off-white background to visually separate it from the hero
-        */}
-        <div className="relative py-16 px-4 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            {/*
-            Section heading,
-            text-center and mb-12 to center it with spacing below
-            */}
-            <h2 className="text-center mb-12 text-2xl font-semibold">Upcoming Events</h2>
-
-            {/*
-            Carousel wrapper,
-            relative so the prev/next buttons can be positioned outside the card area,
-            max-w-2xl mx-auto to constrain and center the card
-            */}
-            <div className="relative max-w-2xl mx-auto" aria-label="Displayed event">
-
-              {/*
-              Previous button,
-              absolute positioned to the left of the card, vertically centered,
-              -translate-x-16 pulls it outside the card boundary,
-              bg-white rounded-full with shadow for the circular button look
-              */}
-              <button
-                onClick={handlePrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-gray-100 transition-all"
-                aria-label="Previous event"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gray-800">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </button>
-
-              {/*
-              Slide window,
-              overflow-hidden clips the off-screen cards so only one is visible at a time
-              */}
-              <div className="overflow-hidden">
-                {/*
-                Slide track,
-                flex lays all cards in a row,
-                translateX shifts the track left by (currentIndex * 100%) to show the active card,
-                transition-transform with duration-500 animates the slide
-                */}
-                <div
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-                >
-                  {events.map((event, index) => (
-                    /*
-                    Individual event card,
-                    min-w-full ensures each card takes up the full width of the window,
-                    group enables hover effects on child elements
-                    */
-                    <a key={index} href="#" className="min-w-full group">
-                      <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-                        {/*
-                        Image placeholder,
-                        bg-purple-200 as a stand-in until real event images are added,
-                        h-80 for a tall image area
-                        */}
-                        <div className="relative h-80 bg-purple-200 flex items-center justify-center"></div>
-                        <div className="p-8">
-                          <h3 className="mb-2 text-center">{event.title}</h3>
-                          <p className="text-gray-600 text-center">{event.date}</p>
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              {/*
-              Next button,
-              absolute positioned to the right of the card, vertically centered,
-              translate-x-16 pulls it outside the card boundary on the right side
-              */}
-              <button
-                onClick={handleNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-gray-100 transition-all"
-                aria-label="Next event"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gray-800">
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </button>
-            </div>
-
-            {/*
-            Dot indicators,
-            one dot per event, centered below the carousel,
-            active dot uses bg-brand and is wider (w-8) to distinguish it,
-            inactive dots use bg-gray-300 with a hover darkening effect
-            */}
-            <div className="flex justify-center gap-2 mt-8">
-              {events.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`h-3 rounded-full transition-all ${
-                    index === currentIndex
-                      ? "bg-brand w-8"
-                      : "w-3 bg-gray-300 hover:bg-gray-400"
-                  }`}
-                  aria-label={`Go to event ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/*
         About section,
         id="about" so the About nav link anchor scrolls here,
