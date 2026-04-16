@@ -93,7 +93,7 @@ export default function Navbar() {
           {/* Divider between navigation links and language switcher */}
           <div className="h-8 w-px bg-white"></div>
           {/* Language switcher */}
-          <a href="#espanol" className="text-white text-sm hover:underline transition-all">
+          <a className="text-white text-sm hover:underline transition-all">
             En Español
           </a>
         </div>
@@ -151,7 +151,7 @@ export default function Navbar() {
           {/* Divider */}
           <div className="h-px bg-purple-700 my-1"></div>
           {/* Language switcher */}
-          <a href="#espanol" className="text-white text-sm hover:underline transition-all">
+          <a className="text-white text-sm hover:underline transition-all">
             En Español
           </a>
         </div>
