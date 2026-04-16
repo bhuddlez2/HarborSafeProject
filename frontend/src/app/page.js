@@ -145,7 +145,7 @@ export default function Home() {
                   {/* alert-circle icon, feathericons.com */}
                   <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                <p className="text-sm font-semibold text-red-700">If you are in immediate danger, call 911.</p>
+                <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
               </div>
 
               {/* Action buttons */}
