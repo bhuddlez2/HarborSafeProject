@@ -184,13 +184,23 @@ export default function Home() {
         */}
         <section id="home" className="relative h-[70vh] flex items-center justify-center">
           {/*
-          Background layer,
-          absolute inset-0 stretches it to fill the entire section,
-          bg-linear-to-br from-purple-900 to-purple-600 creates a diagonal purple gradient,
-          the inner div adds a bg-black/30 dark overlay on top to improve text readability
+          Background image,
+          "White lighthouse on rocky seashore" — Unsplash license (free to use),
+          https://unsplash.com/photos/white-lighthouse-on-rocky-seashore-KPaSCpklCZw,
+          fill makes the image cover the full section (requires relative parent),
+          object-cover crops to fill without distortion,
+          priority preloads the image since it is above the fold,
+          the inner div adds a bg-black/40 dark overlay to improve text readability
           */}
-          <div className="absolute inset-0 bg-linear-to-br from-purple-900 to-purple-600">
-            <div className="absolute inset-0 bg-black/30"></div>
+          <div className="absolute inset-0">
+            <Image
+              src="/sunset_by_the_lighthouse.jpg"
+              alt="White lighthouse on rocky seashore at sunset"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-black/40"></div>
           </div>
 
           {/*
@@ -272,7 +282,7 @@ export default function Home() {
               */}
               <div>
                 <Image
-                  src="/WeAreHere.svg"
+                  src="/WeAreHere.png"
                   alt="Supportive hands"
                   width={0}
                   height={0}
