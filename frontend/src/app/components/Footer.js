@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 /*
 Footer component,
 extracted into its own file so layout.js can import it and render it on every page,
@@ -76,8 +78,23 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Divider line at the bottom of the footer, border-purple-700 for a subtle separator */}
+      {/* Divider line above the combined logo */}
       <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-purple-700"></div>
+
+      {/*
+      Combined logo below the divider,
+      centered with mx-auto,
+      h-40 sets the display height, w-auto scales proportionally
+      */}
+      <div className="max-w-7xl mx-auto mt-6">
+        <Image
+          src="/Combined Logo With Color.svg"
+          alt="Harbor Safe House and Advocacy Center — a program of Family Resource Agency, Inc."
+          width={400}
+          height={100}
+          className="h-40 w-auto rounded-2xl shadow-2xl"
+        />
+      </div>
 
     </footer>
   );

@@ -4,23 +4,7 @@
 import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
 
-// Placeholder event data — replace with real content when available
-const events = [
-  { title: "Event 1", date: "April 5, 2026" },
-  { title: "Event 2", date: "April 12, 2026" },
-  { title: "Event 3", date: "April 20, 2026" },
-  { title: "Event 4", date: "April 27, 2026" },
-  { title: "Event 5", date: "May 3, 2026" },
-];
-
 export default function Home() {
-  /*
-  currentIndex tracks which event card is visible in the carousel,
-  starts at 0 (first event),
-  updated by the prev/next buttons and dot indicators
-  */
-  const [currentIndex, setCurrentIndex] = useState(0);
-
   /*
   showSafetyModal controls whether the security alert popup is visible,
   modal - a dialog that blocks all other interactions until dismissed,
@@ -50,16 +34,6 @@ export default function Home() {
   */
   const handleDismissSafetyModal = () => {
     setShowSafetyModal(false);
-  };
-
-  // Move to previous event, wraps around from first to last
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? events.length - 1 : prev - 1));
-  };
-
-  // Move to next event, wraps around from last to first
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev === events.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -171,7 +145,7 @@ export default function Home() {
                   {/* alert-circle icon, feathericons.com */}
                   <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                <p className="text-sm font-semibold text-red-700">If you are in immediate danger, call 911.</p>
+                <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
               </div>
 
               {/* Action buttons */}
@@ -186,7 +160,7 @@ export default function Home() {
                   onClick={() => window.location.replace("https://www.google.com")}
                   className="hover:scale-105 w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-red-600 hover:bg-white hover:text-red-600 transition-all cursor-pointer"
                 >
-                  Exit quickly now
+                  Safe Exit
                 </button>
               </div>
             </div>
@@ -210,13 +184,23 @@ export default function Home() {
         */}
         <section id="home" className="relative h-[70vh] flex items-center justify-center">
           {/*
-          Background layer,
-          absolute inset-0 stretches it to fill the entire section,
-          bg-linear-to-br from-purple-900 to-purple-600 creates a diagonal purple gradient,
-          the inner div adds a bg-black/30 dark overlay on top to improve text readability
+          Background image,
+          "White lighthouse on rocky seashore" — Unsplash license (free to use),
+          https://unsplash.com/photos/white-lighthouse-on-rocky-seashore-KPaSCpklCZw,
+          fill makes the image cover the full section (requires relative parent),
+          object-cover crops to fill without distortion,
+          priority preloads the image since it is above the fold,
+          the inner div adds a bg-black/40 dark overlay to improve text readability
           */}
-          <div className="absolute inset-0 bg-linear-to-br from-purple-900 to-purple-600">
-            <div className="absolute inset-0 bg-black/30"></div>
+          <div className="absolute inset-0">
+            <Image
+              src="/sunset_by_the_lighthouse.jpg"
+              alt="White lighthouse on rocky seashore at sunset"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-black/40"></div>
           </div>
 
           {/*
@@ -252,119 +236,25 @@ export default function Home() {
         </section>
 
         {/*
-        Upcoming Events section,
-        py-16 px-4 for vertical and horizontal padding,
-        bg-gray-50 for a light off-white background to visually separate it from the hero
+        Hotline strip,
+        sits directly below the hero,
+        bg-purple-50 for a light tinted background,
+        border-b border-purple-100 for a subtle separator below,
+        flex items-center justify-center gap-8 to lay out the three elements centered with spacing,
+        flex-wrap so it stacks gracefully on small screens
         */}
-        <div className="relative py-16 px-4 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            {/*
-            Section heading,
-            text-center and mb-12 to center it with spacing below
-            */}
-            <h2 className="text-center mb-12 text-2xl font-semibold">Upcoming Events</h2>
-
-            {/*
-            Carousel wrapper,
-            relative so the prev/next buttons can be positioned outside the card area,
-            max-w-2xl mx-auto to constrain and center the card
-            */}
-            <div className="relative max-w-2xl mx-auto" aria-label="Displayed event">
-
-              {/*
-              Previous button,
-              absolute positioned to the left of the card, vertically centered,
-              -translate-x-16 pulls it outside the card boundary,
-              bg-white rounded-full with shadow for the circular button look
-              */}
-              <button
-                onClick={handlePrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-gray-100 transition-all"
-                aria-label="Previous event"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gray-800">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </button>
-
-              {/*
-              Slide window,
-              overflow-hidden clips the off-screen cards so only one is visible at a time
-              */}
-              <div className="overflow-hidden">
-                {/*
-                Slide track,
-                flex lays all cards in a row,
-                translateX shifts the track left by (currentIndex * 100%) to show the active card,
-                transition-transform with duration-500 animates the slide
-                */}
-                <div
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-                >
-                  {events.map((event, index) => (
-                    /*
-                    Individual event card,
-                    min-w-full ensures each card takes up the full width of the window,
-                    group enables hover effects on child elements
-                    */
-                    <a key={index} href="#" className="min-w-full group">
-                      <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-                        {/*
-                        Image placeholder,
-                        bg-purple-200 as a stand-in until real event images are added,
-                        h-80 for a tall image area
-                        */}
-                        <div className="relative h-80 bg-purple-200 flex items-center justify-center"></div>
-                        <div className="p-8">
-                          <h3 className="mb-2 text-center">{event.title}</h3>
-                          <p className="text-gray-600 text-center">{event.date}</p>
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              {/*
-              Next button,
-              absolute positioned to the right of the card, vertically centered,
-              translate-x-16 pulls it outside the card boundary on the right side
-              */}
-              <button
-                onClick={handleNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-gray-100 transition-all"
-                aria-label="Next event"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gray-800">
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </button>
-            </div>
-
-            {/*
-            Dot indicators,
-            one dot per event, centered below the carousel,
-            active dot uses bg-brand and is wider (w-8) to distinguish it,
-            inactive dots use bg-gray-300 with a hover darkening effect
-            */}
-            <div className="flex justify-center gap-2 mt-8">
-              {events.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`h-3 rounded-full transition-all ${
-                    index === currentIndex
-                      ? "bg-brand w-8"
-                      : "w-3 bg-gray-300 hover:bg-gray-400"
-                  }`}
-                  aria-label={`Go to event ${index + 1}`}
-                />
-              ))}
-            </div>
+        <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
+          {/* Label */}
+          <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
+          {/* Call and text numbers with a divider between them */}
+          <div className="flex items-center gap-5">
+            <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
+            <span className="text-purple-300">|</span>
+            <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
           </div>
+          {/* Supporting note */}
+          <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
         </div>
-
         {/*
         About section,
         id="about" so the About nav link anchor scrolls here,
@@ -392,7 +282,7 @@ export default function Home() {
               */}
               <div>
                 <Image
-                  src="/WeAreHere.svg"
+                  src="/WeAreHere.png"
                   alt="Supportive hands"
                   width={0}
                   height={0}
@@ -407,115 +297,153 @@ export default function Home() {
               */}
               <div className="space-y-6">
 
-                {/*
-                Section heading,
-                text-brand purple,
-                text-4xl for prominence,
-                text-center to match the Figma design,
-                mb-6 for spacing below before the body copy
-                */}
-                <h1 className="mb-6 text-brand text-center text-4xl font-semibold">We Are Here to Help You.</h1>
+                {/* Section heading above the testimonials */}
+                <h1 className="text-center text-brand text-4xl font-semibold">We Are Here to Help You.</h1>
 
-                {/* Body copy, leading-relaxed for comfortable line height */}
-                <p className="leading-relaxed text-gray-900 text-center mb-4">
-                  <strong className="text-brand">The Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc.</strong>,
-                  provides a secure environment and a comprehensive range of holistic services for
-                  individuals and their children who are survivors of domestic violence and/or sexual
-                  assault. These services empower survivors by giving them the tools and support they
-                  need to rebuild their lives.
-                </p>
-
-                {/*
-                Hotline sub-section,
-                mt-16 pushes it further down to visually separate it from the body copy above
-                */}
-                <div className="mt-16">
-
-                  {/* Hotline heading, brand color and size as the section heading above */}
-                  <h2 className="text-center mb-4 text-brand text-4xl font-semibold">24/7 Confidential Hotline</h2>
-
-                  {/* Supporting italic description */}
-                  <p className="text-gray-900 italic text-center mb-4">
-                    Our advocates are available to talk with anyone who is experiencing domestic
-                    violence or sexual assault at any time, day or night.
+                {/* First testimonial header and block */}
+                <h2 className="text-brand text-xl font-semibold mt-8">A Survivor&apos;s Story</h2>
+                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
+                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
+                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
+                    They were there for me when I had nowhere else to turn. I came in with nothing and
+                    left with the strength to rebuild my life. I will never forget what they did for
+                    me and my children.
                   </p>
-
-                  {/*
-                  Phone and text links,
-                  hover:text-brand highlights them in brand color on hover,
-                  transition-colors for a smooth color change
-                  */}
-                  <p className="text-center text-gray-900">
-                    <a href="tel:423-476-3886" className="hover:text-brand transition-colors">Call (423) 476-3886</a>
-                    {" | "}
-                    <a href="sms:423-715-9614" className="hover:text-brand transition-colors">Text (423) 715-9614</a>
-                  </p>
-
+                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
                 </div>
+
+                {/* Second testimonial header and block */}
+                <h2 className="text-brand text-xl font-semibold mt-8">Finding Safety &amp; Support</h2>
+                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
+                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
+                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
+                    The advocates here never made me feel judged. They listened, they helped me find
+                    housing, and they stood by me through the entire legal process. I finally felt safe
+                    for the first time in years.
+                  </p>
+                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
+                </div>
+
               </div>
             </div>
 
             {/*
-            Bottom row: Our Mission on the left, Our Values on the right,
-            mt-16 for spacing above to separate from the row above,
-            grid md:grid-cols-2 for two columns on medium screens and up,
-            gap-12 for spacing between columns
+            How we help section,
+            mt-16 for spacing above,
+            three service cards in a responsive grid
             */}
-            <div className="mt-16 grid md:grid-cols-2 gap-12">
+            <div className="mt-16">
 
-              {/* Our Mission column, text-center to align image and caption */}
-              <div className="text-center">
-                {/*
-                mb-6 for spacing between image and caption,
-                */}
-                <div className="mb-6">
-                  <Image
-                    src="/OurMission.svg"
-                    alt="Our Mission"
-                    width={0}
-                    height={0}
-                    sizes="100vw"
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
+              {/* Section kicker and heading */}
+              <span className="inline-block text-xs font-semibold tracking-widest uppercase bg-purple-100 text-brand px-3 py-1 rounded-full mb-4">How we help</span>
+              <h2 className="text-3xl font-semibold text-brand mb-3">Comprehensive support for survivors</h2>
+              <p className="text-gray-600 leading-relaxed mb-10 max-w-xl">
+                We provide a secure environment and the tools survivors need to rebuild their lives — for individuals and their children.
+              </p>
+
+              {/*
+              Service cards grid,
+              grid-cols-1 on mobile, md:grid-cols-3 on medium screens and up,
+              gap-5 for spacing between cards
+              */}
+              <div className="grid md:grid-cols-3 gap-5">
+
+                {/* Emergency Shelter card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  {/* Icon box */}
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* home icon, feathericons.com */}
+                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9,22 9,12 15,12 15,22" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
+                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
-                {/* Mission caption */}
-                <p className="text-gray-700 leading-relaxed">
-                  Strengthening communities by providing a safe, caring place and high-quality advocacy for abuse victims.
+
+                {/* Counseling & Advocacy card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* message-square icon, feathericons.com */}
+                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
+                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                </div>
+
+                {/* 24/7 Crisis Line card */}
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                      {/* clock icon, feathericons.com */}
+                      <circle cx="12" cy="12" r="10" /><polyline points="12,6 12,12 16,14" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-brand mb-2">24/7 Crisis Line</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Trained advocates available any time — call or text, day or night, always free.</p>
+                  <a href="tel:423-476-3886" className="text-xs font-semibold text-brand hover:underline transition-all">Call now →</a>
+                </div>
+
+              </div>
+            </div>
+
+            {/*
+            Mission and values row,
+            mt-16 for spacing above,
+            bg-gray-50 and border-y for a subtle section break,
+            grid md:grid-cols-2 for two columns on medium screens and up,
+            gap-16 for generous spacing between columns,
+            py-16 px-8 for breathing room inside the section
+            */}
+            <div className="mt-16 bg-gray-50 border-y border-gray-200 rounded-lg py-16 px-8 grid md:grid-cols-2 gap-16 items-center">
+
+              {/* Left column: kicker, heading, body, FRA footnote */}
+              <div>
+                {/* Kicker label */}
+                <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">Our mission</p>
+                {/* Mission heading */}
+                <h2 className="text-3xl font-semibold text-brand mb-6">Strengthening communities through safe, caring advocacy</h2>
+                {/* Mission body */}
+                <p className="text-gray-700 leading-relaxed mb-8">
+                  We provide a secure environment and comprehensive holistic services for individuals
+                  and their children who are survivors of domestic violence and/or sexual assault —
+                  giving them the tools and support they need to rebuild their lives.
                 </p>
+                {/*
+                FRA footnote,
+                border-t separates it visually from the body text,
+                pt-5 for spacing between the border and the text
+                */}
+                <div className="border-t border-gray-200 pt-5 text-sm text-gray-600">
+                  A program of <strong className="text-brand">Family Resource Agency, Inc.</strong> — Impacting Lives and Changing Communities Since 1972
+                </div>
               </div>
 
-              {/* Our Values column, text-center to align image and caption */}
-              <div className="text-center">
-                {/*
-                mb-6 for spacing between image and caption,
-                */}
-                <div className="mb-6">
-                  <Image
-                    src="/OurValues.svg"
-                    alt="Our Values"
-                    width={0}
-                    height={0}
-                    sizes="100vw"
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
-                </div>
-                {/* Values caption */}
-                <p className="text-gray-700 leading-relaxed mb-6">
-                  Our internal compass steers us toward where we feel aligned with our true direction.
-                  At Harbor Safe House &amp; Advocacy Center our core values guide our work.
-                </p>
-                {/*
-                NESW core values list,
-                flex-wrap and justify-center so items wrap on smaller screens,
-                gap-4 for spacing between items,
-                text-left so the letter labels align with their value text
-                */}
-                <div className="flex flex-wrap justify-center gap-4 text-left">
-                  <div><span className="text-brand font-bold">N-</span> Nurture</div>
-                  <div><span className="text-brand font-bold">E-</span> Empower</div>
-                  <div><span className="text-brand font-bold">S-</span> Strengthen</div>
-                  <div><span className="text-brand font-bold">W-</span> Wholeness</div>
-                </div>
+              {/*
+              Right column: 2x2 grid of NESW value cards,
+              gap-4 for spacing between cards,
+              each card has a large letter, value name, and short description
+              */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { letter: "N", word: "Nurture",    desc: "Caring for the whole person" },
+                  { letter: "E", word: "Empower",    desc: "Building strength & agency" },
+                  { letter: "S", word: "Strengthen", desc: "Supporting survivors & community" },
+                  { letter: "W", word: "Wholeness",  desc: "Healing through holistic care" },
+                ].map(({ letter, word, desc }) => (
+                  <div key={letter} className="bg-white border border-gray-200 rounded-lg p-5">
+                    {/* Large decorative letter */}
+                    <p className="text-4xl font-bold text-brand leading-none mb-2">{letter}</p>
+                    {/* Value name */}
+                    <p className="text-sm font-semibold text-brand mb-1">{word}</p>
+                    {/* Short description, gray-600 for contrast compliance */}
+                    <p className="text-xs text-gray-600">{desc}</p>
+                  </div>
+                ))}
               </div>
 
             </div>
