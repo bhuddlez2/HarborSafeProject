@@ -64,7 +64,7 @@ export default function Navbar() {
             className="h-20 w-auto"
           />
           {/* Text appears on desktop only */}
-          <div className="hidden md:flex flex-col leading-tight">
+          <div className="hidden lg:flex flex-col leading-tight">
             <span className="text-white text-xl font-bold">HSHAC</span>
             <span className="text-white/90 text-sm">Harbor Safe House &amp; Advocacy Center</span>
             <span className="text-white/90 text-xs">A Program of the Family Resource Agency</span>
@@ -72,7 +72,7 @@ export default function Navbar() {
         </Link>
 
         {/* HSHAC text centered on mobile only */}
-        <span className="md:hidden absolute left-1/2 -translate-x-1/2 text-white text-xl font-bold pointer-events-none">
+        <span className="lg:hidden absolute left-1/2 -translate-x-1/2 text-white text-xl font-bold pointer-events-none">
           HSHAC
         </span>
 
@@ -80,7 +80,7 @@ export default function Navbar() {
         Desktop nav links — hidden on small screens, visible from md breakpoint up,
         gap-10 for spacing between links, mr-8 for a small right margin
         */}
-        <div className="hidden md:flex items-center gap-10 mr-8">
+        <div className="hidden lg:flex items-center gap-10 mr-8">
           <Link replace href="/" className="text-white font-bold">
             <span className={navClass("/")}>Home</span>
           </Link>
@@ -105,12 +105,12 @@ export default function Navbar() {
         </div>
 
         {/*
-        Hamburger button — visible only on small screens (md:hidden),
+        Hamburger button — visible only on small screens (lg:hidden),
         toggles menuOpen state to show/hide the mobile dropdown,
         aria-expanded communicates the open/closed state to screen readers
         */}
         <button
-          className="md:hidden text-white p-2"
+          className="lg:hidden text-white p-2"
           onClick={() => setMenuOpen((prev) => !prev)}
           aria-label="Toggle navigation menu"
           aria-expanded={menuOpen}
@@ -138,7 +138,7 @@ export default function Navbar() {
       border-t border-purple-700 for a subtle separator from the navbar above
       */}
       {menuOpen && (
-        <div className="md:hidden bg-brand border-t border-purple-700 flex flex-col px-6 py-4 gap-2">
+        <div className="lg:hidden bg-brand border-t border-purple-700 flex flex-col px-6 py-4 gap-2">
           <Link replace href="/" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
             <span className={navClass("/")}>Home</span>
           </Link>
