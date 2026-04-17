@@ -45,10 +45,10 @@ export default function Navbar() {
     */
     <div className="fixed top-0 left-0 right-0 z-50">
       <nav
-        className="bg-brand h-22.5 flex items-center justify-between px-12"
+        className="bg-brand h-22.5 flex items-center justify-between px-4 md:px-12 relative"
         aria-label="Main navigation"
       >
-        {/* Logo and HSHAC text on the left side of the navbar — clicking routes to home */}
+        {/* Logo image on the left — clicking routes to home */}
         <Link replace href="/" className="flex items-center gap-4">
           {/*
           width and height match the SVG's actual intrinsic dimensions so Next.js
@@ -63,13 +63,18 @@ export default function Navbar() {
             height={514}
             className="h-20 w-auto"
           />
-          {/* HSHAC abbreviation and full name stacked */}
-          <div className="flex flex-col leading-tight">
+          {/* Text appears on desktop only */}
+          <div className="hidden md:flex flex-col leading-tight">
             <span className="text-white text-xl font-bold">HSHAC</span>
             <span className="text-white/90 text-sm">Harbor Safe House &amp; Advocacy Center</span>
             <span className="text-white/90 text-xs">A Program of the Family Resource Agency</span>
           </div>
         </Link>
+
+        {/* HSHAC text centered on mobile only */}
+        <span className="md:hidden absolute left-1/2 -translate-x-1/2 text-white text-xl font-bold pointer-events-none">
+          HSHAC
+        </span>
 
         {/*
         Desktop nav links — hidden on small screens, visible from md breakpoint up,
