@@ -66,7 +66,8 @@ export default function Navbar() {
           {/* HSHAC abbreviation and full name stacked */}
           <div className="flex flex-col leading-tight">
             <span className="text-white text-xl font-bold">HSHAC</span>
-            <span className="text-white/90 text-sm">Harbor Safe House and Advocacy Center</span>
+            <span className="text-white/90 text-sm">Harbor Safe House &amp; Advocacy Center</span>
+            <span className="text-white/90 text-xs">A Program of the Family Resource Agency</span>
           </div>
         </Link>
 
