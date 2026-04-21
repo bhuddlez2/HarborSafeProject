@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function About() {
   return (
     <main>
@@ -17,19 +19,30 @@ export default function About() {
           </div>
 
           {/* Vision and mission text */}
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-brand text-3xl md:text-4xl mb-6 leading-tight">
-              We envision a community where no one faces domestic abuse or sexual assault alone.
-            </h2>
-            <p className="text-gray-700 leading-relaxed text-lg">
-              Our mission is deeply rooted in our unwavering commitment to empowering and
-              supporting survivors of domestic violence. We believe that every individual
-              deserves to live a life free from fear, violence, and oppression. Serving
-              Bradley and Polk counties since 1987, HSHAC provides holistic trauma-informed
-              care to ensure that you and your family find peace.
-            </p>
-          </div>
-
+          <div className="grid md:grid-cols-2 gap-12 items-start">
+            <div>
+              <Image
+                src="/Envision.png"
+                alt="Supportive hands"
+                width={0}
+                height={0}
+                sizes="100vw"
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            </div>
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-brand text-3xl md:text-4xl mb-6 leading-tight">
+                We envision a community where no one faces domestic abuse or sexual assault alone.
+              </h2>
+              <p className="text-gray-700 leading-relaxed text-lg">
+                Our mission is deeply rooted in our unwavering commitment to empowering and
+                supporting survivors of domestic violence. We believe that every individual
+                deserves to live a life free from fear, violence, and oppression. Serving
+                Bradley and Polk counties since 1987, HSHAC provides holistic trauma-informed
+                care to ensure that you and your family find peace.
+              </p>
+            </div>
+          </div>  
         </div>
       </section>
 
