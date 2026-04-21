@@ -124,7 +124,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://tncoalition.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Tennessee Coalition to End Domestic & Sexual Violence website (opens in new tab)">
                   <Image 
-                  src="/Tennessee Coalition Logo.png" 
+                  src="/Tennessee Coalition Logo.svg" 
                   alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" 
                   width={0} 
                   height={0} 
