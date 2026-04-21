@@ -135,9 +135,8 @@ export default function About() {
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                  incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                  exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                  The Tennessee Coalition provides statewide advocacy, training, and resources 
+                  that strengthen the capacity of local programs like HSHAC to serve survivors with best-practice, trauma-informed approaches.
                 </p>
               </div>
             </div>
@@ -158,9 +157,10 @@ export default function About() {
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">Legal Aid of East Tennessee</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                  incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                  exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                  Legal Aid of East Tennessee provides free civil legal services to low-income individuals 
+                  and families, helping them navigate complex legal issues and access justice. 
+                  Their support is crucial in ensuring that survivors of domestic violence have 
+                  the legal resources they need to protect themselves and their children.
                 </p>
               </div>
             </div>
@@ -181,9 +181,10 @@ export default function About() {
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">The Caring Place</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                  incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                  exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                  The Caring Place provides comprehensive support services for survivors of domestic violence 
+                  and sexual assault, including counseling, advocacy, and emergency shelter. 
+                  Their dedicated team works tirelessly to ensure that survivors have 
+                  the resources and support they need to rebuild their lives.
                 </p>
               </div>
             </div>
