@@ -3,6 +3,7 @@
 
 import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   /*
@@ -359,7 +360,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
-                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
                 </div>
 
                 {/* Counseling & Advocacy card */}
@@ -372,7 +373,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
-                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
                 </div>
 
                 {/* 24/7 Crisis Line card */}
