@@ -103,7 +103,7 @@ export default function About() {
                 width={0} 
                 height={0} 
                 sizes="192px" 
-                className="h-20 w-auto" 
+                className="h-28 w-auto" 
                 />
               </div>
               <div>
@@ -125,7 +125,7 @@ export default function About() {
                 width={0} 
                 height={0} 
                 sizes="192px" 
-                className="h-20 w-auto" 
+                className="h-28 w-auto" 
                 />
               </div>
               <div>
@@ -145,7 +145,7 @@ export default function About() {
                 width={0} 
                 height={0} 
                 sizes="192px" 
-                className="h-20 w-auto" 
+                className="h-28 w-auto" 
                 />
               </div>
               <div>
@@ -165,7 +165,7 @@ export default function About() {
                 width={0} 
                 height={0} 
                 sizes="192px" 
-                className="h-20 w-auto" 
+                className="h-28 w-auto" 
                 />
               </div>
               <div>
