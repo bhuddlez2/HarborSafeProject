@@ -170,7 +170,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://thecaringplaceonline.org" target="_blank" rel="noopener noreferrer" aria-label="Visit The Caring Place website (opens in new tab)">
                   <Image 
-                  src="/TheCaringPlace.png" 
+                  src="/TheCaringPlace.svg" 
                   alt="The Caring Place Logo" 
                   width={0} 
                   height={0} 
