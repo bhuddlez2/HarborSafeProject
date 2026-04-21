@@ -97,13 +97,9 @@ export default function About() {
           <div className="space-y-12">
 
             <div className="flex flex-col md:flex-row gap-8 items-center">
-              <Image
-                src="/UnitedWay.jpg"
-                alt="United Way of the Ocoee Region"
-                width={200}
-                height={80}
-                className="h-20 w-auto shrink-0"
-              />
+              <div className="shrink-0 w-48 flex justify-center">
+                <Image src="/UnitedWay.jpg" alt="United Way of the Ocoee Region" width={200} height={80} className="h-20 w-auto" />
+              </div>
               <div>
                 <h3 className="text-2xl text-brand mb-3">United Way of the Ocoee Region</h3>
                 <p className="text-gray-700 leading-relaxed">
@@ -116,31 +112,46 @@ export default function About() {
               </div>
             </div>
 
-            <div>
-              <h3 className="text-2xl text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
-              <p className="text-gray-700 leading-relaxed">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              </p>
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="shrink-0 w-48 flex justify-center">
+                <Image src="/Tennessee Coalition Logo.png" alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" width={200} height={80} className="h-20 w-auto" />
+              </div>
+              <div>
+                <h3 className="text-2xl text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+                  incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                  exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h3 className="text-2xl text-brand mb-3">Legal Aid of East Tennessee</h3>
-              <p className="text-gray-700 leading-relaxed">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              </p>
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="shrink-0 w-48 flex justify-center">
+                <Image src="/LegalAid.png" alt="Legal Aid of East Tennessee Logo" width={200} height={80} className="h-20 w-auto" />
+              </div>
+              <div>
+                <h3 className="text-2xl text-brand mb-3">Legal Aid of East Tennessee</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+                  incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                  exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h3 className="text-2xl text-brand mb-3">The Caring Place</h3>
-              <p className="text-gray-700 leading-relaxed">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              </p>
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="shrink-0 w-48 flex justify-center">
+                <Image src="/TheCaringPlace.png" alt="The Caring Place Logo" width={200} height={80} className="h-20 w-auto" />
+              </div>
+              <div>
+                <h3 className="text-2xl text-brand mb-3">The Caring Place</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+                  incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                  exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                </p>
+              </div>
             </div>
 
           </div>
