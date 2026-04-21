@@ -95,9 +95,9 @@ export default function Home() {
                     {/*
                     kbd is styled to look like a physical keyboard key,
                     */}
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <p className="text-xs text-gray-600 leading-relaxed">
                       Use the red &ldquo;Safe Exit&rdquo; button or press{" "}
-                      <kbd className="bg-gray-100 border border-gray-300 rounded px-1 text-xs">Esc</kbd>{" "}
+                      <kbd className="bg-gray-100 border border-gray-500 rounded px-1 text-xs">Esc</kbd>{" "}
                       to leave this site immediately.
                     </p>
                   </div>
@@ -113,7 +113,7 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-brand mb-0.5">Clear your history after visiting</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <p className="text-xs text-gray-600 leading-relaxed">
                       Delete your browser history or use a private / incognito window before you start.
                     </p>
                   </div>
