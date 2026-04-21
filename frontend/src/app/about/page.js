@@ -5,7 +5,7 @@ export default function About() {
     <main>
 
       {/* ── HERO / MISSION ─────────────────────────────────────────── */}
-      <section className="mt-22.5 pt-20 pb-12 bg-white px-4">
+      <section className="pt-20 pb-12 bg-white px-4">
         <div className="max-w-7xl mx-auto">
 
           {/* Page heading and brand underline */}
