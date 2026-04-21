@@ -12,8 +12,10 @@ node_modules/
 .env.production.local
 
 # Next.js
-frontend/.next/
-frontend/out/
+website/frontend/.next/
+website/frontend/out/
+portal/frontend/.next/
+portal/frontend/out/
 
 # Build outputs
 build/
@@ -37,4 +39,3 @@ backend/prisma/migrations/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-backend/prisma/migrations/
