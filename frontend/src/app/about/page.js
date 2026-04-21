@@ -97,7 +97,15 @@ export default function About() {
             {/* United Way of the Ocoee Region */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/UnitedWay.jpg" alt="United Way of the Ocoee Region" width={0} height={0} sizes="192px" className="h-28 w-auto" />
+                <a href="https://www.unitedwayocoee.org" target="_blank" rel="noopener noreferrer" aria-label="Visit United Way of the Ocoee Region website (opens in new tab)">
+                  <Image 
+                  src="/UnitedWay.jpg" 
+                  alt="United Way of the Ocoee Region" 
+                  width={0} 
+                  height={0} 
+                  sizes="192px" 
+                  className="h-28 w-auto" />
+                </a>
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">United Way of the Ocoee Region</h3>
@@ -114,7 +122,15 @@ export default function About() {
             {/* Tennessee Coalition to End Domestic & Sexual Violence */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/Tennessee Coalition Logo.png" alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" width={0} height={0} sizes="192px" className="h-28 w-auto" />
+                <a href="https://tncoalition.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Tennessee Coalition to End Domestic & Sexual Violence website (opens in new tab)">
+                  <Image 
+                  src="/Tennessee Coalition Logo.png" 
+                  alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" 
+                  width={0} 
+                  height={0} 
+                  sizes="192px" 
+                  className="h-28 w-auto" />
+                </a>
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
@@ -129,7 +145,15 @@ export default function About() {
             {/* Legal Aid of East Tennessee */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/LegalAid.png" alt="Legal Aid of East Tennessee Logo" width={0} height={0} sizes="192px" className="h-28 w-auto" />
+                <a href="https://www.laet.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Legal Aid of East Tennessee website (opens in new tab)">
+                  <Image 
+                  src="/LegalAid.png" 
+                  alt="Legal Aid of East Tennessee Logo" 
+                  width={0} 
+                  height={0} 
+                  sizes="192px" 
+                  className="h-28 w-auto" />
+                </a>
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">Legal Aid of East Tennessee</h3>
@@ -144,7 +168,15 @@ export default function About() {
             {/* The Caring Place */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/TheCaringPlace.png" alt="The Caring Place Logo" width={0} height={0} sizes="192px" className="h-28 w-auto" />
+                <a href="https://thecaringplaceonline.org" target="_blank" rel="noopener noreferrer" aria-label="Visit The Caring Place website (opens in new tab)">
+                  <Image 
+                  src="/TheCaringPlace.png" 
+                  alt="The Caring Place Logo" 
+                  width={0} 
+                  height={0} 
+                  sizes="192px" 
+                  className="h-28 w-auto" />
+                </a>
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">The Caring Place</h3>
