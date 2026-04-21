@@ -98,7 +98,13 @@ export default function About() {
 
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/UnitedWay.jpg" alt="United Way of the Ocoee Region" width={200} height={80} className="h-20 w-auto" />
+                <Image src="/UnitedWay.jpg" 
+                alt="United Way of the Ocoee Region" 
+                width={0} 
+                height={0} 
+                sizes="192px" 
+                className="h-20 w-auto" 
+                />
               </div>
               <div>
                 <h3 className="text-2xl text-brand mb-3">United Way of the Ocoee Region</h3>
@@ -114,7 +120,13 @@ export default function About() {
 
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/Tennessee Coalition Logo.png" alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" width={200} height={80} className="h-20 w-auto" />
+                <Image src="/Tennessee Coalition Logo.png" 
+                alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" 
+                width={0} 
+                height={0} 
+                sizes="192px" 
+                className="h-20 w-auto" 
+                />
               </div>
               <div>
                 <h3 className="text-2xl text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
@@ -128,7 +140,13 @@ export default function About() {
 
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/LegalAid.png" alt="Legal Aid of East Tennessee Logo" width={200} height={80} className="h-20 w-auto" />
+                <Image src="/LegalAid.png" 
+                alt="Legal Aid of East Tennessee Logo" 
+                width={0} 
+                height={0} 
+                sizes="192px" 
+                className="h-20 w-auto" 
+                />
               </div>
               <div>
                 <h3 className="text-2xl text-brand mb-3">Legal Aid of East Tennessee</h3>
@@ -142,7 +160,13 @@ export default function About() {
 
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/TheCaringPlace.png" alt="The Caring Place Logo" width={200} height={80} className="h-20 w-auto" />
+                <Image src="/TheCaringPlace.png" 
+                alt="The Caring Place Logo" 
+                width={0} 
+                height={0} 
+                sizes="192px" 
+                className="h-20 w-auto" 
+                />
               </div>
               <div>
                 <h3 className="text-2xl text-brand mb-3">The Caring Place</h3>
