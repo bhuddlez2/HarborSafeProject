@@ -18,18 +18,19 @@ export default function About() {
             <div className="w-11/12 h-2 bg-brand mx-auto"></div>
           </div>
 
-          {/* Vision and mission text */}
-          <div className="grid md:grid-cols-2 gap-12 items-start">
+          {/* Image next to vision and mission text */}
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <Image
                 src="/Envision.png"
-                alt="Supportive hands"
+                alt="Four diverse women embracing in solidarity"
                 width={0}
                 height={0}
                 sizes="100vw"
                 className="w-full h-auto rounded-lg shadow-lg"
               />
             </div>
+            {/* Vision and mission text */}
             <div className="max-w-3xl mx-auto">
               <h2 className="text-brand text-3xl md:text-4xl mb-6 leading-tight">
                 We envision a community where no one faces domestic abuse or sexual assault alone.
@@ -54,6 +55,16 @@ export default function About() {
       bg-gray-50 for a subtle background shift
       */}
       <section className="py-20 px-4 bg-gray-50">
+        <div>
+          <Image
+            src="/Combined Logo With Color.svg"
+            alt="Harbor Safe House & Advocacy Center logo combined with Family Resource Agency logo"
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="h-32 md:h-64 w-auto mx-auto block rounded-lg shadow-lg mb-12"
+          />
+        </div>
         <div className="max-w-5xl mx-auto">
           <p className="text-gray-700 leading-relaxed text-center max-w-4xl mx-auto">
             HSHAC operates as a program under Family Resource Agency Inc. (FRA). FRA&apos;s
@@ -85,15 +96,24 @@ export default function About() {
 
           <div className="space-y-12">
 
-            <div>
-              <h3 className="text-2xl text-brand mb-3">United Way of the Ocoee Region</h3>
-              <p className="text-gray-700 leading-relaxed">
-                United Way supports HSHAC through funding, volunteer networks, and community
-                connections. United Way of the Ocoee Region mobilizes communities to address
-                local needs through partnership and deep investment in programs that create
-                lasting change. Through their commitment to collaborative problem-solving, they
-                help us provide critical resources and support to survivors of domestic violence.
-              </p>
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <Image
+                src="/UnitedWay.jpg"
+                alt="United Way of the Ocoee Region"
+                width={200}
+                height={80}
+                className="h-20 w-auto shrink-0"
+              />
+              <div>
+                <h3 className="text-2xl text-brand mb-3">United Way of the Ocoee Region</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  United Way supports HSHAC through funding, volunteer networks, and community
+                  connections. United Way of the Ocoee Region mobilizes communities to address
+                  local needs through partnership and deep investment in programs that create
+                  lasting change. Through their commitment to collaborative problem-solving, they
+                  help us provide critical resources and support to survivors of domestic violence.
+                </p>
+              </div>
             </div>
 
             <div>
