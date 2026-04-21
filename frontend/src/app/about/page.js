@@ -99,7 +99,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://www.unitedwayocoee.org" target="_blank" rel="noopener noreferrer" aria-label="Visit United Way of the Ocoee Region website (opens in new tab)">
                   <Image 
-                  src="/UnitedWay.jpg" 
+                  src="/UnitedWay.svg" 
                   alt="United Way of the Ocoee Region" 
                   width={0} 
                   height={0} 
@@ -124,7 +124,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://tncoalition.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Tennessee Coalition to End Domestic & Sexual Violence website (opens in new tab)">
                   <Image 
-                  src="/Tennessee Coalition Logo.png" 
+                  src="/Tennessee Coalition Logo.svg" 
                   alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" 
                   width={0} 
                   height={0} 
@@ -146,7 +146,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://www.laet.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Legal Aid of East Tennessee website (opens in new tab)">
                   <Image 
-                  src="/LegalAid.png" 
+                  src="/LegalAid.svg" 
                   alt="Legal Aid of East Tennessee Logo" 
                   width={0} 
                   height={0} 
@@ -170,7 +170,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://thecaringplaceonline.org" target="_blank" rel="noopener noreferrer" aria-label="Visit The Caring Place website (opens in new tab)">
                   <Image 
-                  src="/TheCaringPlace.png" 
+                  src="/TheCaringPlace.svg" 
                   alt="The Caring Place Logo" 
                   width={0} 
                   height={0} 
