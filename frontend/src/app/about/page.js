@@ -4,21 +4,17 @@ export default function About() {
   return (
     <main>
 
-      {/*
-      Hero / mission section,
-      mt-22.5 offsets the fixed navbar height,
-      two-column grid: vision + mission text on the right
-      */}
+      {/* ── HERO / MISSION ─────────────────────────────────────────── */}
       <section className="mt-22.5 pt-20 pb-12 bg-white px-4">
         <div className="max-w-7xl mx-auto">
 
-          {/* Page heading and purple underline */}
+          {/* Page heading and brand underline */}
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-6xl font-semibold text-brand mb-6">About HSHAC</h1>
             <div className="w-11/12 h-2 bg-brand mx-auto"></div>
           </div>
 
-          {/* Image next to vision and mission text */}
+          {/* Two-column: photo left, vision + mission text right */}
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <Image
@@ -30,11 +26,12 @@ export default function About() {
                 className="w-full h-auto rounded-lg shadow-lg"
               />
             </div>
-            {/* Vision and mission text */}
             <div className="max-w-3xl mx-auto">
+              {/* Vision statement */}
               <h2 className="text-brand text-3xl md:text-4xl font-semibold mb-6 leading-tight">
                 We envision a community where no one faces domestic abuse or sexual assault alone.
               </h2>
+              {/* Mission paragraph */}
               <p className="text-gray-700 leading-relaxed text-lg">
                 Our mission is deeply rooted in our unwavering commitment to empowering and
                 supporting survivors of domestic violence. We believe that every individual
@@ -43,18 +40,18 @@ export default function About() {
                 care to ensure that you and your family find peace.
               </p>
             </div>
-          </div>  
+          </div>
+
         </div>
       </section>
 
       {/* Section divider */}
       <div className="w-full h-1 bg-brand"></div>
 
-      {/*
-      FRA partnership section,
-      bg-gray-50 for a subtle background shift
-      */}
+      {/* ── FRA PARTNERSHIP ────────────────────────────────────────── */}
       <section className="py-20 px-4 bg-gray-50">
+
+        {/* Combined HSHAC + FRA logo */}
         <div>
           <Image
             src="/Combined Logo With Color.svg"
@@ -65,6 +62,8 @@ export default function About() {
             className="h-32 md:h-64 w-auto mx-auto block rounded-lg shadow-lg mb-12"
           />
         </div>
+
+        {/* FRA relationship description */}
         <div className="max-w-5xl mx-auto">
           <p className="text-gray-700 leading-relaxed text-center max-w-4xl mx-auto">
             HSHAC operates as a program under Family Resource Agency Inc. (FRA). FRA&apos;s
@@ -76,18 +75,17 @@ export default function About() {
             diverse services, addressing immediate and long-term community needs.
           </p>
         </div>
+
       </section>
 
       {/* Section divider */}
       <div className="w-full h-1 bg-brand"></div>
 
-      {/*
-      Partners section,
-      bg-white, each partner entry has a name and description
-      */}
+      {/* ── PARTNERS ───────────────────────────────────────────────── */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
 
+          {/* Section heading and intro */}
           <h2 className="text-4xl font-semibold text-brand text-center mb-4">Our Partners</h2>
           <p className="text-gray-700 text-center text-lg leading-relaxed max-w-4xl mx-auto mb-16">
             Harbor Safe House &amp; Advocacy Center proudly partners with local non-profits to
@@ -96,15 +94,10 @@ export default function About() {
 
           <div className="space-y-12">
 
+            {/* United Way of the Ocoee Region */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/UnitedWay.jpg" 
-                alt="United Way of the Ocoee Region" 
-                width={0} 
-                height={0} 
-                sizes="192px" 
-                className="h-28 w-auto" 
-                />
+                <Image src="/UnitedWay.jpg" alt="United Way of the Ocoee Region" width={0} height={0} sizes="192px" className="h-28 w-auto" />
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">United Way of the Ocoee Region</h3>
@@ -118,15 +111,10 @@ export default function About() {
               </div>
             </div>
 
+            {/* Tennessee Coalition to End Domestic & Sexual Violence */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/Tennessee Coalition Logo.png" 
-                alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" 
-                width={0} 
-                height={0} 
-                sizes="192px" 
-                className="h-28 w-auto" 
-                />
+                <Image src="/Tennessee Coalition Logo.png" alt="Tennessee Coalition to End Domestic & Sexual Violence Logo" width={0} height={0} sizes="192px" className="h-28 w-auto" />
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
@@ -138,15 +126,10 @@ export default function About() {
               </div>
             </div>
 
+            {/* Legal Aid of East Tennessee */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/LegalAid.png" 
-                alt="Legal Aid of East Tennessee Logo" 
-                width={0} 
-                height={0} 
-                sizes="192px" 
-                className="h-28 w-auto" 
-                />
+                <Image src="/LegalAid.png" alt="Legal Aid of East Tennessee Logo" width={0} height={0} sizes="192px" className="h-28 w-auto" />
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">Legal Aid of East Tennessee</h3>
@@ -158,15 +141,10 @@ export default function About() {
               </div>
             </div>
 
+            {/* The Caring Place */}
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="shrink-0 w-48 flex justify-center">
-                <Image src="/TheCaringPlace.png" 
-                alt="The Caring Place Logo" 
-                width={0} 
-                height={0} 
-                sizes="192px" 
-                className="h-28 w-auto" 
-                />
+                <Image src="/TheCaringPlace.png" alt="The Caring Place Logo" width={0} height={0} sizes="192px" className="h-28 w-auto" />
               </div>
               <div>
                 <h3 className="text-2xl font-semibold text-brand mb-3">The Caring Place</h3>
