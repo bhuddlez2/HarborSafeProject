@@ -146,7 +146,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://www.laet.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Legal Aid of East Tennessee website (opens in new tab)">
                   <Image 
-                  src="/LegalAid.png" 
+                  src="/LegalAid.svg" 
                   alt="Legal Aid of East Tennessee Logo" 
                   width={0} 
                   height={0} 
