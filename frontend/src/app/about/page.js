@@ -99,7 +99,7 @@ export default function About() {
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://www.unitedwayocoee.org" target="_blank" rel="noopener noreferrer" aria-label="Visit United Way of the Ocoee Region website (opens in new tab)">
                   <Image 
-                  src="/UnitedWay.jpg" 
+                  src="/UnitedWay.svg" 
                   alt="United Way of the Ocoee Region" 
                   width={0} 
                   height={0} 
