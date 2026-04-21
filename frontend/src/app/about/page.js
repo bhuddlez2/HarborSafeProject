@@ -14,7 +14,7 @@ export default function About() {
 
           {/* Page heading and purple underline */}
           <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-6xl mb-6">About HSHAC</h1>
+            <h1 className="text-5xl md:text-6xl font-semibold text-brand mb-6">About HSHAC</h1>
             <div className="w-11/12 h-2 bg-brand mx-auto"></div>
           </div>
 
@@ -32,7 +32,7 @@ export default function About() {
             </div>
             {/* Vision and mission text */}
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-brand text-3xl md:text-4xl mb-6 leading-tight">
+              <h2 className="text-brand text-3xl md:text-4xl font-semibold mb-6 leading-tight">
                 We envision a community where no one faces domestic abuse or sexual assault alone.
               </h2>
               <p className="text-gray-700 leading-relaxed text-lg">
@@ -88,7 +88,7 @@ export default function About() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
 
-          <h2 className="text-4xl text-center mb-4">Our Partners</h2>
+          <h2 className="text-4xl font-semibold text-brand text-center mb-4">Our Partners</h2>
           <p className="text-gray-700 text-center text-lg leading-relaxed max-w-4xl mx-auto mb-16">
             Harbor Safe House &amp; Advocacy Center proudly partners with local non-profits to
             provide holistic, evidence-based care for everyone seeking our support.
@@ -107,7 +107,7 @@ export default function About() {
                 />
               </div>
               <div>
-                <h3 className="text-2xl text-brand mb-3">United Way of the Ocoee Region</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3">United Way of the Ocoee Region</h3>
                 <p className="text-gray-700 leading-relaxed">
                   United Way supports HSHAC through funding, volunteer networks, and community
                   connections. United Way of the Ocoee Region mobilizes communities to address
@@ -129,7 +129,7 @@ export default function About() {
                 />
               </div>
               <div>
-                <h3 className="text-2xl text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
                   incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
@@ -149,7 +149,7 @@ export default function About() {
                 />
               </div>
               <div>
-                <h3 className="text-2xl text-brand mb-3">Legal Aid of East Tennessee</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3">Legal Aid of East Tennessee</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
                   incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
@@ -169,7 +169,7 @@ export default function About() {
                 />
               </div>
               <div>
-                <h3 className="text-2xl text-brand mb-3">The Caring Place</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3">The Caring Place</h3>
                 <p className="text-gray-700 leading-relaxed">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
                   incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
