@@ -3,6 +3,7 @@
 
 import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   /*
@@ -95,9 +96,9 @@ export default function Home() {
                     {/*
                     kbd is styled to look like a physical keyboard key,
                     */}
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <p className="text-xs text-gray-600 leading-relaxed">
                       Use the red &ldquo;Safe Exit&rdquo; button or press{" "}
-                      <kbd className="bg-gray-100 border border-gray-300 rounded px-1 text-xs">Esc</kbd>{" "}
+                      <kbd className="bg-gray-100 border border-gray-500 rounded px-1 text-xs">Esc</kbd>{" "}
                       to leave this site immediately.
                     </p>
                   </div>
@@ -113,7 +114,7 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-brand mb-0.5">Clear your history after visiting</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <p className="text-xs text-gray-600 leading-relaxed">
                       Delete your browser history or use a private / incognito window before you start.
                     </p>
                   </div>
@@ -359,7 +360,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
-                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
                 </div>
 
                 {/* Counseling & Advocacy card */}
@@ -372,7 +373,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
-                  <a href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
                 </div>
 
                 {/* 24/7 Crisis Line card */}

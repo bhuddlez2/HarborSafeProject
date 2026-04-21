@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         {/*
-        Navbar is a client component imported here so layout.js can stay a server component,
+        Navbar and ExitButton are client components imported here so layout.js can stay a server component,
         it renders on every page automatically since layout.js wraps all routes
         */}
         <Navbar />
@@ -48,6 +48,7 @@ export default function RootLayout({ children }) {
         <div className="pt-22.5 flex-1">
           {children}
         </div>
+        {/* Footer is a client component imported here and renders on every page automatically */}
         <Footer />
       </body>
     </html>

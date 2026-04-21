@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { skip } from 'node:test';
+import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Homepage', () => {
 
@@ -12,6 +12,7 @@ test.describe('Homepage', () => {
         await page.goto('/');
         await expect(page.getByText(/you are not alone/i)).toBeVisible();
     });
+
     test.skip('Get Help Now button is visible', async ({ page }) => {
         await page.goto('/');
         await expect(page.getByRole('button', { name: /get help now/i })).toBeVisible();
@@ -44,4 +45,33 @@ test.describe('Homepage', () => {
         await expect(page.getByRole('button', { name: /exit/i })).toBeVisible();
     });
 
-})
+    // --- ACCESSIBILITY TESTS (axe-core) ---
+
+    test('passes WCAG AA with safety modal open', async ({ page }) => {
+        await page.goto('/');
+        
+        // Wait for the modal/dialog to load in (essential for hydrated apps)
+        await page.waitForSelector('[role="dialog"]');
+
+        const results = await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+            .analyze();
+
+        expect(results.violations).toEqual([]);
+    });
+
+    test('passes WCAG AA after safety modal dismissed', async ({ page }) => {
+        await page.goto('/');
+        
+        // Find the "I understand" button in the modal and click it
+        await page.getByText('I understand').click();
+
+        // Run the scan again to ensure the underlying page is accessible
+        const results = await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+            .analyze();
+
+        expect(results.violations).toEqual([]);
+    });
+
+});
