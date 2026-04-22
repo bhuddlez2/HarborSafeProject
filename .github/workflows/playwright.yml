@@ -24,7 +24,7 @@ jobs:
 
     # 3. Install frontend dependencies (for your Next.js app)
     - name: Install frontend dependencies
-      run: npm ci --prefix frontend
+      run: npm ci --prefix website/frontend
 
     - name: Cache Playwright browsers
       uses: actions/cache@v4
