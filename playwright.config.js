@@ -16,9 +16,9 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npm run dev --prefix frontend',
+    command: 'npm run dev --prefix website/frontend',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120000,
-  },
+},
 });
