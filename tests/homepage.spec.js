@@ -8,12 +8,12 @@ test.describe('Homepage', () => {
         await expect(page).toHaveTitle(/Harbor Safe/i);
     });
 
-    test.skip('hero text is visible', async ({ page }) => {
+    test('hero text is visible', async ({ page }) => {
         await page.goto('/');
         await expect(page.getByText(/you are not alone/i)).toBeVisible();
     });
 
-    test.skip('Get Help Now button is visible', async ({ page }) => {
+    test('Get Help Now button is visible', async ({ page }) => {
         await page.goto('/');
         await expect(page.getByRole('button', { name: /get help now/i })).toBeVisible();
     });
@@ -39,7 +39,7 @@ test.describe('Homepage', () => {
         await expect(exitButton).toBeEnabled();
     });
 
-    test.skip('site loads on mobile', async ({ page }) => {
+    test('site loads on mobile', async ({ page }) => {
         await page.goto('/');
         await expect(page.getByText('You are not alone.')).toBeVisible();
         await expect(page.getByRole('button', { name: /exit/i })).toBeVisible();
