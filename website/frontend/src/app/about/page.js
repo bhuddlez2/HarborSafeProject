@@ -58,7 +58,7 @@ export default function About() {
       <div className="w-full h-1 bg-brand"></div>
 
       {/* ── FRA PARTNERSHIP ────────────────────────────────────────── */}
-      <section className="py-20 px-4 bg-purple-50">
+      <section className="py-20 px-4 bg-purple-100">
 
         {/* Combined HSHAC + FRA logo */}
         <div>
