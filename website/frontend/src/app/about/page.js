@@ -92,10 +92,10 @@ export default function About() {
             provide holistic, evidence-based care for everyone seeking our support.
           </p>
 
-          <div className="space-y-12">
+          <div className="divide-y divide-purple-200">
 
             {/* United Way of the Ocoee Region */}
-            <div className="flex flex-col md:flex-row gap-8 items-center">
+            <div className="flex flex-col md:flex-row gap-8 items-center py-12">
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://www.unitedwayocoee.org" target="_blank" rel="noopener noreferrer" aria-label="Visit United Way of the Ocoee Region website (opens in new tab)">
                   <Image 
@@ -120,7 +120,7 @@ export default function About() {
             </div>
 
             {/* Tennessee Coalition to End Domestic & Sexual Violence */}
-            <div className="flex flex-col md:flex-row gap-8 items-center">
+            <div className="flex flex-col md:flex-row gap-8 items-center py-12">
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://tncoalition.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Tennessee Coalition to End Domestic & Sexual Violence website (opens in new tab)">
                   <Image 
@@ -142,7 +142,7 @@ export default function About() {
             </div>
 
             {/* Legal Aid of East Tennessee */}
-            <div className="flex flex-col md:flex-row gap-8 items-center">
+            <div className="flex flex-col md:flex-row gap-8 items-center py-12">
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://www.laet.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Legal Aid of East Tennessee website (opens in new tab)">
                   <Image 
@@ -166,7 +166,7 @@ export default function About() {
             </div>
 
             {/* The Caring Place */}
-            <div className="flex flex-col md:flex-row gap-8 items-center">
+            <div className="flex flex-col md:flex-row gap-8 items-center py-12">
               <div className="shrink-0 w-48 flex justify-center">
                 <a href="https://thecaringplaceonline.org" target="_blank" rel="noopener noreferrer" aria-label="Visit The Caring Place website (opens in new tab)">
                   <Image 
