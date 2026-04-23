@@ -10,7 +10,7 @@ export default function About() {
 
           {/* Page heading and brand underline */}
           <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-6xl font-semibold text-brand mb-6">About HSHAC</h1>
+            <h1 className="text-5xl md:text-6xl font-semibold text-brand mb-6">Who We Are</h1>
             <div className="w-11/12 h-2 bg-brand mx-auto"></div>
           </div>
 
@@ -49,7 +49,7 @@ export default function About() {
       <div className="w-full h-1 bg-brand"></div>
 
       {/* ── FRA PARTNERSHIP ────────────────────────────────────────── */}
-      <section className="py-20 px-4 bg-gray-50">
+      <section className="py-20 px-4 bg-purple-50">
 
         {/* Combined HSHAC + FRA logo */}
         <div>
