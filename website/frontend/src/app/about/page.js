@@ -4,15 +4,24 @@ export default function About() {
   return (
     <main>
 
-      {/* ── HERO / MISSION ─────────────────────────────────────────── */}
-      <section className="pt-20 pb-12 bg-white px-4">
-        <div className="max-w-7xl mx-auto">
+      {/* ── PAGE TITLE BAND ────────────────────────────────────────── */}
+      {/* brand purple banner matching the navbar, mt-32 offsets the fixed navbar */}
+      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
+        {/* Eyebrow kicker */}
+        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
+          Harbor Safe House &amp; Advocacy Center
+        </p>
+        {/* Page title */}
+        <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Who We Are</h1>
+        {/* Short tagline */}
+        <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
+          Serving Bradley and Polk counties since 1987 with holistic, trauma-informed care.
+        </p>
+      </section>
 
-          {/* Page heading and brand underline */}
-          <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-6xl font-semibold text-brand mb-6">Who We Are</h1>
-            <div className="w-11/12 h-2 bg-brand mx-auto"></div>
-          </div>
+      {/* ── MISSION ────────────────────────────────────────────────── */}
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
 
           {/* Two-column: photo left, vision + mission text right */}
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -26,7 +35,7 @@ export default function About() {
                 className="w-full h-auto rounded-lg shadow-lg"
               />
             </div>
-            <div className="max-w-3xl mx-auto">
+            <div>
               {/* Vision statement */}
               <h2 className="text-brand text-3xl md:text-4xl font-semibold mb-6 leading-tight">
                 We envision a community where no one faces domestic abuse or sexual assault alone.
