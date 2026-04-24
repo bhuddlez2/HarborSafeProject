@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 //FOR DB ERRORS
+use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 
 #[Fillable(['name', 'email', 'password'])]
