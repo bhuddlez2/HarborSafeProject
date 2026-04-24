@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Str;
 
+//imports other models to reference for foreign keys
+use App\Models\SubmitterInfo;
+
 class PrivateAssessment extends BaseModel
 {
     //automatically create the UUID for the form
@@ -23,10 +26,6 @@ class PrivateAssessment extends BaseModel
 
     //Fillable Columns
     protected $fillable = [
-        'SubmitterEmail',
-        'SubmitterPhoneNumber',
-        'SubmitterFirstName',
-        'SubmitterLastName',
         'OffenderFirstName',
         'OffenderLastName',
         'OffenderSex',
@@ -38,4 +37,15 @@ class PrivateAssessment extends BaseModel
         'VictimDOB',
         'VictimSafePhoneNumber'
     ];
+
+    public function SubmitterInfo()
+    {
+        return $this->belongsTo(SubmitterInfo::class, 'SubmissionID');
+    }
+
+    //Make connection to assessment table here
+    public function AssessmentAnswers()
+    {
+        return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
+    }
 }
