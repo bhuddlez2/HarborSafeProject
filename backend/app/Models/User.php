@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+//FOR DB ERRORS
+use RuntimeException;
+
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -29,4 +32,25 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+}
+
+//to catch DB routing errors
+abstract class BaseModel extends Model
+{
+    protected function checkConnection(): void
+    {
+        if(!isset($this->connection)){
+            throw new RuntimeException(
+                'No database connection set on model: ' . static::class .
+                '. All models must explicity define $connection.'
+            );
+        }
+    }
+
+    protected static function booted(): void
+    {
+        //Runs whenever model is used
+        (new static)->checkConnection();
+    }
+
 }
