@@ -35,7 +35,9 @@ class PrivateAssessment extends BaseModel
         'VictimLastName',
         'VictimSex',
         'VictimDOB',
-        'VictimSafePhoneNumber'
+        'VictimSafePhoneNumber',
+        'SubmitterID',
+        'AssessmentDocID'        
     ];
 
     public function SubmitterInfo()

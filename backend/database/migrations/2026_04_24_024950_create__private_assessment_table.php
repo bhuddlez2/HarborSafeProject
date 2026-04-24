@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('OffenderLastName',50);
             $table->string('OffenderSex',1);
             $table->date('OffenderDOB')->nullable();
-            $table->string('OffenderVictimRelationship');
+            $table->string('OffenderVictimRelationship',50);
             $table->string('VictimFirstName',50);
             $table->string('VictimLastName',50);
             $table->string('VictimSex',1);
