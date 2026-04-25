@@ -405,7 +405,7 @@ export default function Home() {
               {/* Left column: kicker, heading, body, FRA footnote */}
               <div>
                 {/* Kicker label */}
-                <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">Our mission</p>
+                <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">our cardinal values</p>
                 {/* Mission heading */}
                 <h2 className="text-3xl font-semibold text-brand mb-6">Strengthening communities through safe, caring advocacy</h2>
                 {/* Mission body */}
