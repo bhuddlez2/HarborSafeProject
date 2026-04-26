@@ -16,6 +16,12 @@ export default function AssessmentPage() {
   const [forWhom, setForWhom] = useState(null);
   const [anonymous, setAnonymous] = useState(null);
 
+  // info phase state: collected only when anonymous === false
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [relationship, setRelationship] = useState("");
+  const [phone, setPhone] = useState("");
+
   // total question count and current question
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -43,12 +49,16 @@ export default function AssessmentPage() {
     if (index > 0) setIndex(index - 1);
   };
 
-  // Reset handler: empties answers, resets index, clears prescreen, returns to prescreen
+  // Reset handler: empties answers, resets index, clears prescreen and info, returns to prescreen
   const handleReset = () => {
     setAnswers({});
     setIndex(0);
     setForWhom(null);
     setAnonymous(null);
+    setFirstName("");
+    setLastName("");
+    setRelationship("");
+    setPhone("");
     setPhase("prescreen");
   };
 
@@ -57,7 +67,7 @@ export default function AssessmentPage() {
     return (
       <main className="min-h-screen bg-white">
         <div className="mx-auto max-w-2xl px-6 py-16">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-10">
+          <h1 className="text-3xl font-semibold text-gray-900 mb-8">
             Before we begin
           </h1>
 
@@ -122,7 +132,7 @@ export default function AssessmentPage() {
           {/* Continue — only appears after both questions are answered */}
           {forWhom !== null && anonymous !== null && (
             <button
-              onClick={() => setPhase("intro")}
+              onClick={() => setPhase(!anonymous ? "info" : "intro")}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition"
@@ -130,6 +140,94 @@ export default function AssessmentPage() {
               Continue
             </button>
           )}
+
+        </div>
+      </main>
+    );
+  }
+
+  // Info phase: collects identifying information when anonymous === false
+  if (phase === "info") {
+    return (
+      <main className="min-h-screen bg-white">
+        <div className="mx-auto max-w-2xl px-6 py-16">
+          <h1 className="text-3xl font-semibold text-gray-900 mb-10">
+            Your information
+          </h1>
+
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First name
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last name
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Relationship to subject{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={relationship}
+              onChange={(e) => setRelationship(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
+            />
+          </div>
+
+          <div className="mb-10">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone number{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setPhase("prescreen")}
+              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => setPhase("intro")}
+              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-700 focus:outline-none
+                         focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Continue
+            </button>
+          </div>
 
         </div>
       </main>
