@@ -26,6 +26,7 @@ export default function AssessmentPage() {
   const [subjectFirstName, setSubjectFirstName] = useState("");
   const [subjectLastName, setSubjectLastName] = useState("");
   const [subjectAge, setSubjectAge] = useState("");
+  const [subjectSex, setSubjectSex] = useState("");
 
   // total question count and current question
   const total = lethalityQuestions.length;
@@ -67,6 +68,7 @@ export default function AssessmentPage() {
     setSubjectFirstName("");
     setSubjectLastName("");
     setSubjectAge("");
+    setSubjectSex("");
     setPhase("prescreen");
   };
 
@@ -278,18 +280,36 @@ export default function AssessmentPage() {
             </div>
           </div>
 
-          <div className="mb-10">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Approximate age
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={subjectAge}
-              onChange={(e) => setSubjectAge(e.target.value)}
-              className="w-32 border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
-            />
+          <div className="flex gap-4 mb-10">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Approximate age
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={subjectAge}
+                onChange={(e) => setSubjectAge(e.target.value)}
+                className="w-32 border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sex
+              </label>
+              <select
+                value={subjectSex}
+                onChange={(e) => setSubjectSex(e.target.value)}
+                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              >
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex gap-4">
