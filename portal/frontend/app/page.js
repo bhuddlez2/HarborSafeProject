@@ -404,42 +404,38 @@ export default function AssessmentPage() {
           {current.text}
         </h2>
 
+        {/* Back button — in flow on all sizes */}
+        {index > 0 && (
+          <button
+            onClick={handleBack}
+            className="text-sm text-gray-500 hover:text-gray-900 transition block"
+          >
+            ← Previous question
+          </button>
+        )}
+
       </div>
 
-      {/* Bottom bar — fixed on mobile, in-flow on desktop */}
+      {/* Yes / No buttons — fixed to bottom on mobile, in-flow on desktop */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 pb-10 pt-4
                       md:static md:border-t-0 md:p-0 md:bg-transparent">
-        <div className="mx-auto max-w-2xl">
-
-          {/* Previous question — sits above Yes/No */}
-          {index > 0 && (
-            <button
-              onClick={handleBack}
-              className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4"
-            >
-              ← Previous question
-            </button>
-          )}
-
-          <div className="flex gap-4">
-            <button
-              onClick={() => handleAnswer(true)}
-              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                         hover:bg-gray-900 hover:text-white
-                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
-            >
-              Yes
-            </button>
-            <button
-              onClick={() => handleAnswer(false)}
-              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                         hover:bg-gray-900 hover:text-white
-                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
-            >
-              No
-            </button>
-          </div>
-
+        <div className="flex gap-4 mx-auto max-w-2xl">
+          <button
+            onClick={() => handleAnswer(true)}
+            className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                       hover:bg-gray-900 hover:text-white
+                       focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+          >
+            Yes
+          </button>
+          <button
+            onClick={() => handleAnswer(false)}
+            className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                       hover:bg-gray-900 hover:text-white
+                       focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+          >
+            No
+          </button>
         </div>
       </div>
 
