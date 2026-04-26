@@ -4,18 +4,23 @@ import { useState } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
 
 export default function AssessmentPage() {
-  // phase: cycles through "intro", "questions", and "complete", called in handleanswer and handlereset
-  const [phase, setPhase] = useState("intro");
+  // phase: cycles through "prescreen", "intro", "questions", and "complete"
+  const [phase, setPhase] = useState("prescreen");
   // index: tracks which question is displayed. called in handleanswer and handleback and handlereset
   const [index, setIndex] = useState(0);
-  // answers: stores responses as { questionId: boolean }, called in handleanswer and handlereset 
+  // answers: stores responses as { questionId: boolean }, called in handleanswer and handlereset
   const [answers, setAnswers] = useState({});
+
+  // prescreen state: forWhom is "self" or "other", anonymous is true or false
+  // anonymous stays null until forWhom is answered, which controls whether it renders
+  const [forWhom, setForWhom] = useState(null);
+  const [anonymous, setAnonymous] = useState(null);
 
   // total question count and current question
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
 
-  // below functions are called throughout the progam alongside button presses to handle user interaction and program flow
+  // below functions are called throughout the program alongside button presses to handle user interaction and program flow
 
   // handles the answer, recording it and advancing
   const handleAnswer = (value) => {
@@ -38,12 +43,98 @@ export default function AssessmentPage() {
     if (index > 0) setIndex(index - 1);
   };
 
-  // Reset handler: empties array, resets index, and returns to intro phase
+  // Reset handler: empties answers, resets index, clears prescreen, returns to prescreen
   const handleReset = () => {
     setAnswers({});
     setIndex(0);
-    setPhase("intro");
+    setForWhom(null);
+    setAnonymous(null);
+    setPhase("prescreen");
   };
+
+  // Prescreen phase: collects who the assessment is for and anonymity preference
+  if (phase === "prescreen") {
+    return (
+      <main className="min-h-screen bg-white">
+        <div className="mx-auto max-w-2xl px-6 py-16">
+          <h1 className="text-3xl font-semibold text-gray-900 mb-10">
+            Before we begin
+          </h1>
+
+          {/* Question 1: who is this for */}
+          <p className="text-gray-700 text-lg font-medium mb-4">
+            Who is this assessment for?
+          </p>
+          <div className="flex gap-4 mb-10">
+            <button
+              onClick={() => setForWhom("self")}
+              className={`flex-1 py-4 rounded-lg text-lg border-2 transition
+                focus:outline-none focus:ring-4 focus:ring-gray-400
+                ${forWhom === "self"
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+            >
+              Myself
+            </button>
+            <button
+              onClick={() => setForWhom("other")}
+              className={`flex-1 py-4 rounded-lg text-lg border-2 transition
+                focus:outline-none focus:ring-4 focus:ring-gray-400
+                ${forWhom === "other"
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+            >
+              Someone else
+            </button>
+          </div>
+
+          {/* Question 2: anonymity — only appears after question 1 is answered */}
+          {forWhom !== null && (
+            <div className="mb-10">
+              <p className="text-gray-700 text-lg font-medium mb-4">
+                Would you like to remain anonymous?
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setAnonymous(true)}
+                  className={`flex-1 py-4 rounded-lg text-lg border-2 transition
+                    focus:outline-none focus:ring-4 focus:ring-gray-400
+                    ${anonymous === true
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setAnonymous(false)}
+                  className={`flex-1 py-4 rounded-lg text-lg border-2 transition
+                    focus:outline-none focus:ring-4 focus:ring-gray-400
+                    ${anonymous === false
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Continue — only appears after both questions are answered */}
+          {forWhom !== null && anonymous !== null && (
+            <button
+              onClick={() => setPhase("intro")}
+              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-700 focus:outline-none
+                         focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Continue
+            </button>
+          )}
+
+        </div>
+      </main>
+    );
+  }
 
   // Intro phase
   if (phase === "intro") {
