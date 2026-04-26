@@ -37,6 +37,11 @@ export default function Home() {
     setShowSafetyModal(false);
   };
 
+  useEffect(() => {
+    document.body.classList.toggle("safety-modal-open", showSafetyModal);
+    return () => document.body.classList.remove("safety-modal-open");
+  }, [showSafetyModal]);
+
   return (
     <div>
       {/*
