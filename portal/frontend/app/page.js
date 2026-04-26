@@ -28,6 +28,12 @@ export default function AssessmentPage() {
   const [subjectAge, setSubjectAge] = useState("");
   const [subjectSex, setSubjectSex] = useState("");
 
+  // abuser phase state: always collected
+  const [abuserFirstName, setAbuserFirstName] = useState("");
+  const [abuserLastName, setAbuserLastName] = useState("");
+  const [abuserAge, setAbuserAge] = useState("");
+  const [abuserSex, setAbuserSex] = useState("");
+
   // total question count and current question
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -69,6 +75,10 @@ export default function AssessmentPage() {
     setSubjectLastName("");
     setSubjectAge("");
     setSubjectSex("");
+    setAbuserFirstName("");
+    setAbuserLastName("");
+    setAbuserAge("");
+    setAbuserSex("");
     setPhase("prescreen");
   };
 
@@ -250,7 +260,7 @@ export default function AssessmentPage() {
       <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-10">
-            About the subject
+            About the victim
           </h1>
 
           <div className="flex gap-4 mb-6">
@@ -315,6 +325,98 @@ export default function AssessmentPage() {
           <div className="flex gap-4">
             <button
               onClick={() => setPhase(anonymous === false ? "info" : "prescreen")}
+              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => setPhase("abuser")}
+              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-700 focus:outline-none
+                         focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Continue
+            </button>
+          </div>
+
+        </div>
+      </main>
+    );
+  }
+
+  // Abuser phase: collects identifying information about the abuser
+  if (phase === "abuser") {
+    return (
+      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
+          <h1 className="text-3xl font-semibold text-gray-900 mb-10">
+            About the abuser
+          </h1>
+
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First name
+              </label>
+              <input
+                type="text"
+                value={abuserFirstName}
+                onChange={(e) => setAbuserFirstName(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last name
+              </label>
+              <input
+                type="text"
+                value={abuserLastName}
+                onChange={(e) => setAbuserLastName(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-4 mb-10">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Approximate age
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={abuserAge}
+                onChange={(e) => setAbuserAge(e.target.value)}
+                className="w-32 border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sex
+              </label>
+              <select
+                value={abuserSex}
+                onChange={(e) => setAbuserSex(e.target.value)}
+                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              >
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setPhase("subject")}
               className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-900 hover:text-white
                          focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
