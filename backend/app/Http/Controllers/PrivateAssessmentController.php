@@ -35,7 +35,7 @@ class PrivateAssessmentController extends Controller
     {
         $validated = $request->validate([
             'OffenderFirstName'             => 'required|string|max:50',
-            'OfenderLastName'               => 'required|string|max:50',
+            'OffenderLastName'               => 'required|string|max:50',
             'OffenderSex'                   => 'required|string|max:1',
             'OffenderDOB'                   => 'nullable|date',
             'OffenderVictimRelationship'    => 'required|string|50',
@@ -66,7 +66,7 @@ class PrivateAssessmentController extends Controller
 
         $validated = $request->validate([
             'OffenderFirstName'             => 'nullable|string|max:50',
-            'OfenderLastName'               => 'nullable|string|max:50',
+            'OffenderLastName'               => 'nullable|string|max:50',
             'OffenderSex'                   => 'nullable|string|max:1',
             'OffenderDOB'                   => 'nullable|date',
             'OffenderVictimRelationship'    => 'nullable|string|50',
