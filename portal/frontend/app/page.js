@@ -373,10 +373,11 @@ export default function AssessmentPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-2xl px-6 py-16">
+      {/* Extra bottom padding on mobile keeps content above the fixed button bar */}
+      <div className="mx-auto max-w-2xl px-6 pt-10 pb-36 md:pb-10">
 
         {/* Progress bar */}
-        <div className="mb-12">
+        <div className="mb-10">
           <div className="flex justify-between text-sm text-gray-500 mb-2">
             <span>Question {index + 1} of {total}</span>
             <span>{percent}%</span>
@@ -397,43 +398,51 @@ export default function AssessmentPage() {
 
         {/* Question text */}
         <h2
-          className="text-2xl md:text-3xl text-gray-900 font-medium leading-snug mb-12"
+          className="text-2xl md:text-3xl text-gray-900 font-medium leading-snug mb-10"
           aria-live="polite"
         >
           {current.text}
         </h2>
 
-        {/* Yes / No buttons */}
-        <div className="flex gap-4 mb-8">
-          <button
-            onClick={() => handleAnswer(true)}
-            className="flex-1 bg-gray-900 text-white text-lg py-5 rounded-lg
-                       hover:bg-gray-700 focus:outline-none
-                       focus:ring-4 focus:ring-gray-400 transition"
-          >
-            Yes
-          </button>
-          <button
-            onClick={() => handleAnswer(false)}
-            className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-5 rounded-lg
-                       hover:bg-gray-900 hover:text-white
-                       focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
-          >
-            No
-          </button>
-        </div>
-
-        {/* Back button */}
-        {index > 0 && (
-          <button
-            onClick={handleBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition"
-          >
-            ← Previous question
-          </button>
-        )}
-
       </div>
+
+      {/* Bottom bar — fixed on mobile, in-flow on desktop */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 pb-10 pt-4
+                      md:static md:border-t-0 md:p-0 md:bg-transparent">
+        <div className="mx-auto max-w-2xl">
+
+          {/* Previous question — sits above Yes/No */}
+          {index > 0 && (
+            <button
+              onClick={handleBack}
+              className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4"
+            >
+              ← Previous question
+            </button>
+          )}
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => handleAnswer(true)}
+              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => handleAnswer(false)}
+              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+            >
+              No
+            </button>
+          </div>
+
+        </div>
+      </div>
+
     </main>
   );
 }
