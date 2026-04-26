@@ -22,16 +22,16 @@ class AssessmentAnswers extends Model
 
     //Fillable Columns
     protected $fillable = [
-        'RiskIndicatior1',
-        'RiskIndicatior2',
-        'RiskIndicatior3',
-        'RiskIndicatior4',
-        'RiskIndicatior5',
-        'RiskIndicatior6',
-        'RiskIndicatior7',
-        'RiskIndicatior8',
-        'RiskIndicatior9',
-        'RiskIndicatior10',
-        'RiskIndicatior11'
+        'RiskIndicator1',
+        'RiskIndicator2',
+        'RiskIndicator3',
+        'RiskIndicator4',
+        'RiskIndicator5',
+        'RiskIndicator6',
+        'RiskIndicator7',
+        'RiskIndicator8',
+        'RiskIndicator9',
+        'RiskIndicator10',
+        'RiskIndicator11'
     ];
 }
