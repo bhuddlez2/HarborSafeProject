@@ -73,8 +73,8 @@ export default function AssessmentPage() {
   // Prescreen phase: collects who the assessment is for and anonymity preference
   if (phase === "prescreen") {
     return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-2xl px-6 py-16">
+      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-8">
             Before we begin
           </h1>
@@ -157,8 +157,8 @@ export default function AssessmentPage() {
   // Info phase: collects identifying information when anonymous === false
   if (phase === "info") {
     return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-2xl px-6 py-16">
+      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-10">
             Your information
           </h1>
@@ -245,8 +245,8 @@ export default function AssessmentPage() {
   // Subject phase: collects identifying information about the subject of abuse
   if (phase === "subject") {
     return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-2xl px-6 py-16">
+      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-10">
             About the subject
           </h1>
@@ -320,8 +320,8 @@ export default function AssessmentPage() {
   if (phase === "intro") {
     // min-h-screen scales to screen height, and then color is set using bg
     return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-2xl px-6 py-16">
+      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-6">
             Lethality Assessment
           </h1>
@@ -347,8 +347,8 @@ export default function AssessmentPage() {
   // Complete phase
   if (phase === "complete") {
     return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-2xl px-6 py-16">
+      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-6">
             Assessment complete
           </h1>
@@ -372,9 +372,8 @@ export default function AssessmentPage() {
   const percent = Math.round(((index + 1) / total) * 100);
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Extra bottom padding on mobile keeps content above the fixed button bar */}
-      <div className="mx-auto max-w-2xl px-6 pt-10 pb-36 md:pb-10">
+    <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 pt-10 pb-36 md:pb-14 md:px-12">
 
         {/* Progress bar */}
         <div className="mb-10">
@@ -404,38 +403,67 @@ export default function AssessmentPage() {
           {current.text}
         </h2>
 
-        {/* Back button — in flow on all sizes */}
-        {index > 0 && (
-          <button
-            onClick={handleBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition block"
-          >
-            ← Previous question
-          </button>
-        )}
+        {/* Back + Yes/No — inside card on desktop */}
+        <div className="hidden md:block">
+          {index > 0 && (
+            <button
+              onClick={handleBack}
+              className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4"
+            >
+              ← Previous question
+            </button>
+          )}
+          <div className="flex gap-4">
+            <button
+              onClick={() => handleAnswer(true)}
+              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => handleAnswer(false)}
+              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+            >
+              No
+            </button>
+          </div>
+        </div>
 
       </div>
 
-      {/* Yes / No buttons — fixed to bottom on mobile, in-flow on desktop */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 pb-10 pt-4
-                      md:static md:border-t-0 md:p-0 md:bg-transparent">
-        <div className="flex gap-4 mx-auto max-w-2xl">
-          <button
-            onClick={() => handleAnswer(true)}
-            className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                       hover:bg-gray-900 hover:text-white
-                       focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
-          >
-            Yes
-          </button>
-          <button
-            onClick={() => handleAnswer(false)}
-            className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                       hover:bg-gray-900 hover:text-white
-                       focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
-          >
-            No
-          </button>
+      {/* Back + Yes/No — fixed to bottom on mobile only */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 pb-10 pt-4">
+        <div className="mx-auto max-w-2xl">
+          {index > 0 && (
+            <button
+              onClick={handleBack}
+              className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4"
+            >
+              ← Previous question
+            </button>
+          )}
+          <div className="flex gap-4">
+            <button
+              onClick={() => handleAnswer(true)}
+              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => handleAnswer(false)}
+              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+            >
+              No
+            </button>
+          </div>
         </div>
       </div>
 
