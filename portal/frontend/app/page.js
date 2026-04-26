@@ -22,6 +22,11 @@ export default function AssessmentPage() {
   const [relationship, setRelationship] = useState("");
   const [phone, setPhone] = useState("");
 
+  // subject phase state: always collected
+  const [subjectFirstName, setSubjectFirstName] = useState("");
+  const [subjectLastName, setSubjectLastName] = useState("");
+  const [subjectAge, setSubjectAge] = useState("");
+
   // total question count and current question
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -59,6 +64,9 @@ export default function AssessmentPage() {
     setLastName("");
     setRelationship("");
     setPhone("");
+    setSubjectFirstName("");
+    setSubjectLastName("");
+    setSubjectAge("");
     setPhase("prescreen");
   };
 
@@ -132,7 +140,7 @@ export default function AssessmentPage() {
           {/* Continue — only appears after both questions are answered */}
           {forWhom !== null && anonymous !== null && (
             <button
-              onClick={() => setPhase(!anonymous ? "info" : "intro")}
+              onClick={() => setPhase(!anonymous ? "info" : "subject")}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition"
@@ -213,6 +221,80 @@ export default function AssessmentPage() {
           <div className="flex gap-4">
             <button
               onClick={() => setPhase("prescreen")}
+              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => setPhase("subject")}
+              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-700 focus:outline-none
+                         focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Continue
+            </button>
+          </div>
+
+        </div>
+      </main>
+    );
+  }
+
+  // Subject phase: collects identifying information about the subject of abuse
+  if (phase === "subject") {
+    return (
+      <main className="min-h-screen bg-white">
+        <div className="mx-auto max-w-2xl px-6 py-16">
+          <h1 className="text-3xl font-semibold text-gray-900 mb-10">
+            About the subject
+          </h1>
+
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First name
+              </label>
+              <input
+                type="text"
+                value={subjectFirstName}
+                onChange={(e) => setSubjectFirstName(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last name
+              </label>
+              <input
+                type="text"
+                value={subjectLastName}
+                onChange={(e) => setSubjectLastName(e.target.value)}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
+              />
+            </div>
+          </div>
+
+          <div className="mb-10">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Approximate age
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={subjectAge}
+              onChange={(e) => setSubjectAge(e.target.value)}
+              className="w-32 border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setPhase(anonymous === false ? "info" : "prescreen")}
               className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-900 hover:text-white
                          focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
