@@ -431,10 +431,10 @@ export default function Home() {
               */}
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { letter: "N", word: "Nurture",    desc: "Caring for the whole person",        icon: "/north.svg" },
-                  { letter: "E", word: "Empower",    desc: "Building strength & agency",         icon: "/east.svg"  },
-                  { letter: "W", word: "Wholeness",  desc: "Healing through holistic care",      icon: "/west.svg"  },
-                  { letter: "S", word: "Strengthen", desc: "Supporting survivors & community",   icon: "/south.svg" },
+                  { letter: "N", word: "Nurture",    desc: "Caring for the whole person",  },
+                  { letter: "E", word: "Empower",    desc: "Building strength & agency",  },
+                  { letter: "W", word: "Wholeness",  desc: "Healing through holistic care",  },
+                  { letter: "S", word: "Strengthen", desc: "Supporting survivors & community",  },
                 ].map(({ letter, word, desc, icon }) => (
                   <div key={letter} className="relative bg-white border border-gray-200 rounded-lg p-5">
                     {icon && (
