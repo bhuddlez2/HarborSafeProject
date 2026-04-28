@@ -50,6 +50,7 @@ export default function ExitButton() {
     aria-label and title for accessibility and tooltip text
     */
     <button
+      id="exit-button"
       className="fixed bottom-4 right-4 z-100 bg-red-600 hover:bg-white text-white hover:text-red-600 border-2
       border-red-600 rounded-full px-10 py-5 text-2xl font-semibold shadow-lg transition-all hover:scale-110"
       aria-label="Quick exit button"
