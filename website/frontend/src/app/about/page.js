@@ -28,7 +28,7 @@ export default function About() {
             <div>
               <Image
                 src="/Gift of Love.png"
-                alt="Four diverse women embracing in solidarity"
+                alt="The Gift of Love"
                 width={0}
                 height={0}
                 sizes="100vw"
