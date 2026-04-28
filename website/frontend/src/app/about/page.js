@@ -4,7 +4,7 @@ export default function About() {
   return (
     <main>
 
-      {/* ── PAGE TITLE BAND ────────────────────────────────────────── */}
+      {/* PAGE TITLE BAND */}
       {/* brand purple banner matching the navbar, mt-32 offsets the fixed navbar */}
       <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
         {/* Eyebrow kicker */}
@@ -19,7 +19,7 @@ export default function About() {
         </p>
       </section>
 
-      {/* ── MISSION ────────────────────────────────────────────────── */}
+      {/* MISSION  */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
 
@@ -27,8 +27,8 @@ export default function About() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <Image
-                src="/Envision.png"
-                alt="Four diverse women embracing in solidarity"
+                src="/Gift of Love.png"
+                alt="The Gift of Love"
                 width={0}
                 height={0}
                 sizes="100vw"
@@ -57,7 +57,7 @@ export default function About() {
       {/* Section divider */}
       <div className="w-full h-1 bg-brand"></div>
 
-      {/* ── FRA PARTNERSHIP ────────────────────────────────────────── */}
+      {/* FRA PARTNERSHIP */}
       <section className="py-20 px-4 bg-purple-100">
 
         {/* Combined HSHAC + FRA logo */}
@@ -90,7 +90,7 @@ export default function About() {
       {/* Section divider */}
       <div className="w-full h-1 bg-brand"></div>
 
-      {/* ── PARTNERS ───────────────────────────────────────────────── */}
+      {/* PARTNERS */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
 

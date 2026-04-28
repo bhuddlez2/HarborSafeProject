@@ -25,3 +25,14 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Spotlight the Safe Exit button while the safety modal is open */
+body.safety-modal-open #exit-button {
+  z-index: 300;
+  animation: exit-button-pulse 2s ease-in-out infinite;
+}
+
+@keyframes exit-button-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
+  50%       { box-shadow: 0 0 0 18px rgba(220, 38, 38, 0); }
+}

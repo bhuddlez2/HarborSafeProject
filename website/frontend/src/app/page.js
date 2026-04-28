@@ -37,6 +37,11 @@ export default function Home() {
     setShowSafetyModal(false);
   };
 
+  useEffect(() => {
+    document.body.classList.toggle("safety-modal-open", showSafetyModal);
+    return () => document.body.classList.remove("safety-modal-open");
+  }, [showSafetyModal]);
+
   return (
     <div>
       {/*
@@ -431,12 +436,26 @@ export default function Home() {
               */}
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { letter: "N", word: "Nurture",    desc: "Caring for the whole person" },
-                  { letter: "E", word: "Empower",    desc: "Building strength & agency" },
-                  { letter: "S", word: "Strengthen", desc: "Supporting survivors & community" },
-                  { letter: "W", word: "Wholeness",  desc: "Healing through holistic care" },
-                ].map(({ letter, word, desc }) => (
-                  <div key={letter} className="bg-white border border-gray-200 rounded-lg p-5">
+                  { letter: "N", word: "Nurture",    desc: "Caring for the whole person",  },
+                  { letter: "E", word: "Empower",    desc: "Building strength & agency",  },
+                  { letter: "W", word: "Wholeness",  desc: "Healing through holistic care",  },
+                  { letter: "S", word: "Strengthen", desc: "Supporting survivors & community",  },
+                ].map(({ letter, word, desc, icon }) => (
+                  <div key={letter} className="relative bg-white border border-gray-200 rounded-lg p-5">
+                    {icon && (
+                      <a
+                        title="Compass icon by benanibens Flaticon"
+                        className="absolute top-3 right-3"
+                      >
+                        <Image
+                          src={icon}
+                          alt="compass direction"
+                          width={48}
+                          height={48}
+                          className="filter-[invert(73%)_sepia(24%)_saturate(830%)_hue-rotate(213deg)_brightness(103%)_contrast(100%)]"
+                        />
+                      </a>
+                    )}
                     {/* Large decorative letter */}
                     <p className="text-4xl font-bold text-brand leading-none mb-2">{letter}</p>
                     {/* Value name */}
