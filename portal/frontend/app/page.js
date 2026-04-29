@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
+import { createAssessment } from "@/app/lib/api"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function AssessmentPage() {
   // phase: cycles through "prescreen", "intro", "questions", and "complete"

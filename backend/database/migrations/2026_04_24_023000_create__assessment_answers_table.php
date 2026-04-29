@@ -6,12 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+
+    protected $connection = 'Portal';
+    
+
     public function up(): void
     {
-        Schema::create('_assessment_answers', function (Blueprint $table) {
+        Schema::connection('Portal')->create('assessment_answers', function (Blueprint $table) {
             $table->uuid('AssessmentDocID')->primary();
             $table->boolean('RiskIndicator1');
             $table->boolean('RiskIndicator2');
@@ -32,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('_assessment_answers');
+        Schema::dropIfExists('assessment_answers');
     }
 };
