@@ -204,7 +204,7 @@ export default function AssessmentPage() {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Relationship to subject{" "}
+              Relationship to victim{" "}
               <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <input
