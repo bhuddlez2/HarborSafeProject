@@ -118,8 +118,8 @@ export default function AssessmentPage() {
             </button>
           </div>
 
-          {/* Question 2: anonymity — only appears after question 1 is answered */}
-          {forWhom !== null && (
+          {/* Question 2: anonymity — only shown when assessing someone else */}
+          {forWhom === "other" && (
             <div className="mb-10">
               <p className="text-gray-700 text-lg font-medium mb-4">
                 Would you like to remain anonymous?
@@ -149,10 +149,12 @@ export default function AssessmentPage() {
             </div>
           )}
 
-          {/* Continue — only appears after both questions are answered */}
-          {forWhom !== null && anonymous !== null && (
+          {/* Continue: for "self" appears immediately; for "other" requires anonymity answer */}
+          {(forWhom === "self" || (forWhom === "other" && anonymous !== null)) && (
             <button
-              onClick={() => setPhase(!anonymous ? "info" : "subject")}
+              onClick={() => setPhase(
+                forWhom === "self" || !anonymous ? "info" : "subject"
+              )}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition"
@@ -324,7 +326,7 @@ export default function AssessmentPage() {
 
           <div className="flex gap-4">
             <button
-              onClick={() => setPhase(anonymous === false ? "info" : "prescreen")}
+              onClick={() => setPhase(forWhom === "self" || anonymous === false ? "info" : "prescreen")}
               className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-900 hover:text-white
                          focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
