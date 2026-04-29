@@ -14,24 +14,24 @@ export default function AssessmentPage() {
   // answers: stores responses as { questionId: boolean }, called in handleanswer and handlereset
   const [answers, setAnswers] = useState({});
 
-  // prescreen state: forWhom is "self" or "other", anonymous is true or false
+  // prescreen state
   // anonymous stays null until forWhom is answered, which controls whether it renders
   const [forWhom, setForWhom] = useState(null);
   const [anonymous, setAnonymous] = useState(null);
 
-  // info phase state: collected only when anonymous === false
+  // info phase state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [relationship, setRelationship] = useState("");
   const [phone, setPhone] = useState("");
 
-  // subject phase state: always collected
+  // victim phase state
   const [subjectFirstName, setSubjectFirstName] = useState("");
   const [subjectLastName, setSubjectLastName] = useState("");
   const [subjectAge, setSubjectAge] = useState("");
   const [subjectSex, setSubjectSex] = useState("");
 
-  // abuser phase state: always collected
+  // abuser phase state
   const [abuserFirstName, setAbuserFirstName] = useState("");
   const [abuserLastName, setAbuserLastName] = useState("");
   const [abuserAge, setAbuserAge] = useState("");
@@ -85,7 +85,7 @@ export default function AssessmentPage() {
     setPhase("prescreen");
   };
 
-  // Prescreen phase: collects who the assessment is for and anonymity preference
+  // Prescreen phase: collects who the report is for and anonymity preference
   if (phase === "prescreen") {
     return (
       <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
@@ -96,7 +96,7 @@ export default function AssessmentPage() {
 
           {/* Question 1: who is this for */}
           <p className="text-gray-700 text-lg font-medium mb-4">
-            Who is this assessment for?
+            Who is this report for?
           </p>
           <div className="flex gap-4 mb-10">
             <button
