@@ -19,23 +19,25 @@ export default function AssessmentPage() {
   const [forWhom, setForWhom] = useState(null);
   const [anonymous, setAnonymous] = useState(null);
 
-  // info phase state
+  // info phase state (SubmitterInfo)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [relationship, setRelationship] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
-  // victim phase state
-  const [subjectFirstName, setSubjectFirstName] = useState("");
-  const [subjectLastName, setSubjectLastName] = useState("");
-  const [subjectAge, setSubjectAge] = useState("");
-  const [subjectSex, setSubjectSex] = useState("");
+  // victim phase state (VictimInfo)
+  const [victimFirstName, setVictimFirstName] = useState("");
+  const [victimLastName, setVictimLastName] = useState("");
+  const [victimDob, setVictimDob] = useState("");
+  const [victimSex, setVictimSex] = useState("");
+  const [victimPhone, setVictimPhone] = useState("");
 
-  // abuser phase state
-  const [abuserFirstName, setAbuserFirstName] = useState("");
-  const [abuserLastName, setAbuserLastName] = useState("");
-  const [abuserAge, setAbuserAge] = useState("");
-  const [abuserSex, setAbuserSex] = useState("");
+  // offender phase state (OffenderInfo)
+  const [offenderFirstName, setOffenderFirstName] = useState("");
+  const [offenderLastName, setOffenderLastName] = useState("");
+  const [offenderDob, setOffenderDob] = useState("");
+  const [offenderSex, setOffenderSex] = useState("");
+  const [offenderRelationship, setOffenderRelationship] = useState("");
 
   // total question count and current question
   const total = lethalityQuestions.length;
@@ -72,16 +74,18 @@ export default function AssessmentPage() {
     setAnonymous(null);
     setFirstName("");
     setLastName("");
-    setRelationship("");
+    setEmail("");
     setPhone("");
-    setSubjectFirstName("");
-    setSubjectLastName("");
-    setSubjectAge("");
-    setSubjectSex("");
-    setAbuserFirstName("");
-    setAbuserLastName("");
-    setAbuserAge("");
-    setAbuserSex("");
+    setVictimFirstName("");
+    setVictimLastName("");
+    setVictimDob("");
+    setVictimSex("");
+    setVictimPhone("");
+    setOffenderFirstName("");
+    setOffenderLastName("");
+    setOffenderDob("");
+    setOffenderSex("");
+    setOffenderRelationship("");
     setPhase("prescreen");
   };
 
@@ -156,7 +160,7 @@ export default function AssessmentPage() {
           {(forWhom === "self" || (forWhom === "other" && anonymous !== null)) && (
             <button
               onClick={() => setPhase(
-                forWhom === "self" || !anonymous ? "info" : "subject"
+                forWhom === "self" || !anonymous ? "info" : "victim"
               )}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
@@ -209,13 +213,13 @@ export default function AssessmentPage() {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Relationship to victim{" "}
+              Email{" "}
               <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <input
-              type="text"
-              value={relationship}
-              onChange={(e) => setRelationship(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-gray-900 transition"
             />
@@ -245,7 +249,7 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={() => setPhase("subject")}
+              onClick={() => setPhase("victim")}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition"
@@ -259,8 +263,8 @@ export default function AssessmentPage() {
     );
   }
 
-  // Subject phase: collects identifying information about the subject of abuse
-  if (phase === "subject") {
+  // Victim phase: collects identifying information about the subject of abuse
+  if (phase === "victim") {
     return (
       <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
@@ -275,8 +279,8 @@ export default function AssessmentPage() {
               </label>
               <input
                 type="text"
-                value={subjectFirstName}
-                onChange={(e) => setSubjectFirstName(e.target.value)}
+                value={victimFirstName}
+                onChange={(e) => setVictimFirstName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -287,25 +291,24 @@ export default function AssessmentPage() {
               </label>
               <input
                 type="text"
-                value={subjectLastName}
-                onChange={(e) => setSubjectLastName(e.target.value)}
+                value={victimLastName}
+                onChange={(e) => setVictimLastName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
             </div>
           </div>
 
-          <div className="flex gap-4 mb-10">
+          <div className="flex gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Approximate age
+                Date of birth
               </label>
               <input
-                type="number"
-                min="0"
-                value={subjectAge}
-                onChange={(e) => setSubjectAge(e.target.value)}
-                className="w-32 border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                type="date"
+                value={victimDob}
+                onChange={(e) => setVictimDob(e.target.value)}
+                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
             </div>
@@ -314,17 +317,31 @@ export default function AssessmentPage() {
                 Sex
               </label>
               <select
-                value={subjectSex}
-                onChange={(e) => setSubjectSex(e.target.value)}
+                value={victimSex}
+                onChange={(e) => setVictimSex(e.target.value)}
                 className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               >
                 <option value="">Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="O">Other</option>
               </select>
             </div>
+          </div>
+
+          <div className="mb-10">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Safe phone number{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="tel"
+              value={victimPhone}
+              onChange={(e) => setVictimPhone(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
+            />
           </div>
 
           <div className="flex gap-4">
@@ -337,7 +354,7 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={() => setPhase("abuser")}
+              onClick={() => setPhase("offender")}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition"
@@ -351,13 +368,13 @@ export default function AssessmentPage() {
     );
   }
 
-  // Abuser phase: collects identifying information about the abuser
-  if (phase === "abuser") {
+  // Offender phase: collects identifying information about the abuser
+  if (phase === "offender") {
     return (
       <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-10">
-            About the abuser
+            About the offender
           </h1>
 
           <div className="flex gap-4 mb-6">
@@ -367,8 +384,8 @@ export default function AssessmentPage() {
               </label>
               <input
                 type="text"
-                value={abuserFirstName}
-                onChange={(e) => setAbuserFirstName(e.target.value)}
+                value={offenderFirstName}
+                onChange={(e) => setOffenderFirstName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -379,25 +396,25 @@ export default function AssessmentPage() {
               </label>
               <input
                 type="text"
-                value={abuserLastName}
-                onChange={(e) => setAbuserLastName(e.target.value)}
+                value={offenderLastName}
+                onChange={(e) => setOffenderLastName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
             </div>
           </div>
 
-          <div className="flex gap-4 mb-10">
+          <div className="flex gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Approximate age
+                Date of birth{" "}
+                <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input
-                type="number"
-                min="0"
-                value={abuserAge}
-                onChange={(e) => setAbuserAge(e.target.value)}
-                className="w-32 border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                type="date"
+                value={offenderDob}
+                onChange={(e) => setOffenderDob(e.target.value)}
+                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
             </div>
@@ -406,22 +423,35 @@ export default function AssessmentPage() {
                 Sex
               </label>
               <select
-                value={abuserSex}
-                onChange={(e) => setAbuserSex(e.target.value)}
+                value={offenderSex}
+                onChange={(e) => setOffenderSex(e.target.value)}
                 className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               >
                 <option value="">Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="O">Other</option>
               </select>
             </div>
           </div>
 
+          <div className="mb-10">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Relationship to victim
+            </label>
+            <input
+              type="text"
+              value={offenderRelationship}
+              onChange={(e) => setOffenderRelationship(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
+            />
+          </div>
+
           <div className="flex gap-4">
             <button
-              onClick={() => setPhase("subject")}
+              onClick={() => setPhase("victim")}
               className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-900 hover:text-white
                          focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
