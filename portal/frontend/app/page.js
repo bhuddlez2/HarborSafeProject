@@ -250,9 +250,11 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("victim")}
+              disabled={!firstName.trim() || !lastName.trim()}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+                         focus:ring-4 focus:ring-gray-400 transition
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
             >
               Continue
             </button>
@@ -355,9 +357,11 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("offender")}
+              disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+                         focus:ring-4 focus:ring-gray-400 transition
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
             >
               Continue
             </button>
@@ -460,9 +464,11 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("intro")}
+              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+                         focus:ring-4 focus:ring-gray-400 transition
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
             >
               Continue
             </button>
