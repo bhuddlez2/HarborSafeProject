@@ -39,6 +39,11 @@ export default function AssessmentPage() {
   const [offenderSex, setOffenderSex] = useState("");
   const [offenderRelationship, setOffenderRelationship] = useState("");
 
+  // submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
   // total question count and current question
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -86,7 +91,48 @@ export default function AssessmentPage() {
     setOffenderDob("");
     setOffenderSex("");
     setOffenderRelationship("");
+    setIsSubmitting(false);
+    setSubmitError(null);
+    setSubmitted(false);
     setPhase("prescreen");
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const payload = {
+        for_whom: forWhom,
+        anonymous: anonymous,
+        submitter: forWhom === "other" && !anonymous ? {
+          first_name: firstName,
+          last_name: lastName,
+          email: email || null,
+          phone: phone || null,
+        } : null,
+        victim: {
+          first_name: victimFirstName,
+          last_name: victimLastName,
+          dob: victimDob,
+          sex: victimSex,
+          phone: victimPhone || null,
+        },
+        offender: {
+          first_name: offenderFirstName,
+          last_name: offenderLastName,
+          dob: offenderDob || null,
+          sex: offenderSex,
+          relationship: offenderRelationship,
+        },
+        answers,
+      };
+      await createAssessment(payload);
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Prescreen phase: collects who the report is for and anonymity preference
@@ -509,23 +555,81 @@ export default function AssessmentPage() {
 
   // Complete phase
   if (phase === "complete") {
+    if (submitted) {
+      return (
+        <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
+            <h1 className="text-3xl font-semibold text-gray-900 mb-6">
+              Assessment submitted
+            </h1>
+            <p className="text-gray-700 text-lg mb-10 leading-relaxed">
+              The assessment has been successfully submitted.
+            </p>
+            <button
+              onClick={handleReset}
+              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-700 focus:outline-none
+                         focus:ring-4 focus:ring-gray-400 transition"
+            >
+              New assessment
+            </button>
+          </div>
+        </main>
+      );
+    }
+
     return (
       <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-6">
-            Assessment complete
+            Review &amp; submit
           </h1>
-          <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            All {total} questions have been answered.
-          </p>
-          <button
-            onClick={handleReset}
-            className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                       hover:bg-gray-700 focus:outline-none
-                       focus:ring-4 focus:ring-gray-400 transition"
-          >
-            New assessment
-          </button>
+
+          <div className="divide-y divide-gray-100 mb-10">
+            <div className="py-4">
+              <p className="text-sm font-medium text-gray-500 mb-1">Victim</p>
+              <p className="text-gray-900">{victimFirstName} {victimLastName}</p>
+            </div>
+            <div className="py-4">
+              <p className="text-sm font-medium text-gray-500 mb-1">Offender</p>
+              <p className="text-gray-900">{offenderFirstName} {offenderLastName}</p>
+            </div>
+            {forWhom === "other" && !anonymous && (
+              <div className="py-4">
+                <p className="text-sm font-medium text-gray-500 mb-1">Reported by</p>
+                <p className="text-gray-900">{firstName} {lastName}</p>
+              </div>
+            )}
+            <div className="py-4">
+              <p className="text-sm font-medium text-gray-500 mb-1">Questions answered</p>
+              <p className="text-gray-900">{total} of {total}</p>
+            </div>
+          </div>
+
+          {submitError && (
+            <p className="text-red-600 text-sm mb-6">{submitError}</p>
+          )}
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => { setIndex(total - 1); setPhase("questions"); }}
+              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-700 focus:outline-none
+                         focus:ring-4 focus:ring-gray-400 transition
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+            >
+              {isSubmitting ? "Submitting…" : "Submit assessment"}
+            </button>
+          </div>
         </div>
       </main>
     );
