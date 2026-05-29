@@ -2,8 +2,6 @@
 
 import { useState, useEffect, startTransition } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
-import { createAssessment } from "@/app/lib/api"
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function AssessmentPage() {
@@ -50,10 +48,6 @@ export default function AssessmentPage() {
   const [offenderSex, setOffenderSex] = useState("");
   const [offenderRelationship, setOffenderRelationship] = useState("");
 
-  // submission state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
 
   // total question count and current question
   const total = lethalityQuestions.length;
@@ -82,69 +76,7 @@ export default function AssessmentPage() {
     if (index > 0) setIndex(index - 1);
   };
 
-  // Reset handler: empties answers, resets index, clears prescreen and info, returns to prescreen
-  const handleReset = () => {
-    setAnswers({});
-    setIndex(0);
-    setForWhom(null);
-    setAnonymous(null);
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setPhone("");
-    setVictimFirstName("");
-    setVictimLastName("");
-    setVictimDob("");
-    setVictimSex("");
-    setVictimPhone("");
-    setOffenderFirstName("");
-    setOffenderLastName("");
-    setOffenderDob("");
-    setOffenderSex("");
-    setOffenderRelationship("");
-    setIsSubmitting(false);
-    setSubmitError(null);
-    setSubmitted(false);
-    setPhase("prescreen");
-  };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setSubmitError(null);
-    try {
-      const payload = {
-        for_whom: forWhom,
-        anonymous: anonymous,
-        submitter: forWhom === "other" && !anonymous ? {
-          first_name: firstName,
-          last_name: lastName,
-          email: email || null,
-          phone: phone || null,
-        } : null,
-        victim: {
-          first_name: victimFirstName,
-          last_name: victimLastName,
-          dob: victimDob,
-          sex: victimSex,
-          phone: victimPhone || null,
-        },
-        offender: {
-          first_name: offenderFirstName,
-          last_name: offenderLastName,
-          dob: offenderDob || null,
-          sex: offenderSex,
-          relationship: offenderRelationship,
-        },
-        answers,
-      };
-      await createAssessment(payload);
-      setSubmitted(true);
-    } catch (err) {
-      setSubmitError("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Prescreen phase: collects who the report is for and anonymity preference
   if (phase === "prescreen") {
@@ -660,29 +592,6 @@ export default function AssessmentPage() {
 
   // Complete phase
   if (phase === "complete") {
-    if (submitted) {
-      return (
-        <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
-          <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
-            <h1 className="text-3xl font-semibold text-gray-900 mb-6">
-              Assessment submitted
-            </h1>
-            <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-              The assessment has been successfully submitted.
-            </p>
-            <button
-              onClick={handleReset}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
-            >
-              New assessment
-            </button>
-          </div>
-        </main>
-      );
-    }
-
     return (
       <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
@@ -711,10 +620,6 @@ export default function AssessmentPage() {
             </div>
           </div>
 
-          {submitError && (
-            <p className="text-red-600 text-sm mb-6">{submitError}</p>
-          )}
-
           <div className="flex gap-4">
             <button
               onClick={() => { setIndex(total - 1); setPhase("questions"); }}
@@ -725,14 +630,11 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition
-                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                         focus:ring-4 focus:ring-gray-400 transition"
             >
-              {isSubmitting ? "Submitting…" : "Submit assessment"}
+              Submit assessment
             </button>
           </div>
         </div>
