@@ -48,7 +48,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Trauma-informed counseling through our hotline, in-person sessions, and support groups. We help with safety planning, goal-setting, court navigation, and building a future free from abuse.
               </p>
-              <p className="text-xs text-gray-500">To schedule, call (423) 476-3886 or submit a contact form.</p>
+              <p className="text-xs text-gray-500">To schedule, call <a href="tel:423-476-3886" className="text-brand hover:underline">(423) 476-3886</a> or submit a contact form.</p>
             </div>
 
             {/* Support Groups */}
@@ -78,7 +78,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Help with filing for protection orders, preparing for court appearances, and connecting with legal referrals. We walk with you through the process every step of the way.
               </p>
-              <p className="text-xs text-gray-500">Note: we do not provide legal advice or representation. For more info, call/text (423) 889-1479.</p>
+              <p className="text-xs text-gray-500">Note: we do not provide legal advice or representation. For more info, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a>/<a href="sms:423-889-1479" className="text-brand hover:underline">text</a> (423) 889-1479.</p>
             </div>
 
             {/* Community Education */}
@@ -93,7 +93,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Trauma-informed presentations for schools, clubs, churches, businesses, and organizations to help communities recognize, respond to, and prevent abuse.
               </p>
-              <p className="text-xs text-gray-500">To schedule, call/text (423) 889-1479 or submit a contact form.</p>
+              <p className="text-xs text-gray-500">To schedule, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a>/<a href="sms:423-889-1479" className="text-brand hover:underline">text</a> (423) 889-1479 or submit a contact form.</p>
             </div>
 
           </div>
