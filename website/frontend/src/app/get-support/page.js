@@ -34,66 +34,66 @@ export default function GetSupport() {
             No matter where you are in your journey, our advocates are here to walk alongside you.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-4 gap-10">
 
             {/* Crisis Counseling */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-brand stroke-2 fill-none">
                   {/* message-circle icon, feathericons.com */}
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-brand mb-2">Crisis Counseling</p>
+              <p className="text-base font-semibold text-brand mb-3">Crisis Counseling</p>
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Trauma-informed counseling through our hotline, in-person sessions, and support groups. We help with safety planning, goal-setting, court navigation, and building a future free from abuse.
               </p>
-              <p className="text-xs text-gray-500">To schedule, call <a href="tel:423-476-3886" className="text-brand hover:underline">(423) 476-3886</a> or submit a contact form.</p>
+              <p className="text-xs text-gray-500 mt-auto">To schedule, call <a href="tel:423-476-3886" className="text-brand hover:underline">(423) 476-3886</a> or submit a contact form.</p>
             </div>
 
             {/* Support Groups */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-brand stroke-2 fill-none">
                   {/* users icon, feathericons.com */}
                   <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-brand mb-2">Support Groups</p>
+              <p className="text-base font-semibold text-brand mb-3">Support Groups</p>
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Weekly safe, confidential sessions for women and children to learn about domestic violence, build self-esteem, set goals, and create safety plans. Free childcare available with advance notice.
               </p>
-              <p className="text-xs text-gray-500">For details, submit an online contact form.</p>
+              <p className="text-xs text-gray-500 mt-auto">For details, submit an online contact form.</p>
             </div>
 
             {/* Court Advocacy */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-brand stroke-2 fill-none">
                   {/* briefcase icon, feathericons.com */}
                   <rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-brand mb-2">Court Advocacy</p>
+              <p className="text-base font-semibold text-brand mb-3">Court Advocacy</p>
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Help with filing for protection orders, preparing for court appearances, and connecting with legal referrals. We walk with you through the process every step of the way.
               </p>
-              <p className="text-xs text-gray-500">Note: we do not provide legal advice or representation. For more info, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a>/<a href="sms:423-889-1479" className="text-brand hover:underline">text</a> (423) 889-1479.</p>
+              <p className="text-xs text-gray-500 mt-auto">For more info, call/text <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a>. Note: we do not provide legal advice or representation.</p>
             </div>
 
             {/* Community Education */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-brand stroke-2 fill-none">
                   {/* book-open icon, feathericons.com */}
                   <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-brand mb-2">Community Education</p>
+              <p className="text-base font-semibold text-brand mb-3">Community Education</p>
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Trauma-informed presentations for schools, clubs, churches, businesses, and organizations to help communities recognize, respond to, and prevent abuse.
               </p>
-              <p className="text-xs text-gray-500">To schedule, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a>/<a href="sms:423-889-1479" className="text-brand hover:underline">text</a> (423) 889-1479 or submit a contact form.</p>
+              <p className="text-xs text-gray-500 mt-auto">To schedule, call/text <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a> or submit a contact form.</p>
             </div>
 
           </div>
