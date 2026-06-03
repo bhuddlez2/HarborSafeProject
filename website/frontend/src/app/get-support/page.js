@@ -78,7 +78,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Help with filing for protection orders, preparing for court appearances, and connecting with legal referrals. We walk with you through the process every step of the way.
               </p>
-              <p className="text-xs text-gray-500 mt-auto">For more info, call/text <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a>. Note: we do not provide legal advice or representation.</p>
+              <p className="text-xs text-gray-500 mt-auto">For more info, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a> or <a href="sms:423-889-1479" className="text-brand hover:underline">text</a> <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a>. Note: we do not provide legal advice or representation.</p>
             </div>
 
             {/* Community Education */}
@@ -93,7 +93,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed mb-4">
                 Trauma-informed presentations for schools, clubs, churches, businesses, and organizations to help communities recognize, respond to, and prevent abuse.
               </p>
-              <p className="text-xs text-gray-500 mt-auto">To schedule, call/text <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a> or submit a contact form.</p>
+              <p className="text-xs text-gray-500 mt-auto">To schedule, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a> or <a href="sms:423-889-1479" className="text-brand hover:underline">text</a> <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a> or submit a contact form.</p>
             </div>
 
           </div>
