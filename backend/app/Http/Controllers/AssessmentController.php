@@ -7,16 +7,29 @@ use App\Models\AssessmentAnswers;
 
 class AssessmentController extends Controller
 {
+    // GET - list all
     public function index()
     {
-        return view('portal.dashboard');
+        return response()->json(
+            AssessmentAnswers::all()
+        );
     }
 
-    public function create()
+    // GET - get one
+    public function show($uuid) 
     {
-        return view('portal.assessment');
+        return response()->json(AssessmentAnswers::findOrFail($uuid));
     }
 
+    // PUT - update existing
+    public function update(Request $request, $uuid)
+    {
+        $assessment = AssessmentAnswers::findOrFail($uuid);
+        $assessment->update($request->validated());
+        return response()->json($assessment);
+    }
+
+    // POST - create new
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -37,5 +50,12 @@ class AssessmentController extends Controller
 
         return redirect('/portal/dashboard')
             ->with('success', 'Assessment submitted successfully.');
+    }
+
+    // DELETE — delete
+    public function destroy($uuid)
+    {
+        AssessmentAnswers::findOrFail($uuid)->delete();
+        return response()->json(['message' => 'Deleted'], 200);
     }
 }

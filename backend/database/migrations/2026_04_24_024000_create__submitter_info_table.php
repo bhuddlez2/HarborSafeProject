@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('_submitter_info', function (Blueprint $table) {
-            $table->uuid('SubmissionID')->primary();
+            $table->uuid('SubmitterID')->primary();
             $table->string('SubmitterEmail',100)->nullable();
             $table->string('SubmitterPhoneNumber',20)->nullable();
             $table->string('SubmitterFirstName', 50)->nullable();
