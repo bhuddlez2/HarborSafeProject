@@ -20,6 +20,9 @@ jobs:
     - name: Install frontend dependencies
       run: npm ci --prefix website/frontend
 
+    - name: Build frontend
+      run: npm run build --prefix website/frontend
+
     - name: Cache Playwright browsers
       uses: actions/cache@v4
       id: playwright-cache
@@ -34,9 +37,6 @@ jobs:
     - name: Install Playwright system deps
       if: steps.playwright-cache.outputs.cache-hit == 'true'
       run: npx playwright install-deps chromium
-
-    - name: Build frontend
-      run: npm run build --prefix website/frontend
 
     - name: Run Playwright tests
       run: npx playwright test

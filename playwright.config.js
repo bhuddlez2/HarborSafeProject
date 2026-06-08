@@ -19,10 +19,10 @@ export default defineConfig({
   ],
   webServer: {
     command: isCI
-      ? 'npm run build --prefix website/frontend && npm run start --prefix website/frontend'
+      ? 'npx serve website/frontend/out --listen 3000'
       : 'npm run dev --prefix website/frontend',
     url: 'http://localhost:3000',
     reuseExistingServer: !isCI,
-    timeout: 180000,
+    timeout: 60000,
   },
 });
