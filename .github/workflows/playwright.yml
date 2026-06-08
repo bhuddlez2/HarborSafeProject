@@ -42,6 +42,7 @@ jobs:
       run: npx playwright test
       env:
         CI: true
+      timeout-minutes: 10
 
     - uses: actions/upload-artifact@v5
       if: ${{ !cancelled() }}
