@@ -14,15 +14,9 @@ jobs:
       with:
         node-version: lts/*
 
-    # 1. Install root dependencies (where Playwright/Axe usually live)
     - name: Install root dependencies
       run: npm ci
 
-    # 2. Specifically install axe-core/playwright in the root to be safe
-    - name: Ensure Axe is installed in root
-      run: npm install @axe-core/playwright --save-dev
-
-    # 3. Install frontend dependencies (for your Next.js app)
     - name: Install frontend dependencies
       run: npm ci --prefix website/frontend
 
@@ -31,17 +25,16 @@ jobs:
       id: playwright-cache
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-${{ hashFiles('package-lock.json') }}
+        key: playwright-chromium-${{ hashFiles('package-lock.json') }}
 
     - name: Install Playwright Browsers
       if: steps.playwright-cache.outputs.cache-hit != 'true'
-      run: npx playwright install --with-deps
+      run: npx playwright install chromium --with-deps
 
     - name: Install Playwright system deps
       if: steps.playwright-cache.outputs.cache-hit == 'true'
-      run: npx playwright install-deps
+      run: npx playwright install-deps chromium
 
-    # 4. Run tests from root
     - name: Run Playwright tests
       run: npx playwright test
       env:
