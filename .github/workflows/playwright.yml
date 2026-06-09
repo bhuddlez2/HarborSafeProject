@@ -6,7 +6,7 @@ on:
     branches: [ main, development ]
 jobs:
   test:
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -23,30 +23,11 @@ jobs:
     - name: Build frontend
       run: npm run build --prefix website/frontend
 
-    - name: Install Playwright system deps
-      run: npx playwright install-deps chromium
-
-    - name: Cache Playwright browsers
-      uses: actions/cache@v4
-      id: playwright-cache
-      with:
-        path: ~/.cache/ms-playwright
-        key: playwright-chromium-${{ hashFiles('package-lock.json') }}
-        restore-keys: |
-          playwright-chromium-
-
-    - name: Install Playwright browser
-      if: steps.playwright-cache.outputs.cache-hit != 'true'
-      run: npx playwright install chromium
+    - name: Install Playwright (no browser download)
+      run: npm install @playwright/test
 
     - name: Run Playwright tests
-      run: npx playwright test
+      run: npx playwright test --browser=chromium
       env:
         CI: true
-
-    - uses: actions/upload-artifact@v5
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+        PLAYWRIGHT_BROWSERS_PATH: 0

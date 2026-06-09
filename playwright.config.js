@@ -15,7 +15,13 @@ export default defineConfig({
     headless: true,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chrome',
+      },
+    },
   ],
   webServer: {
     command: isCI
