@@ -23,27 +23,26 @@ jobs:
     - name: Build frontend
       run: npm run build --prefix website/frontend
 
+    - name: Install Playwright system deps
+      run: npx playwright install-deps chromium
+
     - name: Cache Playwright browsers
       uses: actions/cache@v4
       id: playwright-cache
       with:
         path: ~/.cache/ms-playwright
         key: playwright-chromium-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          playwright-chromium-
 
-    - name: Install Playwright Browsers
+    - name: Install Playwright browser
       if: steps.playwright-cache.outputs.cache-hit != 'true'
-      run: npx playwright install chromium --with-deps
-      timeout-minutes: 10
-      
-    - name: Install Playwright system deps
-      if: steps.playwright-cache.outputs.cache-hit == 'true'
-      run: npx playwright install-deps chromium
+      run: npx playwright install chromium
 
     - name: Run Playwright tests
       run: npx playwright test
       env:
         CI: true
-      timeout-minutes: 10
 
     - uses: actions/upload-artifact@v5
       if: ${{ !cancelled() }}
