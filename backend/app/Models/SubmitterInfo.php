@@ -26,6 +26,7 @@ class SubmitterInfo extends Model
         'SubmitterPhoneNumber',
         'SubmitterFirstName',
         'SubmitterLastName',
+        'RelationshipToVictim'
     ];
 
 }

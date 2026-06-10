@@ -6,12 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'Portal';
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('_private_assessment', function (Blueprint $table) {
+        Schema::connection('Portal')->create('private_assessment', function (Blueprint $table) {
             $table->uuid('DocumentID')->primary();
             $table->timestamp('DateCreated')->useCurrent();
             $table->string('OffenderFirstName',50);
@@ -24,8 +25,8 @@ return new class extends Migration
             $table->string('VictimSex',1);
             $table->date('VictimDOB');
             $table->string('VictimSafePhoneNumber',20)->nullable();
-            $table->foreignUuid('SubmitterID')->nullable()->constrained('submitter_info_table');
-            $table->foreignUuid('AssessmentDocID')->constrained('assessment_answers_table');        //Actual assessment doc #
+            $table->foreignUuid('SubmissionID')->nullable()->references('SubmissionID')->on('submitter_info');
+            $table->foreignUuid('AssessmentDocID')->references('AssessmentDocID')->on('assessment_answers');        //Actual assessment doc #
         });
     }
 

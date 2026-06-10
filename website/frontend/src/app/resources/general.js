@@ -1,0 +1,435 @@
+export const generalCategory = {
+  id: "general",
+  title: "General",
+  subtitle: "Victim services, crisis lines, healthcare, housing, and food assistance",
+  resources: [
+    {
+      type: "modal",
+      name: "DV/SA Victims",
+      description: "Local organizations and services for domestic violence and sexual assault victims",
+      subResources: [
+        {
+          name: "Harbor Safe House & Advocacy Center",
+          description: "24/7 Crisis Line",
+          phones: ["Voice 423-476-3886", "Text 423-715-9614"],
+          services: [
+            "Guidance and advocacy through the court process",
+            "Court accompaniment",
+            "Free counseling and education",
+            "Safety planning and Lethality Assessment",
+            "Info and referrals for services",
+            "Emergency Shelter",
+          ],
+        },
+        {
+          name: "Bradley County General Sessions Court",
+          address: "155 N. Ocoee Street, Room 204, Cleveland, TN 37311",
+          phone: "423-728-7218",
+          url: "https://www.bradleycountytn.gov",
+          services: [
+            "File Orders of Protection",
+            "Bilingual services",
+          ],
+        },
+        {
+          name: "Polk County Clerk & Master's Office",
+          address: "164 Industrial Access Circle, Benton, TN 37307",
+          phone: "423-333-4524",
+          url: "https://www.polkgovernment.com",
+          services: [
+            "File Orders of Protection",
+            "Bilingual services",
+          ],
+        },
+        {
+          name: "Legal Aid of East Tennessee",
+          address: "270 N. Ocoee Street, Cleveland, TN 37311",
+          phone: "423-303-2266",
+          url: "https://www.laet.org",
+          services: [
+            "Orders of Protection",
+            "Legal Advice",
+            "Self Help Legal Resources",
+          ],
+        },
+        {
+          name: "Safe at Home",
+          description: "Address Confidentiality Program - online application",
+          url: "https://sos.tn.gov/SafeAtHome",
+        },
+        {
+          name: "Tennessee Criminal Injuries Compensation",
+          description: "Online application. The Criminal Injuries Compensation Fund was established as a fund of last resort to financially assist innocent victims of violent crime in Tennessee. Victims and claimants may be reimbursed for medical expenses, loss of wages, and other unforeseen costs related to the crime.",
+          url: "https://treasury.tn.gov/Services/Claims-and-Risk-Management/Criminal-Injuries-Compensation",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "24-Hour Lines",
+      description: "Crisis hotlines and help lines available around the clock",
+      subResources: [
+        {
+          name: "Harbor Safe House & Advocacy Center",
+          description: "24/7 Crisis Line",
+          phones: ["Voice 423-476-3886", "Text 423-715-9614"],
+        },
+        {
+          name: "National Domestic Violence Hotline",
+          phone: "1-800-799-7233",
+          url: "https://www.thehotline.org",
+        },
+        {
+          name: "Military OneSource",
+          phone: "1-800-342-9647",
+        },
+        {
+          name: "Real Warriors Live Chat",
+          phone: "1-866-966-1020",
+        },
+        {
+          name: "NAMI",
+          description: "M-F 10:00 AM to 10:00 PM - Text NAMI to 62640",
+          phone: "800-950-NAMI (6264)",
+          url: "https://www.nami.org",
+        },
+        {
+          name: "988 Lifeline",
+          description: "Call and Text 24/7",
+          phone: "988",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Hospital and Forensics",
+      description: "Medical care and forensic exam resources for DV/SA victims",
+      subResources: [
+        {
+          alert: true,
+          services: [
+            "If you have been strangled or otherwise had your breathing or blood circulation impeded, seek medical attention.",
+            "If you are a DV victim, there may be funds to help pay for your medical exam.",
+            "Symptoms may be life-threatening, including swelling inside the throat, which can take up to 36 hours to develop.",
+          ],
+        },
+        {
+          name: "Vitruvian Health Bradley Medical Center",
+          address: "2305 Chambliss Ave. NW, Cleveland, TN 37311",
+          phone: "423-559-6000",
+        },
+        {
+          name: "Harbor Safe House & Advocacy Center",
+          description: "For assistance setting up a Forensic Exam",
+          phones: ["Voice 423-476-3886", "Text 423-715-9614"],
+        },
+        {
+          name: "Child Advocacy Center",
+          address: "704 W Madison Ave, Athens, TN 37303",
+          phone: "423-774-0599",
+          url: "https://thehopecenterinc.com/",
+        },
+        {
+          name: "Partnership for Families Children and Adults",
+          description: "24/7 Crisis Line",
+          address: "5600 Brainerd Rd., Suite E-3, Chattanooga, TN 37411",
+          phone: "423-755-2700",
+          url: "https://www.partnershipfca.com",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Inmate Status",
+      description: "Contact county jails to inquire about inmate status",
+      subResources: [
+        {
+          name: "Bradley County Jail",
+          phone: "423-728-7300",
+        },
+        {
+          name: "Polk County Jail",
+          phone: "423-338-8215",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Clothing",
+      description: "Thrift stores, clothing assistance, and infant needs in the area",
+      subResources: [
+        {
+          name: "The Caring Place",
+          description: "Tue: 9-12 & 4:30-7:00, Wed: 10-12 (Supportive Shopping), Thur: 9-12 | Opportunity Center: Mon-Thur 9-4",
+          address: "2400 Bower Lane SE, Cleveland, TN 37311",
+          phones: ["423-472-4414", "Intake Line: 423-472-0769"],
+          url: "https://www.thecaringplaceonline.org",
+        },
+        {
+          name: "hope4one",
+          description: "By Referral - Clothing/Infant Needs",
+          address: "2400 Georgetown Rd., Cleveland, TN 37311",
+          phone: "423-599-9682",
+          url: "https://www.hope4oneministries.org",
+        },
+        {
+          name: "People Helping People",
+          description: "Mon, Tue, Thur, Fri: 10-4",
+          address: "184 Mull Road, Benton, TN 37307",
+          phone: "423-299-9062",
+          url: "https://www.peoplehelpingpeopletn.org",
+        },
+        {
+          name: "Second Harvest Ministries Thrift Store",
+          description: "Wed-Sat 10-5",
+          address: "1543 S Lee Hwy, Cleveland, TN 37311",
+          phone: "423-478-8084",
+          url: "https://www.nccog.com/secondharvest",
+        },
+        {
+          name: "TN Valley Diaper Bank",
+          description: "By Referral Only",
+          url: "https://www.tennesseevalleydiaperbank.com",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Housing",
+      description: "Rental housing assistance programs in Bradley County",
+      subResources: [
+        {
+          name: "Bradley Cleveland Community Services Rental Housing Program",
+          address: "155 6th St. SE, Cleveland, TN 37311",
+          phone: "423-479-4111",
+          url: "https://www.bccsagencytn.org",
+        },
+        {
+          name: "Cleveland Housing Authority",
+          address: "450 Walker Street NE, Cleveland, TN 37320",
+          phone: "423-479-9659",
+          url: "https://www.clevelandhousingauthority.org",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Case Management",
+      description: "Organizations providing case management and behavioral health services",
+      subResources: [
+        {
+          name: "Harbor Safe House & Advocacy Center",
+          description: "24/7 Crisis Line",
+          phones: ["Voice 423-476-3886", "Text 423-715-9614"],
+          url: "https://www.hshac.org",
+        },
+        {
+          name: "Caring Place",
+          phone: "423-472-0769",
+          url: "https://www.thecaringplaceonline.org",
+        },
+        {
+          name: "Salvation Army",
+          phone: "423-308-3467",
+          url: "https://www.southernusa.salvationarmy.org/chattanooga",
+        },
+        {
+          name: "Starfish Family Cornerstone",
+          phone: "423-559-1112",
+          url: "https://www.familycornerstones.com",
+        },
+        {
+          name: "Centerstone",
+          phone: "877-467-3123",
+          url: "https://www.centerstone.org",
+        },
+        {
+          name: "Volunteer Behavioral Health",
+          phone: "423-479-5454",
+          url: "https://www.volunteerbehavioralhealth.org",
+        },
+        {
+          name: "Mental Health Cooperative",
+          phone: "423-728-6400",
+          url: "https://mhc-tn.com/",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Counseling and Mental Healthcare",
+      description: "Mental health counseling, psychiatric services, and recovery support programs",
+      subResources: [
+        {
+          name: "Omni Cleveland",
+          description: "Includes Support Services - Low/No Income",
+          address: "2600 Executive Park Northwest, Cleveland, TN 37312",
+          phone: "423-244-9006",
+          url: "https://www.theomifamily.com",
+        },
+        {
+          name: "Hiwassee Mental Health (Volunteer Behavioral Health)",
+          description: "Includes Support Services - Low/No Income",
+          address: "940 S Ocoee St., Cleveland, TN 37311",
+          phone: "423-479-5454",
+          url: "https://www.vbhcs.org",
+        },
+        {
+          name: "Mental Health Cooperative",
+          description: "TennCare plans, Behavioral Health Safety Net, Uninsured",
+          address: "2544 Dalton Pike SE, Cleveland, TN 37323",
+          phone: "423-728-6400",
+          url: "https://mhc-tn.com/",
+        },
+        {
+          name: "Centerstone",
+          address: "4160 N Ocoee Street, Suite 8, Cleveland, TN 37312",
+          phone: "423-241-5935",
+          url: "https://www.centerstone.org",
+        },
+        {
+          name: "Parkridge Valley Cleveland Outreach Program",
+          description: "Outpatient Addiction Recovery - Non-profit, Medicaid, Medicare, Commercial Insurance",
+          address: "1855 Executive Park Dr NW, Cleveland, TN 37312",
+          phone: "423-472-1999",
+          url: "https://www.parkridgehealth.com",
+          services: ["Treatment", "Housing", "Life Reintegration"],
+        },
+        {
+          name: "Bradley Behavioral Health",
+          description: "Outpatient and/or Inpatient Psychiatric Needs, Addiction",
+          address: "2800 Westside Drive NW, Cleveland, TN 37312",
+          phone: "423-380-6380",
+        },
+        {
+          name: "Hope and Healing Counseling Services",
+          description: "Glyndora Condon MS MFT LPC - Sliding Scale and Insurance Plans Accepted",
+          address: "150 Stuart Rd. Suite 101, Cleveland, TN 37311",
+          phone: "423-790-4906",
+          url: "https://www.healhopecounseling.com",
+        },
+        {
+          name: "Mental Health Cooperative",
+          description: "Serving individuals with TennCare and those who qualify for state funded benefits",
+          address: "2544 Dalton Pike SE, Cleveland, TN 37323",
+          phone: "423-728-6031",
+          url: "https://mhc-tn.com/",
+        },
+        {
+          name: "Neighbors United",
+          description: "Serving individuals at low or no cost",
+          address: "956 6th St. NE, Cleveland, TN 37311",
+          phone: "423-331-6811",
+          url: "https://www.neighborsunitedcounselling.org",
+        },
+        {
+          name: "Bradley Prevention Coalition",
+          description: "One-on-One Peer Recovery Mentorship, Case Management Support (accessing community resources)",
+          address: "2254 Blythe Ave. SE, Cleveland, TN 37311",
+          phone: "423-464-7568",
+        },
+        {
+          name: "Pirate Springs",
+          description: "Long-term Recovery Program",
+          address: "4053 Old Free Will Rd. NW, Cleveland, TN 37312",
+          phone: "423-476-4860",
+          url: "https://www.piratesprings.org",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Healthcare Services",
+      description: "County health departments and community health clinics",
+      subResources: [
+        {
+          name: "Bradley County Health Department",
+          description: "Immunizations, Family Planning, Primary Care, Dental Care",
+          address: "201 Dooley Street SE, Cleveland, TN 37311",
+          phone: "423-728-7020",
+        },
+        {
+          name: "Polk County Health Department",
+          description: "Immunizations, Family Planning, Primary Care, Dental Care",
+          locations: [
+            { label: "Benton", address: "2279 Parksville Road, Benton, TN 37307", phone: "423-338-4533" },
+            { label: "Ducktown", address: "840 Cherokee Trail, Ducktown, TN 37326", phone: "423-496-3275" },
+          ],
+        },
+        {
+          name: "Karis Community Health",
+          description: "Medical and Dental",
+          address: "254 Broad Street SW, Cleveland, TN 37311",
+          phone: "423-457-8024",
+        },
+      ],
+    },
+    {
+      type: "modal",
+      name: "Food Assistance",
+      description: "Food pantries, meal programs, and nutrition assistance in the area",
+      subResources: [
+        {
+          name: "Tennessee Department of Human Services",
+          description: "SNAP",
+          address: "950 Star Vue Dr. SW #1, Cleveland, TN 37311",
+          phone: "423-478-0300",
+        },
+        {
+          name: "Bradley County Health Department",
+          description: "WIC",
+          address: "201 Dooley Street SE, Cleveland, TN 37311",
+          phone: "423-728-7020",
+        },
+        {
+          name: "The Caring Place",
+          description: "Tue: 9-12 & 4:30-7:00, Wed: 10-12 (Supportive Shopping), Thur: 9-12",
+          address: "2400 Bower Lane SE, Cleveland, TN 37311",
+          phone: "423-472-4414",
+        },
+        {
+          name: "Wesley Memorial United Methodist Church",
+          description: "Emergency Pantry M/Th 9-12 | Wednesdays 5:30 Dinner by Reservation",
+          address: "3405 Peerless Rd. NW, Cleveland, TN 37312",
+          phone: "423-472-9578",
+        },
+        {
+          name: "New Life Community Kitchen",
+          description: "Pantry: Mon-Thur 7:30-9 AM (limited to use once every two weeks)",
+          address: "910 17th Street, Cleveland, TN 37311",
+          phone: "423-476-6281",
+        },
+        {
+          name: "Big Springs Baptist Church",
+          description: "Pantry includes formula, diapers, fresh food, and more | Meals on Wheels service for disabled and elderly",
+          address: "1415 Hardwick St. SE, Cleveland, TN 37311",
+          phone: "423-472-1101",
+        },
+        {
+          name: "First Baptist Church/Cleveland",
+          description: "Mann Food Ministry - non-perishable food and hygiene items",
+          address: "1275 Stuart Rd., Cleveland, TN 37312",
+          phone: "423-709-9100",
+        },
+        {
+          name: "Spring Place Church of God Prophecy",
+          description: "Food Pantry open Tuesday 10-2 - Groceries, dairy, and other items",
+          address: "2600 Spring Place Rd. SE, Cleveland, TN 37323",
+          phone: "423-476-6414",
+        },
+        {
+          name: "North Cleveland Church of God",
+          description: "Food Bank, holiday food boxes",
+          address: "335 11th St. NE, Cleveland, TN 37311",
+          phone: "423-476-5513",
+        },
+        {
+          name: "Saint Therese Catholic Church",
+          description: "Tue/Thur - Canned and non-perishables",
+          address: "900 Clingan Ridge Dr, Cleveland, TN 37312",
+          phone: "423-476-8123",
+        },
+      ],
+    },
+  ],
+};
