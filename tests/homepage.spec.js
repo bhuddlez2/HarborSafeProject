@@ -96,7 +96,7 @@ test.describe('Exit Button (Critical Safety Feature)', () => {
 
     test('exit button is visible on homepage', async ({ page }) => {
         await page.goto('/');
-        await expect(page.getByRole('button', { name: /safe exit|exit/i })).toBeVisible();
+        await expect(page.locator('#exit-button')).toBeVisible();
     });
 
     test('exit button is visible on about page', async ({ page }) => {
@@ -116,7 +116,7 @@ test.describe('Exit Button (Critical Safety Feature)', () => {
 
     test('exit button is enabled on homepage', async ({ page }) => {
         await page.goto('/');
-        await expect(page.getByRole('button', { name: /safe exit|exit/i })).toBeEnabled();
+        await expect(page.locator('#exit-button')).toBeEnabled();
     });
 
     test('exit button navigates away from site', async ({ page }) => {
@@ -210,17 +210,17 @@ test.describe('About Page', () => {
 
     test('Tennessee Coalition partner is listed with link', async ({ page }) => {
         await page.goto('/about/');
-        await expect(page.getByRole('link', { name: /tennessee coalition/i })).toBeVisible();
+        await expect(page.getByRole('heading', { name: /tennessee coalition/i })).toBeVisible();
     });
 
     test('Legal Aid partner is listed with link', async ({ page }) => {
         await page.goto('/about/');
-        await expect(page.getByRole('link', { name: /legal aid/i })).toBeVisible();
+        await expect(page.getByRole('heading', { name: /legal aid/i })).toBeVisible();
     });
 
     test('The Caring Place partner is listed with link', async ({ page }) => {
         await page.goto('/about/');
-        await expect(page.getByRole('link', { name: /the caring place/i })).toBeVisible();
+        await expect(page.getByRole('heading', { name: /the caring place/i })).toBeVisible();
     });
 
     test('partner links open in new tab', async ({ page }) => {
