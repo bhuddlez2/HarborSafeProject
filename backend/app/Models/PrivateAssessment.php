@@ -20,6 +20,9 @@ class PrivateAssessment extends BaseModel
     //Mapped Table
     protected $table = 'private_assessment';
 
+    //Primary Key
+    protected $primaryKey = 'DocumentID';
+
     //UUID specifications
     protected $keyType = 'string';
     public $incrementing = false;
@@ -36,7 +39,7 @@ class PrivateAssessment extends BaseModel
         'VictimSex',
         'VictimDOB',
         'VictimSafePhoneNumber',
-        'SubmitterID',
+        'SubmissionID',
         'AssessmentDocID'        
     ];
 

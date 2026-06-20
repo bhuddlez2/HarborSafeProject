@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class AssessmentAnswers extends Model
+class AssessmentAnswers extends BaseModel
 {
     //Sets up UUID input for new records
     use HasUuids;
@@ -15,6 +14,9 @@ class AssessmentAnswers extends Model
 
     //Mapped Table
     protected $table = 'assessment_answers';
+
+    //Primary Key
+    protected $primaryKey = 'AssessmentDocID';
 
     //UUID specifications
     protected $keyType = 'string';
