@@ -20,7 +20,6 @@ class AssessmentAnswers extends BaseModel
     protected $primaryKey = 'AssessmentDocID';
 
     //UUID specifications
-    protected $primaryKey = 'AssessmentDocID';
     protected $keyType = 'string';
     public $incrementing = false;
     public $timestamps = false;
