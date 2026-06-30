@@ -9,16 +9,20 @@ class AssessmentAnswers extends Model
 {
     //Sets up UUID input for new records
     use HasUuids;
+    
 
     //DB Connection
     protected $connection = 'Portal';
 
     //Mapped Table
-    protected $table = 'assessment_answers';
+    protected $table = '_assessment_answers';
 
     //UUID specifications
+    protected $primaryKey = 'AssessmentDocID';
     protected $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
+
 
     //Fillable Columns
     protected $fillable = [
@@ -34,4 +38,9 @@ class AssessmentAnswers extends Model
         'RiskIndicator10',
         'RiskIndicator11'
     ];
+
+    public function uniqueIds(): array
+    {
+        return [$this->primaryKey];
+    }
 }

@@ -20,7 +20,7 @@ Route::get('/', function () {
 });
 
 // Routes for the private assessment table
-Route::apiResource('/assessments', PrivateAssessment::class);
+Route::apiResource('/private-assessments', PrivateAssessmentController::class);
 
 // Routes for lethality assessment table
-Route::apiResource('/lethalityassessment', AssessmentController::class);
+Route::apiResource('/assessments', AssessmentController::class);

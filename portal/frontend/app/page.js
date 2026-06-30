@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
+import { submitAssessment } from "@/app/lib/api";
 
 export default function AssessmentPage() {
   // phase: cycles through "prescreen", "intro", "questions", and "complete"
@@ -34,6 +35,9 @@ export default function AssessmentPage() {
   const [abuserAge, setAbuserAge] = useState("");
   const [abuserSex, setAbuserSex] = useState("");
 
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
   // total question count and current question
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -41,20 +45,42 @@ export default function AssessmentPage() {
   // below functions are called throughout the program alongside button presses to handle user interaction and program flow
 
   // handles the answer, recording it and advancing
-  const handleAnswer = (value) => {
-    // think of updated as a copy of current answers that modifies the set
-    // Update answers with the current response, and overwrites answer as well, allowing back navigation
-    // in react we need to create a new object to trigger re-render, which is why we take the old answers
+  const handleAnswer = async (value) => {
     const updated = { ...answers, [current.id]: value };
-    // calls the state setter to update answers with the new object
     setAnswers(updated);
-    // handles question navigation, advancing until completion
+
     if (index < total - 1) {
-      setIndex(index + 1);
+        setIndex(index + 1);
     } else {
-      setPhase("complete");
+        // last question answered — submit to API
+        setSubmitting(true);
+        setSubmitError(null);
+        try {
+            await submitAssessment({
+                anonymous,
+                forWhom,
+                firstName,
+                lastName,
+                relationship,
+                phone,
+                subjectFirstName,
+                subjectLastName,
+                subjectAge,
+                subjectSex,
+                abuserFirstName,
+                abuserLastName,
+                abuserAge,
+                abuserSex,
+                answers: updated, // use updated not answers — state hasn't updated yet
+            });
+            setPhase("complete");
+        } catch (err) {
+            setSubmitError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
     }
-  };
+};
 
   // sets the user back one question, until the first
   const handleBack = () => {

@@ -14,11 +14,13 @@ class SubmitterInfo extends Model
     protected $connection = 'Portal';
 
     //Mapped Table
-    protected $table = 'submitter_info';
+    protected $table = '_submitter_info';
 
     //UUID specifications
     protected $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
+
 
     //Fillable Columns
     protected $fillable = [

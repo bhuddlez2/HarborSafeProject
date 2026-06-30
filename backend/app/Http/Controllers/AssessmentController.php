@@ -46,10 +46,12 @@ class AssessmentController extends Controller
             'RiskIndicator11' => 'required|boolean',
         ]);
 
-        AssessmentAnswers::create($validated);
+        $assessment = AssessmentAnswers::create($validated);
 
-        return redirect('/portal/dashboard')
-            ->with('success', 'Assessment submitted successfully.');
+        return response()->json([
+            'message' => 'Assessment saved',
+            'data'    => $assessment
+        ], 201);
     }
 
     // DELETE — delete
