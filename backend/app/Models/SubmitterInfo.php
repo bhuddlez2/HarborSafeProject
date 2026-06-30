@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class SubmitterInfo extends Model
+class SubmitterInfo extends BaseModel
 {
     //Sets up UUID input for new records
     use HasUuids;
@@ -15,6 +14,9 @@ class SubmitterInfo extends Model
 
     //Mapped Table
     protected $table = '_submitter_info';
+
+    //Primary Key
+    protected $primaryKey = 'SubmissionID';
 
     //UUID specifications
     protected $keyType = 'string';
@@ -28,6 +30,7 @@ class SubmitterInfo extends Model
         'SubmitterPhoneNumber',
         'SubmitterFirstName',
         'SubmitterLastName',
+        'RelationshipToVictim'
     ];
 
 }

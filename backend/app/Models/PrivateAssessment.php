@@ -39,7 +39,7 @@ class PrivateAssessment extends BaseModel
         'VictimSex',
         'VictimDOB',
         'VictimSafePhoneNumber',
-        'SubmitterID',
+        'SubmissionID',
         'AssessmentDocID'        
     ];
 
