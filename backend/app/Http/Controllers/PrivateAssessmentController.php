@@ -44,8 +44,8 @@ class PrivateAssessmentController extends Controller
             'VictimSex'                     => 'required|string|max:1',
             'VictimDOB'                     => 'nullable|date',
             'VictimSafePhoneNumber'         => 'nullable|string|20',
-            'SubmitterID'                   => 'nullable|uuid|exists:submitter_info,SubmissionID',  
-            'AssessmentDocID'               => 'required|uuid|exists|assessment_answers,AssessmentDocID',
+            'SubmitterID'                   => 'nullable|uuid|exists:_submitter_info,SubmissionID',  
+            'AssessmentDocID'               => 'required|uuid|exists:_assessment_answers,AssessmentDocID',
         ]);
 
         return response()->json(
