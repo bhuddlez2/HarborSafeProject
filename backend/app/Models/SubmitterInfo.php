@@ -16,7 +16,7 @@ class SubmitterInfo extends BaseModel
     protected $table = '_submitter_info';
 
     //Primary Key
-    protected $primaryKey = 'SubmissionID';
+    protected $primaryKey = 'SubmitterID';
 
     //UUID specifications
     protected $keyType = 'string';
@@ -29,9 +29,12 @@ class SubmitterInfo extends BaseModel
         'SubmitterEmail',
         'SubmitterPhoneNumber',
         'SubmitterFirstName',
-        'SubmitterLastName',
-        'RelationshipToVictim'
+        'SubmitterLastName'
     ];
 
+    public function uniqueIds(): array
+    {
+        return ['SubmitterID'];
+    }
 }
 

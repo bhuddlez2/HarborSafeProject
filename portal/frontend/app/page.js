@@ -2,6 +2,7 @@
 
 import { useState, useEffect, startTransition } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
+import { submitAssessment } from "@/app/lib/api";
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function AssessmentPage() {
@@ -66,33 +67,7 @@ export default function AssessmentPage() {
     if (index < total - 1) {
         setIndex(index + 1);
     } else {
-        // last question answered — submit to API
-        setSubmitting(true);
-        setSubmitError(null);
-        try {
-            await submitAssessment({
-                anonymous,
-                forWhom,
-                firstName,
-                lastName,
-                relationship,
-                phone,
-                subjectFirstName,
-                subjectLastName,
-                subjectAge,
-                subjectSex,
-                abuserFirstName,
-                abuserLastName,
-                abuserAge,
-                abuserSex,
-                answers: updated, // use updated not answers — state hasn't updated yet
-            });
-            setPhase("complete");
-        } catch (err) {
-            setSubmitError(err.message);
-        } finally {
-            setSubmitting(false);
-        }
+        setPhase("complete");
     }
 };
 
@@ -645,6 +620,10 @@ export default function AssessmentPage() {
             </div>
           </div>
 
+          {submitError && (
+              <p className="text-red-600 text-sm mb-4">Error Submitting Assessment. Please try again!</p>
+          )}
+
           <div className="flex gap-4">
             <button
               onClick={() => { setIndex(total - 1); setPhase("questions"); }}
@@ -655,17 +634,84 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+              onClick={async () => {
+                  setSubmitting(true);
+                  setSubmitError(null);
+                  try {
+                      await submitAssessment({
+                          anonymous,
+                          forWhom,
+                          firstName,
+                          lastName,
+                          email,
+                          phone,
+                          victimFirstName,
+                          victimLastName,
+                          victimDob,
+                          victimSex,
+                          victimPhone,
+                          offenderFirstName,
+                          offenderLastName,
+                          offenderDob,
+                          offenderSex,
+                          offenderRelationship,
+                          answers,
+                      });
+                      setPhase("submitted");
+                  } catch (err) {
+                      setSubmitError(err.message);
+                  } finally {
+                      setSubmitting(false);
+                  }
+              }}
+              disabled={submitting}
+              className={`bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                        hover:bg-gray-700 focus:outline-none
+                        focus:ring-4 focus:ring-gray-400 transition
+                        ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Submit assessment
-            </button>
+              {submitting ? 'Submitting...' : 'Submit assessment'}
+          </button>
           </div>
         </div>
       </main>
     );
   }
+
+  // Submit Phase
+  if (phase === "submitted") {
+    return (
+        <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+            <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
+                <h1 className="text-3xl font-semibold text-gray-900 mb-6">
+                    Assessment submitted
+                </h1>
+                <p className="text-gray-700 text-lg mb-10 leading-relaxed">
+                    The assessment has been saved successfully.
+                </p>
+                <button
+                    onClick={() => {
+                        // reset all state
+                        setAnswers({});
+                        setIndex(0);
+                        setForWhom(null);
+                        setAnonymous(null);
+                        setFirstName(""); setLastName(""); setEmail(""); setPhone("");
+                        setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimSex(""); setVictimPhone("");
+                        setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderSex(""); setOffenderRelationship("");
+                        setSubmitError(null);
+                        setPhase("prescreen");
+                    }}
+                    className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                               hover:bg-gray-700 focus:outline-none
+                               focus:ring-4 focus:ring-gray-400 transition"
+                >
+                    Start new assessment
+                </button>
+            </div>
+        </main>
+    );
+}
 
   // Questions phase
   const percent = Math.round(((index + 1) / total) * 100);

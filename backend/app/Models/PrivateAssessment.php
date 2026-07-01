@@ -18,7 +18,7 @@ class PrivateAssessment extends BaseModel
     protected $connection = 'Portal';
 
     //Mapped Table
-    protected $table = '_private_assessments';
+    protected $table = '_private_assessment';
 
     //UUID specifications
     protected $primaryKey = "DocumentID";

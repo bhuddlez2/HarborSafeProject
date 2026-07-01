@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 //controller connections
 use App\Http\Controllers\PrivateAssessmentController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\SubmitterInfoController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -24,3 +25,6 @@ Route::apiResource('/private-assessments', PrivateAssessmentController::class);
 
 // Routes for lethality assessment table
 Route::apiResource('/assessments', AssessmentController::class);
+
+// Routes for submitter info table
+Route::apiResource('/submitter-info', SubmitterInfoController::class);

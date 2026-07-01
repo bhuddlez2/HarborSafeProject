@@ -38,12 +38,12 @@ class PrivateAssessmentController extends Controller
             'OffenderLastName'               => 'required|string|max:50',
             'OffenderSex'                   => 'required|string|max:1',
             'OffenderDOB'                   => 'nullable|date',
-            'OffenderVictimRelationship'    => 'required|string|50',
+            'OffenderVictimRelationship'    => 'required|string|max:50',
             'VictimFirstName'               => 'required|string|max:50',
             'VictimLastName'                => 'required|string|max:50',
             'VictimSex'                     => 'required|string|max:1',
             'VictimDOB'                     => 'nullable|date',
-            'VictimSafePhoneNumber'         => 'nullable|string|20',
+            'VictimSafePhoneNumber'         => 'nullable|string|max:20',
             'SubmitterID'                   => 'nullable|uuid|exists:_submitter_info,SubmissionID',  
             'AssessmentDocID'               => 'required|uuid|exists:_assessment_answers,AssessmentDocID',
         ]);
@@ -69,14 +69,14 @@ class PrivateAssessmentController extends Controller
             'OffenderLastName'               => 'nullable|string|max:50',
             'OffenderSex'                   => 'nullable|string|max:1',
             'OffenderDOB'                   => 'nullable|date',
-            'OffenderVictimRelationship'    => 'nullable|string|50',
+            'OffenderVictimRelationship'    => 'nullable|string|max:50',
             'VictimFirstName'               => 'nullable|string|max:50',
             'VictimLastName'                => 'nullable|string|max:50',
             'VictimSex'                     => 'nullable|string|max:1',
             'VictimDOB'                     => 'nullable|date',
-            'VictimSafePhoneNumber'         => 'nullable|string|20',
-            'SubmitterID'                   => 'nullable|uuid|exists:submitter_info,SubmissionID',  
-            'AssessmentDocID'               => 'nullable|uuid|exists|assessment_answers,AssessmentDocID',
+            'VictimSafePhoneNumber'         => 'nullable|string|max:20',
+            'SubmitterID'                   => 'nullable|uuid|exists:_submitter_info,SubmissionID',  
+            'AssessmentDocID'               => 'nullable|uuid|exists:_assessment_answers,AssessmentDocID',
         ]);
 
         $assessment->update($validated);
