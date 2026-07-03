@@ -621,7 +621,7 @@ export default function AssessmentPage() {
           </div>
 
           {submitError && (
-              <p className="text-red-600 text-sm mb-4">Error Submitting Assessment. Please try again!</p>
+              <p className="text-red-600 text-sm mb-4">{submitError}</p>
           )}
 
           <div className="flex gap-4">
