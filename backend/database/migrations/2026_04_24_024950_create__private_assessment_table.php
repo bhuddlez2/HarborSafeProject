@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('VictimSex',1);
             $table->date('VictimDOB');
             $table->string('VictimSafePhoneNumber',20)->nullable();
-            $table->foreignUuid('SubmissionID')->nullable()->references('SubmissionID')->on('submitter_info');
+            $table->foreignUuid('SubmissionID')->nullable()->references('SubmitterID')->on('submitter_info');
             $table->foreignUuid('AssessmentDocID')->references('AssessmentDocID')->on('assessment_answers');        //Actual assessment doc #
         });
     }

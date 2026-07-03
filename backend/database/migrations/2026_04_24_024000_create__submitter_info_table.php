@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('Portal')->create('submitter_info', function (Blueprint $table) {
-            $table->uuid('SubmitterID')->nullable()->primary();
+            $table->uuid('SubmitterID')->primary();
             $table->string('SubmitterEmail',100)->nullable();
             $table->string('SubmitterPhoneNumber',20)->nullable();
             $table->string('SubmitterFirstName', 50)->nullable();
