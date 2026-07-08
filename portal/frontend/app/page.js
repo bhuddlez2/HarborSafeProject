@@ -2,6 +2,7 @@
 
 import { useState, useEffect, startTransition } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
+import { submitAssessment } from "@/app/lib/api";
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function AssessmentPage() {
@@ -49,6 +50,9 @@ export default function AssessmentPage() {
   const [offenderRelationship, setOffenderRelationship] = useState("");
 
 
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
   // total question count and current question
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -56,20 +60,16 @@ export default function AssessmentPage() {
   // below functions are called throughout the program alongside button presses to handle user interaction and program flow
 
   // handles the answer, recording it and advancing
-  const handleAnswer = (value) => {
-    // think of updated as a copy of current answers that modifies the set
-    // Update answers with the current response, and overwrites answer as well, allowing back navigation
-    // in react we need to create a new object to trigger re-render, which is why we take the old answers
+  const handleAnswer = async (value) => {
     const updated = { ...answers, [current.id]: value };
-    // calls the state setter to update answers with the new object
     setAnswers(updated);
-    // handles question navigation, advancing until completion
+
     if (index < total - 1) {
-      setIndex(index + 1);
+        setIndex(index + 1);
     } else {
-      setPhase("complete");
+        setPhase("complete");
     }
-  };
+};
 
   // sets the user back one question, until the first
   const handleBack = () => {
@@ -620,6 +620,10 @@ export default function AssessmentPage() {
             </div>
           </div>
 
+          {submitError && (
+              <p className="text-red-600 text-sm mb-4">{submitError}</p>
+          )}
+
           <div className="flex gap-4">
             <button
               onClick={() => { setIndex(total - 1); setPhase("questions"); }}
@@ -630,17 +634,84 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+              onClick={async () => {
+                  setSubmitting(true);
+                  setSubmitError(null);
+                  try {
+                      await submitAssessment({
+                          anonymous,
+                          forWhom,
+                          firstName,
+                          lastName,
+                          email,
+                          phone,
+                          victimFirstName,
+                          victimLastName,
+                          victimDob,
+                          victimSex,
+                          victimPhone,
+                          offenderFirstName,
+                          offenderLastName,
+                          offenderDob,
+                          offenderSex,
+                          offenderRelationship,
+                          answers,
+                      });
+                      setPhase("submitted");
+                  } catch (err) {
+                      setSubmitError(err.message);
+                  } finally {
+                      setSubmitting(false);
+                  }
+              }}
+              disabled={submitting}
+              className={`bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                        hover:bg-gray-700 focus:outline-none
+                        focus:ring-4 focus:ring-gray-400 transition
+                        ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Submit assessment
-            </button>
+              {submitting ? 'Submitting...' : 'Submit assessment'}
+          </button>
           </div>
         </div>
       </main>
     );
   }
+
+  // Submit Phase
+  if (phase === "submitted") {
+    return (
+        <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+            <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
+                <h1 className="text-3xl font-semibold text-gray-900 mb-6">
+                    Assessment submitted
+                </h1>
+                <p className="text-gray-700 text-lg mb-10 leading-relaxed">
+                    The assessment has been saved successfully.
+                </p>
+                <button
+                    onClick={() => {
+                        // reset all state
+                        setAnswers({});
+                        setIndex(0);
+                        setForWhom(null);
+                        setAnonymous(null);
+                        setFirstName(""); setLastName(""); setEmail(""); setPhone("");
+                        setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimSex(""); setVictimPhone("");
+                        setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderSex(""); setOffenderRelationship("");
+                        setSubmitError(null);
+                        setPhase("prescreen");
+                    }}
+                    className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                               hover:bg-gray-700 focus:outline-none
+                               focus:ring-4 focus:ring-gray-400 transition"
+                >
+                    Start new assessment
+                </button>
+            </div>
+        </main>
+    );
+}
 
   // Questions phase
   const percent = Math.round(((index + 1) / total) * 100);
