@@ -32,7 +32,9 @@ return [
 
     'connections' => [
 
-        //Defaul Connection
+        // Default connection. Backs the stock Laravel tables (users, cache,
+        // jobs, sessions, personal_access_tokens) that don't set their own
+        // $connection on the model/migration.
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
@@ -52,36 +54,17 @@ return [
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
-        //Defaul Connection
-        'create_db' => [
-            'driver' => 'mariadb',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
-        
-        //Portal DB Configuration
+
+        // Portal DB Configuration — used by PrivateAssessment, AssessmentAnswers,
+        // and SubmitterInfo models/migrations via $connection = 'Portal'.
         'Portal' => [
             'driver' => 'mariadb',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST_Portal', '127.0.0.1'),
-            'port' => env('DB_PORT_Portal', '3306'),
-            'database' => env('DB_DATABASE_Portal', 'laravel'),
-            'username' => env('DB_USERNAME_Portal', 'root'),
-            'password' => env('DB_PASSWORD_Portal', ''),
+            'url' => env('DB_URL_PORTAL'),
+            'host' => env('DB_HOST_PORTAL', '127.0.0.1'),
+            'port' => env('DB_PORT_PORTAL', '3306'),
+            'database' => env('DB_DATABASE_PORTAL', 'laravel'),
+            'username' => env('DB_USERNAME_PORTAL', 'root'),
+            'password' => env('DB_PASSWORD_PORTAL', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
@@ -94,15 +77,17 @@ return [
             ]) : [],
         ],
 
-        //Feedback DB Configuration
+        // Feedback DB Configuration — not yet referenced by any model/migration.
+        // Left in place as a placeholder for the planned feedback feature;
+        // remove this block if that feature isn't happening.
         'Feedback' => [
             'driver' => 'mariadb',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST_Feedback', '127.0.0.1'),
-            'port' => env('DB_PORT_Feedback', '3306'),
-            'database' => env('DB_DATABASE_Feedback', 'laravel'),
-            'username' => env('DB_USERNAME_Feedback', 'root'),
-            'password' => env('DB_PASSWORD_Feedback', ''),
+            'url' => env('DB_URL_FEEDBACK'),
+            'host' => env('DB_HOST_FEEDBACK', '127.0.0.1'),
+            'port' => env('DB_PORT_FEEDBACK', '3306'),
+            'database' => env('DB_DATABASE_FEEDBACK', 'laravel'),
+            'username' => env('DB_USERNAME_FEEDBACK', 'root'),
+            'password' => env('DB_PASSWORD_FEEDBACK', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),

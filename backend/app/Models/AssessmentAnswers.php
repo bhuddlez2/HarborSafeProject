@@ -2,23 +2,28 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class AssessmentAnswers extends Model
+class AssessmentAnswers extends BaseModel
 {
     //Sets up UUID input for new records
     use HasUuids;
+    
 
     //DB Connection
     protected $connection = 'Portal';
 
     //Mapped Table
-    protected $table = 'assessment_answers';
+    protected $table = '_assessment_answers';
+
+    //Primary Key
+    protected $primaryKey = 'AssessmentDocID';
 
     //UUID specifications
     protected $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
+
 
     //Fillable Columns
     protected $fillable = [
@@ -34,4 +39,9 @@ class AssessmentAnswers extends Model
         'RiskIndicator10',
         'RiskIndicator11'
     ];
+
+    public function uniqueIds(): array
+    {
+        return [$this->primaryKey];
+    }
 }
