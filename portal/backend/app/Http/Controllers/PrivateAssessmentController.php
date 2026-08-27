@@ -44,7 +44,7 @@ class PrivateAssessmentController extends Controller
             'VictimSex'                     => 'required|string|max:1',
             'VictimDOB'                     => 'nullable|date',
             'VictimSafePhoneNumber'         => 'nullable|string|max:20',
-            'SubmitterID'                   => 'nullable|uuid|exists:Portal._submitter_info,SubmitterID',  
+            'SubmissionID'                  => 'nullable|uuid|exists:Portal._submitter_info,SubmissionID',
             'AssessmentDocID'               => 'required|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);
 
@@ -75,7 +75,7 @@ class PrivateAssessmentController extends Controller
             'VictimSex'                     => 'nullable|string|max:1',
             'VictimDOB'                     => 'nullable|date',
             'VictimSafePhoneNumber'         => 'nullable|string|max:20',
-            'SubmitterID'                   => 'nullable|uuid|exists:Portal._submitter_info,SubmitterID',  
+            'SubmissionID'                  => 'nullable|uuid|exists:Portal._submitter_info,SubmissionID',
             'AssessmentDocID'               => 'nullable|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);
 
