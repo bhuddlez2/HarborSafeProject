@@ -13,23 +13,28 @@ class SubmitterInfo extends BaseModel
     protected $connection = 'Portal';
 
     //Mapped Table
-    protected $table = 'submitter_info';
+    protected $table = '_submitter_info';
 
     //Primary Key
-    protected $primaryKey = 'SubmissionID';
+    protected $primaryKey = 'SubmitterID';
 
     //UUID specifications
     protected $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
+
 
     //Fillable Columns
     protected $fillable = [
         'SubmitterEmail',
         'SubmitterPhoneNumber',
         'SubmitterFirstName',
-        'SubmitterLastName',
-        'RelationshipToVictim'
+        'SubmitterLastName'
     ];
 
+    public function uniqueIds(): array
+    {
+        return ['SubmitterID'];
+    }
 }
 

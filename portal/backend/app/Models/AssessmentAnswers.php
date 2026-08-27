@@ -8,12 +8,13 @@ class AssessmentAnswers extends BaseModel
 {
     //Sets up UUID input for new records
     use HasUuids;
+    
 
     //DB Connection
     protected $connection = 'Portal';
 
     //Mapped Table
-    protected $table = 'assessment_answers';
+    protected $table = '_assessment_answers';
 
     //Primary Key
     protected $primaryKey = 'AssessmentDocID';
@@ -21,6 +22,8 @@ class AssessmentAnswers extends BaseModel
     //UUID specifications
     protected $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
+
 
     //Fillable Columns
     protected $fillable = [
@@ -36,4 +39,9 @@ class AssessmentAnswers extends BaseModel
         'RiskIndicator10',
         'RiskIndicator11'
     ];
+
+    public function uniqueIds(): array
+    {
+        return [$this->primaryKey];
+    }
 }

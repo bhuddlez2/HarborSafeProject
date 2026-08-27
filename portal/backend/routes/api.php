@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 //controller connections
 use App\Http\Controllers\PrivateAssessmentController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\SubmitterInfoController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -19,16 +20,11 @@ Route::get('/', function () {
     ]);
 });
 
+// Routes for the private assessment table
+Route::apiResource('/private-assessments', PrivateAssessmentController::class);
 
-// Routes for the private assessment tabel
-Route::get('/assessments', [PrivateAssessmentController::class, 'index']);
-Route::get('/assessments/{uuid}', [PrivateAssessmentController::class, 'show']);
-Route::post('/assessments', [PrivateAssessmentController::class, 'store']);
-Route::put('/assessments/{uuid}', [PrivateAssessmentController::class, 'update']);
-Route::delete('/assessments/{uuid}', [PrivateAssessmentController::class, 'destroy']);
+// Routes for lethality assessment table
+Route::apiResource('/assessments', AssessmentController::class);
 
-// Routes for lethatlity assessment
-Route::get('/portal/dashboard', [AssessmentController::class, 'index']);
-Route::get('/portal/assessment', [AssessmentController::class, 'create']);
-Route::post('/portal/assessment', [AssessmentController::class, 'store'])
-    ->middleware('throttle:20,15');
+// Routes for submitter info table
+Route::apiResource('/submitter-info', SubmitterInfoController::class);

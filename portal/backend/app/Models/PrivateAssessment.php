@@ -18,14 +18,14 @@ class PrivateAssessment extends BaseModel
     protected $connection = 'Portal';
 
     //Mapped Table
-    protected $table = 'private_assessment';
-
-    //Primary Key
-    protected $primaryKey = 'DocumentID';
+    protected $table = '_private_assessment';
 
     //UUID specifications
+    protected $primaryKey = "DocumentID";
     protected $keyType = 'string';
     public $incrementing = false;
+    public $timestamps = false;
+
 
     //Fillable Columns
     protected $fillable = [
@@ -42,6 +42,11 @@ class PrivateAssessment extends BaseModel
         'SubmissionID',
         'AssessmentDocID'        
     ];
+
+    public function uniqueIds(): array
+    {
+        return [$this->primaryKey];
+    }
 
     public function SubmitterInfo()
     {

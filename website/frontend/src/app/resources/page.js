@@ -310,6 +310,11 @@ const HOPE_QUESTIONS = [
   { id: 8, text: "I meet the goals that I set for myself." },
 ];
 
+const ANSWER_LABELS = {
+  1: "Definitely False", 2: "Mostly False", 3: "Somewhat False", 4: "Slightly False",
+  5: "Slightly True",    6: "Somewhat True", 7: "Mostly True",   8: "Definitely True",
+};
+
 function getHopeLevel(score) {
   if (score <= 16) return { label: "Low Hope",      color: "text-red-600",   bg: "bg-red-50   border-red-200"   };
   if (score <= 39) return { label: "Slight Hope",   color: "text-amber-600", bg: "bg-amber-50 border-amber-200" };
@@ -331,6 +336,48 @@ function ScienceOfHopeContent() {
   const handleAnswer = (qId, val) => {
     setAnswers(prev => ({ ...prev, [qId]: val }));
     setShowResults(false);
+  };
+
+  const printResults = () => {
+    const levelColor = { "Low Hope": "#dc2626", "Slight Hope": "#d97706", "Moderate Hope": "#2563eb", "High Hope": "#16a34a" }[level.label] || "#5c0f8b";
+    const win = window.open("", "_blank");
+    win.document.write(`<!DOCTYPE html><html><head><title>Adult Hope Scale Results</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>
+      @page{margin:.5in}
+      body{font-family:'Montserrat',sans-serif;font-size:14px;color:#1f2937;max-width:680px;margin:28px auto}
+      h1{color:#5c0f8b;font-size:24px;margin:0 0 2px 0}
+      .sub{color:#6b7280;font-size:13px;margin:0 0 16px 0}
+      .banner{text-align:center;padding:14px 16px;border-radius:9px;background:#f5f3ff;border:1px solid #ddd6fe;margin-bottom:14px}
+      .label{font-size:20px;font-weight:bold;color:${levelColor}}
+      .total{font-size:13px;color:#6b7280}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+      .box{border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}
+      .bl{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em}
+      .bv{font-size:28px;font-weight:bold;color:#5c0f8b;line-height:1.2}
+      .bn{font-size:11px;color:#9ca3af}
+      .ranges{background:#f9fafb;border-radius:7px;padding:8px 14px;margin-bottom:16px;font-size:12px;color:#4b5563}
+      .qt{font-size:15px;font-weight:bold;color:#5c0f8b;margin-bottom:8px;border-bottom:1px solid #e5e7eb;padding-bottom:5px}
+      .q{margin-bottom:7px;font-size:13px;line-height:1.4}
+      .qa{color:#5c0f8b;font-weight:bold;font-size:12px}
+      .cite{margin-top:16px;font-size:11px;color:#9ca3af;font-style:italic;border-top:1px solid #e5e7eb;padding-top:10px}
+    </style></head><body>
+      <h1>Adult Hope Scale Results</h1>
+      <p class="sub">Harbor Safe House &amp; Advocacy Center</p>
+      <div class="banner">
+        <div class="label">${level.label}</div>
+        <div class="total">Total Score: ${total} / 64</div>
+      </div>
+      <div class="grid">
+        <div class="box"><div class="bl">Pathways Score</div><div class="bv">${pathways}</div><div class="bn">items 1, 3, 4, 5 — out of 32</div></div>
+        <div class="box"><div class="bl">Willpower Score</div><div class="bv">${willpower}</div><div class="bn">items 2, 6, 7, 8 — out of 32</div></div>
+      </div>
+      <div class="ranges"><strong>Score Ranges:</strong> Low Hope: 8–16 · Slight Hope: 17–39 · Moderate Hope: 40–55 · High Hope: 56–64</div>
+      <div class="qt">Your Responses</div>
+      ${HOPE_QUESTIONS.map(q => `<div class="q"><strong>${q.id}.</strong> ${q.text} <span class="qa">— ${answers[q.id]}: ${ANSWER_LABELS[answers[q.id]]}</span></div>`).join("")}
+      <p class="cite">Snyder, C. R., Harris, C., Anderson, J. R., Holeran, S. A., Irving, L. M., Sigmon, S. T., et al. (1991). The will and the ways: Development and validation of an individual-differences measure of hope. <em>Journal of Personality and Social Psychology, 60</em>, 570–585.</p>
+    </body></html>`);
+    win.document.close();
+    win.focus();
+    win.print();
   };
 
   return (
@@ -452,6 +499,12 @@ function ScienceOfHopeContent() {
               <p className="font-semibold text-gray-700 mb-1">Score Ranges</p>
               <p>Low Hope: 8–16 · Slight Hope: 17–39 · Moderate Hope: 40–55 · High Hope: 56–64</p>
             </div>
+            <button
+              onClick={printResults}
+              className="w-full py-2 rounded-lg text-xs font-semibold bg-brand text-white hover:bg-purple-800 transition-colors"
+            >
+              Print / Save as PDF
+            </button>
             <button
               onClick={() => { setAnswers({}); setShowResults(false); }}
               className="w-full py-2 rounded-lg text-xs font-semibold text-brand border border-brand/30 hover:bg-brand hover:text-white transition-colors"
