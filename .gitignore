@@ -86,4 +86,4 @@ dist/
 /playwright/.auth/
 
 # extra files
-file_org.txt
+Original_Schema_design.md
