@@ -77,9 +77,9 @@ return [
             ]) : [],
         ],
 
-        // Feedback DB Configuration — not yet referenced by any model/migration.
-        // Left in place as a placeholder for the planned feedback feature;
-        // remove this block if that feature isn't happening.
+        // Feedback DB Configuration — full access. Used by Eloquent models
+        // (Service, Resource, County, ServiceFeedback, ResourceRequestForm)
+        // and by portal-side admin/secretary read/export functionality.
         'Feedback' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL_FEEDBACK'),
@@ -88,6 +88,33 @@ return [
             'database' => env('DB_DATABASE_FEEDBACK', 'laravel'),
             'username' => env('DB_USERNAME_FEEDBACK', 'root'),
             'password' => env('DB_PASSWORD_FEEDBACK', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        // Same physical database as Feedback, different (restricted) MySQL
+        // credentials — this is what the public website's form-submission
+        // endpoints use. The MySQL user behind this connection should only
+        // ever be granted INSERT on service_feedback/resource_request_form
+        // and SELECT on services/resources/counties; see the GRANT
+        // statements in Schema_Reference.md. Never point application code
+        // that needs to read back a submission at this connection.
+        'FeedbackPublic' => [
+            'driver' => 'mariadb',
+            'url' => env('DB_URL_FEEDBACK_PUBLIC'),
+            'host' => env('DB_HOST_FEEDBACK_PUBLIC', env('DB_HOST_FEEDBACK', '127.0.0.1')),
+            'port' => env('DB_PORT_FEEDBACK_PUBLIC', env('DB_PORT_FEEDBACK', '3306')),
+            'database' => env('DB_DATABASE_FEEDBACK_PUBLIC', env('DB_DATABASE_FEEDBACK', 'laravel')),
+            'username' => env('DB_USERNAME_FEEDBACK_PUBLIC', 'root'),
+            'password' => env('DB_PASSWORD_FEEDBACK_PUBLIC', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
