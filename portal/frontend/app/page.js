@@ -3,6 +3,7 @@
 import { useState, useEffect, startTransition } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
 import { submitAssessment } from "@/app/lib/api";
+import { isValidEmail, isValidPhone, isNotFutureDate } from "@/app/lib/validators";
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function AssessmentPage() {
@@ -52,6 +53,26 @@ export default function AssessmentPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+
+  // per-phase field validation, computed live so each phase can block
+  // "Continue" and show feedback before the user ever reaches submit
+  const emailError = email.trim() && !isValidEmail(email.trim())
+    ? "Enter a valid email address."
+    : null;
+  const phoneError = phone.trim() && !isValidPhone(phone.trim())
+    ? "Enter a valid phone number."
+    : null;
+
+  const victimDobError = !isNotFutureDate(victimDob)
+    ? "Date of birth can't be in the future."
+    : null;
+  const victimPhoneError = victimPhone.trim() && !isValidPhone(victimPhone.trim())
+    ? "Enter a valid phone number."
+    : null;
+
+  const offenderDobError = !isNotFutureDate(offenderDob)
+    ? "Date of birth can't be in the future."
+    : null;
 
   // total question count and current question
   const total = lethalityQuestions.length;
@@ -276,6 +297,7 @@ export default function AssessmentPage() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                maxLength={50}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -288,6 +310,7 @@ export default function AssessmentPage() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                maxLength={50}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -303,9 +326,14 @@ export default function AssessmentPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              maxLength={100}
+              aria-invalid={!!emailError}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-gray-900 transition"
             />
+            {emailError && (
+              <p className="text-red-600 text-sm mt-1">{emailError}</p>
+            )}
           </div>
 
           <div className="mb-10">
@@ -317,9 +345,14 @@ export default function AssessmentPage() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              maxLength={20}
+              aria-invalid={!!phoneError}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-gray-900 transition"
             />
+            {phoneError && (
+              <p className="text-red-600 text-sm mt-1">{phoneError}</p>
+            )}
           </div>
 
           <div className="flex gap-4">
@@ -333,7 +366,7 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("victim")}
-              disabled={!firstName.trim() || !lastName.trim()}
+              disabled={!firstName.trim() || !lastName.trim() || !!emailError || !!phoneError}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition
@@ -366,6 +399,7 @@ export default function AssessmentPage() {
                 type="text"
                 value={victimFirstName}
                 onChange={(e) => setVictimFirstName(e.target.value)}
+                maxLength={50}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -378,6 +412,7 @@ export default function AssessmentPage() {
                 type="text"
                 value={victimLastName}
                 onChange={(e) => setVictimLastName(e.target.value)}
+                maxLength={50}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -393,9 +428,14 @@ export default function AssessmentPage() {
                 type="date"
                 value={victimDob}
                 onChange={(e) => setVictimDob(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
+                aria-invalid={!!victimDobError}
                 className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {victimDobError && (
+                <p className="text-red-600 text-sm mt-1">{victimDobError}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -424,9 +464,14 @@ export default function AssessmentPage() {
               type="tel"
               value={victimPhone}
               onChange={(e) => setVictimPhone(e.target.value)}
+              maxLength={20}
+              aria-invalid={!!victimPhoneError}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-gray-900 transition"
             />
+            {victimPhoneError && (
+              <p className="text-red-600 text-sm mt-1">{victimPhoneError}</p>
+            )}
           </div>
 
           <div className="flex gap-4">
@@ -440,7 +485,7 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("offender")}
-              disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex}
+              disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex || !!victimDobError || !!victimPhoneError}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition
@@ -473,6 +518,7 @@ export default function AssessmentPage() {
                 type="text"
                 value={offenderFirstName}
                 onChange={(e) => setOffenderFirstName(e.target.value)}
+                maxLength={50}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -485,6 +531,7 @@ export default function AssessmentPage() {
                 type="text"
                 value={offenderLastName}
                 onChange={(e) => setOffenderLastName(e.target.value)}
+                maxLength={50}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
@@ -501,9 +548,14 @@ export default function AssessmentPage() {
                 type="date"
                 value={offenderDob}
                 onChange={(e) => setOffenderDob(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
+                aria-invalid={!!offenderDobError}
                 className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {offenderDobError && (
+                <p className="text-red-600 text-sm mt-1">{offenderDobError}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -531,6 +583,7 @@ export default function AssessmentPage() {
               type="text"
               value={offenderRelationship}
               onChange={(e) => setOffenderRelationship(e.target.value)}
+              maxLength={50}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-gray-900 transition"
             />
@@ -547,7 +600,7 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("intro")}
-              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
+              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim() || !!offenderDobError}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
                          focus:ring-4 focus:ring-gray-400 transition
