@@ -1,8 +1,10 @@
 # HarborSafe Portal Schema — Reference
 
-Human-readable view of the `Portal` MySQL connection, generated because migration PHP files don't give a good at-a-glance picture of the schema. Regenerate with the `SHOW CREATE TABLE` query documented in `CLAUDE.md` after future migrations. Originally compared against `Original_Schema_design.md` (the pre-build design doc) — see the gap analysis at the bottom for what changed and why.
+Human-readable view of the app's MySQL connections (`Portal` and `Feedback`), generated because migration PHP files don't give a good at-a-glance picture of the schema. Regenerate with the `SHOW CREATE TABLE` query documented in `CLAUDE.md` after future migrations. The `Portal` section was originally compared against `Original_Schema_design.md` (the pre-build design doc) — see the gap analysis below it for what changed and why.
 
-## Current live schema
+**Migration bookkeeping:** always run `php artisan migrate --database=Portal`, regardless of which connection a given migration actually targets via its own `Schema::connection(...)` call. Portal's `migrations` table is this project's single canonical ledger. Running `migrate --database=Feedback` (or any other) against a database whose own `migrations` table is empty makes Laravel try to replay the *entire* migration history into it, not just the ones meant for that database — hit and fixed once already while building the `Feedback` schema.
+
+## Portal connection — current live schema
 
 ```mermaid
 erDiagram
@@ -127,7 +129,92 @@ Framework/Sanctum tables also present but not shown above (no app-specific struc
 
 ---
 
-## Gap analysis vs. `Original_Schema_design.md` — resolved
+## Feedback connection — current live schema
+
+Backs the website's two public forms (service feedback, resource request) plus their lookup tables. Physically a separate database (`feedback_app_db`) from `Portal`.
+
+```mermaid
+erDiagram
+    services {
+        bigint id PK
+        string Name
+        timestamp ChangeDate
+    }
+    resources {
+        bigint id PK
+        string Name
+        timestamp ChangeDate
+    }
+    counties {
+        bigint id PK
+        string Name
+        timestamp ChangeDate
+    }
+    service_feedback {
+        uuid FormID PK
+        bigint ServiceID FK
+        tinyint Rating
+        string Comment
+        timestamp SubmissionDate
+    }
+    resource_request_form {
+        uuid FormID PK
+        string FirstName
+        string LastName
+        string EmailAddress
+        string SafePhoneNumber
+        bigint ResourceTypeID FK
+        bigint CountyID FK
+        string Message
+        timestamp SubmissionDate
+    }
+
+    services ||--o{ service_feedback : "ServiceID"
+    resources ||--o{ resource_request_form : "ResourceTypeID (nullable)"
+    counties ||--o{ resource_request_form : "CountyID (nullable)"
+```
+
+### Table detail
+
+| Table | Purpose | Key columns | Notes |
+|---|---|---|---|
+| `services` | Lookup table for the service-feedback form | `id` (PK) | |
+| `resources` | Lookup table for the resource-request form | `id` (PK) | |
+| `counties` | Lookup table for the resource-request form | `id` (PK) | |
+| `service_feedback` | Public service-rating submissions | `FormID` (PK, uuid), `ServiceID` (FK, required) | `Rating`'s 1–5 range is enforced in validation, not a DB constraint, matching how the rest of the app handles range checks. |
+| `resource_request_form` | Public resource-request submissions | `FormID` (PK, uuid) | `LastName`, `ResourceTypeID`, `CountyID`, `Message` are all nullable (optional on the form); `FirstName`/`EmailAddress`/`SafePhoneNumber` are required. `SafePhoneNumber` is a string column, not numeric — an int would drop leading zeros and can't hold formatting. |
+
+### Two connections, one database — how "write-only" is enforced
+
+`config/database.php` defines **two** Laravel connections against the same physical `feedback_app_db`:
+
+- **`Feedback`** — full access. Used by the Eloquent models above, and by the portal-side admin/secretary read/export functionality once it's built.
+- **`FeedbackPublic`** — a second connection meant for a *restricted* MySQL user, for the public website's submission endpoints once they're built. This is what makes "the website only ever has write access" a real, database-enforced guarantee rather than an assumption baked into application code.
+
+The restricted user needs exactly this, and nothing more:
+
+```sql
+-- Replace CHANGE_ME with a strong, generated password. Scope the host
+-- portion (currently '%') to the actual application server in production
+-- rather than allowing any host.
+CREATE USER 'harborsafe_feedback_public'@'%' IDENTIFIED BY 'CHANGE_ME';
+
+GRANT INSERT ON feedback_app_db.service_feedback TO 'harborsafe_feedback_public'@'%';
+GRANT INSERT ON feedback_app_db.resource_request_form TO 'harborsafe_feedback_public'@'%';
+GRANT SELECT ON feedback_app_db.services TO 'harborsafe_feedback_public'@'%';
+GRANT SELECT ON feedback_app_db.resources TO 'harborsafe_feedback_public'@'%';
+GRANT SELECT ON feedback_app_db.counties TO 'harborsafe_feedback_public'@'%';
+
+FLUSH PRIVILEGES;
+```
+
+Note what's deliberately *not* granted: no `SELECT` on `service_feedback`/`resource_request_form` (the website can never read back a submission — only secretary/admin, via the `Feedback` connection, will be able to), and no access of any kind to the `Portal` database. Once created, put the credentials in `DB_USERNAME_FEEDBACK_PUBLIC`/`DB_PASSWORD_FEEDBACK_PUBLIC`.
+
+This is schema/infrastructure only — the actual public submission controller (which will use `FeedbackPublic` and explicitly `DB::disconnect('FeedbackPublic')` after each write) hasn't been built yet.
+
+---
+
+## Gap analysis vs. `Original_Schema_design.md` — resolved (Portal connection)
 
 | Original table | Status | What was built |
 |---|---|---|
