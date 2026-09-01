@@ -3,6 +3,7 @@
 import { useState, useEffect, startTransition } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
 import { submitAssessment } from "@/app/lib/api";
+import { submitterSchema, victimSchema, offenderSchema } from "@/app/lib/validation";
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function AssessmentPage() {
@@ -23,17 +24,19 @@ export default function AssessmentPage() {
   const [index, setIndex] = useState(0);
   // answers: stores responses as { questionId: boolean }, called in handleanswer and handlereset
   const [answers, setAnswers] = useState({});
+  // offenderErrors: stores validation errors for the offender phase
+  const [victimErrors, setVictimErrors] = useState({});
 
   // prescreen state
   // anonymous stays null until forWhom is answered, which controls whether it renders
   const [forWhom, setForWhom] = useState(null);
-  const [anonymous, setAnonymous] = useState(null);
 
   // info phase state (SubmitterInfo)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [badge, setBadge] = useState("");
 
   // victim phase state (VictimInfo)
   const [victimFirstName, setVictimFirstName] = useState("");
@@ -217,6 +220,20 @@ export default function AssessmentPage() {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Badge number{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="badge"
+              value={badge}
+              onChange={(e) => setBadge(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Email{" "}
               <span className="text-gray-400 font-normal">(optional)</span>
             </label>
@@ -287,9 +304,13 @@ export default function AssessmentPage() {
                 type="text"
                 value={victimFirstName}
                 onChange={(e) => setVictimFirstName(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
-              />
+                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${victimErrors.victimFirstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                />
+                {victimErrors.victimFirstName && (
+                <p className="text-sm text-red-600 mt-1">{victimErrors.victimFirstName[0]}</p>
+                )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -360,14 +381,28 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={() => setPhase("offender")}
-              disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition
-                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
-            >
-              Continue
+                onClick={() => {
+                    const result = victimSchema.safeParse({
+                    victimFirstName,
+                    victimLastName,
+                    victimDob,
+                    victimSex,
+                    victimPhone,
+                    });
+
+                    if (!result.success) {
+                    setVictimErrors(result.error.flatten().fieldErrors);
+                    return; // stop here, don't advance phase
+                    }
+
+                    setVictimErrors({});
+                    setPhase("offender");
+                }}
+                className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                            hover:bg-gray-700 focus:outline-none
+                            focus:ring-4 focus:ring-gray-400 transition"
+                >
+                Continue
             </button>
           </div>
 
