@@ -11,8 +11,8 @@ class SubmitterInfoController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'SubmitterFirstName'    => 'required|string|max:100',
-            'SubmitterLastName'     => 'required|string|max:100',
+            'SubmitterFirstName'    => 'required|string|max:50',
+            'SubmitterLastName'     => 'required|string|max:50',
             'SubmitterEmail'        => 'nullable|email|max:100',
             'SubmitterPhoneNumber'  => 'nullable|string|max:20'
         ]);
