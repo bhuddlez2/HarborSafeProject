@@ -16,16 +16,45 @@ class AssessmentController extends Controller
     }
 
     // GET - get one
-    public function show($uuid) 
+    public function show($uuid)
     {
-        return response()->json(AssessmentAnswers::findOrFail($uuid));
+        $assessment = AssessmentAnswers::find($uuid);
+
+        if (!$assessment) {
+            return response()->json([
+                'message' => 'Assessment not found'
+            ], 404);
+        }
+
+        return response()->json($assessment);
     }
 
     // PUT - update existing
     public function update(Request $request, $uuid)
     {
-        $assessment = AssessmentAnswers::findOrFail($uuid);
-        $assessment->update($request->validated());
+        $assessment = AssessmentAnswers::find($uuid);
+
+        if (!$assessment) {
+            return response()->json([
+                'message' => 'Assessment not found'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'RiskIndicator1'  => 'sometimes|boolean',
+            'RiskIndicator2'  => 'sometimes|boolean',
+            'RiskIndicator3'  => 'sometimes|boolean',
+            'RiskIndicator4'  => 'sometimes|boolean',
+            'RiskIndicator5'  => 'sometimes|boolean',
+            'RiskIndicator6'  => 'sometimes|boolean',
+            'RiskIndicator7'  => 'sometimes|boolean',
+            'RiskIndicator8'  => 'sometimes|boolean',
+            'RiskIndicator9'  => 'sometimes|boolean',
+            'RiskIndicator10' => 'sometimes|boolean',
+            'RiskIndicator11' => 'sometimes|boolean',
+        ]);
+
+        $assessment->update($validated);
         return response()->json($assessment);
     }
 
@@ -57,7 +86,15 @@ class AssessmentController extends Controller
     // DELETE — delete
     public function destroy($uuid)
     {
-        AssessmentAnswers::findOrFail($uuid)->delete();
+        $assessment = AssessmentAnswers::find($uuid);
+
+        if (!$assessment) {
+            return response()->json([
+                'message' => 'Assessment not found'
+            ], 404);
+        }
+
+        $assessment->delete();
         return response()->json(['message' => 'Deleted'], 200);
     }
 }

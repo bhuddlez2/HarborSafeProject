@@ -19,7 +19,7 @@ class MigrateAll extends Command
 
         // Then run migrations for each connection
         $connections = [
-            'portal',
+            'Portal',
         ];
 
         foreach ($connections as $connection) {

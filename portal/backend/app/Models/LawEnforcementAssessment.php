@@ -43,7 +43,7 @@ class LawEnforcementAssessment extends BaseModel
         return $this->belongsTo(User::class, 'submitted_by');
     }
 
-    public function AssessmentAnswers()
+    public function assessmentAnswers()
     {
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
     }

@@ -13,7 +13,7 @@ class SubmitterInfoController extends Controller
         $validated = $request->validate([
             'SubmitterFirstName'    => 'required|string|max:100',
             'SubmitterLastName'     => 'required|string|max:100',
-            'SubmitterEmail'        => 'nullable|email|max:255',
+            'SubmitterEmail'        => 'nullable|email|max:100',
             'SubmitterPhoneNumber'  => 'nullable|string|max:20'
         ]);
 

@@ -20,13 +20,11 @@ class CreateDatabases extends Command
             env('DB_DATABASE_PORTAL')
         ];
 
-        DB::purge('create_db');
-    
         foreach ($databases as $database) {
             if(!$database){
                 continue;
             }
-            DB::statement("CREATE DATABASE IF NOT EXISTS '$database'");
+            DB::statement("CREATE DATABASE IF NOT EXISTS `$database`");
             $this->info("Database '$database' created or already exists.");
         }
         

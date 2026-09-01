@@ -48,13 +48,13 @@ class PrivateAssessment extends BaseModel
         return [$this->primaryKey];
     }
 
-    public function SubmitterInfo()
+    public function submitterInfo()
     {
         return $this->belongsTo(SubmitterInfo::class, 'SubmissionID');
     }
 
     //Make connection to assessment table here
-    public function AssessmentAnswers()
+    public function assessmentAnswers()
     {
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
     }
