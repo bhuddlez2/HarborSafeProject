@@ -1,0 +1,62 @@
+[
+  {
+    "id": "nws-001",
+    "title": "Placeholder Newsletter One",
+    "issueDate": "2026-07-01",
+    "summary": null,
+    "file": {
+      "url": "#",
+      "sizeBytes": 2411724,
+      "pages": 4
+    },
+    "isPublished": true
+  },
+  {
+    "id": "nws-002",
+    "title": "Placeholder Newsletter Two",
+    "issueDate": "2026-04-01",
+    "summary": null,
+    "file": {
+      "url": "#",
+      "sizeBytes": 8934112,
+      "pages": 6
+    },
+    "isPublished": true
+  },
+  {
+    "id": "nws-003",
+    "title": "Placeholder Newsletter Three With A Deliberately Long Title, To Check That A Row Still Lines Up When The Heading Wraps Onto Several Lines",
+    "issueDate": "2025-12-01",
+    "summary": null,
+    "file": {
+      "url": "#",
+      "sizeBytes": 512000,
+      "pages": 2
+    },
+    "isPublished": true
+  },
+  {
+    "id": "nws-004",
+    "title": "Placeholder Newsletter Four",
+    "issueDate": "2025-09-01",
+    "summary": null,
+    "file": {
+      "url": "#",
+      "sizeBytes": null,
+      "pages": null
+    },
+    "isPublished": true
+  },
+  {
+    "id": "nws-005",
+    "title": "Placeholder Draft, Unpublished",
+    "issueDate": "2026-09-01",
+    "summary": null,
+    "file": {
+      "url": "#",
+      "sizeBytes": 1000000,
+      "pages": 4
+    },
+    "isPublished": false
+  }
+]

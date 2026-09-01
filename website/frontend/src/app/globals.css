@@ -32,6 +32,17 @@ body.safety-modal-open #exit-button {
   animation: exit-button-pulse 2s ease-in-out infinite;
 }
 
+/*
+Keep the Safe Exit button reachable above any open dialog.
+components/Modal.js sets modal-open on <body> while it is mounted. The modal
+backdrop sits at z-200 and the exit button at z-100, so without this rule the
+exit button would be covered and unclickable.
+No pulse.
+*/
+body.modal-open #exit-button {
+  z-index: 300;
+}
+
 @keyframes exit-button-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
   50%       { box-shadow: 0 0 0 18px rgba(220, 38, 38, 0); }

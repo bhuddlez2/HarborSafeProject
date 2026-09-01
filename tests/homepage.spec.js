@@ -125,6 +125,15 @@ test.describe('Exit Button (Critical Safety Feature)', () => {
         await expect(page).not.toHaveURL(/localhost|onlinehome|hshac/i);
     });
 
+    test('exit button stays clickable while a resources modal is open', async ({ page }) => {
+        await page.goto('/resources/');
+        await page.getByRole('button', { name: /^general victim services/i }).click();
+        await page.getByRole('button', { name: /^dv\/sa victims/i }).click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await page.locator('#exit-button').click();
+        await expect(page).not.toHaveURL(/localhost|onlinehome|hshac/i);
+    });
+
 });
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────

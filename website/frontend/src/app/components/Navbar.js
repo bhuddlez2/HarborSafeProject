@@ -5,6 +5,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+const NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/about", label: "About" },
+  { href: "/get-support", label: "Get Support" },
+  { href: "/give-support", label: "Give Support" },
+  { href: "/resources", label: "Resources" },
+  { href: "/events", label: "Events" },
+];
+
 /*
 Navbar component,
 extracted into its own file so layout.js can remain a server component,
@@ -80,22 +89,12 @@ export default function Navbar() {
         Desktop nav links — hidden on small screens, visible from md breakpoint up,
         gap-10 for spacing between links, mr-8 for a small right margin
         */}
-        <div className="hidden lg:flex items-center gap-10 mr-8">
-          <Link replace href="/" className="text-white font-bold">
-            <span className={navClass("/")}>Home</span>
-          </Link>
-          <Link replace href="/about" className="text-white font-bold">
-            <span className={navClass("/about")}>About</span>
-          </Link>
-          <Link replace href="/get-support" className="text-white font-bold">
-            <span className={navClass("/get-support")}>Get Support</span>
-          </Link>
-          <Link replace href="/give-support" className="text-white font-bold">
-            <span className={navClass("/give-support")}>Give Support</span>
-          </Link>
-          <Link replace href="/resources" className="text-white font-bold">
-            <span className={navClass("/resources")}>Resources</span>
-          </Link>
+        <div className="hidden lg:flex items-center gap-8 mr-8">
+          {NAV_LINKS.map((link) => (
+            <Link key={link.href} replace href={link.href} className="text-white font-bold whitespace-nowrap">
+              <span className={navClass(link.href)}>{link.label}</span>
+            </Link>
+          ))}
           {/* Divider between navigation links and language switcher */}
           <div className="h-8 w-px bg-white"></div>
           {/* Language switcher */}
@@ -139,21 +138,17 @@ export default function Navbar() {
       */}
       {menuOpen && (
         <div className="lg:hidden bg-brand border-t border-purple-700 flex flex-col px-6 py-4 gap-2">
-          <Link replace href="/" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
-            <span className={navClass("/")}>Home</span>
-          </Link>
-          <Link replace href="/about" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
-            <span className={navClass("/about")}>About</span>
-          </Link>
-          <Link replace href="/get-support" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
-            <span className={navClass("/get-support")}>Get Support</span>
-          </Link>
-          <Link replace href="/give-support" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
-            <span className={navClass("/give-support")}>Give Support</span>
-          </Link>
-          <Link replace href="/resources" className="text-white font-bold" onClick={() => setMenuOpen(false)}>
-            <span className={navClass("/resources")}>Resources</span>
-          </Link>
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              replace
+              href={link.href}
+              className="text-white font-bold"
+              onClick={() => setMenuOpen(false)}
+            >
+              <span className={navClass(link.href)}>{link.label}</span>
+            </Link>
+          ))}
           {/* Divider */}
           <div className="h-px bg-purple-700 my-1"></div>
           {/* Language switcher */}
