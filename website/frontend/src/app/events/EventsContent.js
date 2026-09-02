@@ -64,6 +64,16 @@ const ICONS = {
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   ),
+  chevronLeft: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  ),
+  chevronRight: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  ),
 };
 
 // Renders the card/dialog image inside a fixed 16:9 frame
@@ -104,16 +114,32 @@ function CategoryBadge({ category }) {
 
 // ── Event card ────────────────────────────────────────────────────────────────
 
+/*
+One event fills the carousel at a time, so the card runs side-by-side from md up
+(image left, details right) rather than stacking.
+*/
 function EventCard({ event, onOpen }) {
   return (
-    <button
-      onClick={() => onOpen(event)}
-      className="text-left bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col
-      hover:border-brand hover:shadow-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+    <article
+      className="w-full h-full bg-white border border-gray-200 rounded-xl overflow-hidden
+      flex flex-col md:flex-row md:min-h-[20rem]"
     >
-      <EventImage image={event.image} />
+      <div className="relative w-full aspect-video md:w-2/5 md:aspect-auto shrink-0 overflow-hidden
+      bg-purple-100 flex items-center justify-center">
+        {event.image?.src ? (
+          <Image
+            src={event.image.src}
+            alt={event.image.alt ?? ""}
+            fill
+            sizes="(max-width: 768px) 100vw, 40vw"
+            className="object-cover"
+          />
+        ) : (
+          <span className="text-brand opacity-40 scale-[2.5]" aria-hidden="true">{ICONS.calendar}</span>
+        )}
+      </div>
 
-      <div className="p-5 flex flex-col gap-3 flex-1">
+      <div className="flex-1 p-6 md:p-8 flex flex-col gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <CategoryBadge category={event.category} />
           {event.isCancelled && (
@@ -123,20 +149,15 @@ function EventCard({ event, onOpen }) {
           )}
         </div>
 
-        {/*
-        line-clamp-3 keeps an over-long title from pushing every other card in
-        the row out of alignment
-        */}
-        <h3 className="text-lg font-semibold text-gray-900 leading-snug line-clamp-3">
+        <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 leading-snug">
           {event.title}
         </h3>
 
         {event.summary && (
-          <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">{event.summary}</p>
+          <p className="text-gray-600 leading-relaxed">{event.summary}</p>
         )}
 
-        {/* date/time/location facts pinned to the bottom of the card with mt-auto */}
-        <div className="mt-auto pt-2 flex flex-col gap-1.5 text-sm text-gray-700">
+        <div className="pt-2 flex flex-col gap-2 text-gray-700">
           <span className="flex items-center gap-2">
             <span className="text-brand shrink-0" aria-hidden="true">{ICONS.clock}</span>
             <span>
@@ -157,12 +178,27 @@ function EventCard({ event, onOpen }) {
               <span className="text-brand shrink-0" aria-hidden="true">
                 {event.location.isVirtual ? ICONS.video : ICONS.mapPin}
               </span>
-              <span className="line-clamp-1">{event.location.name}</span>
+              <span>{event.location.name}</span>
             </span>
           )}
         </div>
+
+        {/*
+        self-start keeps the button the width of its text rather than stretching
+        across the card. The accessible name names the event, so a screen reader
+        user hears which event the button belongs to rather than a bare
+        "View details".
+        */}
+        <button
+          onClick={() => onOpen(event)}
+          aria-label={`View details for ${event.title}`}
+          className="self-start mt-2 bg-brand text-white px-5 py-2.5 rounded-lg font-semibold
+          hover:bg-purple-800 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          View details
+        </button>
       </div>
-    </button>
+    </article>
   );
 }
 
@@ -238,6 +274,106 @@ function EventModal({ event, onClose }) {
   );
 }
 
+// ── Events carousel ───────────────────────────────────────────────────────────
+
+/*
+Only the current event is rendered; the arrows and dots swap it out and a CSS
+animation slides the incoming card in from the side the arrow points to.
+*/
+function EventsCarousel({ events, onOpen }) {
+  const count = events.length;
+  const [index, setIndex] = useState(0);
+  /*
+  The card being replaced, kept on screen only for the length of the animation
+  so it can slide out while the new one slides in. null when nothing is moving.
+  */
+  const [outgoing, setOutgoing] = useState(null); // { index, direction }
+
+  const goTo = (target, direction) => {
+    if (target === index) return;
+    setOutgoing({ index, direction });
+    setIndex(target);
+  };
+
+  // modulo twice so stepping back from the first slide wraps to the last
+  const step = (delta) => goTo((index + delta + count) % count, delta);
+  const jumpTo = (target) => goTo(target, target > index ? 1 : -1);
+
+  const direction = outgoing?.direction ?? 1;
+
+  const showControls = count > 1;
+
+  return (
+    <>
+      {/*
+      aria-live announces the new event when the card is swapped, which is
+      otherwise silent for a screen reader user pressing the arrows.
+      overflow-hidden clips both cards to the card box while they slide.
+      */}
+      <div
+        role="region"
+        aria-label="Upcoming events"
+        aria-live="polite"
+        className="relative overflow-hidden rounded-xl"
+      >
+        {outgoing && (
+          <div
+            key={`out-${outgoing.index}`}
+            className={`absolute inset-0 ${direction > 0 ? "slide-out-left" : "slide-out-right"}`}
+            aria-hidden="true"
+            inert
+            onAnimationEnd={() => setOutgoing(null)}
+          >
+            <EventCard event={events[outgoing.index]} onOpen={onOpen} />
+          </div>
+        )}
+
+        {/* key remounts the card so its entrance animation restarts each time */}
+        <div
+          key={`in-${index}`}
+          className={outgoing ? (direction > 0 ? "slide-in-right" : "slide-in-left") : undefined}
+        >
+          <EventCard event={events[index]} onOpen={onOpen} />
+        </div>
+      </div>
+
+      {showControls && (
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <button
+            onClick={() => step(-1)}
+            aria-label="Previous event"
+            className="p-3 rounded-full border border-purple-200 text-brand hover:bg-purple-50 transition-all"
+          >
+            {ICONS.chevronLeft}
+          </button>
+
+          <div className="flex items-center gap-2">
+            {events.map((event, i) => (
+              <button
+                key={event.id}
+                onClick={() => jumpTo(i)}
+                aria-label={`Event ${i + 1} of ${count}`}
+                aria-current={i === index}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  i === index ? "bg-brand scale-125" : "bg-purple-200 hover:bg-purple-300"
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => step(1)}
+            aria-label="Next event"
+            className="p-3 rounded-full border border-purple-200 text-brand hover:bg-purple-50 transition-all"
+          >
+            {ICONS.chevronRight}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ── Newsletters ───────────────────────────────────────────────────────────────
 
 /*
@@ -247,7 +383,7 @@ a list of download links.
 */
 function NewsletterList({ newsletters }) {
   return (
-    <ul className="flex flex-col gap-4 max-w-3xl mx-auto">
+    <ul className="flex flex-col gap-4">
       {newsletters.map((issue) => {
         const size = formatFileSize(issue.file?.sizeBytes);
 
@@ -321,16 +457,10 @@ function ErrorState() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-const TABS = [
-  { id: "upcoming", label: "Events" },
-  { id: "newsletters", label: "Newsletters" },
-];
-
 export default function EventsContent() {
   const [events, setEvents] = useState([]);
   const [newsletters, setNewsletters] = useState([]);
   const [status, setStatus] = useState("loading"); // loading | ready | error
-  const [activeTab, setActiveTab] = useState("upcoming");
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
@@ -355,36 +485,48 @@ export default function EventsContent() {
 
   const upcoming = events.filter((event) => !event.isPast);
 
-  const renderTabPanel = () => {
-    if (status === "loading") return <LoadingState />;
-    if (status === "error") return <ErrorState />;
-
-    if (activeTab === "newsletters") {
-      if (newsletters.length === 0) {
-        return (
-          <EmptyState heading="No newsletters yet">
-            Newsletters will appear here once the first issue is published.
-          </EmptyState>
-        );
-      }
-      return <NewsletterList newsletters={newsletters} />;
-    }
-
-    if (upcoming.length === 0) {
+  const renderSections = () => {
+    if (status === "loading" || status === "error") {
       return (
-        <EmptyState heading="No upcoming events right now">
-          Check back soon; our 24/7 crisis line is always available at{" "}
-          <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>.
-        </EmptyState>
+        <section className="py-16 px-4 bg-white">
+          {status === "loading" ? <LoadingState /> : <ErrorState />}
+        </section>
       );
     }
 
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {upcoming.map((event) => (
-          <EventCard key={event.id} event={event} onOpen={setSelectedEvent} />
-        ))}
-      </div>
+      <>
+        <section className="py-16 px-4 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-8 text-center">Upcoming Events</h2>
+
+            {upcoming.length === 0 ? (
+              <EmptyState heading="No upcoming events right now">
+                Check back soon; our 24/7 crisis line is always available at{" "}
+                <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>.
+              </EmptyState>
+            ) : (
+              <EventsCarousel events={upcoming} onOpen={setSelectedEvent} />
+            )}
+          </div>
+        </section>
+
+        <div className="w-full h-1 bg-brand"></div>
+
+        <section className="py-16 px-4 bg-white">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-8 text-center">Newsletters</h2>
+
+            {newsletters.length === 0 ? (
+              <EmptyState heading="No newsletters yet">
+                Newsletters will appear here once the first issue is published.
+              </EmptyState>
+            ) : (
+              <NewsletterList newsletters={newsletters} />
+            )}
+          </div>
+        </section>
+      </>
     );
   };
 
@@ -411,38 +553,7 @@ export default function EventsContent() {
         <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
       </div>
 
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-
-          <div role="tablist" aria-label="Events and news" className="flex gap-2 flex-wrap justify-center mb-12">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  role="tab"
-                  id={`tab-${tab.id}`}
-                  aria-selected={isActive}
-                  aria-controls="tab-panel"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={
-                    isActive
-                      ? "bg-brand text-white px-6 py-3 rounded-full font-semibold transition-all"
-                      : "text-brand px-6 py-3 rounded-full font-semibold border border-purple-200 hover:bg-purple-50 transition-all"
-                  }
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div id="tab-panel" role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
-            {renderTabPanel()}
-          </div>
-
-        </div>
-      </section>
+      {renderSections()}
 
       {/* detail dialog; replaces the per-event routes a static export cannot generate */}
       {selectedEvent && (

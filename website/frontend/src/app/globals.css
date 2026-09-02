@@ -43,6 +43,46 @@ body.modal-open #exit-button {
   z-index: 300;
 }
 
+/*
+Entrance animations for the events carousel.
+The new card slides in from the side the arrow points to. It is a short offset
+plus a fade rather than a full slide across, because only one card is rendered
+at a time.
+*/
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slide-out-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+@keyframes slide-out-right {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
+
+.slide-in-right  { animation: slide-in-right 320ms ease-in-out both; }
+.slide-in-left   { animation: slide-in-left 320ms ease-in-out both; }
+.slide-out-left  { animation: slide-out-left 320ms ease-in-out both; }
+.slide-out-right { animation: slide-out-right 320ms ease-in-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-in-right,
+  .slide-in-left,
+  .slide-out-left,
+  .slide-out-right {
+    animation-duration: 1ms;
+  }
+}
+
 @keyframes exit-button-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
   50%       { box-shadow: 0 0 0 18px rgba(220, 38, 38, 0); }
