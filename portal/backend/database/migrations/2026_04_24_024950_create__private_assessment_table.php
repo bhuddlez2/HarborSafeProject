@@ -23,8 +23,8 @@ return new class extends Migration
             $table->string('VictimSex', 10);
             $table->date('VictimDOB')->nullable();
             $table->string('VictimSafePhoneNumber', 20)->nullable();
-            $table->uuid('SubmitterID')->nullable();
-            $table->foreign('SubmitterID')->references('SubmitterID')->on('_submitter_info');
+            $table->uuid('SubmissionID')->nullable();
+            $table->foreign('SubmissionID')->references('SubmissionID')->on('_submitter_info');
             $table->uuid('AssessmentDocID');
             $table->foreign('AssessmentDocID')->references('AssessmentDocID')->on('_assessment_answers');
         });

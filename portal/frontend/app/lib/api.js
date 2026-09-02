@@ -120,7 +120,7 @@ export async function submitAssessment({
         }
 
         const submitterData = await submitterResponse.json();
-        submitterID = submitterData.data.SubmitterID;
+        submitterID = submitterData.data.SubmissionID;
     }
 
     const personalInfoPayload = {
@@ -134,6 +134,7 @@ export async function submitAssessment({
         VictimSex:                   victimSex || null,
         VictimDOB:                   victimDob || null,
         VictimSafePhoneNumber:       victimPhone || null,
+        SubmissionID:                submitterID,
         AssessmentDocID:             assessmentDocID,
     };
 

@@ -11,7 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('Portal')->create('_submitter_info', function (Blueprint $table) {
-            $table->uuid('SubmitterID')->primary();
+            $table->uuid('SubmissionID')->primary();
             $table->string('SubmitterEmail', 100)->nullable();
             $table->string('SubmitterPhoneNumber', 20)->nullable();
             $table->string('SubmitterFirstName', 50)->nullable();
