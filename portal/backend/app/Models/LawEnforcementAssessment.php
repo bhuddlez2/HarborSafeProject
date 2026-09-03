@@ -2,33 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Support\Str;
 
-//imports other models to reference for foreign keys
-use App\Models\SubmitterInfo;
-
-class PrivateAssessment extends BaseModel
+class LawEnforcementAssessment extends BaseModel
 {
-    //automatically create the UUID for the form
     use HasUuids;
 
-    //DB Connection
     protected $connection = 'Portal';
 
-    //Mapped Table
-    protected $table = '_private_assessment';
+    protected $table = 'law_enforcement_assessment';
 
-    //UUID specifications
-    protected $primaryKey = "DocumentID";
+    protected $primaryKey = 'DocumentID';
+
     protected $keyType = 'string';
     public $incrementing = false;
     public $timestamps = false;
 
-
-    //Fillable Columns
     protected $fillable = [
+        'submitted_by',
         'OffenderFirstName',
         'OffenderLastName',
         'OffenderSex',
@@ -39,8 +30,7 @@ class PrivateAssessment extends BaseModel
         'VictimSex',
         'VictimDOB',
         'VictimSafePhoneNumber',
-        'SubmissionID',
-        'AssessmentDocID'        
+        'AssessmentDocID',
     ];
 
     public function uniqueIds(): array
@@ -48,12 +38,11 @@ class PrivateAssessment extends BaseModel
         return [$this->primaryKey];
     }
 
-    public function submitterInfo()
+    public function submitter()
     {
-        return $this->belongsTo(SubmitterInfo::class, 'SubmissionID');
+        return $this->belongsTo(User::class, 'submitted_by');
     }
 
-    //Make connection to assessment table here
     public function assessmentAnswers()
     {
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
