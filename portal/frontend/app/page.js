@@ -385,9 +385,13 @@ export default function AssessmentPage() {
                 type="text"
                 value={victimLastName}
                 onChange={(e) => setVictimLastName(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition
+                           ${victimErrors.victimLastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               />
+              {victimErrors.victimLastName && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimLastName[0]}</p>
+              )}
             </div>
           </div>
 
@@ -400,9 +404,13 @@ export default function AssessmentPage() {
                 type="date"
                 value={victimDob}
                 onChange={(e) => setVictimDob(e.target.value)}
-                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition
+                           ${victimErrors.victimDob ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               />
+              {victimErrors.victimDob && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimDob[0]}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -411,14 +419,18 @@ export default function AssessmentPage() {
               <select
                 value={victimSex}
                 onChange={(e) => setVictimSex(e.target.value)}
-                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition
+                           ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
               </select>
+              {victimErrors.victimSex && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimSex[0]}</p>
+              )}
             </div>
           </div>
 
@@ -431,9 +443,13 @@ export default function AssessmentPage() {
               type="tel"
               value={victimPhone}
               onChange={(e) => setVictimPhone(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition
+                         ${victimErrors.victimPhone ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
+            {victimErrors.victimPhone && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimPhone[0]}</p>
+              )}
           </div>
 
           <div className="flex gap-4">
