@@ -24,23 +24,19 @@ export default function AssessmentPage() {
   const [index, setIndex] = useState(0);
   // answers: stores responses as { questionId: boolean }, called in handleanswer and handlereset
   const [answers, setAnswers] = useState({});
-  // stores validation errors for the submitter (info) phase
-  const [submitterErrors, setSubmitterErrors] = useState({});
-  // stores validation errors for the victim phase, called when validating victim info
+  // offenderErrors: stores validation errors for the offender phase
   const [victimErrors, setVictimErrors] = useState({});
-  // stores validation errors for the offender phase, called when validating offender info
-  const [offenderErrors, setOffenderErrors] = useState({});
 
   // prescreen state
   // anonymous stays null until forWhom is answered, which controls whether it renders
   const [forWhom, setForWhom] = useState(null);
-  const [anonymous, setAnonymous] = useState(null);
 
   // info phase state (SubmitterInfo)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [badge, setBadge] = useState("");
 
   // victim phase state (VictimInfo)
   const [victimFirstName, setVictimFirstName] = useState("");
@@ -171,7 +167,7 @@ export default function AssessmentPage() {
 
                 {/* Action button */}
                 <button
-                  onClick={() => setShowSafetyModal(false)}
+                  onClick={() => { setShowSafetyModal(false); setPhase("info"); }}
                   className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-semibold text-sm
                              hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
                 >
@@ -182,85 +178,6 @@ export default function AssessmentPage() {
             </div>
           </div>
         )}
-
-        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-8">
-            Before we begin
-          </h1>
-
-          {/* Question 1: who is this for */}
-          <p className="text-gray-700 text-lg font-medium mb-4">
-            Who is this report for?
-          </p>
-          <div className="flex gap-4 mb-10">
-            <button
-              onClick={() => setForWhom("self")}
-              className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                focus:outline-none focus:ring-4 focus:ring-gray-400
-                ${forWhom === "self"
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
-            >
-              Myself
-            </button>
-            <button
-              onClick={() => setForWhom("other")}
-              className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                focus:outline-none focus:ring-4 focus:ring-gray-400
-                ${forWhom === "other"
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
-            >
-              Someone else
-            </button>
-          </div>
-
-          {/* Question 2: anonymity, only shown when assessing someone else */}
-          {forWhom === "other" && (
-            <div className="mb-10">
-              <p className="text-gray-700 text-lg font-medium mb-4">
-                Would you like to remain anonymous?
-              </p>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setAnonymous(true)}
-                  className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                    focus:outline-none focus:ring-4 focus:ring-gray-400
-                    ${anonymous === true
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => setAnonymous(false)}
-                  className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                    focus:outline-none focus:ring-4 focus:ring-gray-400
-                    ${anonymous === false
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
-                >
-                  No
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Continue: for "self" appears immediately; for "other" requires anonymity answer */}
-          {(forWhom === "self" || (forWhom === "other" && anonymous !== null)) && (
-            <button
-              onClick={() => setPhase(
-                forWhom === "other" && !anonymous ? "info" : "victim"
-              )}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
-            >
-              Continue
-            </button>
-          )}
-
-        </div>
       </main>
     );
   }
@@ -283,13 +200,9 @@ export default function AssessmentPage() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none transition
-                           ${submitterErrors.firstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               />
-              {submitterErrors.firstName && (
-                <p className="text-sm text-red-600 mt-1">{submitterErrors.firstName[0]}</p>
-              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -299,14 +212,24 @@ export default function AssessmentPage() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none transition
-                           ${submitterErrors.lastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               />
-              {submitterErrors.lastName && (
-                <p className="text-sm text-red-600 mt-1">{submitterErrors.lastName[0]}</p>
-              )}
             </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Badge number{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="badge"
+              value={badge}
+              onChange={(e) => setBadge(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
+            />
           </div>
 
           <div className="mb-6">
@@ -318,13 +241,9 @@ export default function AssessmentPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none transition
-                         ${submitterErrors.email ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
             />
-            {submitterErrors.email && (
-              <p className="text-sm text-red-600 mt-1">{submitterErrors.email[0]}</p>
-            )}
           </div>
 
           <div className="mb-10">
@@ -351,18 +270,12 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={() => {
-                const result = submitterSchema.safeParse({ firstName, lastName, email, phone });
-                if (!result.success) {
-                  setSubmitterErrors(result.error.flatten().fieldErrors);
-                  return;
-                }
-                setSubmitterErrors({});
-                setPhase("victim");
-              }}
+              onClick={() => setPhase("victim")}
+              disabled={!firstName.trim() || !lastName.trim()}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+                         focus:ring-4 focus:ring-gray-400 transition
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
             >
               Continue
             </button>
@@ -391,13 +304,13 @@ export default function AssessmentPage() {
                 type="text"
                 value={victimFirstName}
                 onChange={(e) => setVictimFirstName(e.target.value)}
-                className={`w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition
-                           ${victimErrors.victimFirstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
-              />
-              {victimErrors.victimFirstName && (
-              <p className="text-sm text-red-600 mt-1">{victimErrors.victimFirstName[0]}</p>
-              )}
+                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${victimErrors.victimFirstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                />
+                {victimErrors.victimFirstName && (
+                <p className="text-sm text-red-600 mt-1">{victimErrors.victimFirstName[0]}</p>
+                )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -407,13 +320,9 @@ export default function AssessmentPage() {
                 type="text"
                 value={victimLastName}
                 onChange={(e) => setVictimLastName(e.target.value)}
-                className={`w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition
-                           ${victimErrors.victimLastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               />
-              {victimErrors.victimLastName && (
-              <p className="text-sm text-red-600 mt-1">{victimErrors.victimLastName[0]}</p>
-              )}
             </div>
           </div>
 
@@ -426,13 +335,9 @@ export default function AssessmentPage() {
                 type="date"
                 value={victimDob}
                 onChange={(e) => setVictimDob(e.target.value)}
-                className={`border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition
-                           ${victimErrors.victimDob ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               />
-              {victimErrors.victimDob && (
-              <p className="text-sm text-red-600 mt-1">{victimErrors.victimDob[0]}</p>
-              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -441,18 +346,14 @@ export default function AssessmentPage() {
               <select
                 value={victimSex}
                 onChange={(e) => setVictimSex(e.target.value)}
-                className={`w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition
-                           ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
               </select>
-              {victimErrors.victimSex && (
-              <p className="text-sm text-red-600 mt-1">{victimErrors.victimSex[0]}</p>
-              )}
             </div>
           </div>
 
@@ -465,13 +366,9 @@ export default function AssessmentPage() {
               type="tel"
               value={victimPhone}
               onChange={(e) => setVictimPhone(e.target.value)}
-              className={`w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition
-                         ${victimErrors.victimPhone ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
             />
-            {victimErrors.victimPhone && (
-              <p className="text-sm text-red-600 mt-1">{victimErrors.victimPhone[0]}</p>
-              )}
           </div>
 
           <div className="flex gap-4">
@@ -484,29 +381,28 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={() => {
-                const result = victimSchema.safeParse({
-                  victimFirstName,
-                  victimLastName,
-                  victimDob,
-                  victimSex,
-                  victimPhone,
-                });
+                onClick={() => {
+                    const result = victimSchema.safeParse({
+                    victimFirstName,
+                    victimLastName,
+                    victimDob,
+                    victimSex,
+                    victimPhone,
+                    });
 
-                if (!result.success) {
-                  setVictimErrors(result.error.flatten().fieldErrors);
-                  return; // stop here, don't advance phase
-                }
+                    if (!result.success) {
+                    setVictimErrors(result.error.flatten().fieldErrors);
+                    return; // stop here, don't advance phase
+                    }
 
-                setVictimErrors({});
-                setPhase("offender");
-              }}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition
-                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
-            >
-              Continue
+                    setVictimErrors({});
+                    setPhase("offender");
+                }}
+                className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                            hover:bg-gray-700 focus:outline-none
+                            focus:ring-4 focus:ring-gray-400 transition"
+                >
+                Continue
             </button>
           </div>
 
@@ -533,13 +429,9 @@ export default function AssessmentPage() {
                 type="text"
                 value={offenderFirstName}
                 onChange={(e) => setOffenderFirstName(e.target.value)}
-                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none transition
-                           ${offenderErrors.offenderFirstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               />
-              {offenderErrors.offenderFirstName && (
-                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderFirstName[0]}</p>
-              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -549,13 +441,9 @@ export default function AssessmentPage() {
                 type="text"
                 value={offenderLastName}
                 onChange={(e) => setOffenderLastName(e.target.value)}
-                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none transition
-                           ${offenderErrors.offenderLastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               />
-              {offenderErrors.offenderLastName && (
-                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderLastName[0]}</p>
-              )}
             </div>
           </div>
 
@@ -569,13 +457,9 @@ export default function AssessmentPage() {
                 type="date"
                 value={offenderDob}
                 onChange={(e) => setOffenderDob(e.target.value)}
-                className={`border-2 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none transition
-                           ${offenderErrors.offenderDob ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               />
-              {offenderErrors.offenderDob && (
-                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderDob[0]}</p>
-              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -584,18 +468,14 @@ export default function AssessmentPage() {
               <select
                 value={offenderSex}
                 onChange={(e) => setOffenderSex(e.target.value)}
-                className={`w-32 h-12 appearance-none border-2 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none transition
-                           ${offenderErrors.offenderSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition"
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
               </select>
-              {offenderErrors.offenderSex && (
-                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderSex[0]}</p>
-              )}
             </div>
           </div>
 
@@ -607,13 +487,9 @@ export default function AssessmentPage() {
               type="text"
               value={offenderRelationship}
               onChange={(e) => setOffenderRelationship(e.target.value)}
-              className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none transition
-                         ${offenderErrors.offenderRelationship ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                         focus:outline-none focus:border-gray-900 transition"
             />
-            {offenderErrors.offenderRelationship && (
-              <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderRelationship[0]}</p>
-            )}
           </div>
 
           <div className="flex gap-4">
@@ -626,24 +502,12 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={() => {
-                const result = offenderSchema.safeParse({
-                  offenderFirstName,
-                  offenderLastName,
-                  offenderDob,
-                  offenderSex,
-                  offenderRelationship,
-                });
-                if (!result.success) {
-                  setOffenderErrors(result.error.flatten().fieldErrors);
-                  return;
-                }
-                setOffenderErrors({});
-                setPhase("intro");
-              }}
+              onClick={() => setPhase("intro")}
+              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+                         focus:ring-4 focus:ring-gray-400 transition
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
             >
               Continue
             </button>
