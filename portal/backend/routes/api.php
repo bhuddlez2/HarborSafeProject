@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PrivateAssessmentController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\SubmitterInfoController;
+use App\Http\Controllers\LawEnforcementAssessmentController;
+use App\Http\Controllers\LawEnforcementAgentController;
+use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\CountyController;
@@ -33,6 +36,15 @@ Route::apiResource('/assessments', AssessmentController::class);
 
 // Routes for submitter info table
 Route::apiResource('/submitter-info', SubmitterInfoController::class);
+
+// Routes for the law enforcement assessment table
+Route::apiResource('/law-enforcement-assessments', LawEnforcementAssessmentController::class);
+
+// Routes for law enforcement agent profiles
+Route::apiResource('/law-enforcement-agents', LawEnforcementAgentController::class);
+
+// Routes for the agencies lookup table
+Route::apiResource('/agencies', AgencyController::class);
 
 // Narrow public API surface for the website's feedback/resource-request
 // forms - reads and writes here go through the restricted FeedbackPublic
