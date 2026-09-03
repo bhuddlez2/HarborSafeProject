@@ -26,6 +26,8 @@ export default function AssessmentPage() {
   const [answers, setAnswers] = useState({});
   // stores validation errors for the victim phase, called when validating victim info
   const [victimErrors, setVictimErrors] = useState({});
+  // stores validation errors for the offender phase, called when validating offender info
+  const [offenderErrors, setOffenderErrors] = useState({});
 
   // prescreen state
   // anonymous stays null until forWhom is answered, which controls whether it renders
