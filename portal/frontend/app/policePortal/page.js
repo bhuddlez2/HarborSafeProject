@@ -10,6 +10,7 @@ export default function AssessmentPage() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [victimErrors, setVictimErrors] = useState({});
+  const [offenderErrors, setOffenderErrors] = useState({});
 
   // officer info — will be populated from auth session (users + law_enforcement_agents)
   // placeholder values until auth is wired up
@@ -252,9 +253,13 @@ export default function AssessmentPage() {
                 type="text"
                 value={offenderFirstName}
                 onChange={(e) => setOffenderFirstName(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${offenderErrors.offenderFirstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               />
+              {offenderErrors.offenderFirstName && (
+                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderFirstName[0]}</p>
+              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -264,9 +269,13 @@ export default function AssessmentPage() {
                 type="text"
                 value={offenderLastName}
                 onChange={(e) => setOffenderLastName(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${offenderErrors.offenderLastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               />
+              {offenderErrors.offenderLastName && (
+                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderLastName[0]}</p>
+              )}
             </div>
           </div>
 
@@ -280,9 +289,13 @@ export default function AssessmentPage() {
                 type="date"
                 value={offenderDob}
                 onChange={(e) => setOffenderDob(e.target.value)}
-                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${offenderErrors.offenderDob ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               />
+              {offenderErrors.offenderDob && (
+                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderDob[0]}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -291,14 +304,18 @@ export default function AssessmentPage() {
               <select
                 value={offenderSex}
                 onChange={(e) => setOffenderSex(e.target.value)}
-                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-32 h-12 appearance-none border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${offenderErrors.offenderSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
               </select>
+              {offenderErrors.offenderSex && (
+                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderSex[0]}</p>
+              )}
             </div>
           </div>
 
@@ -310,9 +327,13 @@ export default function AssessmentPage() {
               type="text"
               value={offenderRelationship}
               onChange={(e) => setOffenderRelationship(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${offenderErrors.offenderRelationship ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
+            {offenderErrors.offenderRelationship && (
+              <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderRelationship[0]}</p>
+            )}
           </div>
 
           <div className="flex gap-4">
@@ -325,12 +346,24 @@ export default function AssessmentPage() {
               Back
             </button>
             <button
-              onClick={() => setPhase("intro")}
-              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
+              onClick={() => {
+                const result = offenderSchema.safeParse({
+                  offenderFirstName,
+                  offenderLastName,
+                  offenderDob,
+                  offenderSex,
+                  offenderRelationship,
+                });
+                if (!result.success) {
+                  setOffenderErrors(result.error.flatten().fieldErrors);
+                  return;
+                }
+                setOffenderErrors({});
+                setPhase("intro");
+              }}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition
-                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                         focus:ring-4 focus:ring-gray-400 transition"
             >
               Continue
             </button>
