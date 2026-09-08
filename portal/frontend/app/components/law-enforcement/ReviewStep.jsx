@@ -1,7 +1,6 @@
 export default function ReviewStep({
   victimFirstName, victimLastName,
   offenderFirstName, offenderLastName,
-  officerId,
   total,
   submitError,
   submitting,
@@ -23,10 +22,6 @@ export default function ReviewStep({
           <div className="py-4">
             <p className="text-sm font-medium text-gray-500 mb-1">Offender</p>
             <p className="text-gray-900">{offenderFirstName} {offenderLastName}</p>
-          </div>
-          <div className="py-4">
-            <p className="text-sm font-medium text-gray-500 mb-1">Submitting officer</p>
-            <p className="text-gray-900">User ID {officerId}</p>
           </div>
           <div className="py-4">
             <p className="text-sm font-medium text-gray-500 mb-1">Questions answered</p>

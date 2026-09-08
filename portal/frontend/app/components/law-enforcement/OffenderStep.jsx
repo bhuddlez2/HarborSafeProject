@@ -24,8 +24,9 @@ export default function OffenderStep({
               type="text"
               value={offenderFirstName}
               onChange={(e) => setOffenderFirstName(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${offenderErrors.offenderFirstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
             {offenderErrors.offenderFirstName && (
               <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderFirstName[0]}</p>
@@ -39,8 +40,9 @@ export default function OffenderStep({
               type="text"
               value={offenderLastName}
               onChange={(e) => setOffenderLastName(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${offenderErrors.offenderLastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
             {offenderErrors.offenderLastName && (
               <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderLastName[0]}</p>
@@ -58,9 +60,13 @@ export default function OffenderStep({
               type="date"
               value={offenderDob}
               onChange={(e) => setOffenderDob(e.target.value)}
-              className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${offenderErrors.offenderDob ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
+            {offenderErrors.offenderDob && (
+              <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderDob[0]}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -70,8 +76,8 @@ export default function OffenderStep({
               value={offenderSex}
               onChange={(e) => setOffenderSex(e.target.value)}
               className={`w-32 h-12 appearance-none border-2 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none transition
-                         ${offenderErrors.offenderSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                          focus:outline-none transition
+                          ${offenderErrors.offenderSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             >
               <option value="">Select</option>
               <option value="M">Male</option>
@@ -92,8 +98,9 @@ export default function OffenderStep({
             type="text"
             value={offenderRelationship}
             onChange={(e) => setOffenderRelationship(e.target.value)}
-            className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                       focus:outline-none focus:border-gray-900 transition"
+            className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                        focus:outline-none transition
+                        ${offenderErrors.offenderRelationship ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
           />
           {offenderErrors.offenderRelationship && (
             <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderRelationship[0]}</p>
@@ -111,7 +118,6 @@ export default function OffenderStep({
           </button>
           <button
             onClick={onContinue}
-            disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
             className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                        hover:bg-gray-700 focus:outline-none
                        focus:ring-4 focus:ring-gray-400 transition"

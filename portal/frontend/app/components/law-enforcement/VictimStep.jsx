@@ -24,11 +24,12 @@ export default function VictimStep({
               type="text"
               value={victimFirstName}
               onChange={(e) => setVictimFirstName(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${victimErrors.victimFirstName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
             {victimErrors.victimFirstName && (
-            <p className="text-sm text-red-600 mt-1">{victimErrors.victimFirstName[0]}</p>
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimFirstName[0]}</p>
             )}
           </div>
           <div className="flex-1">
@@ -39,11 +40,12 @@ export default function VictimStep({
               type="text"
               value={victimLastName}
               onChange={(e) => setVictimLastName(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${victimErrors.victimLastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
             {victimErrors.victimLastName && (
-            <p className="text-sm text-red-600 mt-1">{victimErrors.victimLastName[0]}</p>
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimLastName[0]}</p>
             )}
           </div>
         </div>
@@ -57,9 +59,13 @@ export default function VictimStep({
               type="date"
               value={victimDob}
               onChange={(e) => setVictimDob(e.target.value)}
-              className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+              className={`border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${victimErrors.victimDob ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             />
+            {victimErrors.victimDob && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimDob[0]}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -68,9 +74,9 @@ export default function VictimStep({
             <select
               value={victimSex}
               onChange={(e) => setVictimSex(e.target.value)}
-              className={`w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition
-                         ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+              className={`w-32 h-12 appearance-none border-2 rounded-lg px-4 py-3 text-gray-900
+                          focus:outline-none transition
+                          ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
             >
               <option value="">Select</option>
               <option value="M">Male</option>
@@ -78,7 +84,7 @@ export default function VictimStep({
               <option value="O">Other</option>
             </select>
             {victimErrors.victimSex && (
-            <p className="text-sm text-red-600 mt-1">{victimErrors.victimSex[0]}</p>
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimSex[0]}</p>
             )}
           </div>
         </div>
@@ -108,11 +114,9 @@ export default function VictimStep({
           </button>
           <button
             onClick={onContinue}
-            disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex}
             className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                        hover:bg-gray-700 focus:outline-none
-                       focus:ring-4 focus:ring-gray-400 transition
-                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                       focus:ring-4 focus:ring-gray-400 transition"
           >
             Continue
           </button>

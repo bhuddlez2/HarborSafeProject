@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { lawEnforcementQuestions } from "@/app/lib/questions/law-enforcement";
 import { submitLawEnforcementAssessment } from "@/app/lib/api/law-enforcement";
+import { victimSchema, offenderSchema } from "@/app/lib/validation/law-enforcement";
 
 import OfficerInfoStep from "@/app/components/law-enforcement/OfficerInfoStep";
 import VictimStep from "@/app/components/law-enforcement/VictimStep";
@@ -22,9 +23,7 @@ export default function LawEnforcementAssessmentPage() {
   const [victimErrors, setVictimErrors] = useState({});
   const [offenderErrors, setOffenderErrors] = useState({});
 
-  // officer phase state
-  const [officerId, setOfficerId] = useState("");
-  const [officerIdError, setOfficerIdError] = useState(null);
+  // officer identity is derived from the auth session; no editable state needed here
 
   // victim phase state
   const [victimFirstName, setVictimFirstName] = useState("");
@@ -64,20 +63,28 @@ export default function LawEnforcementAssessmentPage() {
   const resetAll = () => {
     setAnswers({});
     setIndex(0);
-    setOfficerId(""); setOfficerIdError(null);
     setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimSex(""); setVictimPhone("");
     setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderSex(""); setOffenderRelationship("");
     setSubmitError(null);
     setPhase("officerInfo");
   };
 
-  const handleOfficerContinue = () => {
-    if (!/^\d+$/.test(officerId.trim())) {
-      setOfficerIdError("Enter a numeric user ID");
-      return;
-    }
-    setOfficerIdError(null);
-    setPhase("victim");
+  const handleVictimContinue = () => {
+    const result = victimSchema.safeParse({
+      victimFirstName, victimLastName, victimDob, victimSex, victimPhone,
+    });
+    if (!result.success) { setVictimErrors(result.error.flatten().fieldErrors); return; }
+    setVictimErrors({});
+    setPhase("offender");
+  };
+
+  const handleOffenderContinue = () => {
+    const result = offenderSchema.safeParse({
+      offenderFirstName, offenderLastName, offenderDob, offenderSex, offenderRelationship,
+    });
+    if (!result.success) { setOffenderErrors(result.error.flatten().fieldErrors); return; }
+    setOffenderErrors({});
+    setPhase("intro");
   };
 
   const handleSubmit = async () => {
@@ -85,7 +92,6 @@ export default function LawEnforcementAssessmentPage() {
     setSubmitError(null);
     try {
       await submitLawEnforcementAssessment({
-        submittedBy: parseInt(officerId, 10),
         victimFirstName,
         victimLastName,
         victimDob,
@@ -107,13 +113,7 @@ export default function LawEnforcementAssessmentPage() {
   };
 
   if (phase === "officerInfo") {
-    return (
-      <OfficerInfoStep
-        officerId={officerId} setOfficerId={setOfficerId}
-        officerIdError={officerIdError}
-        onContinue={handleOfficerContinue}
-      />
-    );
+    return <OfficerInfoStep onContinue={() => setPhase("victim")} />;
   }
 
   if (phase === "victim") {
@@ -126,7 +126,7 @@ export default function LawEnforcementAssessmentPage() {
         victimPhone={victimPhone} setVictimPhone={setVictimPhone}
         victimErrors={victimErrors}
         onBack={() => setPhase("officerInfo")}
-        onContinue={() => setPhase("offender")}
+        onContinue={handleVictimContinue}
       />
     );
   }
@@ -141,7 +141,7 @@ export default function LawEnforcementAssessmentPage() {
         offenderRelationship={offenderRelationship} setOffenderRelationship={setOffenderRelationship}
         offenderErrors={offenderErrors}
         onBack={() => setPhase("victim")}
-        onContinue={() => setPhase("intro")}
+        onContinue={handleOffenderContinue}
       />
     );
   }
@@ -155,7 +155,6 @@ export default function LawEnforcementAssessmentPage() {
       <ReviewStep
         victimFirstName={victimFirstName} victimLastName={victimLastName}
         offenderFirstName={offenderFirstName} offenderLastName={offenderLastName}
-        officerId={officerId}
         total={total}
         submitError={submitError}
         submitting={submitting}
