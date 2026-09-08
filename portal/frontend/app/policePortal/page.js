@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
 import { submitAssessment } from "@/app/lib/api";
-import { submitterSchema, victimSchema, offenderSchema } from "@/app/lib/validation";
+import { victimSchema, offenderSchema } from "@/app/lib/validation";
 
 export default function AssessmentPage() {
   const [phase, setPhase] = useState("info");
@@ -11,21 +11,20 @@ export default function AssessmentPage() {
   const [answers, setAnswers] = useState({});
   const [victimErrors, setVictimErrors] = useState({});
 
-  // info phase state (officer)
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [badge, setBadge] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  // officer info — will be populated from auth session (users + law_enforcement_agents)
+  // placeholder values until auth is wired up
+  const officerName = "";
+  const officerBadge = "";
+  const officerAgency = "";
 
-  // victim phase state
+  // victim phase state (VictimFirstName, VictimLastName, VictimSex, VictimDOB, VictimSafePhoneNumber)
   const [victimFirstName, setVictimFirstName] = useState("");
   const [victimLastName, setVictimLastName] = useState("");
   const [victimDob, setVictimDob] = useState("");
   const [victimSex, setVictimSex] = useState("");
   const [victimPhone, setVictimPhone] = useState("");
 
-  // offender phase state
+  // offender phase state (OffenderFirstName, OffenderLastName, OffenderSex, OffenderDOB, OffenderVictimRelationship)
   const [offenderFirstName, setOffenderFirstName] = useState("");
   const [offenderLastName, setOffenderLastName] = useState("");
   const [offenderDob, setOffenderDob] = useState("");
@@ -52,91 +51,45 @@ export default function AssessmentPage() {
     if (index > 0) setIndex(index - 1);
   };
 
-  // Info phase: officer identification
+  // Info phase: officer identity, auto-filled from auth session
   if (phase === "info") {
     return (
       <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-10">
-            Your information
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+            Submitting officer
           </h1>
+          <p className="text-sm text-gray-500 mb-10">
+            This information is pulled from your account and cannot be edited here.
+          </p>
 
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                First name
-              </label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
-              />
+              <p className="text-sm font-medium text-gray-700 mb-1">Name</p>
+              <div className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-400 select-none">
+                {officerName || <span className="italic">Auto-filled from account</span>}
+              </div>
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last name
-              </label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
-              />
+              <p className="text-sm font-medium text-gray-700 mb-1">Badge number</p>
+              <div className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-400 select-none">
+                {officerBadge || <span className="italic">Auto-filled from account</span>}
+              </div>
             </div>
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Badge number{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={badge}
-              onChange={(e) => setBadge(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
-            />
           </div>
 
           <div className="mb-10">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone number{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
-            />
+            <p className="text-sm font-medium text-gray-700 mb-1">Agency</p>
+            <div className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-400 select-none">
+              {officerAgency || <span className="italic">Auto-filled from account</span>}
+            </div>
           </div>
 
           <button
             onClick={() => setPhase("victim")}
-            disabled={!firstName.trim() || !lastName.trim()}
             className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                        hover:bg-gray-700 focus:outline-none
-                       focus:ring-4 focus:ring-gray-400 transition
-                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                       focus:ring-4 focus:ring-gray-400 transition"
           >
             Continue
           </button>
@@ -180,9 +133,13 @@ export default function AssessmentPage() {
                 type="text"
                 value={victimLastName}
                 onChange={(e) => setVictimLastName(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-full border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${victimErrors.victimLastName ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               />
+              {victimErrors.victimLastName && (
+                <p className="text-sm text-red-600 mt-1">{victimErrors.victimLastName[0]}</p>
+              )}
             </div>
           </div>
 
@@ -195,9 +152,13 @@ export default function AssessmentPage() {
                 type="date"
                 value={victimDob}
                 onChange={(e) => setVictimDob(e.target.value)}
-                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${victimErrors.victimDob ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               />
+              {victimErrors.victimDob && (
+                <p className="text-sm text-red-600 mt-1">{victimErrors.victimDob[0]}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -206,20 +167,24 @@ export default function AssessmentPage() {
               <select
                 value={victimSex}
                 onChange={(e) => setVictimSex(e.target.value)}
-                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-32 h-12 appearance-none border-2 rounded-lg px-4 py-3 text-gray-900
+                            focus:outline-none transition
+                            ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
               </select>
+              {victimErrors.victimSex && (
+                <p className="text-sm text-red-600 mt-1">{victimErrors.victimSex[0]}</p>
+              )}
             </div>
           </div>
 
           <div className="mb-10">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone number{" "}
+              Safe phone number{" "}
               <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <input
@@ -390,14 +355,24 @@ export default function AssessmentPage() {
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
             Nothing is saved or transmitted. Closing the tab clears the results.
           </p>
-          <button
-            onClick={() => setPhase("questions")}
-            className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                       hover:bg-gray-700 focus:outline-none
-                       focus:ring-4 focus:ring-gray-400 transition"
-          >
-            Begin assessment
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setPhase("offender")}
+              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-900 hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => setPhase("questions")}
+              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-gray-700 focus:outline-none
+                         focus:ring-4 focus:ring-gray-400 transition"
+            >
+              Begin assessment
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -413,10 +388,6 @@ export default function AssessmentPage() {
           </h1>
 
           <div className="divide-y divide-gray-100 mb-10">
-            <div className="py-4">
-              <p className="text-sm font-medium text-gray-500 mb-1">Submitted by</p>
-              <p className="text-gray-900">{firstName} {lastName}</p>
-            </div>
             <div className="py-4">
               <p className="text-sm font-medium text-gray-500 mb-1">Victim</p>
               <p className="text-gray-900">{victimFirstName} {victimLastName}</p>
@@ -450,21 +421,16 @@ export default function AssessmentPage() {
                 setSubmitError(null);
                 try {
                   await submitAssessment({
-                    firstName,
-                    lastName,
-                    badge,
-                    email,
-                    phone,
-                    victimFirstName,
-                    victimLastName,
-                    victimDob,
-                    victimSex,
-                    victimPhone,
-                    offenderFirstName,
-                    offenderLastName,
-                    offenderDob,
-                    offenderSex,
-                    offenderRelationship,
+                    VictimFirstName: victimFirstName,
+                    VictimLastName: victimLastName,
+                    VictimDOB: victimDob,
+                    VictimSex: victimSex,
+                    VictimSafePhoneNumber: victimPhone,
+                    OffenderFirstName: offenderFirstName,
+                    OffenderLastName: offenderLastName,
+                    OffenderDOB: offenderDob,
+                    OffenderSex: offenderSex,
+                    OffenderVictimRelationship: offenderRelationship,
                     answers,
                   });
                   setPhase("submitted");
@@ -503,7 +469,6 @@ export default function AssessmentPage() {
             onClick={() => {
               setAnswers({});
               setIndex(0);
-              setFirstName(""); setLastName(""); setBadge(""); setEmail(""); setPhone("");
               setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimSex(""); setVictimPhone("");
               setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderSex(""); setOffenderRelationship("");
               setSubmitError(null);
