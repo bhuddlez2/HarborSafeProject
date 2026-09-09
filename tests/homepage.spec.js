@@ -288,10 +288,16 @@ test.describe('Get Support Page', () => {
         await expect(page.getByRole('link', { name: /contact us/i })).toBeVisible();
     });
 
-    test('Contact Us button opens in new tab', async ({ page }) => {
+    test('Contact Us button goes to the contact page, in the same tab', async ({ page }) => {
         await page.goto('/get-support/');
         const contactLink = page.getByRole('link', { name: /contact us/i });
-        await expect(contactLink).toHaveAttribute('target', '_blank');
+        // trailingSlash: true in next.config.mjs, so the emitted href is /contact/
+        await expect(contactLink).toHaveAttribute('href', '/contact/');
+        await expect(contactLink).not.toHaveAttribute('target', '_blank');
+
+        await contactLink.click();
+        await expect(page).toHaveURL(/\/contact/);
+        await expect(page.getByRole('heading', { name: /^contact us$/i })).toBeVisible();
     });
 
     test('We are here when ready section is visible', async ({ page }) => {
