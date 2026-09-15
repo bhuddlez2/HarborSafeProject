@@ -10,7 +10,7 @@ class ServiceController extends Controller
     public function index()
     {
         return response()->json(
-            Service::on('FeedbackPublic')->get()
+            Service::on('FeedbackPublic')->select('id', 'Name')->get()
         );
     }
 }

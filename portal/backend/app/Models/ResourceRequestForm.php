@@ -23,7 +23,6 @@ class ResourceRequestForm extends BaseModel
         'LastName',
         'EmailAddress',
         'SafePhoneNumber',
-        'ResourceTypeID',
         'CountyID',
         'Message',
     ];
@@ -33,9 +32,16 @@ class ResourceRequestForm extends BaseModel
         return [$this->primaryKey];
     }
 
-    public function resource()
+    // Multi-select "resources of interest" - see resource_request_resource_types
+    // (migration 2026_09_15_090100). Replaced the old singular ResourceTypeID FK.
+    public function resourceTypes()
     {
-        return $this->belongsTo(Resource::class, 'ResourceTypeID');
+        return $this->belongsToMany(
+            Resource::class,
+            'resource_request_resource_types',
+            'FormID',
+            'ResourceTypeID'
+        );
     }
 
     public function county()

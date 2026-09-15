@@ -10,7 +10,7 @@ class CountyController extends Controller
     public function index()
     {
         return response()->json(
-            County::on('FeedbackPublic')->get()
+            County::on('FeedbackPublic')->select('id', 'Name')->get()
         );
     }
 }
