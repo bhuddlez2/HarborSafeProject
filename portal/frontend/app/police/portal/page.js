@@ -12,7 +12,7 @@ export default function AssessmentPage() {
   const [victimErrors, setVictimErrors] = useState({});
   const [offenderErrors, setOffenderErrors] = useState({});
 
-  // officer info — will be populated from auth session (users + law_enforcement_agents)
+  // officer info -- will be populated from auth session (users + law_enforcement_agents)
   // placeholder values until auth is wired up
   const officerName = "";
   const officerBadge = "";
@@ -560,7 +560,7 @@ export default function AssessmentPage() {
               onClick={handleBack}
               className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4"
             >
-              ← Previous question
+              Previous question
             </button>
           )}
           <div className="flex gap-4">
@@ -593,7 +593,7 @@ export default function AssessmentPage() {
               onClick={handleBack}
               className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4"
             >
-              ← Previous question
+              Previous question
             </button>
           )}
           <div className="flex gap-4">
