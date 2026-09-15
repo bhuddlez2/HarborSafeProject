@@ -1,32 +1,26 @@
 /*
 forms.js: the data layer for the two public forms on the Contact page.
+
+The option lists are read from the API's lookup tables rather than hardcoded
+here - services/resources/counties are maintained in the database, so adding
+a county or renaming a service is a data change, not a frontend deploy.
+
+This site is a static export, so these fetches happen in the browser at
+runtime (see ContactContent), not at build time.
 */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-export const SERVICES = [
-  { id: 1, Name: "Emergency Shelter" },
-  { id: 2, Name: "Crisis Counseling" },
-  { id: 3, Name: "Support Groups" },
-  { id: 4, Name: "Court Advocacy" },
-  { id: 5, Name: "Community Education" },
-  { id: 6, Name: "24/7 Crisis Line" },
-];
+async function getJson(path) {
+  const response = await fetch(`${API_URL}/api/public/${path}`, {
+    headers: { Accept: "application/json" },
+  });
 
-export const RESOURCE_TYPES = [
-  { id: 1, Name: "Emergency Shelter" },
-  { id: 2, Name: "Safety Planning" },
-  { id: 3, Name: "Orders of Protection" },
-  { id: 4, Name: "Counseling" },
-  { id: 5, Name: "Legal Help" },
-  { id: 6, Name: "Transportation" },
-  { id: 7, Name: "Clothing" },
-  { id: 8, Name: "Something Else" },
-];
+  if (!response.ok) {
+    throw new Error(`Could not load ${path}`);
+  }
 
-export const COUNTIES = [
-  { id: 1, Name: "Bradley" },
-  { id: 2, Name: "Polk" },
-];
+  return response.json();
+}
 
 async function postJson(path, body) {
   const response = await fetch(`${API_URL}/api/public/${path}`, {
@@ -45,6 +39,22 @@ async function postJson(path, body) {
   }
 
   return data;
+}
+
+/*
+Loads every option list the Contact page needs in one go. Each entry is
+{ id, Name }. Fetched in parallel - one failure rejects the lot, which is
+what we want: a form with a half-populated dropdown is worse than a form
+that says it couldn't load.
+*/
+export async function fetchFormOptions() {
+  const [services, resourceTypes, counties] = await Promise.all([
+    getJson("services"),
+    getJson("resources"),
+    getJson("counties"),
+  ]);
+
+  return { services, resourceTypes, counties };
 }
 
 // both endpoints are rate limited to 10 requests a minute and return { message, FormID }

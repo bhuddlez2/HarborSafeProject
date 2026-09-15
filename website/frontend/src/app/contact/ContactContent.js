@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  SERVICES,
-  RESOURCE_TYPES,
-  COUNTIES,
+  fetchFormOptions,
   submitResourceRequest,
   submitServiceFeedback,
 } from "../lib/forms";
@@ -91,7 +89,7 @@ const EMPTY_REQUEST = {
   Message: "",
 };
 
-function ResourceRequestForm() {
+function ResourceRequestForm({ resourceTypes, counties }) {
   const [values, setValues] = useState(EMPTY_REQUEST);
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const [message, setMessage] = useState("");
@@ -247,7 +245,7 @@ function ResourceRequestForm() {
         )}
 
         <div className="grid sm:grid-cols-2 gap-2">
-          {RESOURCE_TYPES.map((resource) => {
+          {resourceTypes.map((resource) => {
             const checked = values.ResourceTypeIDs.includes(resource.id);
             return (
               <label
@@ -284,7 +282,7 @@ function ResourceRequestForm() {
             className={inputClass}
           >
             <option value="">Please choose…</option>
-            {COUNTIES.map((county) => (
+            {counties.map((county) => (
               <option key={county.id} value={county.id}>{county.Name}</option>
             ))}
           </select>
@@ -317,7 +315,7 @@ function ResourceRequestForm() {
 
 const RATINGS = [1, 2, 3, 4, 5];
 
-function ServiceFeedbackForm() {
+function ServiceFeedbackForm({ services }) {
   const [values, setValues] = useState({ ServiceID: "", Rating: "", Comment: "" });
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
@@ -371,7 +369,7 @@ function ServiceFeedbackForm() {
           className={inputClass}
         >
           <option value="">Please choose…</option>
-          {SERVICES.map((service) => (
+          {services.map((service) => (
             <option key={service.id} value={service.id}>{service.Name}</option>
           ))}
         </select>
@@ -445,7 +443,51 @@ function ServiceFeedbackForm() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+/*
+FormSection wraps each form with the shared loading/error handling for the
+option lists. The crisis-line details above stay visible regardless - if the
+API is unreachable, someone still needs a way to get help, so only the form
+itself is replaced by the message.
+*/
+function FormSection({ status, children }) {
+  if (status === "loading") {
+    return <p className="text-gray-600 text-center">Loading the form…</p>;
+  }
+
+  if (status === "error") {
+    return (
+      <FormMessage tone="error">
+        We could not load this form just now. Please call or text our crisis line at
+        (423) 476-3886, or try again in a few minutes.
+      </FormMessage>
+    );
+  }
+
+  return children;
+}
+
 export default function ContactContent() {
+  const [options, setOptions] = useState(null);
+  const [status, setStatus] = useState("loading"); // loading | ready | error
+
+  useEffect(() => {
+    let active = true;
+
+    fetchFormOptions()
+      .then((loaded) => {
+        if (!active) return;
+        setOptions(loaded);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (active) setStatus("error");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <main>
 
@@ -480,7 +522,12 @@ export default function ContactContent() {
             now, please call or text our crisis hotline.
           </p>
 
-          <ResourceRequestForm />
+          <FormSection status={status}>
+            <ResourceRequestForm
+              resourceTypes={options?.resourceTypes ?? []}
+              counties={options?.counties ?? []}
+            />
+          </FormSection>
         </div>
       </section>
 
@@ -496,7 +543,9 @@ export default function ContactContent() {
             anonymous.
           </p>
 
-          <ServiceFeedbackForm />
+          <FormSection status={status}>
+            <ServiceFeedbackForm services={options?.services ?? []} />
+          </FormSection>
         </div>
       </section>
 
