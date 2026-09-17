@@ -1,4 +1,4 @@
-export const lethalityQuestions = [
+export const civilianQuestions = [
   { id: 1,  text: "Have they ever used a weapon against you or threatened you with a weapon?" },
   { id: 2,  text: "Have they threatened to kill you or your children?" },
   { id: 3,  text: "Have they ever tried to choke (strangle) you?" },
