@@ -118,6 +118,7 @@ export default function OffenderStep({
           </button>
           <button
             onClick={onContinue}
+            disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
             className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                        hover:bg-gray-700 focus:outline-none
                        focus:ring-4 focus:ring-gray-400 transition"
