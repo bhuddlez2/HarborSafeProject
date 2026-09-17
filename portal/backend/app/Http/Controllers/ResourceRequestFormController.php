@@ -2,26 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Public\ResourceRequestStoreRequest;
 use App\Models\ResourceRequestForm;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ResourceRequestFormController extends Controller
 {
     // POST /api/public/resource-requests
-    public function store(Request $request)
+    public function store(ResourceRequestStoreRequest $request)
     {
-        $validated = $request->validate([
-            'FirstName'      => 'required|string|max:50',
-            'LastName'       => 'nullable|string|max:50',
-            'EmailAddress'   => 'required|email|max:250',
-            'SafePhoneNumber' => 'required|string|max:20',
-            'ResourceTypeID' => 'nullable|integer|exists:FeedbackPublic.resources,id',
-            'CountyID'       => 'nullable|integer|exists:FeedbackPublic.counties,id',
-            'Message'        => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
+        $resourceTypeIds = $validated['ResourceTypeIDs'] ?? [];
+        unset($validated['ResourceTypeIDs']);
 
-        $resourceRequest = ResourceRequestForm::on('FeedbackPublic')->create($validated);
+        $resourceRequest = DB::connection('FeedbackPublic')->transaction(function () use ($validated, $resourceTypeIds) {
+            $resourceRequest = ResourceRequestForm::on('FeedbackPublic')->create($validated);
+
+            if (! empty($resourceTypeIds)) {
+                $junctionRows = array_map(
+                    fn ($resourceTypeId) => [
+                        'FormID'         => $resourceRequest->FormID,
+                        'ResourceTypeID' => $resourceTypeId,
+                    ],
+                    $resourceTypeIds
+                );
+
+                DB::connection('FeedbackPublic')
+                    ->table('resource_request_resource_types')
+                    ->insert($junctionRows);
+            }
+
+            return $resourceRequest;
+        });
 
         DB::disconnect('FeedbackPublic');
 

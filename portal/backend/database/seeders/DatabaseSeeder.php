@@ -21,5 +21,14 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Feedback-connection lookup tables backing the website's two public
+        // forms. Safe to run on their own:
+        //   php artisan db:seed --class=ServiceSeeder
+        $this->call([
+            ServiceSeeder::class,
+            ResourceSeeder::class,
+            CountySeeder::class,
+        ]);
     }
 }

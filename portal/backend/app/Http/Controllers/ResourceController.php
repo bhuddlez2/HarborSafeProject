@@ -10,7 +10,7 @@ class ResourceController extends Controller
     public function index()
     {
         return response()->json(
-            Resource::on('FeedbackPublic')->get()
+            Resource::on('FeedbackPublic')->select('id', 'Name')->get()
         );
     }
 }

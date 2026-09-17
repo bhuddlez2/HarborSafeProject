@@ -163,15 +163,19 @@ erDiagram
         string LastName
         string EmailAddress
         string SafePhoneNumber
-        bigint ResourceTypeID FK
         bigint CountyID FK
         string Message
         timestamp SubmissionDate
     }
+    resource_request_resource_types {
+        uuid FormID PK,FK
+        bigint ResourceTypeID PK,FK
+    }
 
     services ||--o{ service_feedback : "ServiceID"
-    resources ||--o{ resource_request_form : "ResourceTypeID (nullable)"
     counties ||--o{ resource_request_form : "CountyID (nullable)"
+    resource_request_form ||--o{ resource_request_resource_types : "FormID"
+    resources ||--o{ resource_request_resource_types : "ResourceTypeID"
 ```
 
 ### Table detail
@@ -182,7 +186,8 @@ erDiagram
 | `resources` | Lookup table for the resource-request form | `id` (PK) | |
 | `counties` | Lookup table for the resource-request form | `id` (PK) | |
 | `service_feedback` | Public service-rating submissions | `FormID` (PK, uuid), `ServiceID` (FK, required) | `Rating`'s 1–5 range is enforced in validation, not a DB constraint, matching how the rest of the app handles range checks. |
-| `resource_request_form` | Public resource-request submissions | `FormID` (PK, uuid) | `LastName`, `ResourceTypeID`, `CountyID`, `Message` are all nullable (optional on the form); `FirstName`/`EmailAddress`/`SafePhoneNumber` are required. `SafePhoneNumber` is a string column, not numeric — an int would drop leading zeros and can't hold formatting. |
+| `resource_request_form` | Public resource-request submissions | `FormID` (PK, uuid) | `LastName`, `CountyID`, `Message` are all nullable (optional on the form); `FirstName` is required. `EmailAddress`/`SafePhoneNumber` are each nullable, but the form requires at least one of the two (`required_without` on both, enforced in `ResourceRequestStoreRequest`) so there's always a way to reach the submitter back. `FirstName`/`LastName` are `varchar(50)` — shrunk from an original 100 to match what validation and the form input actually accept end-to-end. `SafePhoneNumber` is a string column, not numeric — an int would drop leading zeros and can't hold formatting. |
+| `resource_request_resource_types` | Junction table for the form's multi-select "resources of interest" field | `FormID` (FK), `ResourceTypeID` (FK), composite PK on both | Replaced an earlier singular `ResourceTypeID` FK column directly on `resource_request_form`, which couldn't represent more than one selection. |
 
 ### Two connections, one database — how "write-only" is enforced
 
@@ -201,6 +206,7 @@ CREATE USER 'harborsafe_feedback_public'@'%' IDENTIFIED BY 'CHANGE_ME';
 
 GRANT INSERT ON feedback_app_db.service_feedback TO 'harborsafe_feedback_public'@'%';
 GRANT INSERT ON feedback_app_db.resource_request_form TO 'harborsafe_feedback_public'@'%';
+GRANT INSERT ON feedback_app_db.resource_request_resource_types TO 'harborsafe_feedback_public'@'%';
 GRANT SELECT ON feedback_app_db.services TO 'harborsafe_feedback_public'@'%';
 GRANT SELECT ON feedback_app_db.resources TO 'harborsafe_feedback_public'@'%';
 GRANT SELECT ON feedback_app_db.counties TO 'harborsafe_feedback_public'@'%';
@@ -208,9 +214,11 @@ GRANT SELECT ON feedback_app_db.counties TO 'harborsafe_feedback_public'@'%';
 FLUSH PRIVILEGES;
 ```
 
-Note what's deliberately *not* granted: no `SELECT` on `service_feedback`/`resource_request_form` (the website can never read back a submission — only secretary/admin, via the `Feedback` connection, will be able to), and no access of any kind to the `Portal` database. Once created, put the credentials in `DB_USERNAME_FEEDBACK_PUBLIC`/`DB_PASSWORD_FEEDBACK_PUBLIC`.
+Note what's deliberately *not* granted: no `SELECT` on `service_feedback`/`resource_request_form`/`resource_request_resource_types` (the website can never read back a submission — only secretary/admin, via the `Feedback` connection, will be able to), and no access of any kind to the `Portal` database. Once created, put the credentials in `DB_USERNAME_FEEDBACK_PUBLIC`/`DB_PASSWORD_FEEDBACK_PUBLIC`.
 
-This is schema/infrastructure only — the actual public submission controller (which will use `FeedbackPublic` and explicitly `DB::disconnect('FeedbackPublic')` after each write) hasn't been built yet.
+**The `resource_request_resource_types` grant is new** (added alongside the migration that created the table) — any environment where the `harborsafe_feedback_public` user was already created before this needs that one `GRANT INSERT` statement run against it manually; migrations can't grant MySQL privileges themselves.
+
+The public submission controllers (`ServiceFeedbackController`, `ResourceRequestFormController`) are built and live at `POST /api/public/service-feedback` / `POST /api/public/resource-requests` — both use `FeedbackPublic` and explicitly `DB::disconnect('FeedbackPublic')` after each write. Input validation for both lives in `app/Http/Requests/Public/` (`ServiceFeedbackStoreRequest`, `ResourceRequestStoreRequest`).
 
 ---
 
