@@ -20,7 +20,7 @@ export default function PoliceLandingPage() {
 
         <div className="flex flex-col gap-4">
           <Link
-            href="/law-enforcement"
+            href="/police/portal"
             className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg text-center
                        hover:bg-gray-700 focus:outline-none
                        focus:ring-4 focus:ring-gray-400 transition"
