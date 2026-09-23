@@ -23,6 +23,38 @@ see [Schema_Reference.md](Schema_Reference.md).
 | Node.js | 20+ | Next.js 16 requires it |
 | MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running** |
 
+### PHP's `intl` extension
+
+The Filament staff panel needs PHP's `intl` extension. Without it, `composer
+install` refuses to resolve with:
+
+```
+- filament/support[v5.7.6, ..., v5.8.4] require ext-intl * -> it is missing from
+  your system. Install or enable PHP's intl extension.
+```
+
+**It's a one-line fix, not a dependency problem.** Enable it for your platform:
+
+- **Fedora/RHEL** — it's a separate package: `sudo dnf install php-intl`
+- **Windows/XAMPP** — the DLL already ships with XAMPP. In
+  `C:\xampp\php\php.ini`, change `;extension=intl` to `extension=intl`, then
+  restart Apache from the XAMPP control panel.
+- **Debian/Ubuntu** — `sudo apt install php-intl` (or `php8.x-intl` to match
+  your PHP version)
+
+Verify (must print `bool(true)`):
+
+```bash
+php -r "var_dump(extension_loaded('intl'));"
+```
+
+If it still prints `false`, run `php --ini` to see which `php.ini` the CLI
+actually loads — it isn't always the one Apache uses.
+
+**S3:** the content features (events, newsletters) store uploads on S3. Before
+working on them, fill in the `AWS_*` keys in `portal/backend/.env` — never in
+`.env.example` or anything else that gets committed.
+
 ### Is my database already running?
 
 Very likely yes, and not as part of XAMPP. Check:
