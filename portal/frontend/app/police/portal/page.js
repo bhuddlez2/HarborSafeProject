@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
-import { submitAssessment } from "@/app/lib/api";
+import { submitLawEnforcementAssessment } from "@/app/lib/api";
 import { victimSchema, offenderSchema } from "@/app/lib/validation";
 
 export default function AssessmentPage() {
@@ -453,17 +453,17 @@ export default function AssessmentPage() {
                 setSubmitting(true);
                 setSubmitError(null);
                 try {
-                  await submitAssessment({
-                    VictimFirstName: victimFirstName,
-                    VictimLastName: victimLastName,
-                    VictimDOB: victimDob,
-                    VictimSex: victimSex,
-                    VictimSafePhoneNumber: victimPhone,
-                    OffenderFirstName: offenderFirstName,
-                    OffenderLastName: offenderLastName,
-                    OffenderDOB: offenderDob,
-                    OffenderSex: offenderSex,
-                    OffenderVictimRelationship: offenderRelationship,
+                  await submitLawEnforcementAssessment({
+                    victimFirstName,
+                    victimLastName,
+                    victimDob,
+                    victimSex,
+                    victimPhone,
+                    offenderFirstName,
+                    offenderLastName,
+                    offenderDob,
+                    offenderSex,
+                    offenderRelationship,
                     answers,
                   });
                   setPhase("submitted");

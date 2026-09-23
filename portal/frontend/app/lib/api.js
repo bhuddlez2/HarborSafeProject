@@ -1,5 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
+// TODO(auth): replace with the real logged-in officer's users.id once auth is wired.
+// Will eventually come from the authenticated session (users table), cross-referenced
+// with law_enforcement_agents for badge number / agency display.
+const PLACEHOLDER_OFFICER_USER_ID = 1;
+
 export async function getAssessments() {
     const response = await fetch(`${API_URL}/api/assessments`);
     if (!response.ok) throw new Error('Failed to fetch assessments');
@@ -153,4 +158,83 @@ export async function submitAssessment({
     }
 
     return await infoResponse.json();
+}
+
+export async function submitLawEnforcementAssessment({
+    submittedBy = PLACEHOLDER_OFFICER_USER_ID,
+    victimFirstName,
+    victimLastName,
+    victimDob,
+    victimSex,
+    victimPhone,
+    offenderFirstName,
+    offenderLastName,
+    offenderDob,
+    offenderSex,
+    offenderRelationship,
+    answers,
+}) {
+    const answersPayload = {
+        RiskIndicator1:  answers[1]  ?? false,
+        RiskIndicator2:  answers[2]  ?? false,
+        RiskIndicator3:  answers[3]  ?? false,
+        RiskIndicator4:  answers[4]  ?? false,
+        RiskIndicator5:  answers[5]  ?? false,
+        RiskIndicator6:  answers[6]  ?? false,
+        RiskIndicator7:  answers[7]  ?? false,
+        RiskIndicator8:  answers[8]  ?? false,
+        RiskIndicator9:  answers[9]  ?? false,
+        RiskIndicator10: answers[10] ?? false,
+        RiskIndicator11: answers[11] ?? false,
+    };
+
+    const answersResponse = await fetch(`${API_URL}/api/assessments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept':        'application/json',
+        },
+        body: JSON.stringify(answersPayload),
+    });
+
+    if (!answersResponse.ok) {
+        const error = await answersResponse.json();
+        throw new Error(error.message || 'Failed to save assessment answers');
+    }
+
+    const answersData = await answersResponse.json();
+    const assessmentDocID = answersData.data.AssessmentDocID;
+
+    const assessmentPayload = {
+        submitted_by:                submittedBy,
+        OffenderFirstName:           offenderFirstName,
+        OffenderLastName:            offenderLastName,
+        OffenderSex:                 offenderSex || null,
+        OffenderDOB:                 offenderDob || null,
+        OffenderVictimRelationship:  offenderRelationship || null,
+        VictimFirstName:             victimFirstName,
+        VictimLastName:              victimLastName,
+        VictimSex:                   victimSex || null,
+        VictimDOB:                   victimDob || null,
+        VictimSafePhoneNumber:       victimPhone || null,
+        AssessmentDocID:             assessmentDocID,
+    };
+
+    const assessmentResponse = await fetch(`${API_URL}/api/law-enforcement-assessments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept':        'application/json',
+        },
+        body: JSON.stringify(assessmentPayload),
+    });
+
+    if (!assessmentResponse.ok) {
+        const error = await assessmentResponse.json();
+        throw new Error(error.message || 'Failed to save law enforcement assessment');
+    }
+
+    // Unlike /api/assessments and /api/private-assessments, this endpoint
+    // returns the created record directly, not wrapped in { data: ... }.
+    return await assessmentResponse.json();
 }
