@@ -1,6 +1,8 @@
 # Filament staff panel — design and setup guide
 
-**Status:** design settled, not yet implemented. Nothing in this document has been built.
+**Status:** design settled. Phases 1–3 (§11) are implemented: prerequisites, Filament
+installed with the `staff` panel at `/staff`, and Shield + spatie on the `Portal`
+connection. Everything from Phase 4 on is not yet built.
 
 ## 1. What this is
 
@@ -93,6 +95,30 @@ Before running spatie's migration:
   `protected $connection = 'Portal';`, and point `config/permission.php` at your
   subclasses.
 - Run it with `--database=Portal` like everything else (§6.4).
+
+**Do not run `shield:setup` in this project.** It publishes spatie's migration and then
+immediately calls a bare `migrate` — default connection, before you can edit anything —
+and with `--fresh` it also runs `DROP TABLE` statements through the default connection.
+Publish by hand instead:
+
+```
+php artisan vendor:publish --tag=filament-shield-config
+php artisan vendor:publish --tag=permission-config
+php artisan vendor:publish --tag=permission-migrations
+```
+
+Then edit the migration and models as above, migrate, and only *then* run
+`php artisan shield:install staff`. `shield:install` registers the plugin on the panel
+but also quietly runs `shield:generate --resource=RoleResource`, which writes a
+`super_admin` role and its permissions — so the tables must already exist on `Portal`.
+
+As implemented: Shield 4.3.1 resolved spatie/laravel-permission **8.3.0**, which still has
+no connection setting. The subclasses are `App\Models\Role` and `App\Models\Permission`
+(extending spatie's models, not `BaseModel`, so they declare `$connection` manually like
+`User`), and `User` uses `HasRoles`. spatie's cache (`store => 'default'`) needs no
+change — `CACHE_STORE=database` with `DB_CACHE_CONNECTION=Portal` already puts it on
+Portal. When probing in tinker, query through `App\Models\Role`, not
+`Spatie\Permission\Models\Role`.
 
 Verify before moving on: `php artisan migrate:status --database=Portal` lists the
 permission tables, and a `php artisan tinker` role lookup returns without a connection
@@ -334,27 +360,29 @@ from `email.includes("admin")`. `proxy.js` only checks that the cookie exists.
 Retiring it per §9 closes this. Worth stating plainly so nobody preserves it out of
 caution — it would be a serious hole if it ever reached production.
 
-### 10.2 Officer submissions land in the anonymous civilian table — hard blocker
+### 10.2 Officer submissions: routed correctly, identity still a placeholder
 
-`portal/frontend/app/police/portal/page.js:5` imports `submitAssessment` — the
-**civilian** function — which POSTs to `/api/private-assessments`.
-`submitLawEnforcementAssessment()` was deleted along with
-`portal/frontend/app/lib/api/law-enforcement.js` during the frontend restructure.
+**Routing — fixed in `0326f7f`.** The wizard at
+`portal/frontend/app/police/portal/page.js` briefly imported the civilian
+`submitAssessment` (so officer submissions landed in `_private_assessment`). It now
+imports `submitLawEnforcementAssessment()` from `portal/frontend/app/lib/api.js`, which
+POSTs to `/api/law-enforcement-assessments`, so rows land in
+`law_enforcement_assessment`.
 
-The consequences:
+**Identity — still open, now part of Phase 11.**
 
-- `law_enforcement_assessment` receives no rows at all.
-- `submitted_by` is never written.
-- Officer identity is still three hardcoded empty strings at
-  `portal/frontend/app/police/portal/page.js:17-19`.
+- `submitted_by` is sent from the client as `PLACEHOLDER_OFFICER_USER_ID = 1`
+  (`portal/frontend/app/lib/api.js`), so every officer submission is attributed to
+  user 1.
+- `LawEnforcementAssessmentController::store()` validates `submitted_by` as
+  `exists:Portal.users,id` but never ties it to the caller — a spoofing hole.
+- Officer name/badge/agency in the wizard are still hardcoded empty strings.
 
-**The officer dashboard, the owner-only edit rule and the entire change log have no data
-until this is fixed.** This is the largest single dependency in the plan. Phase 11 is
-blocked on it. Fixing it means restoring an LE submit path that POSTs to
-`/api/law-enforcement-assessments` with `submitted_by` derived from the authenticated
-session rather than the request body — deriving it server-side also closes a spoofing
-hole, since `LawEnforcementAssessmentController::store()` currently validates
-`submitted_by` as `exists:Portal.users,id` but never ties it to the caller.
+**The officer dashboard, the owner-only edit rule and the change log have no trustworthy
+ownership data until this is fixed.** The fix is to derive `submitted_by` server-side
+from the authenticated session (`$request->user()`) rather than the request body, and
+drop the placeholder. That needs the cross-origin session from Phase 11, so it's done
+there rather than separately.
 
 ## 11. Implementation phases
 
@@ -369,12 +397,13 @@ league/flysystem-aws-s3-v3` (§3.2).
 *Gate:* a panel provider appears in `portal/backend/bootstrap/providers.php`, which
 currently lists only `AppServiceProvider`.
 
-**3 — Shield + spatie.** Install, publish config, and **point the migration and models at
-`Portal`** — re-read §3.3 before running anything.
+**3 — Shield + spatie.** *(Done.)* Install, publish config, and **point the migration and
+models at `Portal`** — re-read §3.3 before running anything, especially the
+`shield:setup` warning.
 *Gate:* `php artisan migrate:status --database=Portal` lists the permission tables, and a
 tinker role lookup returns without a connection error.
 
-**4 — Add `police_admin`** to `App\Enums\UserRole`.
+**4 — Add `police_admin`** to `App\Enums\UserRole`. *(Done.)*
 *Gate:* all four cases resolve and cast correctly on `User`.
 
 **5 — Content connection.** `Content` + `ContentPublic` in `config/database.php`, env
@@ -387,6 +416,10 @@ vars, grants from §6.5.
 **7 — Auth and access.** Filament login, `User implements FilamentUser` with
 `canAccessPanel()`, Shield permissions encoding the §5 matrix, Shield super-admin plus a
 seeder creating one user per role for local development.
+*(Partly done: `canAccessPanel()` — `is_active` plus a valid role — and the local-only
+`LocalStaffUserSeeder` exist, with two placeholder pages (`/staff/content`,
+`/staff/police`) gated by `canAccess()`. Shield permissions and the super-admin are
+still to do.)*
 *Gate:* each of the four roles sees exactly its matrix row; admin is refused when
 creating an officer; `police_admin` has no edit action on assessments.
 
@@ -405,10 +438,13 @@ repoint `content.js` and delete the two mock files.
 page renders real data with no component changes.
 
 **11 — Cross-origin session.** `SESSION_DOMAIN`, `supports_credentials`, CORS origins,
-wizard sending `credentials: 'include'`.
+wizard sending `credentials: 'include'`. Then close the identity half of §10.2: put the
+LE store route behind the session, set `submitted_by` from `$request->user()` in
+`LawEnforcementAssessmentController::store()` (not from the request body), and remove
+`PLACEHOLDER_OFFICER_USER_ID` from `portal/frontend/app/lib/api.js`.
 *Gate:* an officer logs into Filament, opens `/police/portal`, submits, and the row lands
-in `law_enforcement_assessment` with the correct `submitted_by`.
-**Blocked on §10.2.**
+in `law_enforcement_assessment` with the correct `submitted_by`; a request body claiming
+a different `submitted_by` is ignored.
 
 **12 — Next.js cleanup** per §9.
 *Gate:* no portal route is reachable without a Filament session.
@@ -428,10 +464,11 @@ this is new ground.
 
 ## 12. Open items
 
-Neither was settled during the design pass. Decide before implementing:
+- ~~**Whether §10.2 gets fixed as part of this work.**~~ Resolved: yes. The routing half
+  was fixed in `0326f7f`; the identity half is folded into Phase 11.
 
-- **Whether §10.2 gets fixed as part of this work** or handed back to whoever owns the
-  wizard. Phase 11 cannot be verified until it is done by someone.
+Still undecided:
+
 - **Production domain layout.** The cross-origin session design in §4 assumes the panel
   and the portal share a registrable domain. If they end up on unrelated domains, the
   shared-cookie approach does not work and the officer identity mechanism needs
