@@ -12,6 +12,8 @@ async function getOfficer() {
   };
 }
 
+// Metadata for the officer portal layout
+// robots insures search engine crawlers ignore police portal pages
 export const metadata = {
   title: "Officer Portal",
   robots: { index: false, follow: false },
