@@ -44,9 +44,11 @@ export default function Footer() {
               <span>(423) 476-3886</span>
             </a>
 
-            {/* Link to the request/feedback forms */}
-            <Link href="/contact" className="inline-block hover:text-purple-200 transition-colors underline">
-              Request resources or share feedback
+            <Link href="/contact" className="block hover:text-purple-200 transition-colors underline">
+              Request resources
+            </Link>
+            <Link href="/feedback" className="block hover:text-purple-200 transition-colors underline">
+              Share feedback on a service
             </Link>
           </div>
         </div>

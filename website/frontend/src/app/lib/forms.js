@@ -1,25 +1,66 @@
 /*
-forms.js: the data layer for the two public forms on the Contact page.
+forms.js: the data layer for the two public forms.
 
-The option lists are read from the API's lookup tables rather than hardcoded
-here - services/resources/counties are maintained in the database, so adding
-a county or renaming a service is a data change, not a frontend deploy.
-
-This site is a static export, so these fetches happen in the browser at
-runtime (see ContactContent), not at build time.
+The option lists come from the API's lookup tables rather than being hardcoded. 
+The site is a static export, so these fetches happen in the browser at runtime.
 */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+/*
+TEMPORARY: delete before the site goes live.
+
+Placeholder options so the forms still render while the API is not running,
+which is what lets the pages be reviewed on the dev branch. Removing this is
+two deletions in this file: this constant, and the try/catch in getJson below.
+*/
+const IS_LOCAL_PREVIEW =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+const FALLBACK_OPTIONS = {
+  services: [
+    { id: 1, Name: "Emergency Shelter" },
+    { id: 2, Name: "Crisis Counseling" },
+    { id: 3, Name: "Support Groups" },
+    { id: 4, Name: "Court Advocacy" },
+    { id: 5, Name: "Community Education" },
+    { id: 6, Name: "24/7 Crisis Line" },
+  ],
+  resources: [
+    { id: 1, Name: "Emergency Shelter" },
+    { id: 2, Name: "Safety Planning" },
+    { id: 3, Name: "Orders of Protection" },
+    { id: 4, Name: "Counseling" },
+    { id: 5, Name: "Legal Help" },
+    { id: 6, Name: "Transportation" },
+    { id: 7, Name: "Clothing" },
+    { id: 8, Name: "Something Else" },
+  ],
+  counties: [
+    { id: 1, Name: "Bradley" },
+    { id: 2, Name: "Polk" },
+  ],
+};
+
 async function getJson(path) {
-  const response = await fetch(`${API_URL}/api/public/${path}`, {
-    headers: { Accept: "application/json" },
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/public/${path}`, {
+      headers: { Accept: "application/json" },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Could not load ${path}`);
+    if (!response.ok) {
+      throw new Error(`Could not load ${path}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    // TEMPORARY: anywhere but a local preview, fail properly
+    if (!IS_LOCAL_PREVIEW) throw error;
+
+    // TEMPORARY: see FALLBACK_OPTIONS above
+    console.warn(`[forms] "${path}" unavailable; showing placeholder options.`);
+    return FALLBACK_OPTIONS[path];
   }
-
-  return response.json();
 }
 
 async function postJson(path, body) {
@@ -41,20 +82,17 @@ async function postJson(path, body) {
   return data;
 }
 
-/*
-Loads every option list the Contact page needs in one go. Each entry is
-{ id, Name }. Fetched in parallel - one failure rejects the lot, which is
-what we want: a form with a half-populated dropdown is worse than a form
-that says it couldn't load.
-*/
-export async function fetchFormOptions() {
-  const [services, resourceTypes, counties] = await Promise.all([
-    getJson("services"),
+export async function fetchRequestOptions() {
+  const [resourceTypes, counties] = await Promise.all([
     getJson("resources"),
     getJson("counties"),
   ]);
 
-  return { services, resourceTypes, counties };
+  return { resourceTypes, counties };
+}
+
+export async function fetchServices() {
+  return getJson("services");
 }
 
 // both endpoints are rate limited to 10 requests a minute and return { message, FormID }
