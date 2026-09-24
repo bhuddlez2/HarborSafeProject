@@ -127,6 +127,58 @@ return [
             ]) : [],
         ],
 
+        // Website-facing CMS content: events, newsletters and their category
+        // lookup. Full access — this is what the Filament staff panel and the
+        // Eloquent models use. Separate physical database from Portal and
+        // Feedback so the public read user (ContentPublic) can be scoped to it
+        // and nothing else.
+        'Content' => [
+            'driver' => 'mariadb',
+            'url' => env('DB_URL_CONTENT'),
+            'host' => env('DB_HOST_CONTENT', '127.0.0.1'),
+            'port' => env('DB_PORT_CONTENT', '3306'),
+            'database' => env('DB_DATABASE_CONTENT', 'laravel'),
+            'username' => env('DB_USERNAME_CONTENT', 'root'),
+            'password' => env('DB_PASSWORD_CONTENT', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        // Same physical database as Content, different (restricted) MySQL
+        // credentials — this is what the public website's read-only content
+        // endpoints use. The MySQL user behind this connection should only
+        // ever be granted SELECT on events/newsletters/event_categories and
+        // nothing else; see the GRANT statements in Schema_Reference.md.
+        // Content is added, changed and deleted exclusively from the staff
+        // panel, so this connection must never be given write access.
+        'ContentPublic' => [
+            'driver' => 'mariadb',
+            'url' => env('DB_URL_CONTENT_PUBLIC'),
+            'host' => env('DB_HOST_CONTENT_PUBLIC', env('DB_HOST_CONTENT', '127.0.0.1')),
+            'port' => env('DB_PORT_CONTENT_PUBLIC', env('DB_PORT_CONTENT', '3306')),
+            'database' => env('DB_DATABASE_CONTENT_PUBLIC', env('DB_DATABASE_CONTENT', 'laravel')),
+            'username' => env('DB_USERNAME_CONTENT_PUBLIC', 'root'),
+            'password' => env('DB_PASSWORD_CONTENT_PUBLIC', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
     ],
 
     /*
