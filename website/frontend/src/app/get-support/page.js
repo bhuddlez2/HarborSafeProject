@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function GetSupport() {
   return (
     <main>
@@ -111,14 +113,13 @@ export default function GetSupport() {
             Reaching out can feel hard. Whether you call, text, or fill out a form, we will meet you where you are — no judgment, no pressure.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="https://docs.google.com/forms/d/17tp9D1rWlMVuzSXBWFfrY16Q1xYZgXn6fI9hGEl2tg8/edit"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              replace
+              href="/contact"
               className="bg-brand text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
             >
               Contact Us
-            </a>
+            </Link>
             <a
               href="tel:423-476-3886"
               className="border-2 border-brand text-brand px-8 py-3 rounded-lg font-semibold hover:bg-brand hover:text-white transition-all"

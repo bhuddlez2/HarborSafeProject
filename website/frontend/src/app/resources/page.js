@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
+import Modal from "../components/Modal";
 import { generalCategory } from "./general";
 import { legalCategory } from "./legal";
 import { thingsToKnowCategory } from "./things-to-know";
@@ -63,47 +64,6 @@ const ICONS = {
     </svg>
   ),
 };
-
-// ── Shared modal shell ────────────────────────────────────────────────────────
-
-function Modal({ title, subtitle, onClose, children }) {
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keyup", onKey);
-    return () => window.removeEventListener("keyup", onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 bg-black/60 z-200 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        <div className="flex items-start justify-between p-6 border-b border-gray-100 shrink-0">
-          <div>
-            <h2 className="text-xl font-semibold text-brand leading-snug">{title}</h2>
-            {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="ml-4 shrink-0 text-gray-400 hover:text-brand transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-        <div className="overflow-y-auto">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Modal variants ────────────────────────────────────────────────────────────
 

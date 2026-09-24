@@ -3,6 +3,8 @@
 import { useState, useEffect, startTransition } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
 import { submitAssessment } from "@/app/lib/api";
+import { submitterSchema, victimSchema, offenderSchema } from "@/app/lib/validation";
+import { isValidEmail, isValidPhone, isNotFutureDate } from "@/app/lib/validators";
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function AssessmentPage() {
@@ -23,6 +25,12 @@ export default function AssessmentPage() {
   const [index, setIndex] = useState(0);
   // answers: stores responses as { questionId: boolean }, called in handleanswer and handlereset
   const [answers, setAnswers] = useState({});
+  // stores validation errors for the submitter (info) phase
+  const [submitterErrors, setSubmitterErrors] = useState({});
+  // stores validation errors for the victim phase, called when validating victim info
+  const [victimErrors, setVictimErrors] = useState({});
+  // stores validation errors for the offender phase, called when validating offender info
+  const [offenderErrors, setOffenderErrors] = useState({});
 
   // prescreen state
   // anonymous stays null until forWhom is answered, which controls whether it renders
@@ -52,6 +60,26 @@ export default function AssessmentPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+
+  // per-phase field validation, computed live so each phase can block
+  // "Continue" and show feedback before the user ever reaches submit
+  const emailError = email.trim() && !isValidEmail(email.trim())
+    ? "Enter a valid email address."
+    : null;
+  const phoneError = phone.trim() && !isValidPhone(phone.trim())
+    ? "Enter a valid phone number."
+    : null;
+
+  const victimDobError = !isNotFutureDate(victimDob)
+    ? "Date of birth can't be in the future."
+    : null;
+  const victimPhoneError = victimPhone.trim() && !isValidPhone(victimPhone.trim())
+    ? "Enter a valid phone number."
+    : null;
+
+  const offenderDobError = !isNotFutureDate(offenderDob)
+    ? "Date of birth can't be in the future."
+    : null;
 
   // total question count and current question
   const total = lethalityQuestions.length;
@@ -279,6 +307,9 @@ export default function AssessmentPage() {
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {submitterErrors.firstName && (
+                <p className="text-sm text-red-600 mt-1">{submitterErrors.firstName[0]}</p>
+              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -291,6 +322,9 @@ export default function AssessmentPage() {
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {submitterErrors.lastName && (
+                <p className="text-sm text-red-600 mt-1">{submitterErrors.lastName[0]}</p>
+              )}
             </div>
           </div>
 
@@ -317,9 +351,14 @@ export default function AssessmentPage() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              maxLength={20}
+              aria-invalid={!!phoneError}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-gray-900 transition"
             />
+            {phoneError && (
+              <p className="text-red-600 text-sm mt-1">{phoneError}</p>
+            )}
           </div>
 
           <div className="flex gap-4">
@@ -336,8 +375,7 @@ export default function AssessmentPage() {
               disabled={!firstName.trim() || !lastName.trim()}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition
-                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                         focus:ring-4 focus:ring-gray-400 transition"
             >
               Continue
             </button>
@@ -369,6 +407,9 @@ export default function AssessmentPage() {
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {victimErrors.victimFirstName && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimFirstName[0]}</p>
+              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -381,6 +422,9 @@ export default function AssessmentPage() {
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {victimErrors.victimLastName && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimLastName[0]}</p>
+              )}
             </div>
           </div>
 
@@ -404,14 +448,18 @@ export default function AssessmentPage() {
               <select
                 value={victimSex}
                 onChange={(e) => setVictimSex(e.target.value)}
-                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none focus:border-gray-900 transition
+                           ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
               </select>
+              {victimErrors.victimSex && (
+              <p className="text-sm text-red-600 mt-1">{victimErrors.victimSex[0]}</p>
+              )}
             </div>
           </div>
 
@@ -476,6 +524,9 @@ export default function AssessmentPage() {
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {offenderErrors.offenderFirstName && (
+                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderFirstName[0]}</p>
+              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -488,6 +539,9 @@ export default function AssessmentPage() {
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none focus:border-gray-900 transition"
               />
+              {offenderErrors.offenderLastName && (
+                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderLastName[0]}</p>
+              )}
             </div>
           </div>
 
@@ -512,14 +566,18 @@ export default function AssessmentPage() {
               <select
                 value={offenderSex}
                 onChange={(e) => setOffenderSex(e.target.value)}
-                className="w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                className={`w-32 h-12 appearance-none border-2 rounded-lg px-4 py-3 text-gray-900
+                           focus:outline-none transition
+                           ${offenderErrors.offenderSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
                 <option value="F">Female</option>
                 <option value="O">Other</option>
               </select>
+              {offenderErrors.offenderSex && (
+                <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderSex[0]}</p>
+              )}
             </div>
           </div>
 
@@ -534,6 +592,9 @@ export default function AssessmentPage() {
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-gray-900 transition"
             />
+            {offenderErrors.offenderRelationship && (
+              <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderRelationship[0]}</p>
+            )}
           </div>
 
           <div className="flex gap-4">
@@ -550,8 +611,7 @@ export default function AssessmentPage() {
               disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
               className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition
-                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                         focus:ring-4 focus:ring-gray-400 transition"
             >
               Continue
             </button>

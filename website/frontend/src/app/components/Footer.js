@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 /*
 Footer component,
@@ -42,6 +43,13 @@ export default function Footer() {
               </svg>
               <span>(423) 476-3886</span>
             </a>
+
+            <Link href="/contact" className="block hover:text-purple-200 transition-colors underline">
+              Request resources
+            </Link>
+            <Link href="/feedback" className="block hover:text-purple-200 transition-colors underline">
+              Share feedback on a service
+            </Link>
           </div>
         </div>
 
