@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { PlusIcon, LockIcon } from "@/components/portal/icons";
+import { PlusIcon } from "@/components/portal/icons";
+import { SessionNotice } from "@/components/portal/PortalHeader";
 
 // TODO: replace with a real draft query once drafts are persisted server-side, e.g.:
 //   const draft = await db.assessment.findFirst({
@@ -16,16 +17,16 @@ export default async function PoliceLandingPage() {
   const draft = await getOpenDraft();
 
   return (
-    <main className="mx-auto flex max-w-[1000px] flex-col gap-7 px-5 py-8 md:px-14 md:py-12">
+    <main className="mx-auto flex max-w-250 flex-col gap-7 px-5 py-8 md:px-14 md:py-12">
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div className="flex items-end justify-between">
         <h1 className="font-montserrat text-2xl font-bold md:text-[32px]">
           What do you need to do?
         </h1>
-        <p className="flex items-center gap-2 text-sm text-[#5A5566]">
-          <LockIcon size={16} />
-          Session locks after {SESSION_TIMEOUT_MINUTES} minutes of inactivity
-        </p>
+        {/* Desktop only — on mobile this appears below the card stack */}
+        <span className="hidden md:flex">
+          <SessionNotice minutes={SESSION_TIMEOUT_MINUTES} />
+        </span>
       </div>
 
       <div className="grid gap-5 md:grid-cols-3">
@@ -33,10 +34,10 @@ export default async function PoliceLandingPage() {
         {/* Primary action — start a new assessment */}
         <Link
           href="/police/portal"
-          className="flex min-h-[220px] flex-col justify-end gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
+          className="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
                      transition-colors hover:bg-[#4C0B74]
                      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
-                     md:col-span-2 md:min-h-[280px] md:p-9"
+                     md:col-span-2 md:min-h-70 md:p-9"
         >
           <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 p-4">
             <PlusIcon size={32} />
@@ -55,7 +56,7 @@ export default async function PoliceLandingPage() {
           {draft ? (
             <section
               aria-labelledby="draft-heading"
-              className="flex grow flex-col gap-3 rounded-2xl border border-[#DDD7E6] bg-white p-[22px]"
+              className="flex grow flex-col gap-3 rounded-2xl border border-[#DDD7E6] bg-white p-5.5"
             >
               <div className="flex items-center justify-between gap-2">
                 <h2 id="draft-heading" className="text-[17px] font-bold">
@@ -90,7 +91,7 @@ export default async function PoliceLandingPage() {
               </div>
             </section>
           ) : (
-            <section className="flex grow flex-col justify-center gap-2 rounded-2xl border border-dashed border-[#C9C1D6] bg-white p-[22px]">
+            <section className="flex grow flex-col justify-center gap-2 rounded-2xl border border-dashed border-[#C9C1D6] bg-white p-5.5">
               <h2 className="text-[17px] font-bold">No unfinished drafts</h2>
               <p className="text-[15px] text-[#5A5566]">
                 A screening you leave part-way through will be saved here.
@@ -101,8 +102,13 @@ export default async function PoliceLandingPage() {
         </div>
       </div>
 
+      {/* Mobile only — session notice sits below the card stack where it's easy to read */}
+      <span className="md:hidden">
+        <SessionNotice minutes={SESSION_TIMEOUT_MINUTES} />
+      </span>
+
       {/* Pointer to past records */}
-      <section className="flex flex-col gap-4 rounded-2xl border border-[#DDD7E6] bg-white px-[26px] py-[22px] md:flex-row md:items-center md:justify-between">
+      <section className="flex flex-col gap-4 rounded-2xl border border-[#DDD7E6] bg-white px-5.5 py-5.5 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-[17px] font-bold">Looking for a past assessment?</h2>
           <p className="text-[15px] text-[#5A5566]">
