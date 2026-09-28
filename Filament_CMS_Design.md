@@ -1,8 +1,8 @@
 # Filament staff panel — design and setup guide
 
-**Status:** design settled. Phases 1–3 (§11) are implemented: prerequisites, Filament
-installed with the `staff` panel at `/staff`, and Shield + spatie on the `Portal`
-connection. Everything from Phase 4 on is not yet built.
+**Status:** design settled. Done (§11): Phases 1–4, 11 (officer screens and wizard in
+Filament) and 12 (Next.js cleanup); Phase 7 partly. Phases 5, 6, 8, 9, 10 and 13 are not
+yet built.
 
 ## 1. What this is
 
@@ -131,30 +131,32 @@ admin, secretary, police admin and officer. It owns events, newsletters, event
 categories, the form dropdown options, submission review, assessment review and user
 management.
 
-**What stays in Next.js.** Only the two assessment *submission wizards*: the
-law-enforcement one at `portal/frontend/app/police/portal/` and the anonymous civilian
-flow at `portal/frontend/app/page.js`. Everything else in `portal/frontend` is retired
-(§9). The civilian flow cannot move into Filament because it is anonymous and public.
+**What stays in Next.js.** Only the anonymous civilian assessment at
+`portal/frontend/app/page.js`. It cannot move into Filament because it is anonymous and
+public. Everything officer-facing — the officer home, My Assessments, Search Records,
+Account and the law-enforcement assessment *wizard* — lives in the panel, carried over
+from the former Next.js officer portal (`app/police/`, `components/portal/`) with the
+same copy, layout and colours. Everything else in `portal/frontend` is retired (§9).
 
 **Auth: Filament's built-in login, and nothing else.** There is exactly one sign-in
-screen. The Next.js `/login` page, the `/api/auth/*` route handlers and `proxy.js` are
-deleted. This replaces a placeholder that never authenticated anyone (§10).
+screen, restyled to look like the old Next.js one (`App\Filament\Pages\Auth\Login`).
+The Next.js `/login` page, the `/api/auth/*` route handlers and `proxy.js` are deleted.
+This replaced a placeholder that never authenticated anyone (§10).
 
-**Officer identity for the Next.js wizard.** The wizard still has to write
-`submitted_by`, so it reads Filament's session cross-origin:
+**Officer identity: server-side, from the session.** The wizard is a Filament page
+(`App\Filament\Pages\NewAssessment`), so it writes `submitted_by = auth()->id()`
+directly, inside one `Portal` transaction with the `_assessment_answers` row. The
+cross-origin session design this section used to describe — a shared `SESSION_DOMAIN`,
+`supports_credentials`, the Next.js wizard sending `credentials: 'include'` — is
+**dropped**: nothing outside the panel needs the staff session any more. The
+`/api/law-enforcement-assessments` routes remain, behind `auth:sanctum`, and their
+`store()` likewise takes `submitted_by` from `$request->user()`, never the body.
 
-- `SESSION_DOMAIN` set to the parent domain shared by the panel and the portal.
-- `supports_credentials` flipped to `true` in `portal/backend/config/cors.php` — it is
-  currently `false`.
-- The portal origin listed in CORS (already env-driven via `PORTAL_URL`).
-- The wizard's fetches sending `credentials: 'include'`. They currently send neither
-  credentials nor a token.
-
-Cookies ignore port, so a single `SESSION_DOMAIN=localhost` works across
-`localhost:3001` and `localhost:8000` in local development. In production both must sit
-under one registrable domain — e.g. `portal.example.org` and `api.example.org` with
-`SESSION_DOMAIN=.example.org`. Filament links officers out to the wizard; the wizard
-redirects to the Filament login when no session resolves.
+**Look and feel.** The panel's theme (`resources/css/filament/staff/theme.css`,
+compiled by Vite) carries over the officer portal's design for every role: `#5C0F8B`
+primary, Tailwind's gray, Nunito/Montserrat, a dark full-height sidebar, no topbar,
+no dark mode. The session lifetime is 15 minutes (`SESSION_LIFETIME`), because the
+officer home tells officers their session locks after that long.
 
 **Authorization: Filament Shield + spatie/laravel-permission.**
 
@@ -327,62 +329,47 @@ and the longest field name is `OffenderVictimRelationship` at 26 characters agai
 `police_admin` and `admin` read these logs. Only the owning officer generates them,
 since only the owning officer can edit (§5, rule 1).
 
-## 9. Next.js cleanup
+## 9. Next.js cleanup — done
 
-Delete once the panel is live:
+`portal/frontend` keeps **only the civilian flow**: `app/page.js` and what it imports
+(`app/lib/{api,validation,validators,lethality-questions}.js`, `app/layout.js`,
+`app/globals.css`). `api.js` is down to `submitAssessment()`.
 
-- `portal/frontend/app/login/`
-- `portal/frontend/app/api/auth/login/`, `portal/frontend/app/api/auth/logout/`
-- `portal/frontend/proxy.js`
-- `portal/frontend/app/admin/` — an empty placeholder reading "Admin tools and reports
-  will appear here"; that job is now the Filament panel's
-- `portal/frontend/app/police/page.js` — the landing page, replaced by the panel
+Deleted (Phase 12): `app/login/`, `app/api/auth/`, `proxy.js`, `app/admin/`, the whole
+officer side under `app/police/` (layout, home, wizard), and `components/portal/`
+(sidebar, mobile header, icons). `next.config.mjs` redirects the old URLs — `/login` to
+`/staff/login`; `/admin`, `/police` and `/police/*` to `/staff` — built from
+`NEXT_PUBLIC_API_URL`.
 
-Keep: `portal/frontend/app/police/portal/` (the LE wizard) and
-`portal/frontend/app/page.js` (the civilian flow).
+With `proxy.js` gone the portal has no route protection, and needs none: nothing left in
+it is behind a login.
 
-**Deleting `proxy.js` removes the only route protection in the portal.** It is correctly
-named — Next 16.2.4 ships `PROXY_FILENAME` alongside `MIDDLEWARE_FILENAME`, so `proxy.js`
-is the current convention, not a mistake. But once it is gone, `/police/portal` must do
-its own session check and redirect to the Filament login, or it ships unprotected.
+## 10. Former state of the portal code (resolved)
 
-## 10. Current state of the portal code
+Kept for the record; both are closed.
 
-Two things you will run into. Both are statements of fact with paths, not criticism.
+### 10.1 The old login authenticated nobody — removed
 
-### 10.1 The existing login authenticates nobody
+`portal/frontend/app/api/auth/login/route.js` accepted **any** non-empty email and
+password, set a hardcoded `session=dev-token` cookie, and derived the role from
+`email.includes("admin")`; `proxy.js` only checked that the cookie existed. Both were
+deleted in Phase 12. Filament's login is the only sign-in.
 
-`portal/frontend/app/api/auth/login/route.js` carries
-`// TODO: replace with real Laravel backend auth call`. It accepts **any** non-empty
-email and password, sets a hardcoded `session=dev-token` cookie, and derives the role
-from `email.includes("admin")`. `proxy.js` only checks that the cookie exists.
+### 10.2 Officer identity — resolved
 
-Retiring it per §9 closes this. Worth stating plainly so nobody preserves it out of
-caution — it would be a serious hole if it ever reached production.
+Officer submissions used to send `submitted_by` from the client as a hardcoded
+`PLACEHOLDER_OFFICER_USER_ID = 1`, so every one was attributed to user 1, and
+`LawEnforcementAssessmentController::store()` never tied it to the caller.
 
-### 10.2 Officer submissions: routed correctly, identity still a placeholder
+Now the wizard is a Filament page and sets `submitted_by = auth()->id()` server-side
+(Phase 11); the placeholder is gone with `submitLawEnforcementAssessment()`. The API's
+`store()` sits behind `auth:sanctum`, accepts only `law_enforcement` users (403
+otherwise) and takes `submitted_by` from `$request->user()`, ignoring any value in the
+body. Officer name, badge and agency are read from `law_enforcement_agents` / `agencies`
+(`User::officerIdentity()`).
 
-**Routing — fixed in `0326f7f`.** The wizard at
-`portal/frontend/app/police/portal/page.js` briefly imported the civilian
-`submitAssessment` (so officer submissions landed in `_private_assessment`). It now
-imports `submitLawEnforcementAssessment()` from `portal/frontend/app/lib/api.js`, which
-POSTs to `/api/law-enforcement-assessments`, so rows land in
-`law_enforcement_assessment`.
-
-**Identity — still open, now part of Phase 11.**
-
-- `submitted_by` is sent from the client as `PLACEHOLDER_OFFICER_USER_ID = 1`
-  (`portal/frontend/app/lib/api.js`), so every officer submission is attributed to
-  user 1.
-- `LawEnforcementAssessmentController::store()` validates `submitted_by` as
-  `exists:Portal.users,id` but never ties it to the caller — a spoofing hole.
-- Officer name/badge/agency in the wizard are still hardcoded empty strings.
-
-**The officer dashboard, the owner-only edit rule and the change log have no trustworthy
-ownership data until this is fixed.** The fix is to derive `submitted_by` server-side
-from the authenticated session (`$request->user()`) rather than the request body, and
-drop the placeholder. That needs the cross-origin session from Phase 11, so it's done
-there rather than separately.
+Still open: `update()` on that controller still accepts `submitted_by` from an
+authenticated caller. Owner-only editing belongs to the policies in Phases 7–8.
 
 ## 11. Implementation phases
 
@@ -437,17 +424,21 @@ repoint `content.js` and delete the two mock files.
 *Gate:* the response shape matches `mock-events.json` field for field, and the events
 page renders real data with no component changes.
 
-**11 — Cross-origin session.** `SESSION_DOMAIN`, `supports_credentials`, CORS origins,
-wizard sending `credentials: 'include'`. Then close the identity half of §10.2: put the
-LE store route behind the session, set `submitted_by` from `$request->user()` in
-`LawEnforcementAssessmentController::store()` (not from the request body), and remove
-`PLACEHOLDER_OFFICER_USER_ID` from `portal/frontend/app/lib/api.js`.
-*Gate:* an officer logs into Filament, opens `/police/portal`, submits, and the row lands
-in `law_enforcement_assessment` with the correct `submitted_by`; a request body claiming
-a different `submitted_by` is ignored.
+**11 — Officer screens and wizard in Filament.** *(Done.)* Carry the officer portal over
+from `portal/frontend` faithfully: a custom Vite theme for the panel; Home (the existing
+`Police` page), My Assessments and Search Records (placeholders — they had no design),
+Account (Filament's profile page), all in an "Officer Portal" navigation group; the LAP
+wizard as a `Wizard` page writing both assessment rows in one `Portal` transaction with
+`submitted_by = auth()->id()`; the login page restyled. Lock the assessment API down:
+LE/agent/agency routes fully behind `auth:sanctum`, and only `store` public on the three
+civilian tables. The cross-origin session previously planned here is dropped (§4).
+*Gate:* an officer signs in, opens New assessment, submits, and both rows land linked
+with the correct `submitted_by`; secretaries get 403 on officer pages; the protected API
+routes return 401 unauthenticated.
 
-**12 — Next.js cleanup** per §9.
-*Gate:* no portal route is reachable without a Filament session.
+**12 — Next.js cleanup** per §9. *(Done.)*
+*Gate:* no officer screen is served by `portal/frontend`; its old URLs redirect to the
+panel.
 
 **13 — Tests.** Extend the pattern already documented in `portal/backend/tests/Pest.php`
 — run-token tagging, `afterEach` cleanup, deliberately no `RefreshDatabase` — with
@@ -467,9 +458,14 @@ this is new ground.
 - ~~**Whether §10.2 gets fixed as part of this work.**~~ Resolved: yes. The routing half
   was fixed in `0326f7f`; the identity half is folded into Phase 11.
 
+- ~~**Production domain layout.**~~ No longer a constraint. It only mattered for the
+  cross-origin session, which was dropped when the wizard moved into Filament (§4).
+  The panel, API and portal can sit on any domains.
+
 Still undecided:
 
-- **Production domain layout.** The cross-origin session design in §4 assumes the panel
-  and the portal share a registrable domain. If they end up on unrelated domains, the
-  shared-cookie approach does not work and the officer identity mechanism needs
-  revisiting — most likely by moving the wizard into Filament after all.
+- **View logging.** The officer Home page says "Records are in My Assessments. Each view
+  is logged with your name and a timestamp." — carried over verbatim from the old
+  portal. Nothing logs views: it is neither designed nor built. The change log (§8)
+  records edits only. Either design and build view logging (per record, per user, with a
+  timestamp) before My Assessments ships, or change that copy.

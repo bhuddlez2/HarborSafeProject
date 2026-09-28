@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use App\Models\LawEnforcementAssessment;
 
@@ -32,8 +33,11 @@ class LawEnforcementAssessmentController extends Controller
     // POST /api/law-enforcement-assessments
     public function store(Request $request)
     {
+        abort_unless($request->user()->role === UserRole::LawEnforcement, 403);
+
+        // submitted_by is deliberately not accepted from the request: it is
+        // always the authenticated officer (set below).
         $validated = $request->validate([
-            'submitted_by' => 'required|integer|exists:Portal.users,id',
             'OffenderFirstName' => 'required|string|max:50',
             'OffenderLastName' => 'required|string|max:50',
             'OffenderSex' => 'required|string|max:10',
@@ -48,7 +52,10 @@ class LawEnforcementAssessmentController extends Controller
         ]);
 
         return response()->json(
-            LawEnforcementAssessment::create($validated), 201
+            LawEnforcementAssessment::create([
+                ...$validated,
+                'submitted_by' => $request->user()->id,
+            ]), 201
         );
     }
 

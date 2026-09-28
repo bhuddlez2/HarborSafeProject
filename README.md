@@ -6,7 +6,7 @@ Three applications in one repository, backing Harbor Safe House & Advocacy Cente
 |---|---|---|
 | `portal/backend/` | Laravel 13 JSON API. Backs **both** other apps. | http://127.0.0.1:8000 |
 | `website/frontend/` | Next.js 16, static export. The public informational site. | http://localhost:3000 |
-| `portal/frontend/` | Next.js 16, server mode. The staff/law-enforcement portal. | http://localhost:3001 |
+| `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment. | http://localhost:3001 |
 
 Nothing but the backend talks to the database. The website reaches only a
 narrow `/api/public/*` slice of the API and can never read anything back —
@@ -126,10 +126,22 @@ Those three seeders fill the lookup tables (services / resources / counties)
 that the website's contact forms read their dropdowns from. Without them the
 forms load empty. They're idempotent — safe to re-run.
 
+Build the staff panel's theme (the Filament panel at `/staff` — officer
+screens, the assessment wizard, content management — is styled by a custom
+Tailwind theme in `resources/css/filament/staff/theme.css`, compiled by Vite):
+
+```bash
+npm install
+npm run build            # re-run after changing theme.css or the panel's Blade views
+```
+
+Without this build the panel fails to load its stylesheet. Use `npm run dev`
+instead while editing styles, so changes recompile live.
+
 Start it:
 
 ```bash
-php artisan serve        # http://127.0.0.1:8000
+php artisan serve        # http://127.0.0.1:8000, staff panel at /staff
 ```
 
 ---
@@ -160,25 +172,20 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 
 ## 4. Portal (`portal/frontend/`)
 
-**There is a landing page** — `/` lists the two assessment flows. (It arrived
-with the frontend merge; earlier there wasn't one.)
-
-| Route | What it is |
-|---|---|
-| `/` | Landing page, links to both flows |
-| `/civilian` | Civilian (anonymous) assessment |
-| `/law-enforcement` | Law-enforcement assessment |
+Only the anonymous civilian assessment lives here, at `/`. Everything
+officer-facing — sign-in, the officer home, the law-enforcement assessment
+wizard — is in the backend's Filament staff panel (`/staff`). The old portal
+URLs `/login`, `/admin`, `/police` and `/police/*` redirect there.
 
 ```bash
 cd portal/frontend
 npm install
-npm run dev -- -p 3001   # http://localhost:3001
+npm run dev              # http://localhost:3001
 ```
 
-**Use `-p 3001`.** Both frontends default to port 3000, so without it the
-second one you start either fails or silently picks another port. The backend's
-CORS config allows 3000 and 3001 in local dev, so 3001 works out of the box;
-any other port needs adding to `PORTAL_URL` in the backend's `.env`.
+The `dev` and `start` scripts pin port 3001, since both frontends would
+otherwise default to 3000. The backend's CORS config allows 3000 and 3001 in
+local dev; any other port needs adding to `PORTAL_URL` in the backend's `.env`.
 
 ---
 
@@ -194,11 +201,11 @@ cd portal/backend && php artisan serve
 cd website/frontend && npm run dev
 
 # 3 - portal
-cd portal/frontend && npm run dev -- -p 3001
+cd portal/frontend && npm run dev
 ```
 
 Then: website http://localhost:3000, portal http://localhost:3001,
-API http://127.0.0.1:8000/api.
+API http://127.0.0.1:8000/api, staff panel http://127.0.0.1:8000/staff.
 
 ---
 

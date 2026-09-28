@@ -40,6 +40,20 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(LawEnforcementAssessment::class, 'submitted_by');
     }
 
+    // Name, badge number and agency as the officer screens display them.
+    // Badge and agency are null for accounts with no law_enforcement_agents
+    // row (every non-officer account, and officers not yet provisioned).
+    public function officerIdentity(): array
+    {
+        $agent = $this->lawEnforcementAgent()->with('agency')->first();
+
+        return [
+            'name' => $this->name,
+            'badge' => $agent?->badge_number,
+            'agency' => $agent?->agency?->name,
+        ];
+    }
+
     // Checked by Filament at login and on every panel request. Reads the raw
     // role string so an unrecognised value is refused rather than throwing
     // from the enum cast.
