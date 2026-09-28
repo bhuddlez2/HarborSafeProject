@@ -276,7 +276,7 @@ export default function Home() {
             gap-12 for spacing between columns,
             items-start so both columns align to the top
             */}
-            <div className="grid md:grid-cols-2 gap-12 items-start">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
 
               {/*
               Left column: WeAreHere image,
@@ -311,9 +311,18 @@ export default function Home() {
                 <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
                   <span className="text-5xl text-brand leading-none">&ldquo;</span>
                   <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
-                    They were there for me when I had nowhere else to turn. I came in with nothing and
-                    left with the strength to rebuild my life. I will never forget what they did for
-                    me and my children.
+                    It was at the point that I was gathering the things I needed for me and my children to live in the car that I reached out to Harbor Safe House.  
+                    I was just done with the abuse. 
+                    I was struggling with day to day living and overwhelmed with the constant fear of what was going to happen next.  
+                    I felt hopeless and numb.
+                    I’m not sure I would still be around without asking for the help I needed.  
+                    I did the work, but without the support of Harbor Safe House, I’m not sure I would have been able to do it.  
+                    They helped me find the right steps into stability and my new and improved life that I am creating. 
+                    Having a safe place and supportive people helping me and my little ones, while going through the most difficult time in my life, has meant the world to me. 
+                    I’m a better mom and a better person.  
+                    Today, I am alive.  
+                    The feeling of waking up every morning having purpose and being happy is new to me. 
+                    I am confident that I hold a bright future for myself and my family.
                   </p>
                   <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
                 </div>
@@ -323,11 +332,17 @@ export default function Home() {
                 <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
                   <span className="text-5xl text-brand leading-none">&ldquo;</span>
                   <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
-                    The advocates here never made me feel judged. They listened, they helped me find
-                    housing, and they stood by me through the entire legal process. I finally felt safe
-                    for the first time in years.
+                    It was at the point that I was gathering the things I needed for me and my children to live in the car that I reached out to Harbor Safe House.  
+                    I was just done with the abuse. I was struggling with day to day living and overwhelmed with the constant fear of what was going to happen next.  
+                    I felt hopeless and numb.
+                    I’m not sure I would still be around without asking for the help I needed.  
+                    I did the work, but without the support of Harbor Safe House, I’m not sure I would have been able to do it.  
+                    They helped me find the right steps into stability and my new and improved life that I am creating. Having a safe place and supportive people helping me and my little ones, while going through the most difficult time in my life, has meant the world to me. 
+                    I’m a better mom and a better person.  
+                    Today, I am alive.  The feeling of waking up every morning having purpose and being happy is new to me. 
+                    I am confident that I hold a bright future for myself and my family.
                   </p>
-                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
+                  <p className="text-sm font-semibold text-brand">— C</p>
                 </div>
 
               </div>
