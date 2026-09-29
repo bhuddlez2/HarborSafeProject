@@ -1,8 +1,12 @@
 # Filament staff panel — design and setup guide
 
-**Status:** design settled. Done (§11): Phases 1–4, 11 (officer screens and wizard in
-Filament) and 12 (Next.js cleanup); Phase 7 partly. Phases 5, 6, 8, 9, 10 and 13 are not
-yet built.
+**Status:** design settled. Done (§11): Phases 1–6, 11 (officer screens and wizard in
+Filament) and 12 (Next.js cleanup); Phase 7 partly. Phases 8, 9, 10 and 13 are not yet
+built.
+
+Two things the Content work still needs from outside the codebase: the restricted
+`harborsafe_content_public` MySQL user (§6.5) does not exist in any environment, and S3
+has no bucket or credentials, so uploads have nowhere to go.
 
 ## 1. What this is
 
@@ -393,11 +397,11 @@ tinker role lookup returns without a connection error.
 **4 — Add `police_admin`** to `App\Enums\UserRole`. *(Done.)*
 *Gate:* all four cases resolve and cast correctly on `User`.
 
-**5 — Content connection.** `Content` + `ContentPublic` in `config/database.php`, env
+**5 — Content connection.** *(Done, except the restricted MySQL user.)* `Content` + `ContentPublic` in `config/database.php`, env
 vars, grants from §6.5.
 *Gate:* `php artisan db:show --database=Content`.
 
-**6 — Content schema.** Migrations and models per §6.
+**6 — Content schema.** *(Done.)* Migrations and models per §6.
 *Gate:* `php artisan migrate:status --database=Portal`.
 
 **7 — Auth and access.** Filament login, `User implements FilamentUser` with

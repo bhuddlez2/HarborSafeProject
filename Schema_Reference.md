@@ -226,7 +226,9 @@ The public submission controllers (`ServiceFeedbackController`, `ResourceRequest
 
 Backs the website's Events & News page. Physically a separate database from both `Portal` and `Feedback`. The migrations (`2026_09_24_100000`–`2026_09_24_100200`) are applied and the three tables below are live, with `event_categories` seeded from `EventCategorySeeder`; `events` and `newsletters` are empty until the panel can create them.
 
-**There are no Eloquent models for these tables yet** (no `Event`, `Newsletter` or `EventCategory` in `app/Models/`), so nothing reads or writes them in application code — the seeder goes through the query builder. Also still outstanding: the restricted `harborsafe_content_public` MySQL user has not been created in any environment (the `ContentPublic` connection currently points at the same credentials as `Content`), and S3 has no bucket or keys, so `image_path`/`file_path` have nowhere to write.
+Eloquent models exist for all three (`Event`, `Newsletter`, `EventCategory`), each with `published()` scopes matching the website's own filter and sort order, and `hasLocation()`/`hasImage()`/`hasRegistration()`/`hasFile()` helpers so the API can emit a nested object as `null` rather than as an object full of nulls.
+
+Two things are still outstanding: the restricted `harborsafe_content_public` MySQL user has not been created in any environment (the `ContentPublic` connection currently points at the same credentials as `Content`, so the SELECT-only guarantee is documented but not enforced), and S3 has no bucket or credentials, so `image_path`/`file_path` have nowhere to write.
 
 ```mermaid
 erDiagram
