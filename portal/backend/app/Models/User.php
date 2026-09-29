@@ -63,6 +63,22 @@ class User extends Authenticatable implements FilamentUser
             && UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? '')) !== null;
     }
 
+    // The single role check every panel page's canAccess() goes through, so
+    // deactivating an account closes everything at once rather than relying on
+    // canAccessPanel() being the only gate. Reads the raw role string for the
+    // same reason canAccessPanel() does: an unrecognised value is refused
+    // rather than throwing from the enum cast.
+    public function hasActiveRole(UserRole ...$roles): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        $role = UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? ''));
+
+        return $role !== null && in_array($role, $roles, true);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

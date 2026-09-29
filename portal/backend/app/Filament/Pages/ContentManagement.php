@@ -24,9 +24,9 @@ class ContentManagement extends Page
 
     public static function canAccess(): bool
     {
-        return in_array(Filament::auth()->user()?->role, [
+        return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::Admin,
             UserRole::Secretary,
-        ], true);
+        );
     }
 }

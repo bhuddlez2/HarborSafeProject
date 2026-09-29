@@ -88,7 +88,7 @@ class NewAssessment extends Page
     // Only officers submit assessments; police admins and admins view them.
     public static function canAccess(): bool
     {
-        return Filament::auth()->user()?->role === UserRole::LawEnforcement;
+        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::LawEnforcement);
     }
 
     public function getHeading(): string | Htmlable

@@ -33,11 +33,11 @@ class MyAssessments extends Page
     // Access matrix: officers see their own, police admins and admins see all.
     public static function canAccess(): bool
     {
-        return in_array(Filament::auth()->user()?->role, [
+        return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::LawEnforcement,
             UserRole::PoliceAdmin,
             UserRole::Admin,
-        ], true);
+        );
     }
 
     public function getHeading(): string | Htmlable

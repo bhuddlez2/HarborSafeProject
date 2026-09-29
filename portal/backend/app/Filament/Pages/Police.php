@@ -33,11 +33,11 @@ class Police extends Page
 
     public static function canAccess(): bool
     {
-        return in_array(Filament::auth()->user()?->role, [
+        return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::LawEnforcement,
             UserRole::PoliceAdmin,
             UserRole::Admin,
-        ], true);
+        );
     }
 
     // The original page draws its own heading.

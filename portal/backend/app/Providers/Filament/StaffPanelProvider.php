@@ -4,6 +4,9 @@ namespace App\Providers\Filament;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Auth\Login;
+use App\Http\Middleware\RedirectStaffHome;
+use App\Http\Responses\StaffLoginResponse;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -71,11 +74,11 @@ class StaffPanelProvider extends PanelProvider
                     ->group('Officer Portal')
                     ->sort(6)
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.staff.auth.profile'))
-                    ->visible(fn (): bool => in_array(auth()->user()?->role, [
+                    ->visible(fn (): bool => (bool) auth()->user()?->hasActiveRole(
                         UserRole::LawEnforcement,
                         UserRole::PoliceAdmin,
                         UserRole::Admin,
-                    ], true)),
+                    )),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             // No Dashboard: with nothing on the panel root, Filament's built-in
@@ -100,6 +103,20 @@ class StaffPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                // Sends /staff to the signed-in user's landing page from
+                // App\Filament\StaffLanding rather than to whichever
+                // navigation item happens to sort first.
+                RedirectStaffHome::class,
             ]);
+    }
+
+    public function register(): void
+    {
+        parent::register();
+
+        // Where a successful sign-in goes. Filament's default lands on
+        // whatever the navigation starts with; StaffLanding declares it per
+        // role instead.
+        $this->app->singleton(LoginResponse::class, StaffLoginResponse::class);
     }
 }

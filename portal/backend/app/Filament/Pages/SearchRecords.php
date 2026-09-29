@@ -33,11 +33,11 @@ class SearchRecords extends Page
     // Same roles as My Assessments.
     public static function canAccess(): bool
     {
-        return in_array(Filament::auth()->user()?->role, [
+        return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::LawEnforcement,
             UserRole::PoliceAdmin,
             UserRole::Admin,
-        ], true);
+        );
     }
 
     public function getHeading(): string | Htmlable
