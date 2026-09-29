@@ -222,9 +222,11 @@ The public submission controllers (`ServiceFeedbackController`, `ResourceRequest
 
 ---
 
-## Content connection — migrations written, not yet applied anywhere
+## Content connection — schema applied, models not yet written
 
-Backs the website's Events & News page. Physically a separate database from both `Portal` and `Feedback`. **The migrations exist (`2026_09_24_100000`–`2026_09_24_100200`) but have not been run in any environment yet** — the tables below describe what they create, not what is live.
+Backs the website's Events & News page. Physically a separate database from both `Portal` and `Feedback`. The migrations (`2026_09_24_100000`–`2026_09_24_100200`) are applied and the three tables below are live, with `event_categories` seeded from `EventCategorySeeder`; `events` and `newsletters` are empty until the panel can create them.
+
+**There are no Eloquent models for these tables yet** (no `Event`, `Newsletter` or `EventCategory` in `app/Models/`), so nothing reads or writes them in application code — the seeder goes through the query builder. Also still outstanding: the restricted `harborsafe_content_public` MySQL user has not been created in any environment (the `ContentPublic` connection currently points at the same credentials as `Content`), and S3 has no bucket or keys, so `image_path`/`file_path` have nowhere to write.
 
 ```mermaid
 erDiagram
