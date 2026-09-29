@@ -12,14 +12,15 @@ Filament_CMS_Design.md section 6.
 file_size_bytes and file_pages are nullable because the mock data has issues
 with both unset, and EventsContent.js renders them conditionally
 ("PDF - 2.3 MB - 4 pages", with either half dropped when missing). They are
-stored rather than derived so the listing doesn't have to stat every object in
-the bucket to render a list.
+stored rather than derived so the listing doesn't have to stat every stored file
+to render a list.
 
-file_path is an object-storage key, not a URL; the API resource turns it into
-the site's file.url. Whether that is a plain public URL or an expiring signed
-one depends on the public-vs-private decision in Filament_CMS_Design.md
-section 6.6, which is still open - newsletters may not all be intended to be
-world-readable by URL.
+file_path is a path on the configured filesystem disk, not a URL; the API
+resource turns it into the site's file.url. Which disk matters: everything on
+the public disk is reachable by whoever guesses the filename, so an issue that
+must not be openly readable belongs on the private disk behind a route that
+checks authorization. See Filament_CMS_Design.md section 6.6 - that per-issue
+decision is still open.
 */
 return new class extends Migration
 {

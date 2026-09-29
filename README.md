@@ -51,9 +51,18 @@ php -r "var_dump(extension_loaded('intl'));"
 If it still prints `false`, run `php --ini` to see which `php.ini` the CLI
 actually loads — it isn't always the one Apache uses.
 
-**S3:** the content features (events, newsletters) store uploads on S3. Before
-working on them, fill in the `AWS_*` keys in `portal/backend/.env` — never in
-`.env.example` or anything else that gets committed.
+### File uploads
+
+The content features (events, newsletters) store uploads on the **local disk**, not in
+cloud storage — no account or credentials needed. Run this once per environment, and
+again after any deploy that rebuilds the tree, or uploaded files return 404:
+
+```bash
+php artisan storage:link
+```
+
+That symlinks `public/storage` to `storage/app/public`. It is not part of the repo, so a
+fresh clone or a rebuilt deploy will not have it.
 
 ### Is my database already running?
 

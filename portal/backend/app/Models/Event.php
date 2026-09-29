@@ -33,8 +33,9 @@ is_published and is_cancelled are independent: a published event can also be
 cancelled, which the page renders as a "cancelled" badge with the registration
 link suppressed. They are not one status field.
 
-image_path is an object-storage key, not a URL. Turning it into the absolute
-URL the site wants at image.src is the API layer's job.
+image_path is a path on the configured filesystem disk, not a URL. Turning it
+into the absolute URL the site wants at image.src is the API layer's job. The
+column is storage-agnostic, so which disk is in use is a config concern.
 */
 class Event extends BaseModel
 {

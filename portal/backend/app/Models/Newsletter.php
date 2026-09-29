@@ -15,11 +15,12 @@ listing issues doesn't mean stat-ing every object in the bucket. The site
 renders them conditionally ("PDF - 2.3 MB - 4 pages", either half dropped when
 missing), so leaving them null is a supported state, not a data problem.
 
-file_path is an object-storage key, not a URL. The API layer turns it into the
-site's file.url - a plain public URL or an expiring signed one depending on the
-public-vs-private decision in Filament_CMS_Design.md section 6.6, which is
-still open. Do not assume newsletters are safe to expose by permanent URL until
-that is settled.
+file_path is a path on the configured filesystem disk, not a URL. The API layer
+turns it into the site's file.url. Which disk matters here: anything on the
+public disk is reachable by URL to whoever guesses the filename, so an issue
+that must not be openly readable belongs on the private disk behind a route
+that checks authorization - see Filament_CMS_Design.md section 6.6, where that
+per-issue decision is still open.
 */
 class Newsletter extends BaseModel
 {

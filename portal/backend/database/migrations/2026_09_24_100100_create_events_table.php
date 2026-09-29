@@ -56,8 +56,8 @@ return new class extends Migration
             $table->boolean('location_is_virtual')->default(false);
             $table->string('location_virtual_note', 255)->nullable();
 
-            // Object-storage key, not a URL. The API resource turns it into an
-            // absolute URL for the site's image.src.
+            // A path on the configured filesystem disk, not a URL. The API
+            // resource turns it into an absolute URL for the site's image.src.
             $table->string('image_path', 255)->nullable();
             $table->string('image_alt', 255)->nullable();
 

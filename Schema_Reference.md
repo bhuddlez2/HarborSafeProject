@@ -228,7 +228,7 @@ Backs the website's Events & News page. Physically a separate database from both
 
 Eloquent models exist for all three (`Event`, `Newsletter`, `EventCategory`), each with `published()` scopes matching the website's own filter and sort order, and `hasLocation()`/`hasImage()`/`hasRegistration()`/`hasFile()` helpers so the API can emit a nested object as `null` rather than as an object full of nulls.
 
-Two things are still outstanding: the restricted `harborsafe_content_public` MySQL user has not been created in any environment (the `ContentPublic` connection currently points at the same credentials as `Content`, so the SELECT-only guarantee is documented but not enforced), and S3 has no bucket or credentials, so `image_path`/`file_path` have nowhere to write.
+Two things are still outstanding: the restricted `harborsafe_content_public` MySQL user has not been created in any environment (the `ContentPublic` connection currently points at the same credentials as `Content`, so the SELECT-only guarantee is documented but not enforced), and `php artisan storage:link` has not been proven on the Ionos deploy target, which is what makes `image_path`/`file_path` reachable by URL.
 
 ```mermaid
 erDiagram
@@ -282,7 +282,7 @@ erDiagram
 
 **Times are stored UTC.** The site formats in `America/New_York` (`TIME_ZONE` in `website/frontend/src/app/lib/content.js`) and the source data carries offsets that shift with DST (`-05:00` in January, `-04:00` in March). The staff panel must convert on the way in — writing a naive wall-clock value straight into `starts_at` puts every DST-straddling event an hour off.
 
-**`image_path` and `file_path` are object-storage keys, not URLs.** Uploads go to S3 (`league/flysystem-aws-s3-v3`); the API resource turns the key into the absolute URL the site expects at `image.src` / `file.url`. Whether that is a public URL or an expiring signed one depends on the still-open public-vs-private decision in `Filament_CMS_Design.md` §6.6.
+**`image_path` and `file_path` hold a path on the configured filesystem disk, not a URL.** Uploads go to the local public disk (`storage/app/public`, served via `php artisan storage:link`); the API resource turns the stored path into the absolute URL the site expects at `image.src` / `file.url`. These columns are storage-agnostic, so moving to an S3-compatible provider later would be a config change rather than a migration. Note that anything on the public disk is reachable by URL to anyone who guesses the filename — see `Filament_CMS_Design.md` §6.6 on randomized names and on which files belong on the private disk instead.
 
 ### `ContentPublic` — the read-only half
 

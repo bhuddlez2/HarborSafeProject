@@ -5,8 +5,8 @@ Filament) and 12 (Next.js cleanup); Phase 7 partly. Phases 8, 9, 10 and 13 are n
 built.
 
 Two things the Content work still needs from outside the codebase: the restricted
-`harborsafe_content_public` MySQL user (§6.5) does not exist in any environment, and S3
-has no bucket or credentials, so uploads have nowhere to go.
+`harborsafe_content_public` MySQL user (§6.5) does not exist in any environment, and
+`php artisan storage:link` has not been proven on the Ionos deploy target (§3.2).
 
 ## 1. What this is
 
@@ -67,14 +67,24 @@ restart.
 an intimidating failure mode, so put it in the README rather than letting each person
 rediscover it.
 
-### 3.2 `league/flysystem-aws-s3-v3` is not installed
+### 3.2 `storage:link` has to work on the deploy target
 
-File storage is S3 (§4). Laravel does not ship the S3 adapter — `laravel/framework`
-only *suggests* it at `^3.25.1`. Verified absent from `composer.lock`. You need:
+File storage is the local public disk (§4), which means uploads land in
+`storage/app/public` and are served through a symlink at `public/storage` created by:
 
 ```
-composer require league/flysystem-aws-s3-v3
+php artisan storage:link
 ```
+
+Run it once per environment, and **again after any deploy that rebuilds the tree** — the
+symlink is not part of the repo.
+
+The open risk is the deploy target: the website and portal are going on **a shared server
+through Ionos** (see `Public_Forms_Backend_Design.md`), and shared hosts vary in whether
+they permit symlinks and in how the document root is arranged. Confirm `storage:link`
+works there, and that the plan has disk headroom, before building the upload UI. If it
+turns out symlinks are blocked, see §4 for the fallback — it is a config change, not a
+rewrite.
 
 ### 3.3 spatie/laravel-permission will silently target the wrong database
 
@@ -183,8 +193,24 @@ them into the JSON the website already consumes (§6).
 **Connection: a new dedicated `Content` database**, with a paired `Content` /
 `ContentPublic` arrangement mirroring `Feedback` / `FeedbackPublic`.
 
-**File storage: S3 / object storage** for event images and newsletter PDFs. Needs §3.2,
-plus a bucket and credentials before anyone can work on content locally.
+**File storage: the local public disk** for event images and newsletter PDFs —
+`storage/app/public` served via `php artisan storage:link` (§3.2). No cloud account, no
+credentials, and nothing for a teammate to wait on before working on content locally.
+
+This reverses an earlier decision to use Amazon S3. S3 was dropped for two reasons. The
+reasons to use object storage — files surviving ephemeral containers, several servers
+sharing one store, CDN-scale traffic — none apply to a single persistent Ionos server
+holding a few dozen images and a quarterly PDF. And it required an AWS account, which is
+ruled out.
+
+**Fallback if `storage:link` cannot work on Ionos:** use an S3-compatible provider that
+is not AWS — Cloudflare R2 (no egress charge), Backblaze B2, or DigitalOcean Spaces.
+Laravel's `s3` driver speaks to all of them by setting an endpoint, so the change is
+`composer require league/flysystem-aws-s3-v3`, the disk config, and
+`FILESYSTEM_DISK`. **No application code changes**: `image_path` and `file_path` hold a
+path on whichever disk is configured, so the models and migrations are already
+storage-agnostic. Do not reach for this until §3.2 has actually been tested on the
+deploy target.
 
 ## 5. Access matrix — four roles
 
@@ -288,7 +314,7 @@ Credentials go in `DB_USERNAME_CONTENT_PUBLIC` / `DB_PASSWORD_CONTENT_PUBLIC`.
 
 `image_path` and `file_path` accept staff uploads, which makes them the highest-risk
 surface in this feature. A Phase 1 audit earlier in the project established these
-requirements; they predate the move to S3 and still apply:
+requirements; they predate the storage decision and apply whichever disk is used:
 
 - **Allow-list both MIME type and extension**, and check them independently — a
   browser-supplied MIME type is not trustworthy on its own. Images: PNG/JPEG/WebP.
@@ -297,10 +323,12 @@ requirements; they predate the move to S3 and still apply:
   key; keep it in a separate display column if it needs showing.
 - **Reject executables outright**, including files that merely rename an executable to
   an allowed extension. Validate by content, not by name.
-- **Decide public vs. private deliberately.** Event images are genuinely public.
-  Newsletters may or may not be — if any issue should not be world-readable by URL,
-  they belong in a private bucket served through a controlled route with an expiring
-  signed URL, not a public one.
+- **Decide public vs. private deliberately.** Event images are genuinely public. On
+  the local public disk (§4) *everything* in `storage/app/public` is world-readable by
+  URL to anyone who guesses the filename — which is why randomized names matter. If any
+  newsletter issue must not be openly reachable, it does not belong on that disk: put it
+  on the private disk (`storage/app/private`) and serve it through a controlled route
+  that checks authorization, rather than linking the file directly.
 - **Cap file size** in both Filament's `FileUpload` and the server-side request
   validation. Client-side limits alone are not a control.
 
@@ -379,9 +407,10 @@ authenticated caller. Owner-only editing belongs to the policies in Phases 7–8
 
 Each phase has a gate. Don't start the next one until the gate passes.
 
-**1 — Prerequisites.** Enable `ext-intl` (§3.1); `composer require
-league/flysystem-aws-s3-v3` (§3.2).
-*Gate:* `php -r "var_dump(extension_loaded('intl'));"` prints `true`.
+**1 — Prerequisites.** Enable `ext-intl` (§3.1); run `php artisan storage:link` and
+confirm it works on the deploy target, not just locally (§3.2).
+*Gate:* `php -r "var_dump(extension_loaded('intl'));"` prints `true`, and a file written
+to `storage/app/public` is reachable under `/storage/...`.
 
 **2 — Install Filament.** `composer require filament/filament:"^5.0"`, then
 `php artisan filament:install --panels`.
