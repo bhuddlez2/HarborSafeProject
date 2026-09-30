@@ -18,13 +18,17 @@ yarn-error.log*
 *.sqlite*
 
 # --- Global: env files ---
+# Catch-all rather than a list of known names: real credentials live in .env,
+# and the dangerous case is an ad-hoc copy nobody thought to add here -
+# .env.bak, .env.save, .env.2026-09-24, an editor's .env~. Those carry the
+# same secrets as .env and were previously committable.
+#
+# .env.example is the one that must stay tracked, hence the negation. Keep it
+# free of real values: it is the only file in this group that ships.
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.backup
-.env.production
+.env.*
+.env~
+!.env.example
 
 # --- website/frontend (Next.js) ---
 website/frontend/.yarn/*

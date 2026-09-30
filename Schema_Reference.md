@@ -222,6 +222,94 @@ The public submission controllers (`ServiceFeedbackController`, `ResourceRequest
 
 ---
 
+## Content connection — schema applied, models not yet written
+
+Backs the website's Events & News page. Physically a separate database from both `Portal` and `Feedback`. The migrations (`2026_09_24_100000`–`2026_09_24_100200`) are applied and the three tables below are live, with `event_categories` seeded from `EventCategorySeeder`; `events` and `newsletters` are empty until the panel can create them.
+
+Eloquent models exist for all three (`Event`, `Newsletter`, `EventCategory`), each with `published()` scopes matching the website's own filter and sort order, and `hasLocation()`/`hasImage()`/`hasRegistration()`/`hasFile()` helpers so the API can emit a nested object as `null` rather than as an object full of nulls.
+
+Two things are still outstanding: the restricted `harborsafe_content_public` MySQL user has not been created in any environment (the `ContentPublic` connection currently points at the same credentials as `Content`, so the SELECT-only guarantee is documented but not enforced), and `php artisan storage:link` has not been proven on the Ionos deploy target, which is what makes `image_path`/`file_path` reachable by URL.
+
+```mermaid
+erDiagram
+    event_categories {
+        bigint id PK
+        string Name
+        timestamp ChangeDate
+    }
+    events {
+        uuid EventID PK
+        string title
+        string summary
+        json description
+        datetime starts_at
+        datetime ends_at
+        boolean all_day
+        string recurrence
+        string location_name
+        string location_address
+        boolean location_is_virtual
+        string location_virtual_note
+        string image_path
+        string image_alt
+        string registration_url
+        string registration_label
+        bigint category_id FK
+        boolean is_published
+        boolean is_cancelled
+    }
+    newsletters {
+        uuid NewsletterID PK
+        string title
+        date issue_date
+        string summary
+        string file_path
+        bigint file_size_bytes
+        smallint file_pages
+        boolean is_published
+    }
+
+    event_categories ||--o{ events : "category_id (nullable)"
+```
+
+### Table detail
+
+| Table | Purpose | Key columns | Notes |
+|---|---|---|---|
+| `event_categories` | Lookup for the events page's category badge | `id` (PK) | Same shape as the `services`/`resources`/`counties` lookups. Seeded with the five values the page was built against (`EventCategorySeeder`). The public endpoint must serialize `Name`, never `category_id` — the site renders the category as a plain string. |
+| `events` | Events shown on the public Events & News page | `EventID` (PK, uuid), `category_id` (FK, nullable) | Columns derived from `website/frontend/src/app/lib/mock-events.json`, which this table replaces. The mock's nested `location`/`image`/`registration` objects are flattened here and rebuilt by the API resource. `description` is a **JSON array of paragraph strings**, not HTML — the page does `description.map(...)`. `is_published` and `is_cancelled` are independent flags, not one status: a published event can also be cancelled. Indexed on `(is_published, starts_at)` to match the public endpoint's filter and sort. |
+| `newsletters` | Newsletter issues on the same page | `NewsletterID` (PK, uuid) | `file_size_bytes`/`file_pages` are nullable and stored rather than derived, so listing issues doesn't require stat-ing every object in the bucket. Indexed on `(is_published, issue_date)`. |
+
+**Times are stored UTC.** The site formats in `America/New_York` (`TIME_ZONE` in `website/frontend/src/app/lib/content.js`) and the source data carries offsets that shift with DST (`-05:00` in January, `-04:00` in March). The staff panel must convert on the way in — writing a naive wall-clock value straight into `starts_at` puts every DST-straddling event an hour off.
+
+**`image_path` and `file_path` hold a path on the configured filesystem disk, not a URL.** Uploads go to the local public disk (`storage/app/public`, served via `php artisan storage:link`); the API resource turns the stored path into the absolute URL the site expects at `image.src` / `file.url`. These columns are storage-agnostic, so moving to an S3-compatible provider later would be a config change rather than a migration. Note that anything on the public disk is reachable by URL to anyone who guesses the filename — see `Filament_CMS_Design.md` §6.6 on randomized names and on which files belong on the private disk instead.
+
+### `ContentPublic` — the read-only half
+
+As with `Feedback`/`FeedbackPublic`, `config/database.php` defines two connections against the same physical database:
+
+- **`Content`** — full access. Used by the Filament staff panel and the Eloquent models.
+- **`ContentPublic`** — a restricted, **SELECT-only** MySQL user for the website's read endpoints. Content is added, changed and deleted exclusively from the staff panel, so this user gets no write privilege of any kind.
+
+```sql
+-- Replace CHANGE_ME with a strong, generated password. Scope the host
+-- portion (currently '%') to the actual application server in production
+-- rather than allowing any host.
+CREATE USER 'harborsafe_content_public'@'%' IDENTIFIED BY 'CHANGE_ME';
+
+GRANT SELECT ON content_db.events           TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_db.newsletters      TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_db.event_categories TO 'harborsafe_content_public'@'%';
+
+FLUSH PRIVILEGES;
+```
+
+Note what is deliberately *not* granted: no `INSERT`, `UPDATE` or `DELETE` on anything, and no access of any kind to `Portal` or the feedback database. Once created, put the credentials in `DB_USERNAME_CONTENT_PUBLIC`/`DB_PASSWORD_CONTENT_PUBLIC`. Substitute the real database name for `content_db` — it comes from `DB_DATABASE_CONTENT`.
+
+Like the `FeedbackPublic` grants, these have to be run by hand against each environment — migrations can't grant MySQL privileges.
+
+---
+
 ## Gap analysis vs. `Original_Schema_design.md` — resolved (Portal connection)
 
 | Original table | Status | What was built |

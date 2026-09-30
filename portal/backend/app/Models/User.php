@@ -5,11 +5,14 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 //FOR DB ERRORS
 use Illuminate\Database\Eloquent\Model;
@@ -17,10 +20,10 @@ use RuntimeException;
 
 #[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     // The users table physically lives on the Portal connection (migrations
     // were run with --database=Portal), not the default mariadb connection
@@ -35,6 +38,45 @@ class User extends Authenticatable
     public function submittedAssessments()
     {
         return $this->hasMany(LawEnforcementAssessment::class, 'submitted_by');
+    }
+
+    // Name, badge number and agency as the officer screens display them.
+    // Badge and agency are null for accounts with no law_enforcement_agents
+    // row (every non-officer account, and officers not yet provisioned).
+    public function officerIdentity(): array
+    {
+        $agent = $this->lawEnforcementAgent()->with('agency')->first();
+
+        return [
+            'name' => $this->name,
+            'badge' => $agent?->badge_number,
+            'agency' => $agent?->agency?->name,
+        ];
+    }
+
+    // Checked by Filament at login and on every panel request. Reads the raw
+    // role string so an unrecognised value is refused rather than throwing
+    // from the enum cast.
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->is_active
+            && UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? '')) !== null;
+    }
+
+    // The single role check every panel page's canAccess() goes through, so
+    // deactivating an account closes everything at once rather than relying on
+    // canAccessPanel() being the only gate. Reads the raw role string for the
+    // same reason canAccessPanel() does: an unrecognised value is refused
+    // rather than throwing from the enum cast.
+    public function hasActiveRole(UserRole ...$roles): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        $role = UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? ''));
+
+        return $role !== null && in_array($role, $roles, true);
     }
 
     /**

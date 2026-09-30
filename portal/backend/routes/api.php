@@ -28,23 +28,24 @@ Route::get('/', function () {
     ]);
 });
 
-// Routes for the private assessment table
-Route::apiResource('/private-assessments', PrivateAssessmentController::class);
+// The anonymous civilian flow (portal/frontend/app/page.js) only ever
+// creates records, so store is the one public action on these three tables.
+// Reading, editing or deleting them - civilian PII included - needs auth.
+Route::apiResource('/private-assessments', PrivateAssessmentController::class)->only('store');
+Route::apiResource('/assessments', AssessmentController::class)->only('store');
+Route::apiResource('/submitter-info', SubmitterInfoController::class)->only('store');
 
-// Routes for lethality assessment table
-Route::apiResource('/assessments', AssessmentController::class);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('/private-assessments', PrivateAssessmentController::class)->except('store');
+    Route::apiResource('/assessments', AssessmentController::class)->except('store');
+    Route::apiResource('/submitter-info', SubmitterInfoController::class)->except('store');
 
-// Routes for submitter info table
-Route::apiResource('/submitter-info', SubmitterInfoController::class);
-
-// Routes for the law enforcement assessment table
-Route::apiResource('/law-enforcement-assessments', LawEnforcementAssessmentController::class);
-
-// Routes for law enforcement agent profiles
-Route::apiResource('/law-enforcement-agents', LawEnforcementAgentController::class);
-
-// Routes for the agencies lookup table
-Route::apiResource('/agencies', AgencyController::class);
+    // Officers submit through the staff panel's wizard now, not this API;
+    // every action here needs an authenticated user.
+    Route::apiResource('/law-enforcement-assessments', LawEnforcementAssessmentController::class);
+    Route::apiResource('/law-enforcement-agents', LawEnforcementAgentController::class);
+    Route::apiResource('/agencies', AgencyController::class);
+});
 
 // Narrow public API surface for the website's feedback/resource-request
 // forms - reads and writes here go through the restricted FeedbackPublic

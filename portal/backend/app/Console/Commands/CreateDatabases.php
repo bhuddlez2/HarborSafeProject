@@ -18,6 +18,7 @@ class CreateDatabases extends Command
         $databases = [
             env('DB_DATABASE_PORTAL'),
             env('DB_DATABASE_FEEDBACK'),
+            env('DB_DATABASE_CONTENT'),
         ];
 
         // Issued via the Portal connection rather than the default

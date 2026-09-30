@@ -30,5 +30,10 @@ class DatabaseSeeder extends Seeder
             ResourceSeeder::class,
             CountySeeder::class,
         ]);
+
+        // Content-connection lookup backing the events page's category badge.
+        $this->call([
+            EventCategorySeeder::class,
+        ]);
     }
 }

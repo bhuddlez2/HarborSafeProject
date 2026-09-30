@@ -1,0 +1,254 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../resources/views/components/officer-icon.blade.php';
+
+/*
+ * Carried over from the former Next.js officer portal (portal/frontend:
+ * app/police/layout.js, components/portal/PortalSidebar.js, app/login and
+ * app/police/portal). The pages copy that markup's Tailwind classes as-is;
+ * this file restyles Filament's own chrome (sidebar, inputs, login card) to
+ * match it.
+ *
+ * Everything below `@theme` is deliberately unlayered: Filament's component
+ * styles live in cascade layers, and unlayered rules beat layered ones
+ * whatever their specificity.
+ */
+
+@theme {
+    --font-montserrat: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+    --font-nunito: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Shell: app/police/layout.js — bg-[#F4F2F7] text-[#1B1726]. */
+.fi-body {
+    background-color: #f4f2f7;
+    color: #1b1726;
+}
+
+/* Sidebar rail: PortalSidebar.js — bg-[#231A33], p-4 pt-7, gap-1.5. */
+.fi-sidebar {
+    background-color: #231a33;
+}
+
+.fi-sidebar .fi-logo {
+    color: #fff;
+}
+
+.fi-sidebar-nav {
+    padding: 1.75rem 1rem 1rem;
+    scrollbar-gutter: auto;
+}
+
+.fi-sidebar-nav-groups {
+    margin-inline: 0;
+}
+
+.fi-sidebar-group-items {
+    gap: 0.375rem;
+}
+
+/* "OFFICER PORTAL": px-3 pb-6 font-montserrat text-[15px] font-bold tracking-[0.04em] uppercase. */
+.fi-sidebar-group-btn {
+    padding: 0 0.75rem 1.5rem;
+}
+
+.fi-sidebar-group-label {
+    color: #fff;
+    font-family: var(--font-montserrat);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Items: h-12 gap-3 rounded-[10px] px-3.5 text-[15px] font-semibold text-[#D6CFE2]. */
+.fi-sidebar-item-btn {
+    height: 3rem;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    border-radius: 10px;
+    padding: 0 0.875rem;
+    color: #d6cfe2;
+}
+
+.fi-sidebar-item-btn > .fi-icon {
+    width: 20px;
+    height: 20px;
+    color: inherit;
+}
+
+.fi-sidebar-item-label {
+    color: inherit;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* hover:bg-white/10 hover:text-white */
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover,
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:focus-visible {
+    background-color: rgb(255 255 255 / 0.1);
+    color: #fff;
+}
+
+/* Active: bg-[#5C0F8B] font-bold text-white */
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover {
+    background-color: #5c0f8b;
+    color: #fff;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon,
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
+    color: #fff;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
+    font-weight: 700;
+}
+
+/* Footer: border-t border-[#4A3E5E]; the user menu holds sign out. */
+.fi-sidebar-footer {
+    margin: 0.75rem 1rem 1rem;
+    border-color: #4a3e5e;
+}
+
+.fi-sidebar .fi-user-menu-trigger {
+    color: #fff;
+}
+
+.fi-sidebar .fi-user-menu-trigger:hover,
+.fi-sidebar .fi-user-menu-trigger:focus-visible {
+    background-color: rgb(255 255 255 / 0.1);
+}
+
+/* Officer pages lay themselves out (their own container and padding). */
+.fi-main:has(.hs-officer-page) {
+    padding: 0;
+}
+
+.fi-main:has(.hs-officer-page) .fi-page-header-main-ctn {
+    padding: 0;
+    gap: 0;
+}
+
+/*
+ * Form fields on the wizard and the login page, as the originals drew them:
+ * border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900,
+ * focus:border-gray-900, border-red-500 when invalid; labels text-sm
+ * font-medium text-gray-700.
+ */
+.hs-lap-wizard .fi-input-wrp,
+.hs-login .fi-input-wrp {
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+}
+
+.hs-lap-wizard .fi-input-wrp:focus-within,
+.hs-login .fi-input-wrp:focus-within {
+    border-color: var(--color-gray-900);
+    box-shadow: none;
+}
+
+.hs-lap-wizard .fi-input-wrp.fi-invalid,
+.hs-login .fi-input-wrp.fi-invalid {
+    border-color: var(--color-red-500);
+}
+
+.hs-lap-wizard input.fi-input,
+.hs-lap-wizard select.fi-select-input,
+.hs-login input.fi-input {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: var(--color-gray-900);
+}
+
+.hs-lap-wizard .fi-fo-field-label-content,
+.hs-login .fi-fo-field-label-content {
+    color: var(--color-gray-700);
+}
+
+/* Field rows were `flex gap-4`. */
+.hs-lap-wizard .fi-grid,
+.hs-lap-wizard .fi-sc-flex {
+    column-gap: 1rem;
+}
+
+/* Sex select: w-32 h-12 appearance-none (no arrow). */
+.hs-lap-wizard .hs-lap-sex {
+    width: 8rem;
+}
+
+.hs-lap-wizard .hs-lap-sex select.fi-select-input {
+    height: 3rem;
+    background-image: none;
+}
+
+/* Back and Continue sat left-aligned with gap-4; the questions phase had none. */
+.hs-lap-wizard .fi-sc-wizard-footer {
+    justify-content: flex-start;
+    gap: 1rem;
+    margin-top: 2.5rem;
+}
+
+/* The wizard has no cancel action, but its empty slot would still take a gap. */
+.hs-lap-wizard .fi-sc-wizard-footer > div:nth-child(2) {
+    display: none;
+}
+
+.hs-lap-wizard.hs-lap-questions .fi-sc-wizard-footer {
+    display: none;
+}
+
+/*
+ * Login: app/login/page.js — bg-gray-100 screen, white rounded-2xl shadow-lg
+ * max-w-md card, px-8 py-10 md:px-12 md:py-14, full-width gray-900 button.
+ * It sat outside the officer layout, so it rendered in globals.css's body
+ * font (Arial) rather than Nunito.
+ */
+.hs-login {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.fi-simple-layout:has(.hs-login) {
+    background-color: var(--color-gray-100);
+}
+
+.fi-simple-main:has(.hs-login) {
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+    padding: 2.5rem 2rem;
+
+    @media (min-width: 48rem) {
+        padding: 3.5rem 3rem;
+    }
+}
+
+.hs-login .fi-sc-form {
+    gap: 1.5rem;
+}
+
+.hs-login .fi-sc-form > .fi-sc:first-child {
+    gap: 1.5rem;
+}
+
+.hs-login .fi-ac .fi-btn {
+    margin-top: 1rem;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-gray-900);
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    color: #fff;
+}
+
+.hs-login .fi-ac .fi-btn:hover {
+    background-color: var(--color-gray-700);
+}
+
+.hs-login .fi-ac .fi-btn:focus-visible {
+    box-shadow: 0 0 0 4px var(--color-gray-400);
+}
