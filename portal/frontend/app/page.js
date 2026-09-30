@@ -1,3 +1,5 @@
+// This is the Civilian Assessment Portal page component
+
 "use client";
 
 import { useState, useEffect, startTransition } from "react";
