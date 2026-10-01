@@ -4,9 +4,14 @@ Three applications in one repository, backing Harbor Safe House & Advocacy Cente
 
 | Path | What it is | Dev URL |
 |---|---|---|
-| `portal/backend/` | Laravel 13 JSON API. Backs **both** other apps. | http://127.0.0.1:8000 |
+| `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · panel at [/staff](http://127.0.0.1:8000/staff) |
 | `website/frontend/` | Next.js 16, static export. The public informational site. | http://localhost:3000 |
-| `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment. | http://localhost:3001 |
+| `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment only. | http://localhost:3001 |
+
+If you are here to work on the staff portal, the code is in `portal/backend`
+(PHP, Blade and Tailwind), not in `portal/frontend` — the officer screens moved
+into the Filament panel. See [PORTAL_SETUP.md](PORTAL_SETUP.md) if you have not
+run PHP before.
 
 Nothing but the backend talks to the database. The website reaches only a
 narrow `/api/public/*` slice of the API and can never read anything back —
@@ -99,13 +104,27 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Then edit `.env` and fill in the database section. Two physical databases are
-needed — create them if they don't exist:
+Then edit `.env` and fill in the database section. **Three** physical databases
+are needed — create them if they don't exist:
+
+The names are entirely up to you — all that matters is that they match the
+`DB_DATABASE_*` values in your `.env`. These are what `.env.example` ships
+with, so this works unedited:
 
 ```sql
-CREATE DATABASE assessment_app_db;   -- the Portal connection
-CREATE DATABASE feedback_app_db;     -- the Feedback + FeedbackPublic connections
+CREATE DATABASE portal;     -- the Portal connection
+CREATE DATABASE feedback;   -- the Feedback + FeedbackPublic connections
+CREATE DATABASE content;    -- the Content + ContentPublic connections
 ```
+
+Or skip the SQL entirely: `php artisan db:create` reads those three
+`DB_DATABASE_*` values and creates whichever are missing. On Linux, where
+MariaDB authenticates root over a unix socket and the passwordless root in
+`.env` fails, use [docs/local-db-setup.sql](docs/local-db-setup.sql) instead —
+it creates the databases and a dedicated dev user.
+
+Don't be thrown if a teammate's databases are named differently (`portal` vs
+`assessment_app_db`, say). Nothing reads the name except `.env`.
 
 The `.env` keys that matter:
 
@@ -113,6 +132,8 @@ The `.env` keys that matter:
 DB_HOST_PORTAL / DB_PORT_PORTAL / DB_DATABASE_PORTAL / DB_USERNAME_PORTAL / DB_PASSWORD_PORTAL
 DB_HOST_FEEDBACK / DB_PORT_FEEDBACK / DB_DATABASE_FEEDBACK / DB_USERNAME_FEEDBACK / DB_PASSWORD_FEEDBACK
 DB_USERNAME_FEEDBACK_PUBLIC / DB_PASSWORD_FEEDBACK_PUBLIC
+DB_HOST_CONTENT / DB_PORT_CONTENT / DB_DATABASE_CONTENT / DB_USERNAME_CONTENT / DB_PASSWORD_CONTENT
+DB_USERNAME_CONTENT_PUBLIC / DB_PASSWORD_CONTENT_PUBLIC
 ```
 
 `FeedbackPublic` points at the *same database* as `Feedback` but with a
@@ -122,6 +143,13 @@ forms will not work until that user exists.** Create it with the `GRANT` block
 in [Schema_Reference.md](Schema_Reference.md#two-connections-one-database--how-write-only-is-enforced),
 then put its credentials in `DB_USERNAME_FEEDBACK_PUBLIC` / `DB_PASSWORD_FEEDBACK_PUBLIC`.
 
+`ContentPublic` works the same way for the events/newsletters database — a
+SELECT-only user, so the website can read published content but never change
+it. That user **does not exist in any environment yet**; until it does, leave
+`DB_USERNAME_CONTENT_PUBLIC` / `DB_PASSWORD_CONTENT_PUBLIC` pointing at the
+same credentials as `DB_*_CONTENT` and nothing breaks locally. The `GRANT`
+block is in [Schema_Reference.md](Schema_Reference.md#contentpublic--the-read-only-half).
+
 Migrate and seed:
 
 ```bash
@@ -129,11 +157,37 @@ php artisan migrate --database=Portal     # ALWAYS --database=Portal - see gotch
 php artisan db:seed --class=ServiceSeeder
 php artisan db:seed --class=ResourceSeeder
 php artisan db:seed --class=CountySeeder
+php artisan db:seed --class=EventCategorySeeder
 ```
 
-Those three seeders fill the lookup tables (services / resources / counties)
-that the website's contact forms read their dropdowns from. Without them the
-forms load empty. They're idempotent — safe to re-run.
+Those seeders fill the lookup tables — services / resources / counties for the
+website's contact forms, event categories for the events page. Without them
+those dropdowns and badges come up empty. All are idempotent, so they're safe
+to re-run.
+
+**Then create accounts, or you cannot get into the staff panel.** There is no
+sign-up screen: `/staff/login` will reject everything until users exist.
+
+```bash
+php artisan db:seed --class=LocalStaffUserSeeder --database=Portal
+```
+
+That creates one login per role (plus a deactivated account, for checking that
+`is_active` is enforced). It refuses to run unless `APP_ENV=local`. The password
+comes from `LOCAL_SEED_PASSWORD` in `.env`, falling back to `password` when
+that is unset.
+
+| Email | Role | Lands on |
+|---|---|---|
+| `officer@harborsafe.test` | `law_enforcement` | `/staff/police` — **the only role that sees the officer screens and the assessment wizard** |
+| `police-admin@harborsafe.test` | `police_admin` | `/staff/police` |
+| `admin@harborsafe.test` | `admin` | `/staff/content` |
+| `secretary@harborsafe.test` | `secretary` | `/staff/content` |
+| `inactive@harborsafe.test` | `admin`, deactivated | nothing — refused at the login screen |
+
+Note that `/staff/content`, My Assessments and Search Records are still
+"Coming soon" placeholders, so sign in as the officer if you want to see
+something built.
 
 Build the staff panel's theme (the Filament panel at `/staff` — officer
 screens, the assessment wizard, content management — is styled by a custom
