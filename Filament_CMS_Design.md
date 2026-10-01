@@ -703,3 +703,34 @@ landing page.
 deleted. It was ungrouped, which floated it above the sidebar, and being the only
 non-officer destination it made the admin experience look like the officer portal with an
 empty page attached. The `/staff/content` address it held is now the Content cluster's.
+
+- **Staff sessions persist across navigation, and the local `.env` has drifted.**
+  Reported 2026-10-01: navigating away from content management and back does not ask
+  for a login again.
+
+  Three separate things are tangled here, and they need separating before anyone
+  "fixes" it:
+
+  1. **A config drift, which is the immediate cause.** `.env.example` sets
+     `SESSION_LIFETIME=15`, and `CLAUDE.md` says 15 because the officer Home promises a
+     15-minute lock. The working `.env` on at least one machine says **120**. That is a
+     two-hour idle window, so of course the session is still good on return. Check
+     `SESSION_LIFETIME` in your own `.env` before concluding anything about the code.
+     Worth deciding whether 15 is actually right for the *content* side too — a
+     secretary editing an event has different needs from an officer with victim PII on
+     screen, and one number currently serves both.
+
+  2. **It is an idle timeout, not a per-navigation re-auth.** Even at 15, leaving the
+     panel and coming back five minutes later will not prompt, because Laravel refreshes
+     the session cookie on activity and `expire_on_close` is `false`. That is what being
+     signed in means, and it is correct behaviour.
+
+  3. **If re-authentication on return is genuinely wanted, that is a feature, not a
+     setting.** The options are roughly: Filament's password-confirmation action on
+     sensitive pages; a client-side idle lock driven by the Page Visibility API that
+     clears the session after N minutes hidden; or `SESSION_EXPIRE_ON_CLOSE=true`, which
+     only covers closing the browser and not navigating away. Each of these has a real
+     cost to a secretary doing bulk content entry, so pick deliberately.
+
+  Related and still unresolved: the officer Home's "Each view is logged with your name
+  and a timestamp" copy, immediately above, which nothing implements.
