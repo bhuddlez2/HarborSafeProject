@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Facades\Storage;
 
 /*
 An event on the website's Events & News page. Columns mirror
@@ -41,6 +42,18 @@ class Event extends BaseModel
 {
     use HasUuids;
 
+    /*
+    The wall-clock timezone the public site renders event times in - it must
+    match TIME_ZONE in website/frontend/src/app/lib/content.js.
+
+    starts_at/ends_at are stored UTC. Anything that shows a time to a human,
+    or accepts one from a human, converts through this. It lives here so the
+    panel's date pickers and the public API agree on one value; the hazard is
+    a DST boundary, where a hard-coded -05:00 or -04:00 silently shifts half
+    the year's events by an hour.
+    */
+    public const DISPLAY_TIMEZONE = 'America/New_York';
+
     protected $connection = 'Content';
 
     protected $table = 'events';
@@ -64,6 +77,7 @@ class Event extends BaseModel
         'location_is_virtual',
         'location_virtual_note',
         'image_path',
+        'image_file_id',
         'image_alt',
         'registration_url',
         'registration_label',
@@ -96,6 +110,13 @@ class Event extends BaseModel
         return $this->belongsTo(EventCategory::class, 'category_id');
     }
 
+    // The uploaded image, stored as a row in content_files rather than on a
+    // disk. Safe to eager-load: ContentFile's global scope keeps the blob out.
+    public function imageFile()
+    {
+        return $this->belongsTo(ContentFile::class, 'image_file_id', 'FileID');
+    }
+
     // What the public endpoint serves: published only, soonest first. The site
     // sorts client-side as well, but ordering here keeps the index on
     // (is_published, starts_at) doing the work.
@@ -115,7 +136,27 @@ class Event extends BaseModel
 
     public function hasImage(): bool
     {
-        return filled($this->image_path);
+        return filled($this->image_file_id) || filled($this->image_path);
+    }
+
+    /*
+    The absolute URL the website wants at image.src, or null.
+
+    Two storage paths are live by design (see the
+    add_content_file_ids_to_events_and_newsletters migration): a row in
+    content_files, which is what the panel writes today, or a path on a
+    filesystem disk, which is the documented fallback. image_file_id wins when
+    both are somehow set.
+    */
+    public function imageUrl(): ?string
+    {
+        if (filled($this->image_file_id)) {
+            return route('public.content-files.show', ['file' => $this->image_file_id]);
+        }
+
+        return filled($this->image_path)
+            ? Storage::disk(config('filesystems.default'))->url($this->image_path)
+            : null;
     }
 
     public function hasRegistration(): bool

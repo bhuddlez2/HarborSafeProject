@@ -16,6 +16,7 @@ use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\CountyController;
 use App\Http\Controllers\ServiceFeedbackController;
 use App\Http\Controllers\ResourceRequestFormController;
+use App\Http\Controllers\ContentFileController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -58,4 +59,10 @@ Route::prefix('public')->group(function () {
         ->middleware('throttle:10,1');
     Route::post('/resource-requests', [ResourceRequestFormController::class, 'store'])
         ->middleware('throttle:10,1');
+
+    // Event images and newsletter PDFs, served out of the database. Only
+    // reachable while a published event or newsletter points at the file -
+    // the controller enforces that, not this route.
+    Route::get('/content-files/{file}', [ContentFileController::class, 'show'])
+        ->name('public.content-files.show');
 });
