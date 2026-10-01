@@ -1,3 +1,5 @@
+// This is the Civilian Assessment Portal page component
+
 "use client";
 
 import { useState, useEffect, startTransition } from "react";
@@ -109,7 +111,7 @@ export default function AssessmentPage() {
   // Prescreen phase: collects who the report is for and anonymity preference
   if (phase === "prescreen") {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+      <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
 
         {/* Safety / confidentiality modal, shown on every visit before the form begins */}
         {showSafetyModal && (
@@ -122,8 +124,8 @@ export default function AssessmentPage() {
             <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
 
               {/* Header */}
-              <div className="bg-gray-900 px-6 py-5 text-center">
-                <p className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-0.5">Before you begin</p>
+              <div className="bg-[#5C0F8B] px-6 py-5 text-center">
+                <p className="text-xs font-semibold tracking-widest uppercase text-purple-200 mb-0.5">Before you begin</p>
                 <h2 id="safety-modal-heading" className="text-xl font-bold text-white">Confidentiality notice</h2>
               </div>
 
@@ -193,8 +195,8 @@ export default function AssessmentPage() {
                 {/* Action button */}
                 <button
                   onClick={() => setShowSafetyModal(false)}
-                  className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-semibold text-sm
-                             hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+                  className="w-full bg-[#5C0F8B] text-white py-2.5 rounded-lg font-semibold text-sm
+                             hover:bg-[#4C0B74] focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
                 >
                   I understand, continue
                 </button>
@@ -217,20 +219,20 @@ export default function AssessmentPage() {
             <button
               onClick={() => setForWhom("self")}
               className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                focus:outline-none focus:ring-4 focus:ring-gray-400
+                focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40
                 ${forWhom === "self"
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+                  ? "bg-[#5C0F8B] text-white border-[#5C0F8B]"
+                  : "border-[#5C0F8B] text-[#5C0F8B] hover:bg-[#5C0F8B] hover:text-white"}`}
             >
               Myself
             </button>
             <button
               onClick={() => setForWhom("other")}
               className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                focus:outline-none focus:ring-4 focus:ring-gray-400
+                focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40
                 ${forWhom === "other"
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+                  ? "bg-[#5C0F8B] text-white border-[#5C0F8B]"
+                  : "border-[#5C0F8B] text-[#5C0F8B] hover:bg-[#5C0F8B] hover:text-white"}`}
             >
               Someone else
             </button>
@@ -246,20 +248,20 @@ export default function AssessmentPage() {
                 <button
                   onClick={() => setAnonymous(true)}
                   className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                    focus:outline-none focus:ring-4 focus:ring-gray-400
+                    focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40
                     ${anonymous === true
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+                      ? "bg-[#5C0F8B] text-white border-[#5C0F8B]"
+                      : "border-[#5C0F8B] text-[#5C0F8B] hover:bg-[#5C0F8B] hover:text-white"}`}
                 >
                   Yes
                 </button>
                 <button
                   onClick={() => setAnonymous(false)}
                   className={`flex-1 py-4 rounded-lg text-lg border-2 transition
-                    focus:outline-none focus:ring-4 focus:ring-gray-400
+                    focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40
                     ${anonymous === false
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"}`}
+                      ? "bg-[#5C0F8B] text-white border-[#5C0F8B]"
+                      : "border-[#5C0F8B] text-[#5C0F8B] hover:bg-[#5C0F8B] hover:text-white"}`}
                 >
                   No
                 </button>
@@ -273,9 +275,9 @@ export default function AssessmentPage() {
               onClick={() => setPhase(
                 forWhom === "other" && !anonymous ? "info" : "victim"
               )}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+              className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#4C0B74] focus:outline-none
+                         focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
             >
               Continue
             </button>
@@ -289,7 +291,7 @@ export default function AssessmentPage() {
   // Info phase: collects identifying information when anonymous === false
   if (phase === "info") {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+      <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-10">
             Your information
@@ -305,7 +307,7 @@ export default function AssessmentPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
               {submitterErrors.firstName && (
                 <p className="text-sm text-red-600 mt-1">{submitterErrors.firstName[0]}</p>
@@ -320,7 +322,7 @@ export default function AssessmentPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
               {submitterErrors.lastName && (
                 <p className="text-sm text-red-600 mt-1">{submitterErrors.lastName[0]}</p>
@@ -338,7 +340,7 @@ export default function AssessmentPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+                         focus:outline-none focus:border-[#5C0F8B] transition"
             />
           </div>
 
@@ -354,7 +356,7 @@ export default function AssessmentPage() {
               maxLength={20}
               aria-invalid={!!phoneError}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+                         focus:outline-none focus:border-[#5C0F8B] transition"
             />
             {phoneError && (
               <p className="text-red-600 text-sm mt-1">{phoneError}</p>
@@ -364,18 +366,18 @@ export default function AssessmentPage() {
           <div className="flex gap-4">
             <button
               onClick={() => setPhase("prescreen")}
-              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-900 hover:text-white
-                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+              className="border-2 border-[#5C0F8B] text-[#5C0F8B] px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#5C0F8B] hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
             >
               Back
             </button>
             <button
               onClick={() => setPhase("victim")}
               disabled={!firstName.trim() || !lastName.trim()}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+              className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#4C0B74] focus:outline-none
+                         focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
             >
               Continue
             </button>
@@ -389,7 +391,7 @@ export default function AssessmentPage() {
   // Victim phase: collects identifying information about the subject of abuse
   if (phase === "victim") {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+      <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-10">
             {forWhom === "self" ? "Your information" : "About the victim"}
@@ -405,7 +407,7 @@ export default function AssessmentPage() {
                 value={victimFirstName}
                 onChange={(e) => setVictimFirstName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
               {victimErrors.victimFirstName && (
               <p className="text-sm text-red-600 mt-1">{victimErrors.victimFirstName[0]}</p>
@@ -420,7 +422,7 @@ export default function AssessmentPage() {
                 value={victimLastName}
                 onChange={(e) => setVictimLastName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
               {victimErrors.victimLastName && (
               <p className="text-sm text-red-600 mt-1">{victimErrors.victimLastName[0]}</p>
@@ -438,7 +440,7 @@ export default function AssessmentPage() {
                 value={victimDob}
                 onChange={(e) => setVictimDob(e.target.value)}
                 className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
             </div>
             <div>
@@ -449,8 +451,8 @@ export default function AssessmentPage() {
                 value={victimSex}
                 onChange={(e) => setVictimSex(e.target.value)}
                 className={`w-32 h-12 appearance-none border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition
-                           ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                           focus:outline-none focus:border-[#5C0F8B] transition
+                           ${victimErrors.victimSex ? "border-red-500" : "border-gray-300 focus:border-[#5C0F8B]"}`}
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
@@ -473,26 +475,26 @@ export default function AssessmentPage() {
               value={victimPhone}
               onChange={(e) => setVictimPhone(e.target.value)}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+                         focus:outline-none focus:border-[#5C0F8B] transition"
             />
           </div>
 
           <div className="flex gap-4">
             <button
               onClick={() => setPhase(forWhom === "other" && anonymous === false ? "info" : "prescreen")}
-              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-900 hover:text-white
-                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+              className="border-2 border-[#5C0F8B] text-[#5C0F8B] px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#5C0F8B] hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
             >
               Back
             </button>
             <button
               onClick={() => setPhase("offender")}
               disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition
-                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+              className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#4C0B74] focus:outline-none
+                         focus:ring-4 focus:ring-[#5C0F8B]/40 transition
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#5C0F8B]"
             >
               Continue
             </button>
@@ -506,7 +508,7 @@ export default function AssessmentPage() {
   // Offender phase: collects identifying information about the abuser
   if (phase === "offender") {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+      <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-10">
             About the offender
@@ -522,7 +524,7 @@ export default function AssessmentPage() {
                 value={offenderFirstName}
                 onChange={(e) => setOffenderFirstName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
               {offenderErrors.offenderFirstName && (
                 <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderFirstName[0]}</p>
@@ -537,7 +539,7 @@ export default function AssessmentPage() {
                 value={offenderLastName}
                 onChange={(e) => setOffenderLastName(e.target.value)}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
               {offenderErrors.offenderLastName && (
                 <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderLastName[0]}</p>
@@ -556,7 +558,7 @@ export default function AssessmentPage() {
                 value={offenderDob}
                 onChange={(e) => setOffenderDob(e.target.value)}
                 className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                           focus:outline-none focus:border-gray-900 transition"
+                           focus:outline-none focus:border-[#5C0F8B] transition"
               />
             </div>
             <div>
@@ -568,7 +570,7 @@ export default function AssessmentPage() {
                 onChange={(e) => setOffenderSex(e.target.value)}
                 className={`w-32 h-12 appearance-none border-2 rounded-lg px-4 py-3 text-gray-900
                            focus:outline-none transition
-                           ${offenderErrors.offenderSex ? "border-red-500" : "border-gray-300 focus:border-gray-900"}`}
+                           ${offenderErrors.offenderSex ? "border-red-500" : "border-gray-300 focus:border-[#5C0F8B]"}`}
               >
                 <option value="">Select</option>
                 <option value="M">Male</option>
@@ -590,7 +592,7 @@ export default function AssessmentPage() {
               value={offenderRelationship}
               onChange={(e) => setOffenderRelationship(e.target.value)}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-gray-900 transition"
+                         focus:outline-none focus:border-[#5C0F8B] transition"
             />
             {offenderErrors.offenderRelationship && (
               <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderRelationship[0]}</p>
@@ -600,18 +602,18 @@ export default function AssessmentPage() {
           <div className="flex gap-4">
             <button
               onClick={() => setPhase("victim")}
-              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-900 hover:text-white
-                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+              className="border-2 border-[#5C0F8B] text-[#5C0F8B] px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#5C0F8B] hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
             >
               Back
             </button>
             <button
               onClick={() => setPhase("intro")}
               disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
-              className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-700 focus:outline-none
-                         focus:ring-4 focus:ring-gray-400 transition"
+              className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#4C0B74] focus:outline-none
+                         focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
             >
               Continue
             </button>
@@ -626,7 +628,7 @@ export default function AssessmentPage() {
   if (phase === "intro") {
     // min-h-screen scales to screen height, and then color is set using bg
     return (
-      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+      <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-6">
             Lethality Assessment
@@ -639,9 +641,9 @@ export default function AssessmentPage() {
           </p>
           <button
             onClick={() => setPhase("questions")}
-            className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                       hover:bg-gray-700 focus:outline-none
-                       focus:ring-4 focus:ring-gray-400 transition"
+            className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                       hover:bg-[#4C0B74] focus:outline-none
+                       focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
           >
             Begin assessment
           </button>
@@ -653,7 +655,7 @@ export default function AssessmentPage() {
   // Complete phase
   if (phase === "complete") {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+      <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
           <h1 className="text-3xl font-semibold text-gray-900 mb-6">
             Review &amp; submit
@@ -687,9 +689,9 @@ export default function AssessmentPage() {
           <div className="flex gap-4">
             <button
               onClick={() => { setIndex(total - 1); setPhase("questions"); }}
-              className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg
-                         hover:bg-gray-900 hover:text-white
-                         focus:outline-none focus:ring-4 focus:ring-gray-400 transition"
+              className="border-2 border-[#5C0F8B] text-[#5C0F8B] px-8 py-4 rounded-lg text-lg
+                         hover:bg-[#5C0F8B] hover:text-white
+                         focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
             >
               Back
             </button>
@@ -725,9 +727,9 @@ export default function AssessmentPage() {
                   }
               }}
               disabled={submitting}
-              className={`bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                        hover:bg-gray-700 focus:outline-none
-                        focus:ring-4 focus:ring-gray-400 transition
+              className={`bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                        hover:bg-[#4C0B74] focus:outline-none
+                        focus:ring-4 focus:ring-[#5C0F8B]/40 transition
                         ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {submitting ? 'Submitting...' : 'Submit assessment'}
@@ -741,7 +743,7 @@ export default function AssessmentPage() {
   // Submit Phase
   if (phase === "submitted") {
     return (
-        <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+        <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
             <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10 md:px-12 md:py-14">
                 <h1 className="text-3xl font-semibold text-gray-900 mb-6">
                     Assessment submitted
@@ -762,9 +764,9 @@ export default function AssessmentPage() {
                         setSubmitError(null);
                         setPhase("prescreen");
                     }}
-                    className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                               hover:bg-gray-700 focus:outline-none
-                               focus:ring-4 focus:ring-gray-400 transition"
+                    className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                               hover:bg-[#4C0B74] focus:outline-none
+                               focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
                 >
                     Start new assessment
                 </button>
@@ -777,7 +779,7 @@ export default function AssessmentPage() {
   const percent = Math.round(((index + 1) / total) * 100);
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-6">
+    <main className="min-h-screen bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 pt-10 pb-36 md:pb-14 md:px-12">
 
         {/* Progress bar */}
@@ -794,7 +796,7 @@ export default function AssessmentPage() {
             aria-valuemax={100}
           >
             <div
-              className="h-full bg-gray-900 transition-all duration-300"
+              className="h-full bg-[#5C0F8B] transition-all duration-300"
               style={{ width: `${percent}%` }}
             />
           </div>
@@ -821,16 +823,16 @@ export default function AssessmentPage() {
           <div className="flex gap-4">
             <button
               onClick={() => handleAnswer(true)}
-              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                         hover:bg-gray-900 hover:text-white
+              className="flex-1 border-2 border-[#5C0F8B] text-[#5C0F8B] text-lg py-4 rounded-lg
+                         hover:bg-[#5C0F8B] hover:text-white
                          focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
             >
               Yes
             </button>
             <button
               onClick={() => handleAnswer(false)}
-              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                         hover:bg-gray-900 hover:text-white
+              className="flex-1 border-2 border-[#5C0F8B] text-[#5C0F8B] text-lg py-4 rounded-lg
+                         hover:bg-[#5C0F8B] hover:text-white
                          focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
             >
               No
@@ -854,16 +856,16 @@ export default function AssessmentPage() {
           <div className="flex gap-4">
             <button
               onClick={() => handleAnswer(true)}
-              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                         hover:bg-gray-900 hover:text-white
+              className="flex-1 border-2 border-[#5C0F8B] text-[#5C0F8B] text-lg py-4 rounded-lg
+                         hover:bg-[#5C0F8B] hover:text-white
                          focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
             >
               Yes
             </button>
             <button
               onClick={() => handleAnswer(false)}
-              className="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                         hover:bg-gray-900 hover:text-white
+              className="flex-1 border-2 border-[#5C0F8B] text-[#5C0F8B] text-lg py-4 rounded-lg
+                         hover:bg-[#5C0F8B] hover:text-white
                          focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
             >
               No
