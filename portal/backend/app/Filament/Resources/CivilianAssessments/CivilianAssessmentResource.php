@@ -15,7 +15,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
@@ -183,16 +182,6 @@ class CivilianAssessmentResource extends Resource
                 // VictimSafePhoneNumber is deliberately absent - see the class
                 // comment. It is in the detail view only.
 
-                IconColumn::make('SubmissionID')
-                    ->label('Named')
-                    ->boolean()
-                    ->trueIcon(Heroicon::OutlinedUser)
-                    ->falseIcon(Heroicon::OutlinedUserMinus)
-                    ->falseColor('gray')
-                    ->tooltip(fn (PrivateAssessment $record): string => $record->SubmissionID
-                        ? 'Submitted with contact details'
-                        : 'Anonymous submission'),
-
                 TextColumn::make('risk_count')
                     ->label('Yes answers')
                     ->badge()
@@ -204,9 +193,10 @@ class CivilianAssessmentResource extends Resource
                     }),
             ])
             ->defaultSort('DateCreated', 'desc')
-            // Without this the Yes-answers column and the Named icon would
-            // each issue a query per row.
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['assessmentAnswers', 'submitterInfo']))
+            // Without this the Yes-answers column would issue a query per row.
+            // submitterInfo is deliberately not eager-loaded: nothing in the
+            // table reads it, and the detail view loads one record anyway.
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('assessmentAnswers'))
             ->filters([
                 Filter::make('high_risk')
                     ->label('Four or more yes answers')
