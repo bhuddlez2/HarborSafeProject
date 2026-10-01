@@ -14,4 +14,11 @@ class Service extends BaseModel
         'Name',
         'ChangeDate',
     ];
+
+    // Inverse of ServiceFeedback::service(). Used by the panel to decide
+    // whether a service can still be deleted.
+    public function feedback()
+    {
+        return $this->hasMany(ServiceFeedback::class, 'ServiceID');
+    }
 }

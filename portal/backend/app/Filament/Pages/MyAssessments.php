@@ -30,13 +30,20 @@ class MyAssessments extends Page
 
     protected Width | string | null $maxContentWidth = Width::Full;
 
-    // Access matrix: officers see their own, police admins and admins see all.
+    /*
+    Officers and police admins. Not admins: this page is scoped to the
+    signed-in officer's own submissions, so "My Assessments" is meaningless
+    for an admin. The all-submissions view they are granted by section 5 is
+    App\Filament\Resources\AssessmentReview.
+
+    Still a static mockup as of this change - the rows are hardcoded in the
+    Blade view, so nothing here is scoped by submitted_by yet.
+    */
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::LawEnforcement,
             UserRole::PoliceAdmin,
-            UserRole::Admin,
         );
     }
 
