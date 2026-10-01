@@ -1,11 +1,12 @@
 {{--
-    Filament's login in the layout of the former Next.js sign-in page
-    (portal/frontend/app/login/page.js): heading and subheading left-aligned
-    above the form. Card and field styling live in the theme under .hs-login.
+    Filament login styled to match the website and civilian assessment:
+    Montserrat font, #F4F2F7 background, #5C0F8B accents.
 --}}
+
+{{-- HarborSafe Staff Portal heading above the login form. --}}
 <div class="fi-simple-page hs-login">
-    <h1 class="text-3xl font-semibold text-gray-900 mb-2">{{ $this->getHeading() }}</h1>
-    <p class="text-sm text-gray-500 mb-10">{{ $this->getSubheading() }}</p>
+    <p class="text-xs font-bold tracking-widest uppercase mb-4" style="color: #5C0F8B;">HarborSafe Staff Portal</p>
+    <h1 class="text-3xl font-semibold text-gray-900 mb-10">{{ $this->getHeading() }}</h1>
 
     {{ $this->content }}
 
