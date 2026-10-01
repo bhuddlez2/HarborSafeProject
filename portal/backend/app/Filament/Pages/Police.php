@@ -51,14 +51,6 @@ class Police extends Page
         return Filament::auth()->user()?->role === UserRole::LawEnforcement;
     }
 
-    // TODO: replace with a real draft query once drafts are persisted
-    // server-side. Carried over as-is from the Next.js stub, which also
-    // always returned null.
-    public function getOpenDraft(): ?array
-    {
-        return null;
-    }
-
     public function getSessionTimeoutMinutes(): int
     {
         return (int) config('session.lifetime');
