@@ -59,9 +59,9 @@ class NewAssessment extends Page
     private const NAME_PATTERN = "/^[a-zA-Z\s'-]+$/";
 
     // Tailwind classes lifted from the original buttons.
-    private const PRIMARY_BUTTON = 'bg-gray-900 text-white px-8 py-4 rounded-lg text-lg hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-400 transition';
+    private const PRIMARY_BUTTON = 'bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg hover:bg-[#4C0B74] focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition';
 
-    private const SECONDARY_BUTTON = 'border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-lg text-lg hover:bg-gray-900 hover:text-white focus:outline-none focus:ring-4 focus:ring-gray-400 transition';
+    private const SECONDARY_BUTTON = 'border-2 border-[#5C0F8B] text-[#5C0F8B] px-8 py-4 rounded-lg text-lg hover:bg-[#5C0F8B] hover:text-white focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition';
 
     protected string $view = 'filament.pages.new-assessment';
 

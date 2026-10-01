@@ -148,7 +148,7 @@
 
 .hs-lap-wizard .fi-input-wrp:focus-within,
 .hs-login .fi-input-wrp:focus-within {
-    border-color: var(--color-gray-900);
+    border-color: #5c0f8b;
     box-shadow: none;
 }
 
