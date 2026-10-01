@@ -10,8 +10,8 @@ import {
   SubmitButton,
   FormMessage,
   FormSection,
-  CrisisHotlineStrip,
 } from "../components/FormControls";
+import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
 
 const EMPTY_REQUEST = {
   FirstName: "",

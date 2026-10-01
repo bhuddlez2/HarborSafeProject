@@ -10,8 +10,8 @@ import {
   SubmitButton,
   FormMessage,
   FormSection,
-  CrisisHotlineStrip,
 } from "../components/FormControls";
+import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
 
 const RATINGS = [1, 2, 3, 4, 5];
 
