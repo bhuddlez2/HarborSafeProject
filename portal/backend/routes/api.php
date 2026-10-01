@@ -17,6 +17,8 @@ use App\Http\Controllers\CountyController;
 use App\Http\Controllers\ServiceFeedbackController;
 use App\Http\Controllers\ResourceRequestFormController;
 use App\Http\Controllers\ContentFileController;
+use App\Http\Controllers\PublicEventController;
+use App\Http\Controllers\PublicNewsletterController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -59,6 +61,14 @@ Route::prefix('public')->group(function () {
         ->middleware('throttle:10,1');
     Route::post('/resource-requests', [ResourceRequestFormController::class, 'store'])
         ->middleware('throttle:10,1');
+
+    // Website content, managed in the staff panel. Published records only,
+    // read through the restricted ContentPublic connection, and shaped to
+    // match the mock JSON the Events & News page was built against.
+    Route::get('/events', [PublicEventController::class, 'index'])
+        ->name('public.events.index');
+    Route::get('/newsletters', [PublicNewsletterController::class, 'index'])
+        ->name('public.newsletters.index');
 
     // Event images and newsletter PDFs, served out of the database. Only
     // reachable while a published event or newsletter points at the file -
