@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -195,7 +196,10 @@ return [
             ],
         ],
         'exclude' => [
-            //
+            // Governed by the hand-written LawEnforcementAssessmentPolicy
+            // (role + submitted_by). Excluded so shield:generate can never
+            // overwrite that policy with a permission-based one.
+            LawEnforcementAssessmentResource::class,
         ],
     ],
 

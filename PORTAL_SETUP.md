@@ -250,7 +250,7 @@ resources/views/filament/pages/
         heading.blade.php     intro.blade.php      officer.blade.php
         questions.blade.php   review.blade.php     submit-button.blade.php
     content-management.blade.php   placeholder
-    officer-placeholder.blade.php  My Assessments and Search Records
+    officer-placeholder.blade.php  Search Records
     auth/login.blade.php           the sign-in screen
 
 resources/views/filament/partials/   small shared pieces
@@ -269,7 +269,7 @@ Colours, fonts and the sidebar live here. `#5C0F8B` is the brand purple.
 
 ```
 app/Filament/Pages/
-    Police.php  NewAssessment.php  MyAssessments.php  SearchRecords.php
+    Police.php  NewAssessment.php  SearchRecords.php
     ContentManagement.php  Auth/Login.php
 ```
 

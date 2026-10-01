@@ -1,8 +1,9 @@
 # Filament staff panel — design and setup guide
 
 **Status:** design settled. Done (§11): Phases 1–6, 11 (officer screens and wizard in
-Filament) and 12 (Next.js cleanup); Phase 7 partly. Phases 8, 9, 10 and 13 are not yet
-built.
+Filament) and 12 (Next.js cleanup); Phases 7 and 8 partly — the read-only law-enforcement
+assessment resource ("My Assessments") and its policy are built, nothing else in either.
+Phases 9, 10 and 13 are not yet built.
 
 Two things the Content work still needs from outside the codebase: the restricted
 `harborsafe_content_public` MySQL user (§6.5) does not exist in any environment, and
@@ -186,6 +187,26 @@ officer home tells officers their session locks after that long.
 per-resource permissions on top. Be honest that this means two things describe access
 and they can drift; keep `role` authoritative for "which dashboard is this person" and
 spatie authoritative for "may they perform this action on this resource."
+
+**Exception: law-enforcement assessments are not governed by spatie.** Access to
+`LawEnforcementAssessment` is enforced by the hand-written
+`App\Policies\LawEnforcementAssessmentPolicy`, registered with `Gate::policy()` in
+`AppServiceProvider`. It decides on `users.role` (through `User::hasActiveRole()`) plus
+ownership — `submitted_by` must be the signed-in officer — because "own submissions
+only" is a per-record rule a permission string cannot express. Every write method
+returns `false`. The resource's `getEloquentQuery()` applies the same scope, so another
+officer's record is a 404 rather than a 403.
+
+`LawEnforcementAssessmentResource` is therefore listed in `resources.exclude` in
+`config/filament-shield.php`, which keeps it out of both `shield:generate` and the role
+editor. Do not remove it and do not generate a policy for this model: Shield would
+overwrite the file with one that checks `View:LawEnforcementAssessment`-style
+permissions and drops the ownership rule.
+
+**Leave `super_admin.define_via_gate` at `false`.** Set to `true`, Shield registers a
+`Gate::before` that answers `true` for anyone holding the `super_admin` role before any
+policy runs, so that role would bypass this policy entirely — including the `false` on
+update and delete (§5 rule 1).
 
 **New role: `police_admin`.** `App\Enums\UserRole` goes from three cases to four. The
 column is already a string, so this is an enum change, not a migration.
@@ -445,13 +466,21 @@ vars, grants from §6.5.
 seeder creating one user per role for local development.
 *(Partly done: `canAccessPanel()` — `is_active` plus a valid role — and the local-only
 `LocalStaffUserSeeder` exist, with two placeholder pages (`/staff/content`,
-`/staff/police`) gated by `canAccess()`. Shield permissions and the super-admin are
-still to do.)*
+`/staff/police`) gated by `canAccess()`. The seeder also creates a second officer, with
+both officers badged in a "Local Test PD" agency, and `LocalAssessmentSeeder` gives each
+two assessments. The law-enforcement assessment row of the matrix is enforced by
+`LawEnforcementAssessmentPolicy` (§4). Shield permissions for everything else and the
+super-admin are still to do.)*
 *Gate:* each of the four roles sees exactly its matrix row; admin is refused when
 creating an officer; `police_admin` has no edit action on assessments.
 
 **8 — Resources.** Events, newsletters, event categories, form options, submissions,
 assessments, users.
+*(Partly done: the law-enforcement assessment resource only, and read-only —
+`App\Filament\Resources\LawEnforcementAssessments`, at `/staff/police/assessments` and
+`/staff/police/assessments/{DocumentID}`, replacing the My Assessments placeholder. List
+and view on Filament's default components; no create, edit or delete routes or actions.
+Owner-only editing waits for Phase 9. Every other resource is still to do.)*
 *Gate:* CRUD works; assessments expose no edit action except to the owning officer; and an
 upload renamed to an allowed extension is still rejected (§6.6).
 
@@ -466,7 +495,8 @@ page renders real data with no component changes.
 
 **11 — Officer screens and wizard in Filament.** *(Done.)* Carry the officer portal over
 from `portal/frontend` faithfully: a custom Vite theme for the panel; Home (the existing
-`Police` page), My Assessments and Search Records (placeholders — they had no design),
+`Police` page), My Assessments and Search Records (placeholders — they had no design;
+My Assessments has since become a resource, see Phase 8),
 Account (Filament's profile page), all in an "Officer Portal" navigation group; the LAP
 wizard as a `Wizard` page writing both assessment rows in one `Portal` transaction with
 `submitted_by = auth()->id()`; the login page restyled. Lock the assessment API down:
@@ -508,4 +538,5 @@ Still undecided:
   is logged with your name and a timestamp." — carried over verbatim from the old
   portal. Nothing logs views: it is neither designed nor built. The change log (§8)
   records edits only. Either design and build view logging (per record, per user, with a
-  timestamp) before My Assessments ships, or change that copy.
+  timestamp) before My Assessments ships, or change that copy. **Now live and untrue:**
+  My Assessments exists as a read-only resource and records open without being logged.
