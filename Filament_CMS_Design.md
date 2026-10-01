@@ -1,8 +1,13 @@
 # Filament staff panel — design and setup guide
 
-**Status:** design settled. Done (§11): Phases 1–6, 8 (content management), 11 (officer
-screens and wizard in Filament) and 12 (Next.js cleanup); Phase 7 partly. Phases 9, 10
-and 13 are not yet built.
+**Status:** design settled. Done (§11): Phases 1–6, 8 (content management), 10 (public
+content API and website cutover), 11 (officer screens and wizard in Filament) and 12
+(Next.js cleanup); Phases 7 and 13 partly. Phase 9 is not yet built.
+
+**The CMS is end to end as of 2026-10-01.** Staff publish an event in the panel and it
+appears on the public website without a deploy, image included. What remains is user
+management (§11 phase 8), the change-log observer (§8), Shield permissions and policies
+(§11 phase 7).
 
 The content side of the panel is now built and under test: events, newsletters,
 categories, the two public-form submission lists and the three form-option lookups, plus
@@ -451,13 +456,46 @@ and leaves the row, because an unpublish-then-republish would otherwise lose the
 irrecoverably and a stray row costs a few kilobytes. If cleanup is ever wanted it belongs
 in a scheduled command that checks both referencing columns, not in a form hook.
 
-## 7. Public content API
+## 7. Public content API — built
 
-`GET /api/public/events` and `GET /api/public/newsletters` — published records only,
-read through `ContentPublic`, shaped by a Laravel API Resource that reconstructs the
-nested `location` / `image` / `registration` / `file` objects exactly as the mock JSON
-has them. Add them to the existing `Route::prefix('public')` group in
-`portal/backend/routes/api.php` alongside the feedback endpoints.
+`GET /api/public/events` and `GET /api/public/newsletters`. Published records only, read
+through `ContentPublic`, in the existing `Route::prefix('public')` group.
+`App\Http\Resources\PublicEventResource` and `PublicNewsletterResource` reconstruct the
+nested `location` / `image` / `registration` / `file` objects from the flattened columns.
+
+**Those two resources are now the contract.** `mock-events.json` and
+`mock-newsletters.json` were the original specification and were deleted at cutover, so
+the key structure asserted in `tests/Feature/Public/ContentEndpointsTest.php` is the only
+written record of it. Changing a field there means changing
+`website/frontend/src/app/lib/content.js` in the same commit.
+
+Four things in the implementation that are not obvious:
+
+- **The website fetches in the browser, at view time.** It is a static export, so there
+  is no server to fetch on its behalf, and baking content in at build time would mean a
+  rebuild and redeploy every time staff added an event — the thing the panel exists to
+  avoid. The cost is that the page depends on the API being reachable when someone looks
+  at it, which is why `EventsContent.js` has a loading state, an error state carrying the
+  crisis line, and a hard 12-second timeout.
+- **`PublicEventController` joins `event_categories` instead of eager-loading it.**
+  Eloquent resolves a relation on the *related* model's connection, and `EventCategory`
+  declares `Content` — so `->with('category')` would read the category through the
+  full-access connection while the events came through the restricted one, defeating the
+  point and leaving a query the restricted user is never tested against.
+- **Times go out in Eastern with an offset**, e.g. `2026-10-22T18:00:00-04:00`, matching
+  the mock. The columns are UTC. A `Z` string would render identically on the site, but
+  it would stop matching the contract.
+- **A nested object is null or whole, never partial.** The page guards on plain
+  truthiness, and `{name: null}` is truthy — it would render an empty row with a map
+  pin. The `has*` helpers on the models exist for that decision.
+
+CORS needed no change: `config/cors.php` already covers `api/*`, allows localhost:3000 in
+local, and uses `WEBSITE_URL` in production. `supports_credentials` stays `false`, which
+is correct — these are unauthenticated public reads and the site has no credentials.
+
+The website reads `NEXT_PUBLIC_API_URL` (default `http://127.0.0.1:8000`), the same
+pattern `forms.js` already used. It is inlined at build time, so it must be set before
+`npm run build` on the deploy target.
 
 No officer-scoped API is needed. Officers review and edit inside Filament, so policies
 handle it and no new authenticated endpoints are required.
@@ -585,10 +623,17 @@ rendering, authoring and file storage.
 *Gate:* editing an owned assessment writes one row per changed field, attributed to the
 editing user.
 
-**10 — Content API + website cutover.** Public endpoints and API Resource (§7), then
-repoint `content.js` and delete the two mock files.
-*Gate:* the response shape matches `mock-events.json` field for field, and the events
-page renders real data with no component changes.
+**10 — Content API + website cutover.** *(Done.)* Public endpoints and API Resources
+(§7), `content.js` repointed, both mock files deleted.
+*Gate passed:* the response shape matched `mock-events.json` key for key, and the events
+page rendered a real event — title, category badge, Eastern time, registration link and a
+database-stored image — with **no component changes**; only the two loader functions in
+`content.js` were touched, as §6.1 required.
+
+One knock-on for the Playwright suite: `playwright.config.js` boots the website only, so
+specs that expect content now stub the two endpoints via `tests/support/content-api.js`
+rather than depending on a developer having `php artisan serve` running. The response
+shape itself is pinned on the backend instead.
 
 **11 — Officer screens and wizard in Filament.** *(Done.)* Carry the officer portal over
 from `portal/frontend` faithfully: a custom Vite theme for the panel; Home (the existing

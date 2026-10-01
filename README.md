@@ -5,7 +5,7 @@ Three applications in one repository, backing Harbor Safe House & Advocacy Cente
 | Path | What it is | Dev URL |
 |---|---|---|
 | `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · panel at [/staff](http://127.0.0.1:8000/staff) |
-| `website/frontend/` | Next.js 16, static export. The public informational site. | http://localhost:3000 |
+| `website/frontend/` | Next.js 16, static export. The public informational site. Calls the API from the browser for the contact forms and the events page. | http://localhost:3000 |
 | `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment only. | http://localhost:3001 |
 
 If you are here to work on the staff portal, the code is in `portal/backend`
@@ -231,12 +231,27 @@ npm install
 npm run dev              # http://localhost:3000
 ```
 
-The contact forms need the backend running (step 2). They read their option
-lists from `GET /api/public/{services,resources,counties}` and submit to
-`POST /api/public/{resource-requests,service-feedback}`.
+**Two parts of this site need the backend running (step 2).** Both fetch from
+the visitor's browser — it is a static export, so there is no server to fetch
+on its behalf:
+
+| Page | Reads | Writes |
+|---|---|---|
+| Contact (the two forms) | `GET /api/public/{services,resources,counties}` | `POST /api/public/{resource-requests,service-feedback}` |
+| Events & News | `GET /api/public/{events,newsletters}` and `/api/public/content-files/{id}` for images | — |
+
+Without the backend up, the contact forms cannot load their dropdowns and the
+events page shows its error state with the crisis line after a 12-second
+timeout. That is the intended behaviour, not a bug — but it does mean
+`npm run dev` alone is not enough to see those two pages working.
+
+Events and newsletters come from the staff panel, so the page is empty until
+someone publishes something there. Empty is a normal state and the page says so.
 
 The API base URL defaults to `http://127.0.0.1:8000`, so nothing to configure
-locally. To point at a different backend, create `website/frontend/.env.local`:
+locally. It is inlined at build time, so on a deploy target it must be set
+**before** `npm run build`. To point at a different backend, create
+`website/frontend/.env.local`:
 
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000

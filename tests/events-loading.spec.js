@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { stubContentApi } from './support/content-api';
 
 /*
 The Events & News page must never sit on "Loading…" indefinitely.
@@ -60,6 +61,9 @@ test('a simulated failure shows the crisis line and offers a retry', async ({ pa
 });
 
 test('retrying from the error state reloads the content', async ({ page }) => {
+  // The retry has to succeed for this to prove anything, so the API is stubbed
+  // with real content and the failure comes from ?preview=error instead.
+  await stubContentApi(page);
   await page.goto('/events?preview=error');
 
   const retry = page.getByRole('button', { name: 'Try again' });
@@ -75,6 +79,25 @@ test('retrying from the error state reloads the content', async ({ page }) => {
   await retry.click();
 
   await expect(page.getByRole('heading', { name: 'Upcoming Events' })).toBeVisible();
+  await expect(page.getByText('Moonlight Walk')).toBeVisible();
   await expect(page.getByText('Loading…')).toHaveCount(0);
   await expect(page.getByText(ERROR_HEADING)).toHaveCount(0);
+});
+
+test('a request that hangs at the network level also times out', async ({ page }) => {
+  /*
+  Complements the ?preview=hang case above by hanging the real request rather
+  than the loader: the route handler never responds, which is what a stalled
+  connection or an unreachable API looks like. Before the timeout existed this
+  was the exact shape of the reported bug.
+  */
+  test.setTimeout(60000);
+
+  await page.route('**/api/public/events', () => { /* never fulfilled */ });
+  await page.route('**/api/public/newsletters', () => { /* never fulfilled */ });
+
+  await page.goto('/events');
+
+  await expect(page.getByText(ERROR_HEADING)).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText('Loading…')).toHaveCount(0);
 });
