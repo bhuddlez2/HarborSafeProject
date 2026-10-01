@@ -16,7 +16,7 @@ use UnitEnum;
 // styling until it's designed.
 class MyAssessments extends Page
 {
-    protected string $view = 'filament.pages.officer-placeholder';
+    protected string $view = 'filament.pages.my-assessments';
 
     protected static ?string $slug = 'police/assessments';
 
@@ -43,5 +43,10 @@ class MyAssessments extends Page
     public function getHeading(): string | Htmlable
     {
         return '';
+    }
+
+    public function getSessionTimeoutMinutes(): int
+    {
+        return (int) config('session.lifetime');
     }
 }
