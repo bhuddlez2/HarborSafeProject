@@ -16,6 +16,7 @@ use App\Filament\Pages\NewAssessment;
 use App\Filament\Pages\Police;
 use App\Filament\Pages\SearchRecords;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
+use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\StaffLanding;
 
 /*
@@ -50,6 +51,7 @@ function allStaffComponents(): array
         'form-options.resource-types' => ResourceTypeResource::class,
         'form-options.counties' => CountyResource::class,
         'assessment-review' => AssessmentReviewResource::class,
+        'civilian-assessments' => CivilianAssessmentResource::class,
         'police.home' => Police::class,
         'police.new-assessment' => NewAssessment::class,
         'police.my-assessments' => MyAssessments::class,
@@ -76,6 +78,10 @@ dataset('role matrix', [
             'submissions.cluster', 'submissions.service-feedback', 'submissions.resource-requests',
             'form-options.services', 'form-options.resource-types', 'form-options.counties',
             'assessment-review',
+            // Section 5 gives admin "Civilian assessments: view" and gives it
+            // to nobody else - not even police_admin, whose row covers
+            // law-enforcement submissions only.
+            'civilian-assessments',
         ],
     ],
     // Views all law-enforcement submissions, provisions officers, edits

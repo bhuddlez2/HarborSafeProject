@@ -610,6 +610,17 @@ creating an officer; `police_admin` has no edit action on assessments.
   `LookupResource` base.
 - **Assessment review** — all law-enforcement submissions, view-only, for admin and
   police_admin (§5).
+- **Civilian assessments** — submissions from the public civilian flow, view-only, for
+  admin alone (§5).
+
+**The civilian page was missed on the first pass, and the matrix caught nothing.** This
+phase shipped with `Assessment review` only, so a civilian submission landed in
+`_private_assessment` and was invisible to every role in the panel — reported as
+"submitted assessments aren't showing on the admin page". The §5 matrix had granted admin
+`Civilian assessments: view` all along. The lesson is narrow and worth keeping: the
+matrix-enforcement test in `tests/Feature/Staff/PanelAccessTest.php` can only check the
+components that exist, so it proves no role sees too much and says nothing about a row
+that was never built. A matrix line with no resource behind it fails silently.
 
 **Still to build: user management.** Creating and deactivating accounts is not in the
 panel yet, and it is the phase's remaining piece — note that it carries §5 rule 2, which
@@ -718,7 +729,8 @@ Content management                              roles
     Counties       /staff/form-options/counties
 
 Assessments
-  Assessment review  /staff/assessment-review   admin, police_admin
+  Assessment review      /staff/assessment-review     admin, police_admin
+  Civilian assessments   /staff/civilian-assessments  admin only
 
 Officer Portal                                  law_enforcement, police_admin
   Home            /staff/police
