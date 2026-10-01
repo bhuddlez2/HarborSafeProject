@@ -26,7 +26,11 @@ export default function Navbar() {
   used to determine which nav link should appear active (white pill style),
   re-runs automatically whenever the user navigates to a new page
   */
-  const pathname = usePathname();
+  /*
+  next.config.mjs sets trailingSlash: true, so pathname comes back as "/about/" while
+  NAV_LINKS use "/about"; strip the trailing slash (except on "/") so they compare equal
+  */
+  const pathname = usePathname().replace(/(.)\/$/, "$1");
 
   /*
   menuOpen tracks whether the mobile dropdown is visible,
@@ -52,13 +56,13 @@ export default function Navbar() {
     fixed at the top so it stays visible while scrolling,
     z-50 ensures it sits above all page content
     */
-    <div className="fixed top-0 left-0 right-0 z-50">
+    <div className="on-dark fixed top-0 left-0 right-0 z-50">
       <nav
-        className="bg-brand h-22.5 flex items-center justify-between px-4 md:px-12 relative"
+        className="bg-brand h-22.5 flex items-center justify-between px-4 md:px-12 lg:px-6 xl:px-10 relative"
         aria-label="Main navigation"
       >
-        {/* Logo image on the left — clicking routes to home */}
-        <Link replace href="/" className="flex items-center gap-4">
+        {/* Logo image on the left; clicking routes to home, shrink-0 so the nav links can't squeeze it */}
+        <Link replace href="/" className="flex items-center gap-4 shrink-0">
           {/*
           width and height match the SVG's actual intrinsic dimensions so Next.js
           can calculate the correct aspect ratio,
@@ -72,11 +76,15 @@ export default function Navbar() {
             height={514}
             className="h-20 w-auto"
           />
-          {/* Text appears on desktop only */}
-          <div className="hidden lg:flex flex-col leading-tight">
+          {/*
+          Text appears on desktop only, whitespace-nowrap so each line stays on one line,
+          the full name and program line only show from xl (1280px) up; between lg and xl the
+          nav links leave too little room, so only "HSHAC" shows there
+          */}
+          <div className="hidden lg:flex flex-col leading-tight whitespace-nowrap">
             <span className="text-white text-xl font-bold">HSHAC</span>
-            <span className="text-white/90 text-sm">Harbor Safe House &amp; Advocacy Center</span>
-            <span className="text-white/90 text-xs">A Program of the Family Resource Agency</span>
+            <span className="hidden xl:block text-white/90 text-sm">Harbor Safe House &amp; Advocacy Center</span>
+            <span className="hidden xl:block text-white/90 text-xs">A Program of the Family Resource Agency</span>
           </div>
         </Link>
 
@@ -86,17 +94,18 @@ export default function Navbar() {
         </span>
 
         {/*
-        Desktop nav links — hidden on small screens, visible from md breakpoint up,
-        gap-10 for spacing between links, mr-8 for a small right margin
+        Desktop nav links; hidden on small screens, visible from lg breakpoint up,
+        the pills' own px-4 provides most of the spacing, so the gap between them is small
+        (gap-1, gap-2 from xl), which leaves room for the full org name beside the logo
         */}
-        <div className="hidden lg:flex items-center gap-8 mr-8">
+        <div className="hidden lg:flex items-center gap-1 xl:gap-2">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} replace href={link.href} className="text-white font-bold whitespace-nowrap">
+            <Link key={link.href} replace href={link.href} className="text-white font-bold whitespace-nowrap rounded-full">
               <span className={navClass(link.href)}>{link.label}</span>
             </Link>
           ))}
           {/* Divider between navigation links and language switcher */}
-          <div className="h-8 w-px bg-white"></div>
+          <div className="h-8 w-px bg-white mx-2 xl:mx-3"></div>
           {/* Language switcher */}
           <a className="text-white text-sm hover:underline transition-all">
             En Español
@@ -143,7 +152,7 @@ export default function Navbar() {
               key={link.href}
               replace
               href={link.href}
-              className="text-white font-bold"
+              className="text-white font-bold rounded-full"
               onClick={() => setMenuOpen(false)}
             >
               <span className={navClass(link.href)}>{link.label}</span>

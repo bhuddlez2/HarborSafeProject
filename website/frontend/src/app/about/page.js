@@ -1,4 +1,12 @@
 import Image from "next/image";
+import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+
+// Browser tab title and search description for this page (overrides the default in layout.js)
+export const metadata = {
+  title: "Who We Are | Harbor Safe House & Advocacy Center",
+  description:
+    "Learn about Harbor Safe House & Advocacy Center, a program of Family Resource Agency serving survivors in Bradley and Polk counties since 1987, and the partners we work with.",
+};
 
 export default function About() {
   return (
@@ -19,15 +27,7 @@ export default function About() {
         </p>
       </section>
 
-      <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
-        <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
-        <div className="flex items-center gap-5">
-          <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
-          <span className="text-purple-300">|</span>
-          <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
-        </div>
-        <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
-      </div>
+      <CrisisHotlineStrip />
 
       {/* MISSION  */}
       <section className="py-20 px-4 bg-white">

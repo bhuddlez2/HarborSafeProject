@@ -1,4 +1,13 @@
 import Image from "next/image";
+import Link from "next/link";
+import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+
+// Browser tab title and search description for this page (overrides the default in layout.js)
+export const metadata = {
+  title: "Give Support | Harbor Safe House & Advocacy Center",
+  description:
+    "Ways to support survivors at Harbor Safe House & Advocacy Center in Cleveland, TN: financial gifts, our Amazon wishlist, and donated items.",
+};
 
 const WISHLIST_ITEMS = [
   "Toiletries (soap, shampoo, toothbrushes, toothpaste, feminine hygiene products)",
@@ -25,19 +34,11 @@ export default function GiveSupport() {
       </section>
 
       {/* Hotline strip */}
-      <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
-        <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
-        <div className="flex items-center gap-5">
-          <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
-          <span className="text-purple-300">|</span>
-          <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
-        </div>
-        <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
-      </div>
+      <CrisisHotlineStrip />
 
-      {/* Intro */}
+      {/* Intro, left-aligned on phones where a long centered paragraph is hard to read, centered from sm up */}
       <section className="py-20 px-4 bg-white">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-left sm:text-center">
           <p className="text-gray-700 leading-relaxed text-lg">
             We are so thankful you want to learn more about HSHAC and the ways you and your family can get involved.
             Running a safe house for survivors of domestic violence and sexual assault requires a wide range of items
@@ -45,7 +46,7 @@ export default function GiveSupport() {
             strong message to every individual that no one should face domestic abuse or sexual assault alone and
             that they are loved. From the colors we use to the furniture we choose, every aspect conveys that they
             are safe and matter. Due to space constraints at our location, we can only accept items on the list
-            below, monetary gifts or gift cards. Please contact us to ask about other donations. Thank you for
+            below, monetary gifts or gift cards. Please <Link replace href="/contact" className="text-brand font-semibold hover:underline">contact us</Link> to ask about other donations. Thank you for
             thinking of us.
           </p>
         </div>
