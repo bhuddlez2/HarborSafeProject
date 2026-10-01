@@ -10,12 +10,27 @@ export const TIME_ZONE = "America/New_York";
 // ── Loading the data ──────────────────────────────────────────────────────────
 
 /*
+A promise that never settles, for ?preview=hang.
+
+The page's real failure mode is not a load that rejects - that was always
+handled - but one that never comes back at all: a chunk request that hangs, a
+blocked script, a stalled connection. The symptom is the page sitting on
+"Loading" forever, and since nothing but that word is in the prerendered HTML,
+that is the entire page.
+
+This exists so EventsContent's load timeout is actually testable, in the same
+spirit as the "error" and "empty" hooks beside it.
+*/
+const NEVER = new Promise(() => {});
+
+/*
 getEvents returns every published event, sorted soonest-first, each with a
 computed isPast flag.
 */
 export async function getEvents({ simulate } = {}) {
   if (simulate === "error") throw new Error("Simulated content failure");
   if (simulate === "empty") return [];
+  if (simulate === "hang") return NEVER;
 
   const { default: events } = await import("./mock-events.json");
 
@@ -33,6 +48,7 @@ export async function getEvents({ simulate } = {}) {
 export async function getNewsletters({ simulate } = {}) {
   if (simulate === "error") throw new Error("Simulated content failure");
   if (simulate === "empty") return [];
+  if (simulate === "hang") return NEVER;
 
   const { default: newsletters } = await import("./mock-newsletters.json");
 

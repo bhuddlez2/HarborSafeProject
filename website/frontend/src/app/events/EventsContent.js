@@ -444,7 +444,7 @@ function LoadingState() {
   );
 }
 
-function ErrorState() {
+function ErrorState({ onRetry }) {
   return (
     <div className="text-center max-w-lg mx-auto py-12">
       <h3 className="text-xl font-semibold text-gray-900 mb-3">We couldn&apos;t load this right now</h3>
@@ -452,24 +452,59 @@ function ErrorState() {
         Please try again in a few minutes. If you need help now, our crisis line is answered 24 hours a
         day at <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>.
       </p>
+      {onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-6 rounded-lg border-2 border-brand px-6 py-2.5 font-semibold text-brand transition hover:bg-brand hover:text-white focus:outline-none focus:ring-4 focus:ring-brand/40"
+        >
+          Try again
+        </button>
+      ) : null}
     </div>
   );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+/*
+How long to wait for content before giving up and showing ErrorState.
+
+This exists because every section of this page is client-rendered: the
+prerendered HTML carries nothing but "Loading…", so until the effect below
+settles, that single word IS the page. A load that rejects was already handled,
+but a load that simply never settles - a chunk request that hangs, a blocked
+script, a connection that stalls mid-fetch - left the page showing "Loading…"
+with no way out of it.
+
+A visitor stuck on that has no crisis line in front of them, which for this
+organisation is the part that matters. Timing out into ErrorState puts the
+24-hour number on screen instead.
+*/
+const LOAD_TIMEOUT_MS = 12000;
+
 export default function EventsContent() {
   const [events, setEvents] = useState([]);
   const [newsletters, setNewsletters] = useState([]);
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [selectedEvent, setSelectedEvent] = useState(null);
+  // Bumped by the Try again button to re-run the effect below.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const simulate = new URLSearchParams(window.location.search).get("preview");
 
     let cancelled = false;
+    let timer;
 
-    Promise.all([getEvents({ simulate }), getNewsletters({ simulate })])
+    const expiry = new Promise((_resolve, reject) => {
+      timer = setTimeout(() => reject(new Error("Timed out loading content")), LOAD_TIMEOUT_MS);
+    });
+
+    Promise.race([
+      Promise.all([getEvents({ simulate }), getNewsletters({ simulate })]),
+      expiry,
+    ])
       .then(([loadedEvents, loadedNewsletters]) => {
         if (cancelled) return;
         setEvents(loadedEvents);
@@ -477,12 +512,15 @@ export default function EventsContent() {
         setStatus("ready");
       })
       .catch(() => {
+        // Covers a genuine failure and the timeout alike - the visitor needs
+        // the same thing either way.
         if (!cancelled) setStatus("error");
-      });
+      })
+      .finally(() => clearTimeout(timer));
 
     // guard against a state update after unmount if the visitor navigates away mid-load
-    return () => { cancelled = true; };
-  }, []);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [attempt]);
 
   const upcoming = events.filter((event) => !event.isPast);
 
@@ -490,7 +528,20 @@ export default function EventsContent() {
     if (status === "loading" || status === "error") {
       return (
         <section className="py-16 px-4 bg-white">
-          {status === "loading" ? <LoadingState /> : <ErrorState />}
+          {status === "loading" ? (
+            <LoadingState />
+          ) : (
+            <ErrorState
+              onRetry={() => {
+                // Reset here rather than in the effect body: a setState inside
+                // an effect triggers cascading renders (and the lint rule that
+                // flags them). On first mount the state is already "loading",
+                // so this is only ever needed for a retry.
+                setStatus("loading");
+                setAttempt((n) => n + 1);
+              }}
+            />
+          )}
         </section>
       );
     }
