@@ -107,14 +107,13 @@ php artisan key:generate
 Then edit `.env` and fill in the database section. **Three** physical databases
 are needed — create them if they don't exist:
 
-The names are entirely up to you — all that matters is that they match the
-`DB_DATABASE_*` values in your `.env`. These are what `.env.example` ships
-with, so this works unedited:
+These are the names `.env.example` ships with and the ones every other
+document here uses, so this works unedited:
 
 ```sql
-CREATE DATABASE portal;     -- the Portal connection
-CREATE DATABASE feedback;   -- the Feedback + FeedbackPublic connections
-CREATE DATABASE content;    -- the Content + ContentPublic connections
+CREATE DATABASE assessment_app_db;   -- the Portal connection
+CREATE DATABASE feedback_app_db;     -- the Feedback + FeedbackPublic connections
+CREATE DATABASE content_app_db;      -- the Content + ContentPublic connections
 ```
 
 Or skip the SQL entirely: `php artisan db:create` reads those three
@@ -123,8 +122,9 @@ MariaDB authenticates root over a unix socket and the passwordless root in
 `.env` fails, use [docs/local-db-setup.sql](docs/local-db-setup.sql) instead —
 it creates the databases and a dedicated dev user.
 
-Don't be thrown if a teammate's databases are named differently (`portal` vs
-`assessment_app_db`, say). Nothing reads the name except `.env`.
+Nothing in the application reads a database name — only `.env` does — so you
+*can* call them something else. Don't: every doc and GRANT block here assumes
+these names, and a teammate reading your `.env` should recognise it.
 
 The `.env` keys that matter:
 

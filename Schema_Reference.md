@@ -297,14 +297,14 @@ As with `Feedback`/`FeedbackPublic`, `config/database.php` defines two connectio
 -- rather than allowing any host.
 CREATE USER 'harborsafe_content_public'@'%' IDENTIFIED BY 'CHANGE_ME';
 
-GRANT SELECT ON content_db.events           TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.newsletters      TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.event_categories TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.events           TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.newsletters      TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.event_categories TO 'harborsafe_content_public'@'%';
 
 FLUSH PRIVILEGES;
 ```
 
-Note what is deliberately *not* granted: no `INSERT`, `UPDATE` or `DELETE` on anything, and no access of any kind to `Portal` or the feedback database. Once created, put the credentials in `DB_USERNAME_CONTENT_PUBLIC`/`DB_PASSWORD_CONTENT_PUBLIC`. Substitute the real database name for `content_db` — it comes from `DB_DATABASE_CONTENT`.
+Note what is deliberately *not* granted: no `INSERT`, `UPDATE` or `DELETE` on anything, and no access of any kind to `Portal` or the feedback database. Once created, put the credentials in `DB_USERNAME_CONTENT_PUBLIC`/`DB_PASSWORD_CONTENT_PUBLIC`. The database name comes from `DB_DATABASE_CONTENT`; `content_app_db` is what `.env.example` and the README use.
 
 Like the `FeedbackPublic` grants, these have to be run by hand against each environment — migrations can't grant MySQL privileges.
 

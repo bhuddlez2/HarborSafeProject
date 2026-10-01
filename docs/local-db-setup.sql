@@ -19,16 +19,16 @@
 -- Database names match .env.example; charset/collation match
 -- config/database.php. Don't commit a copy with a real password in it.
 
-CREATE DATABASE IF NOT EXISTS portal   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS feedback CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS content  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS assessment_app_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS feedback_app_db   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS content_app_db    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Both hosts: PHP connects over TCP to 127.0.0.1, the mariadb CLI over the socket.
 CREATE USER IF NOT EXISTS 'harborsafe_dev'@'localhost' IDENTIFIED BY 'CHANGE_ME';
 CREATE USER IF NOT EXISTS 'harborsafe_dev'@'127.0.0.1' IDENTIFIED BY 'CHANGE_ME';
 
-GRANT ALL PRIVILEGES ON portal.*   TO 'harborsafe_dev'@'localhost', 'harborsafe_dev'@'127.0.0.1';
-GRANT ALL PRIVILEGES ON feedback.* TO 'harborsafe_dev'@'localhost', 'harborsafe_dev'@'127.0.0.1';
-GRANT ALL PRIVILEGES ON content.*  TO 'harborsafe_dev'@'localhost', 'harborsafe_dev'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON assessment_app_db.* TO 'harborsafe_dev'@'localhost', 'harborsafe_dev'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON feedback_app_db.*   TO 'harborsafe_dev'@'localhost', 'harborsafe_dev'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON content_app_db.*    TO 'harborsafe_dev'@'localhost', 'harborsafe_dev'@'127.0.0.1';
 
 FLUSH PRIVILEGES;

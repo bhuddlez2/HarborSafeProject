@@ -301,9 +301,9 @@ tables, nothing else, no write access of any kind:
 -- to the actual application server in production rather than '%'.
 CREATE USER 'harborsafe_content_public'@'%' IDENTIFIED BY 'CHANGE_ME';
 
-GRANT SELECT ON content_db.events            TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.newsletters       TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.event_categories  TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.events            TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.newsletters       TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.event_categories  TO 'harborsafe_content_public'@'%';
 
 FLUSH PRIVILEGES;
 ```
