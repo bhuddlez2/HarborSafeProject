@@ -356,6 +356,7 @@ If classes are mysteriously not applying, check this first.
 | Panel loads but looks unstyled | You skipped `npm run build` |
 | Your new Tailwind classes do nothing | Section 8, the `@source` trap |
 | An upload fails with an unhelpful error | `upload_max_filesize` / `post_max_size` too low (step 4). PHP discards the file before Laravel runs, so you never see the panel's own "too large" message |
+| `npm run dev` on a frontend dies on `globals.css` with "the module factory is not available" | Nothing to do with your browser cache, despite what it says. Stop the dev server, delete that frontend's `.next` directory, and start again. It happens when an old postcss from the repo root's `node_modules` shadows the frontend's own — both `next.config.mjs` files pin `turbopack.root` to prevent it, so if you hit this, check that pin is still there |
 | The upload box says "up to 2 MB" when it should say 4 | Same cause — the panel prints whatever php.ini will actually accept rather than over-promising |
 
 Two commands worth knowing when something is stale:
