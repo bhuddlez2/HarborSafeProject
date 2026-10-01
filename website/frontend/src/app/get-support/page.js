@@ -1,8 +1,18 @@
 import Link from "next/link";
+import HashHighlight from "./HashHighlight";
+import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+
+// Browser tab title and search description for this page (overrides the default in layout.js)
+export const metadata = {
+  title: "Get Support | Harbor Safe House & Advocacy Center",
+  description:
+    "Free, confidential services for survivors of domestic violence and sexual assault in Cleveland, TN: emergency shelter, crisis counseling, support groups, court advocacy, and community education.",
+};
 
 export default function GetSupport() {
   return (
     <main>
+      <HashHighlight />
 
       {/* Hero */}
       <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
@@ -16,17 +26,11 @@ export default function GetSupport() {
       </section>
 
       {/* Hotline strip */}
-      <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
-        <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
-        <div className="flex items-center gap-5">
-          <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
-          <span className="text-purple-300">|</span>
-          <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
-        </div>
-        <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
-      </div>
+      <CrisisHotlineStrip />
 
-      {/* Services */}
+      {/*
+      Services
+      */}
       <section className="py-32 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
 
@@ -36,10 +40,37 @@ export default function GetSupport() {
             No matter where you are in your journey, our advocates are here to walk alongside you.
           </p>
 
-          <div className="grid md:grid-cols-4 gap-16">
+          {/*
+          Service cards,
+          each card's width subtracts its share of the gap-x-4 (1rem) gutters,
+          cards carry their own p-6 padding so the service-card :target highlight
+          (globals.css) has room around the content when a home page link lands on one
+          */}
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-8">
 
-            {/* Crisis Counseling */}
-            <div className="flex flex-col items-center text-center">
+            {/*
+            Emergency Shelter,
+            id="shelter" is the target of the home page's Emergency Shelter "Learn more" link,
+            scroll-mt-28 clears the fixed navbar with a little breathing room
+            */}
+            <div id="shelter" data-highlight="shelter" className="service-card scroll-mt-28 rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
+                  {/* home icon, feathericons.com */}
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9,22 9,12 15,12 15,22" />
+                </svg>
+              </div>
+              <p className="text-lg font-semibold text-brand mb-4">Emergency Shelter</p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Safe, confidential housing for individuals and families escaping dangerous situations. Our advocates can help you plan a safe move and connect you with the support you need while you stay with us.
+              </p>
+            </div>
+
+            {/*
+            Crisis Counseling, id="counseling" is the scroll target of the home page's Counseling & Advocacy "Learn more" link,
+            data-highlight="counseling" (shared with Court Advocacy) marks every card that link highlights
+            */}
+            <div id="counseling" data-highlight="counseling" className="service-card scroll-mt-28 rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
                   {/* message-circle icon, feathericons.com */}
@@ -47,14 +78,13 @@ export default function GetSupport() {
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Crisis Counseling</p>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Trauma-informed counseling through our hotline, in-person sessions, and support groups. We help with safety planning, goal-setting, court navigation, and building a future free from abuse.
               </p>
-              <p className="text-xs text-gray-500 mt-auto">To schedule, call <a href="tel:423-476-3886" className="text-brand hover:underline">(423) 476-3886</a> or submit a contact form.</p>
             </div>
 
             {/* Support Groups */}
-            <div className="flex flex-col items-center text-center">
+            <div className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
                   {/* users icon, feathericons.com */}
@@ -62,14 +92,13 @@ export default function GetSupport() {
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Support Groups</p>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Weekly safe, confidential sessions for women and children to learn about domestic violence, build self-esteem, set goals, and create safety plans. Free childcare available with advance notice.
               </p>
-              <p className="text-xs text-gray-500 mt-auto">For details, submit an online contact form.</p>
             </div>
 
-            {/* Court Advocacy */}
-            <div className="flex flex-col items-center text-center">
+            {/* Court Advocacy, highlighted along with Crisis Counseling by the home page's Counseling & Advocacy link */}
+            <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
                   {/* briefcase icon, feathericons.com */}
@@ -77,14 +106,14 @@ export default function GetSupport() {
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Court Advocacy</p>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Help with filing for protection orders, preparing for court appearances, and connecting with legal referrals. We walk with you through the process every step of the way.
+                Please note: we do not provide legal advice or representation.
               </p>
-              <p className="text-xs text-gray-500 mt-auto">For more info, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a> or <a href="sms:423-889-1479" className="text-brand hover:underline">text</a> <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a>. Note: we do not provide legal advice or representation.</p>
             </div>
 
             {/* Community Education */}
-            <div className="flex flex-col items-center text-center">
+            <div className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
                   {/* book-open icon, feathericons.com */}
@@ -92,13 +121,29 @@ export default function GetSupport() {
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Community Education</p>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Trauma-informed presentations for schools, clubs, churches, businesses, and organizations to help communities recognize, respond to, and prevent abuse.
               </p>
-              <p className="text-xs text-gray-500 mt-auto">To schedule, <a href="tel:423-889-1479" className="text-brand hover:underline">call</a> or <a href="sms:423-889-1479" className="text-brand hover:underline">text</a> <a href="tel:423-889-1479" className="text-brand hover:underline">(423) 889-1479</a> or submit a contact form.</p>
             </div>
 
           </div>
+
+          {/*
+          One contact line for every service above, replacing per-card footers that mostly
+          repeated the same thing; court advocacy and community education keep their office number
+          */}
+          <p className="mt-16 text-center text-gray-600 leading-relaxed max-w-2xl mx-auto">
+            To ask about any of these services, call{" "}
+            <a href="tel:423-476-3886" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 476-3886</a>{" "}
+            or text{" "}
+            <a href="sms:423-715-9614" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 715-9614</a>{" "}
+            any time, or{" "}
+            <Link replace href="/contact" className="font-semibold text-brand hover:underline">submit a contact form</Link>.
+            For court advocacy or community education, you can also{" "}
+            <a href="tel:423-889-1479" className="font-semibold text-brand hover:underline">call</a> or{" "}
+            <a href="sms:423-889-1479" className="font-semibold text-brand hover:underline">text</a> our office at{" "}
+            <a href="tel:423-889-1479" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 889-1479</a>.
+          </p>
         </div>
       </section>
 

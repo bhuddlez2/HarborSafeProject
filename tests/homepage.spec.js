@@ -15,6 +15,17 @@ async function dismissModalIfPresent(page) {
     }
 }
 
+// ─── SAFETY NOTICE SETUP ─────────────────────────────────────────────────────
+// The "Browse safely & privately" notice appears on whichever page a visitor lands on
+// first, once per tab session (see website/frontend/src/app/components/SafetyModal.js).
+// Every test starts with it already dismissed for its tab so it doesn't block clicks;
+// the Safety Notice tests at the end open fresh tabs without this to test it directly.
+const SAFETY_NOTICE_KEY = 'hshac-safety-notice-dismissed';
+
+test.beforeEach(async ({ page }) => {
+    await page.addInitScript((key) => window.sessionStorage.setItem(key, '1'), SAFETY_NOTICE_KEY);
+});
+
 // ─── HOMEPAGE ────────────────────────────────────────────────────────────────
 test.describe('Homepage', () => {
 
@@ -260,7 +271,7 @@ test.describe('Get Support Page', () => {
 
     test('crisis hotline text link is visible', async ({ page }) => {
         await page.goto('/get-support/');
-        await expect(page.getByRole('link', { name: /text.*715.*9614/i })).toBeVisible();
+        await expect(page.getByRole('link', { name: /text.*715.*9614/i }).first()).toBeVisible();
     });
 
     test('Crisis Counseling service is visible', async ({ page }) => {
@@ -275,12 +286,12 @@ test.describe('Get Support Page', () => {
 
     test('Court Advocacy service is visible', async ({ page }) => {
         await page.goto('/get-support/');
-        await expect(page.getByText(/court advocacy/i)).toBeVisible();
+        await expect(page.getByText('Court Advocacy', { exact: true })).toBeVisible();
     });
 
     test('Community Education service is visible', async ({ page }) => {
         await page.goto('/get-support/');
-        await expect(page.getByText(/community education/i)).toBeVisible();
+        await expect(page.getByText('Community Education', { exact: true })).toBeVisible();
     });
 
     test('Contact Us CTA button is visible', async ({ page }) => {
@@ -419,6 +430,48 @@ test.describe('404 Page', () => {
     test('shows 404 for unknown routes', async ({ page }) => {
         await page.goto('/this-page-does-not-exist/');
         await expect(page.getByText(/404|not found/i)).toBeVisible();
+    });
+
+});
+
+// ─── SAFETY NOTICE ───────────────────────────────────────────────────────────
+// These use context.newPage() for a fresh tab that skips the beforeEach dismissal above
+// (sessionStorage is per tab), so the notice behaves as it would for a new visitor.
+test.describe('Safety Notice', () => {
+
+    const notice = (page) => page.getByRole('dialog', { name: /browse safely/i });
+
+    test('appears when landing on a page other than home', async ({ context }) => {
+        const tab = await context.newPage();
+        await tab.goto('/resources/');
+        await expect(notice(tab)).toBeVisible();
+    });
+
+    test('does not reappear after dismissal when navigating to home', async ({ context }) => {
+        const tab = await context.newPage();
+        await tab.goto('/about/');
+        await tab.getByRole('button', { name: /i understand/i }).click();
+        await expect(notice(tab)).toBeHidden();
+        await tab.getByRole('link', { name: /^home$/i }).click();
+        await expect(tab).toHaveURL(/\/$/);
+        await expect(tab.getByText(/you are not alone/i).first()).toBeVisible();
+        await expect(notice(tab)).toBeHidden();
+    });
+
+    test('appears again in a new tab', async ({ context }) => {
+        const first = await context.newPage();
+        await first.goto('/');
+        await first.getByRole('button', { name: /i understand/i }).click();
+        const second = await context.newPage();
+        await second.goto('/get-support/');
+        await expect(notice(second)).toBeVisible();
+    });
+
+    test('leaves nothing in localStorage', async ({ context }) => {
+        const tab = await context.newPage();
+        await tab.goto('/');
+        await tab.getByRole('button', { name: /i understand/i }).click();
+        expect(await tab.evaluate(() => window.localStorage.length)).toBe(0);
     });
 
 });

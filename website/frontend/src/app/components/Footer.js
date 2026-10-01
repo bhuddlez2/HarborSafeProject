@@ -13,9 +13,11 @@ export default function Footer() {
     bg-brand for brand purple background,
     text-white for all text inside,
     py-12 px-4 for vertical padding and horizontal gutters,
+    pb-32 below lg leaves room under the logo for the fixed Safe Exit button (bottom-right),
+    which would otherwise sit on top of the footer's last content on narrower screens,
     aria-label describes the footer region to screen readers
     */
-    <footer className="bg-brand text-white py-12 px-4" aria-label="Site footer with contact information and social media links">
+    <footer className="on-dark bg-brand text-white pt-12 pb-32 lg:pb-12 px-4" aria-label="Site footer with contact information and social media links">
 
       {/*
       Two-column layout: hotline info on the left, social links on the right,
@@ -41,7 +43,15 @@ export default function Footer() {
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12 19.79 19.79 0 0 1 1.06 3.38 2 2 0 0 1 3.04 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
-              <span>(423) 476-3886</span>
+              <span>Call (423) 476-3886</span>
+            </a>
+
+            {/* Text link, same layout as the phone link, message-square icon from feathericons.com */}
+            <a href="sms:423-715-9614" className="flex items-center gap-3 hover:text-purple-200 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>Text (423) 715-9614</span>
             </a>
 
             <Link href="/contact" className="block hover:text-purple-200 transition-colors underline">

@@ -1,6 +1,7 @@
 import { Montserrat, Nunito } from "next/font/google";
 import Navbar from "./components/Navbar";
 import ExitButton from "./components/ExitButton";
+import SafetyModal from "./components/SafetyModal";
 import Footer from "./components/Footer";
 import "./globals.css";
 
@@ -41,6 +42,8 @@ export default function RootLayout({ children }) {
         */}
         <Navbar />
         <ExitButton />
+        {/* Safety notice, shown on whichever page a visitor lands on first, once per tab session */}
+        <SafetyModal />
         {/*
         pt-22.5 offsets the page content below the fixed navbar height,
         flex-1 lets the content area grow to fill the remaining viewport height

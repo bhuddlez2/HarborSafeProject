@@ -35,17 +35,23 @@ export default function Modal({ title, subtitle, onClose, children }) {
     z-200 to sit above the navbar (z-50); globals.css raises the exit button
     above this while modal-open is set,
     the onClick only fires onClose when the click landed on the backdrop itself
-    rather than bubbling up from inside the dialog card
+    rather than bubbling up from inside the dialog card,
+    pb-28 below lg reserves space for the Safe Exit button (fixed bottom-right),
+    which would otherwise cover the bottom of the card on narrower screens; from lg
+    up the centered card and the button no longer overlap horizontally
     */
     <div
-      className="fixed inset-0 bg-black/60 z-200 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 z-200 flex items-center justify-center p-4 pb-28 lg:pb-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
-      {/* Dialog card: max-h-[80vh] with an inner scroll area so long descriptions cannot push the close button off screen */}
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      {/*
+      Dialog card with an inner scroll area so long descriptions cannot push the close button off screen,
+      max-h-full keeps it inside the backdrop's padding (clear of the Safe Exit button) below lg
+      */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-full lg:max-h-[80vh] flex flex-col">
 
         {/* Header: title, optional subtitle, and close button */}
         <div className="flex items-start justify-between p-6 border-b border-gray-100 shrink-0">

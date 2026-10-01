@@ -1,178 +1,98 @@
 // necessary for useState and client-side interactivity in this component, server components cannot use state or event handlers
 "use client";
 
-import { useState, useEffect, startTransition } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Modal from "./components/Modal";
+import CrisisHotlineStrip from "./components/CrisisHotlineStrip";
 
 export default function Home() {
   /*
-  showSafetyModal controls whether the security alert popup is visible,
-  modal - a dialog that blocks all other interactions until dismissed,
-  initialized to false so the server-rendered HTML and the first client render match,
-  this prevents the React hydration mismatch error that occurs when server and client
-  produce different HTML — the server runs without a browser so it must start as false,
-  the useEffect below sets it to true after hydration so it shows on every page load,
-  intentionally not stored in localStorage — the warning should appear every visit
-  so that any person using the browser sees it, not just the first user ever
+  showHelpModal controls the "Get Help Now" contact list opened from the hero button
   */
-  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   /*
-  Shows the security alert modal after the component hydrates on the client,
-  always shows regardless of previous visits — no localStorage check,
-  runs once on mount after the first render so server and client HTML match first
+  replaceNavigate does a full page load that replaces the current history entry (same
+  history behavior as <Link replace>), used by the service cards' "Learn more" links to
+  /get-support/#... anchors. Next's client router mishandles repeat hash navigations in dev, 
+  so these links bypass it and let the browser scroll to the anchor natively.
   */
-  useEffect(() => {
-    startTransition(() => setShowSafetyModal(true));
-  }, []);
-
-
-  /*
-  handleDismissSafetyModal is called when the user clicks OK on the security alert modal,
-  hides the modal by setting showSafetyModal to false,
-  intentionally does not store anything — the modal will show again on the next page load
-  */
-  const handleDismissSafetyModal = () => {
-    setShowSafetyModal(false);
+  const replaceNavigate = (e) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    window.location.replace(e.currentTarget.href);
   };
-
-  useEffect(() => {
-    document.body.classList.toggle("safety-modal-open", showSafetyModal);
-    return () => document.body.classList.remove("safety-modal-open");
-  }, [showSafetyModal]);
 
   return (
     <div>
-      {/*
-      Safety modal — shown on every visit, icons from Feather Icons (https://feathericons.com) MIT License,
-      z-200 places it above the navbar (z-50) and exit button (z-100)
-      */}
-      {showSafetyModal && (
-        <div
-          className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="safety-modal-heading"
+      {showHelpModal && (
+        <Modal
+          title="Get help now"
+          subtitle={<>Free, confidential support.<br />You don&apos;t have to go through this alone.</>}
+          onClose={() => setShowHelpModal(false)}
         >
-          {/* Modal card */}
-          <div className="bg-white rounded-4xl shadow-xl max-w-md w-full overflow-hidden">
+          <div className="p-6 space-y-4">
 
-            {/* Brand header with shield icon and title */}
-            <div className="bg-brand px-6 py-5 flex items-center gap-4">
-              {/*
-              bg-white/15 creates a subtle semi-transparent circle behind the shield icon
-              */}
-              <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-white/85 stroke-5 fill-none">
-                  {/* shield icon, feathericons.com */}
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-              <div>
-                {/* Eyebrow label */}
-                <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-0.5">Your safety matters</p>
-                {/* Modal heading */}
-                <h2 id="safety-modal-heading" className="text-xl font-bold text-white">Browse safely &amp; privately</h2>
+            {/* 911 danger callout, alert-circle icon from feathericons.com */}
+            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex gap-2 items-start">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 mt-0.5 stroke-red-700 stroke-2 fill-none" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
+            </div>
+
+            {/*
+            Harbor Safe crisis line, soft fill instead of a border so the buttons carry the emphasis,
+            buttons stack on narrow phones so the numbers can't wrap
+            */}
+            <div className="bg-purple-50 rounded-xl p-4">
+              <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-1">24/7 Crisis Line</p>
+              <p className="text-sm font-semibold text-brand mb-3">Harbor Safe House &amp; Advocacy Center</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <a href="tel:423-476-3886" className="text-center bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">
+                  Call (423) 476-3886
+                </a>
+                <a href="sms:423-715-9614" className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">
+                  Text (423) 715-9614
+                </a>
               </div>
             </div>
 
-            {/* Modal body */}
-            <div className="px-6 py-5">
-              {/* Introductory paragraph */}
-              <p className="text-sm text-gray-600 leading-relaxed mb-5">
-                Internet usage can be monitored and is difficult to erase completely. If you&apos;re
-                concerned your activity is being watched, here are some ways to stay safer.
-              </p>
-
-              {/* Safety tips */}
-              <div className="space-y-4 mb-5">
-
-                {/* Exit quickly tip */}
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
-                      {/* log-out icon, feathericons.com */}
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                  </div>
+            <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl">
+              {[
+                { name: "National Domestic Violence Hotline", note: "Call 24/7 · Text START to 88788", phone: "1-800-799-7233", tel: "18007997233" },
+                { name: "988 Suicide & Crisis Lifeline", note: "Call or text, 24/7", phone: "988", tel: "988" },
+              ].map(({ name, note, phone, tel }) => (
+                /* stacked on phones so the pill doesn't squeeze the name, side by side from sm up */
+                <div key={name} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 px-4 py-3">
                   <div>
-                    <p className="text-sm font-semibold text-brand mb-0.5">Exit quickly anytime</p>
-                    {/*
-                    kbd is styled to look like a physical keyboard key,
-                    */}
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Use the red &ldquo;Safe Exit&rdquo; button or press{" "}
-                      <kbd className="bg-gray-100 border border-gray-500 rounded px-1 text-xs">Esc</kbd>{" "}
-                      to leave this site immediately.
-                    </p>
+                    {/* text-balance splits long names into even lines instead of orphaning the last word */}
+                    <p className="text-sm font-semibold text-brand text-balance">{name}</p>
+                    <p className="text-xs text-gray-600">{note}</p>
                   </div>
-                </div>
-
-                {/* Clear history tip */}
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
-                      {/* trash icon, feathericons.com */}
-                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-brand mb-0.5">Clear your history after visiting</p>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Delete your browser history or use a private / incognito window before you start.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Call confidentially tip */}
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
-                      {/* phone icon, feathericons.com */}
+                  {/* pill with phone icon (feathericons.com) so the number is intuitively tappable */}
+                  <a
+                    href={`tel:${tel}`}
+                    aria-label={`Call ${name} at ${phone}`}
+                    className="shrink-0 inline-flex items-center gap-1.5 bg-purple-100 text-brand text-sm font-semibold px-3 py-1.5 rounded-full hover:bg-brand hover:text-white transition-all"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 stroke-current stroke-2 fill-none" aria-hidden="true">
                       <path d="M22 16.92v3a2 2 0 01-2.18 2A19.86 19.86 0 013.09 4.18 2 2 0 015.09 2h3a2 2 0 012 1.72c.13 1 .37 1.97.72 2.9a2 2 0 01-.45 2.11L9.09 10a16 16 0 006.91 6.91l1.27-1.27a2 2 0 012.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0122 16.92z" />
                     </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-brand mb-0.5">Call us confidentially</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      If you&apos;re worried about being monitored, call{" "}
-                      <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>{" "}
-                      — available 24/7, always free.
-                    </p>
-                  </div>
+                    {phone}
+                  </a>
                 </div>
-
-              </div>
-
-              {/* 911 danger callout */}
-              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-5 flex gap-2 items-start">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 mt-0.5 stroke-red-700 stroke-2 fill-none">
-                  {/* alert-circle icon, feathericons.com */}
-                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
-              </div>
-
-              {/* Action buttons */}
-              <div className="space-y-2">
-                <button
-                  onClick={handleDismissSafetyModal}
-                  className="hover:scale-105 w-full bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-white hover:text-brand cursor-pointer transition-all"
-                >
-                  I understand — continue to site
-                </button>
-                <button
-                  onClick={() => window.location.replace("https://www.google.com")}
-                  className="hover:scale-105 w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-red-600 hover:bg-white hover:text-red-600 transition-all cursor-pointer"
-                >
-                  Safe Exit
-                </button>
-              </div>
+              ))}
             </div>
 
+            <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
+              <Link href="/get-support" className="font-semibold text-brand hover:underline">Our services →</Link>
+              <Link href="/resources" className="font-semibold text-brand hover:underline">More resources →</Link>
+            </div>
           </div>
-        </div>
+        </Modal>
       )}
       {/*
       Page content,
@@ -188,7 +108,7 @@ export default function Home() {
         h-[70vh] for 70% of the viewport height,
         flex items-center justify-center to center content both vertically and horizontally
         */}
-        <section id="home" className="relative h-[70vh] flex items-center justify-center">
+        <section id="home" className="on-dark relative h-[70vh] flex items-center justify-center">
           {/*
           Background image,
           "White lighthouse on rocky seashore" — Unsplash license (free to use),
@@ -235,32 +155,17 @@ export default function Home() {
             shadow-lg for depth,
             font-semibold for emphasis
             */}
-            <button className="bg-white text-black px-10 py-4 rounded-full hover:bg-gray-200 hover:scale-105 transition-all shadow-lg font-semibold">
+            <button
+              onClick={() => setShowHelpModal(true)}
+              className="bg-white text-black px-10 py-4 rounded-full hover:bg-gray-200 hover:scale-105 transition-all shadow-lg font-semibold cursor-pointer"
+            >
               Get Help Now
             </button>
           </div>
         </section>
 
-        {/*
-        Hotline strip,
-        sits directly below the hero,
-        bg-purple-50 for a light tinted background,
-        border-b border-purple-100 for a subtle separator below,
-        flex items-center justify-center gap-8 to lay out the three elements centered with spacing,
-        flex-wrap so it stacks gracefully on small screens
-        */}
-        <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
-          {/* Label */}
-          <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
-          {/* Call and text numbers with a divider between them */}
-          <div className="flex items-center gap-5">
-            <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
-            <span className="text-purple-300">|</span>
-            <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
-          </div>
-          {/* Supporting note */}
-          <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
-        </div>
+        {/* Hotline strip */}
+        <CrisisHotlineStrip />
         {/*
         About section,
         id="about" so the About nav link anchor scrolls here,
@@ -380,7 +285,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
-                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
+                  <a href="/get-support/#shelter" onClick={replaceNavigate} className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
 
                 {/* Counseling & Advocacy card */}
@@ -393,7 +298,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
-                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
+                  <a href="/get-support/#counseling" onClick={replaceNavigate} className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
 
                 {/* 24/7 Crisis Line card */}
@@ -406,7 +311,9 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">24/7 Crisis Line</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Trained advocates available any time — call or text, day or night, always free.</p>
-                  <a href="tel:423-476-3886" className="text-xs font-semibold text-brand hover:underline transition-all">Call now →</a>
+                  {/* Call and text, matching the card copy and the hotline strip */}
+                  <a href="tel:423-476-3886" className="text-xs font-semibold text-brand hover:underline transition-all">Call →</a>
+                  <a href="sms:423-715-9614" className="ml-4 text-xs font-semibold text-brand hover:underline transition-all">Text →</a>
                 </div>
 
               </div>
