@@ -59,13 +59,20 @@ before writing any code.
   your system. Install or enable PHP's intl extension.
 ```
 
-The DLL is already present at `C:\xampp\php\ext\php_intl.dll`; line 925 of
-`C:\xampp\php\php.ini` just has `;extension=intl` commented out. Uncomment it and
-restart.
+On Fedora/Debian it is a separate package (`php-intl`). On Windows it is a `php.ini`
+line — the DLL ships in PHP's `ext/` directory, commented out as `;extension=intl`.
 
-**Every teammate's machine and the deploy target needs this.** It is a one-line fix with
-an intimidating failure mode, so put it in the README rather than letting each person
-rediscover it.
+**Related, and worse on Windows: XAMPP cannot run this project at all.** XAMPP for
+Windows ships PHP 8.2.12 at most, and `laravel/framework` v13 requires `^8.3` (as do
+`spatie/laravel-permission` 8.3.0 and Pest 4), so there is no version to lower to. PHP
+has to be installed separately from XAMPP, which is then useful only for MariaDB. A
+standalone Windows PHP also ships **no `php.ini` at all** and has every optional
+extension off, so `intl` is one of eight lines to uncomment rather than one — the others
+being `extension_dir`, `curl`, `fileinfo`, `mbstring`, `openssl`, `pdo_mysql` and `zip`.
+
+**Every teammate's machine and the deploy target needs this.** The failure modes are
+intimidating and don't name the cause clearly, so the full Windows path is written up in
+`PORTAL_SETUP.md` rather than left for each person to rediscover.
 
 ### 3.2 `storage:link` has to work on the deploy target
 

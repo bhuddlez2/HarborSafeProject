@@ -31,33 +31,48 @@ PHP toolchain installed so you can run the app and see your changes.
 
 ---
 
-## 2. Install three things
+## 2. Install four things
 
-### XAMPP — gives you PHP and MySQL in one installer
+> **Read this bit before downloading anything.** XAMPP is the obvious choice on
+> Windows and it is *not sufficient on its own*. XAMPP for Windows ships at most
+> **PHP 8.2.12**, and this project needs **PHP 8.3 or newer** — Laravel 13
+> itself requires it, so there is no way to lower the bar. You install XAMPP for
+> the database, and PHP separately.
+
+### XAMPP — for MariaDB only
 
 Download from [apachefriends.org](https://www.apachefriends.org/) and install
 to the default `C:\xampp`.
 
-You only need two pieces of it:
+You need exactly one piece of it: **MySQL** (really MariaDB). After installing,
+open the **XAMPP Control Panel** and press **Start** next to **MySQL**. Leave
+Apache stopped, and ignore the PHP that came with it.
 
-- the **PHP** binary, to run the app
-- **MySQL**, for the database
+**Do not configure Apache.** Laravel ships its own dev server. Nothing in this
+project goes in `htdocs`, and you never need a virtual host.
 
-**You do not need to configure Apache.** Laravel ships its own dev server. Do
-not spend time on virtual hosts or `htdocs` — nothing in this project goes
-there.
+MySQL must be running whenever you work on the project, and it does not start
+on boot by default.
 
-After installing, open the **XAMPP Control Panel** and press **Start** next to
-**MySQL**. Leave Apache stopped. MySQL has to be running whenever you work on
-the project, and it does not start on boot by default.
+### PHP 8.3+ — installed separately
+
+From [windows.php.net/download](https://windows.php.net/download/), take a
+**Non-Thread-Safe (NTS), x64 Zip** of PHP 8.3 or newer. NTS is the right build
+for the command line and `php artisan serve`; the thread-safe one is only for
+running PHP inside Apache, which we aren't.
+
+Extract it to **`C:\php`**. Keeping it out of `C:\xampp\php` matters: a XAMPP
+update would otherwise overwrite your PHP and put you back on 8.2.
 
 ### Composer — PHP's package manager (PHP's `npm`)
 
 Download `Composer-Setup.exe` from
 [getcomposer.org/download](https://getcomposer.org/download/) and run it. When
-it asks for your PHP executable, point it at `C:\xampp\php\php.exe`.
+it asks for your PHP executable, point it at **`C:\php\php.exe`** — not the one
+in XAMPP. Do this *after* step 4, or Composer will complain about missing
+extensions.
 
-The installer adds itself to your PATH, so there is nothing more to do for it.
+The installer adds itself to your PATH.
 
 ### Node.js 20+
 
@@ -68,8 +83,8 @@ probably do.
 
 ## 3. Add PHP to your PATH
 
-The XAMPP installer does **not** do this, so `php` won't be recognised in a
-terminal until you add it yourself. This is the step people get stuck on.
+Nothing does this for you, so `php` won't be recognised in a terminal until you
+add it. This is the step people get stuck on.
 
 1. Press Start, type `environment`, open **Edit the system environment
    variables**
@@ -78,45 +93,75 @@ terminal until you add it yourself. This is the step people get stuck on.
 4. Click **New** and add:
 
    ```
-   C:\xampp\php
+   C:\php
    ```
 
-5. OK out of all three dialogs
-6. **Close every open terminal and open a new one.** PATH changes only apply to
+5. If `C:\xampp\php` is already in the list, **remove it** — otherwise you may
+   get XAMPP's PHP 8.2 instead and nothing will make sense
+6. OK out of all three dialogs
+7. **Close every open terminal and open a new one.** PATH changes only apply to
    new terminals — this is the usual reason it "didn't work"
 
 Check it:
 
 ```bash
-php -v          # should print PHP 8.3 or newer
-composer -V     # should print Composer 2.x
-node -v         # should print v20 or newer
+php -v          # must print 8.3 or newer
+node -v         # v20 or newer
 ```
 
-If `php -v` still fails, your XAMPP is somewhere other than `C:\xampp` — use
-that path instead.
+If `php -v` prints 8.2.x you are still getting XAMPP's copy — recheck step 5.
 
 ---
 
-## 4. Turn on one PHP extension
+## 4. Create php.ini and turn on seven extensions
 
-The panel needs PHP's `intl` extension. It ships with XAMPP but is switched
-off, and **`composer install` will refuse to run without it** with a wall of red
-about `filament/support requires ext-intl`.
+**A PHP zip from windows.php.net has no `php.ini` at all**, and every optional
+extension is switched off. XAMPP pre-enables these, which is why most guides
+only mention `intl`. You have to do all of it yourself.
 
-1. Open `C:\xampp\php\php.ini` in your editor
-2. Find the line `;extension=intl` (search for `extension=intl`)
-3. Delete the leading semicolon so it reads `extension=intl`
-4. Save
-
-Check it — this must print `bool(true)`:
+First create the file:
 
 ```bash
-php -r "var_dump(extension_loaded('intl'));"
+copy C:\php\php.ini-development C:\php\php.ini
 ```
 
-If it prints `false`, run `php --ini` to see which `php.ini` your terminal
-actually loads. It is not always the one you just edited.
+Then open `C:\php\php.ini` and uncomment these **eight** lines by deleting the
+leading `;`. Search for each one:
+
+```ini
+extension_dir = "ext"      ; near line 758 — without this none of the rest load
+
+extension=curl
+extension=fileinfo
+extension=intl             ; the staff panel needs this one
+extension=mbstring
+extension=openssl
+extension=pdo_mysql        ; without this there is no database at all
+extension=zip
+```
+
+Save. Then check — this lists anything still missing, so you want an **empty**
+array:
+
+```bash
+php -r "var_dump(array_diff(['curl','fileinfo','intl','mbstring','openssl','pdo_mysql','zip'], get_loaded_extensions()));"
+```
+
+```
+array(0) {
+}
+```
+
+That is what success looks like. Anything named in the output is still
+commented out.
+
+If extensions you uncommented are still missing, run `php --ini` and confirm
+"Loaded Configuration File" says `C:\php\php.ini`. If it says `(none)`, the
+copy above didn't land in the right place.
+
+`composer install` fails with a different error for each missing one, and the
+messages don't always name the extension clearly — so it's worth getting all
+eight right before moving on.
 
 ---
 
@@ -272,7 +317,11 @@ If classes are mysteriously not applying, check this first.
 | What you see | What it means |
 |---|---|
 | `php` is not recognised | PATH (step 3), or you didn't open a new terminal |
-| `requires ext-intl` during `composer install` | Step 4 |
+| `php -v` prints **8.2.x** | You're getting XAMPP's PHP — remove `C:\xampp\php` from PATH (step 3.5) |
+| `requires php ^8.3` / `your php version (8.2…) does not satisfy` | Same cause as above |
+| `php --ini` says Loaded Configuration File **(none)** | You didn't copy `php.ini-development` to `php.ini` (step 4) |
+| `requires ext-intl` during `composer install` | Step 4 — and check the other seven while you're there |
+| `could not find driver` on any database command | `extension=pdo_mysql` still commented out (step 4) |
 | `No application encryption key` | You skipped `php artisan key:generate` |
 | `SQLSTATE[HY000] [2002]` or connection refused | MySQL isn't running — start it in the XAMPP Control Panel |
 | `Unknown database` | Run `php artisan db:create` |

@@ -23,10 +23,10 @@ see [Schema_Reference.md](Schema_Reference.md).
 
 | Tool | Version | Notes |
 |---|---|---|
-| PHP | 8.3+ | Comes with XAMPP; `php -v` to check |
+| PHP | 8.3+ | **Not from XAMPP on Windows** — it ships 8.2 at most, and Laravel 13 needs 8.3. See [PORTAL_SETUP.md](PORTAL_SETUP.md) |
 | Composer | 2.x | |
 | Node.js | 20+ | Next.js 16 requires it |
-| MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running** |
+| MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running.** On Windows, XAMPP is a fine way to get just this |
 
 ### PHP's `intl` extension
 
@@ -41,9 +41,10 @@ install` refuses to resolve with:
 **It's a one-line fix, not a dependency problem.** Enable it for your platform:
 
 - **Fedora/RHEL** — it's a separate package: `sudo dnf install php-intl`
-- **Windows/XAMPP** — the DLL already ships with XAMPP. In
-  `C:\xampp\php\php.ini`, change `;extension=intl` to `extension=intl`, then
-  restart Apache from the XAMPP control panel.
+- **Windows** — XAMPP's PHP is too old for this project, so PHP gets
+  installed separately, and it arrives with *no* `php.ini` and every extension
+  switched off. `intl` is one of eight lines to uncomment, not one. Full Windows
+  setup is in [PORTAL_SETUP.md](PORTAL_SETUP.md).
 - **Debian/Ubuntu** — `sudo apt install php-intl` (or `php8.x-intl` to match
   your PHP version)
 
