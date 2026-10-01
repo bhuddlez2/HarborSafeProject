@@ -140,6 +140,21 @@ extension=pdo_mysql        ; without this there is no database at all
 extension=zip
 ```
 
+**Then change two values that are already uncommented** — these are not
+extensions, they are size limits, and the defaults are too small for the
+panel's uploads:
+
+```ini
+upload_max_filesize = 8M   ; default is 2M
+post_max_size = 12M        ; default is 8M — must stay above the line above
+```
+
+Event images are capped at 4 MB and newsletter PDFs at 8 MB. With the stock
+`upload_max_filesize = 2M`, **PHP throws the file away before Laravel ever
+sees it**, so you get an unhelpful error instead of the panel's own "file too
+large" message. `post_max_size` bounds the whole request rather than the one
+file, so it has to stay larger than `upload_max_filesize`.
+
 Save. Then check — this lists anything still missing, so you want an **empty**
 array:
 
@@ -154,6 +169,16 @@ array(0) {
 
 That is what success looks like. Anything named in the output is still
 commented out.
+
+And check the two limits separately:
+
+```bash
+php -r "printf('upload=%s post=%s%s', ini_get('upload_max_filesize'), ini_get('post_max_size'), PHP_EOL);"
+```
+
+```
+upload=8M post=12M
+```
 
 If extensions you uncommented are still missing, run `php --ini` and confirm
 "Loaded Configuration File" says `C:\php\php.ini`. If it says `(none)`, the
@@ -206,7 +231,9 @@ npm install
 npm run build
 ```
 
-Create the uploads symlink:
+Create the storage symlink. Uploads do not need it — event images and
+newsletter PDFs go in the database — but Laravel's own tooling assumes it
+exists, so run it once:
 
 ```bash
 php artisan storage:link
@@ -328,7 +355,8 @@ If classes are mysteriously not applying, check this first.
 | Login rejects every password | You skipped `LocalStaffUserSeeder` |
 | Panel loads but looks unstyled | You skipped `npm run build` |
 | Your new Tailwind classes do nothing | Section 8, the `@source` trap |
-| Uploaded images 404 | You skipped `php artisan storage:link` |
+| An upload fails with an unhelpful error | `upload_max_filesize` / `post_max_size` too low (step 4). PHP discards the file before Laravel runs, so you never see the panel's own "too large" message |
+| The upload box says "up to 2 MB" when it should say 4 | Same cause — the panel prints whatever php.ini will actually accept rather than over-promising |
 
 Two commands worth knowing when something is stale:
 

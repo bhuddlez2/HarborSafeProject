@@ -59,16 +59,26 @@ actually loads — it isn't always the one Apache uses.
 
 ### File uploads
 
-The content features (events, newsletters) store uploads on the **local disk**, not in
-cloud storage — no account or credentials needed. Run this once per environment, and
-again after any deploy that rebuilds the tree, or uploaded files return 404:
+Event images and newsletter PDFs are stored **in the database** (a `content_files` table
+on the `Content` connection), not on a disk and not in cloud storage. No account, no
+credentials, and nothing to re-run after a deploy — a database dump is a complete
+backup. See `Filament_CMS_Design.md` §4 for why.
 
-```bash
-php artisan storage:link
+**You must raise two php.ini limits or uploads fail confusingly.** The defaults are
+smaller than the panel allows, and PHP discards an oversized file *before* Laravel runs
+— so you get an opaque error rather than the panel's own "file too large" message:
+
+```ini
+upload_max_filesize = 8M   ; default is 2M
+post_max_size = 12M        ; default is 8M, and must stay above the line above
 ```
 
-That symlinks `public/storage` to `storage/app/public`. It is not part of the repo, so a
-fresh clone or a rebuilt deploy will not have it.
+Caps are 4 MB for an image and 8 MB for a PDF. Both sit under MariaDB's
+`max_allowed_packet` (16 MB by default), which bounds a single row in *both* directions
+— a blob that squeezes in past it can still fail to read back out.
+
+`php artisan storage:link` is no longer required by this feature. It is still worth
+running on a new environment, since Laravel's own tooling assumes it.
 
 ### Is my database already running?
 

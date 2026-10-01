@@ -88,13 +88,35 @@ shared host had never been proven to allow that. Uploads are now rows in
 `content_files` (§4, §6.7), so there is no symlink, no document-root arrangement to
 confirm, and nothing to re-run after a deploy.
 
-What replaced it is a different constraint, and it is a real one: **`max_allowed_packet`
-caps a single upload**, server-side. It is 16 MB on the dev box and on a default MariaDB
-install, and an oversized blob fails both on INSERT and on every later SELECT, with an
-error that does not name the cause.
-`App\Filament\Forms\Components\DatabaseFileUpload` therefore caps uploads at 4 MB for
-an image and 8 MB for a PDF. Do not raise those without raising `max_allowed_packet` on
-the server first.
+What replaced it is a set of size limits, and an upload has to clear **four** of them.
+The lowest one wins, and the first two are the ones that actually bite:
+
+| Limit | Where | Default | Why it matters |
+|---|---|---|---|
+| `upload_max_filesize` | php.ini | **2M** | Rejects the file before Laravel runs |
+| `post_max_size` | php.ini | **8M** | Bounds the whole request; must exceed the above |
+| temporary upload rule | Livewire | 12M | `max:12288` unless the config is published |
+| `max_allowed_packet` | MariaDB | 16M | Caps a single row in **both** directions |
+
+`App\Filament\Forms\Components\DatabaseFileUpload` asks for 4 MB on an image and 8 MB
+on a PDF, and this project's php.ini therefore needs `upload_max_filesize = 8M` and
+`post_max_size = 12M` (see `PORTAL_SETUP.md`).
+
+**The first two are nastier than they look.** PHP discards an oversized upload before any
+application code runs, so none of Filament's validation messages appear and the failure
+looks like the panel being broken rather than the file being too big. This was reported
+as exactly that: a 3.5 MB event photo failing against a stock `upload_max_filesize` of
+2M, while the panel's own helper text promised 4 MB.
+
+So the component no longer hardcodes its cap. `effectiveLimitKb()` clamps the intended
+limit to `min(upload_max_filesize, post_max_size)` and the helper text prints whatever
+survives, which means a misconfigured server shows "up to 2 MB" and enforces it cleanly
+rather than advertising a size it cannot accept. `tests/Feature/Staff/UploadLimitsTest.php`
+asserts the arithmetic and, separately, asserts that the machine running the suite can
+actually carry the intended limits.
+
+`max_allowed_packet` remains the outer bound: do not raise the application's limits past
+it, because a blob that squeezes in can still fail to read back out.
 
 `storage:link` is still worth running on a new environment — Laravel's own tooling
 assumes it, and `PORTAL_SETUP.md` lists it — but nothing in this feature depends on it
