@@ -196,7 +196,7 @@ that is unset.
 | `secretary@harborsafe.test` | `secretary` | `/staff/content` |
 | `inactive@harborsafe.test` | `admin`, deactivated | nothing — refused at the login screen |
 
-Note that `/staff/content`, My Assessments and Search Records are still
+Note that `/staff/content` and Search Records are still
 "Coming soon" placeholders, so sign in as the officer if you want to see
 something built.
 

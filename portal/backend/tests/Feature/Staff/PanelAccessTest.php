@@ -11,12 +11,12 @@ use App\Filament\Clusters\FormOptions\Resources\Services\ServiceResource;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\ResourceRequestResource;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackResource;
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
-use App\Filament\Pages\MyAssessments;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Pages\Police;
 use App\Filament\Pages\SearchRecords;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
+use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use App\Filament\StaffLanding;
 
 /*
@@ -54,7 +54,7 @@ function allStaffComponents(): array
         'civilian-assessments' => CivilianAssessmentResource::class,
         'police.home' => Police::class,
         'police.new-assessment' => NewAssessment::class,
-        'police.my-assessments' => MyAssessments::class,
+        'police.my-assessments' => LawEnforcementAssessmentResource::class,
         'police.search-records' => SearchRecords::class,
     ];
 }

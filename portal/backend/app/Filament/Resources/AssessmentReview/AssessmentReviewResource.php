@@ -35,8 +35,8 @@ wizard at App\Filament\Pages\NewAssessment is the only way a row is ever
 written, and it is officers-only.
 
 Deliberately NOT a replacement for the officer-facing My Assessments page
-(App\Filament\Pages\MyAssessments), which is scoped to the signed-in officer
-and is currently a static design mockup. This one is the all-submissions view.
+(App\Filament\Resources\LawEnforcementAssessments), which is scoped to the
+signed-in officer. This one is the all-submissions view.
 
 Secretaries must never reach this: rule 3, secretary never sees assessment PII,
 neither civilian nor law-enforcement.

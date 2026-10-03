@@ -49,7 +49,7 @@
                 </p>
             </div>
             <a
-                href="{{ \App\Filament\Pages\MyAssessments::getUrl() }}"
+                href="{{ \App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource::getUrl('index') }}"
                 class="flex h-12 shrink-0 items-center justify-center rounded-[10px] border border-[#C9C1D6] px-5 text-[15px] font-bold
                        transition-colors hover:bg-[#F4F2F7]
                        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#231A33]"
