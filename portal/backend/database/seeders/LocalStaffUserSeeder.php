@@ -10,15 +10,22 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /*
-One staff-panel login per role, plus a second officer and an inactive admin,
-for local development only. Deliberately not registered in DatabaseSeeder.
+One staff-panel login per role, plus a second officer, an inactive admin and a
+second agency, for local development only. Deliberately not registered in
+DatabaseSeeder.
 
   php artisan db:seed --class=LocalStaffUserSeeder --database=Portal
 
-Both officers also get a law_enforcement_agents row (badges LOCAL-1001 and
-LOCAL-1002) in the "Local Test PD" agency. The second officer exists so "own
-submissions only" can be checked; LocalAssessmentSeeder gives each of them
-records.
+Two agencies, each with a police admin and officers, all holding a
+law_enforcement_agents row:
+
+  Local Test PD   police-admin@ (LOCAL-9001), officer@ (LOCAL-1001),
+                  officer2@ (LOCAL-1002)
+  Second Test PD  police-admin2@ (LOCAL-9002), officer3@ (LOCAL-2001)
+
+The second officer exists so "own submissions only" can be checked, and the
+second agency so "own agency only" can be; LocalAssessmentSeeder gives each
+officer records.
 
 Password comes from LOCAL_SEED_PASSWORD, falling back to "password" when it is
 unset or blank. Idempotent: keyed on email (agency on name, agent on user_id),
@@ -43,6 +50,8 @@ class LocalStaffUserSeeder extends Seeder
             ['officer@harborsafe.test', 'Local Officer', UserRole::LawEnforcement, true],
             ['officer2@harborsafe.test', 'Local Officer Two', UserRole::LawEnforcement, true],
             ['inactive@harborsafe.test', 'Inactive Admin', UserRole::Admin, false],
+            ['police-admin2@harborsafe.test', 'Second Police Admin', UserRole::PoliceAdmin, true],
+            ['officer3@harborsafe.test', 'Second PD Officer', UserRole::LawEnforcement, true],
         ];
 
         foreach ($users as [$email, $name, $role, $isActive]) {
@@ -60,25 +69,36 @@ class LocalStaffUserSeeder extends Seeder
         // agencies and law_enforcement_agents have no created_at/updated_at
         // columns, but neither model turns timestamps off, so a plain
         // create() fails on the missing columns.
-        $agency = Agency::withoutTimestamps(
-            fn (): Agency => Agency::firstOrCreate(['name' => 'Local Test PD']),
-        );
-
-        $badges = [
-            'officer@harborsafe.test' => 'LOCAL-1001',
-            'officer2@harborsafe.test' => 'LOCAL-1002',
+        // Agency name => [email => badge]. The police admins' rows are what
+        // User::agencyId() reads to scope them to their agency.
+        $agencies = [
+            'Local Test PD' => [
+                'police-admin@harborsafe.test' => 'LOCAL-9001',
+                'officer@harborsafe.test' => 'LOCAL-1001',
+                'officer2@harborsafe.test' => 'LOCAL-1002',
+            ],
+            'Second Test PD' => [
+                'police-admin2@harborsafe.test' => 'LOCAL-9002',
+                'officer3@harborsafe.test' => 'LOCAL-2001',
+            ],
         ];
 
-        foreach ($badges as $email => $badge) {
-            LawEnforcementAgent::withoutTimestamps(
-                fn (): LawEnforcementAgent => LawEnforcementAgent::updateOrCreate(
-                    ['user_id' => User::where('email', $email)->value('id')],
-                    [
-                        'badge_number' => $badge,
-                        'agency_id' => $agency->getKey(),
-                    ],
-                ),
+        foreach ($agencies as $agencyName => $badges) {
+            $agency = Agency::withoutTimestamps(
+                fn (): Agency => Agency::firstOrCreate(['name' => $agencyName]),
             );
+
+            foreach ($badges as $email => $badge) {
+                LawEnforcementAgent::withoutTimestamps(
+                    fn (): LawEnforcementAgent => LawEnforcementAgent::updateOrCreate(
+                        ['user_id' => User::where('email', $email)->value('id')],
+                        [
+                            'badge_number' => $badge,
+                            'agency_id' => $agency->getKey(),
+                        ],
+                    ),
+                );
+            }
         }
     }
 }

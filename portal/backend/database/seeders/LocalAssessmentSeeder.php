@@ -11,9 +11,10 @@ use RuntimeException;
 
 /*
 Two law-enforcement assessments per local officer, so My Assessments has
-something to list and the "own submissions only" rule has a second officer to
-be checked against. Local development only. Deliberately not registered in
-DatabaseSeeder. Run LocalStaffUserSeeder first - it creates the two officers.
+something to list, the "own submissions only" rule has a second officer to be
+checked against, and the police admins' "own agency only" rule has a second
+agency. Local development only. Deliberately not registered in
+DatabaseSeeder. Run LocalStaffUserSeeder first - it creates the officers.
 
   php artisan db:seed --class=LocalAssessmentSeeder --database=Portal
 
@@ -31,6 +32,11 @@ class LocalAssessmentSeeder extends Seeder
         'officer2@harborsafe.test' => [
             'C' => [true, true, true, true, false, false, true, true, false, false, true],
             'D' => [false, true, false, false, false, true, false, false, true, true, false],
+        ],
+        // The officer in the second agency, for the police admins' agency scope.
+        'officer3@harborsafe.test' => [
+            'E' => [false, true, true, false, true, false, false, true, false, false, true],
+            'F' => [true, false, false, false, false, true, true, false, false, true, false],
         ],
     ];
 

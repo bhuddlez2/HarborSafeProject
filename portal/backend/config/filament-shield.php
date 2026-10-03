@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
+use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -200,6 +201,10 @@ return [
             // (role + submitted_by). Excluded so shield:generate can never
             // overwrite that policy with a permission-based one.
             LawEnforcementAssessmentResource::class,
+            // Authorizes itself (police admins, own agency only) rather than
+            // through a policy on User. Excluded so shield:generate never
+            // writes a permission-based UserPolicy over those rules.
+            OfficerAccountResource::class,
         ],
     ],
 

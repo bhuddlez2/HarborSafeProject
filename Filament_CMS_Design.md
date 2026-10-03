@@ -252,16 +252,17 @@ Form options           —       —          edit       edit
 Service feedback       —       —          view       view
 Resource requests      —       —          view       view
 Civilian assessments   —       —          —          view
-LE assessments         own     view all   —          view
-LE change logs         own     view all   —          view
+LE assessments         own     own agency —          view
+LE change logs         own     own agency —          view
 ---------------------------------------------------------
-Create officers        —       YES        —          NO
+Manage officers        —       own agency —          NO
+  (create/edit/deactivate)
 Create police admins   —       —          —          YES
 Create secretaries     —       —          —          YES
 Create admins          —       —          —          YES
 ```
 
-Four rules that are easy to get wrong and must be enforced explicitly:
+Five rules that are easy to get wrong and must be enforced explicitly:
 
 1. **Only the submitting officer may edit an assessment.** Matched on
    `law_enforcement_assessment.submitted_by`. `police_admin` and `admin` are view-only.
@@ -270,6 +271,14 @@ Four rules that are easy to get wrong and must be enforced explicitly:
    `police_admin`. Admin creates secretaries, admins and police admins.
 3. **Secretary never sees assessment PII** — not civilian, not law-enforcement.
 4. **`is_active = false` denies panel access regardless of role.**
+5. **A police admin is scoped to its own agency.** It manages only the officers
+   (`law_enforcement` accounts) of that agency, and views only assessments submitted by
+   them — never another agency's, never admins, secretaries or other police admins, never
+   itself. The agency is `User::agencyId()`, read from the account's
+   `law_enforcement_agents` row; police admins hold a row there for exactly this (§12).
+   A police admin with no row, or a null `agency_id`, gets nothing: empty lists, no
+   create. Officers are created with role and agency forced server-side, and are
+   deactivated (`is_active = false`), never deleted, so assessment history survives.
 
 Rule 2 is the one most likely to be "helpfully" widened by someone who assumes admin is
 a superset. It is not.
@@ -469,8 +478,11 @@ seeder creating one user per role for local development.
 `/staff/police`) gated by `canAccess()`. The seeder also creates a second officer, with
 both officers badged in a "Local Test PD" agency, and `LocalAssessmentSeeder` gives each
 two assessments. The law-enforcement assessment row of the matrix is enforced by
-`LawEnforcementAssessmentPolicy` (§4). Shield permissions for everything else and the
-super-admin are still to do.)*
+`LawEnforcementAssessmentPolicy` (§4), now agency-scoped for police admins through
+`User::agencyId()` (§5 rule 5). The seeder has since gained a second agency, "Second Test
+PD", with its own police admin and officer, and gives both police admins a
+`law_enforcement_agents` row. Shield permissions for everything else and the super-admin
+are still to do.)*
 *Gate:* each of the four roles sees exactly its matrix row; admin is refused when
 creating an officer; `police_admin` has no edit action on assessments.
 
@@ -480,7 +492,15 @@ assessments, users.
 `App\Filament\Resources\LawEnforcementAssessments`, at `/staff/police/assessments` and
 `/staff/police/assessments/{DocumentID}`, replacing the My Assessments placeholder. List
 and view on Filament's default components; no create, edit or delete routes or actions.
-Owner-only editing waits for Phase 9. Every other resource is still to do.)*
+Owner-only editing waits for Phase 9. **Officer provisioning is also done:**
+`App\Filament\Resources\OfficerAccounts` (on `User`), at `/staff/police/officers` in a
+"Police Admin" navigation group — list, create and edit, no delete. Police admins with an
+agency only; it authorizes itself on the resource (`getAuthorizationResponse()` and the
+`can*()` methods) rather than through a `UserPolicy`, because the future admin "Users"
+screen needs different rules for the same model, and is in `resources.exclude` in
+`config/filament-shield.php`. Create and edit write `users` and `law_enforcement_agents`
+in one `Portal` transaction; passwords are 15–64 characters and checked against breached
+passwords (`Password::uncompromised()`). Every other resource is still to do.)*
 *Gate:* CRUD works; assessments expose no edit action except to the owning officer; and an
 upload renamed to an allowed extension is still rejected (§6.6).
 
@@ -540,3 +560,27 @@ Still undecided:
   records edits only. Either design and build view logging (per record, per user, with a
   timestamp) before My Assessments ships, or change that copy. **Now live and untrue:**
   My Assessments exists as a read-only resource and records open without being logged.
+
+Open schema items, for the database architect — officer provisioning (§5 rule 5) was built
+without any schema change, and these are what that left undecided:
+
+- **Police admins are stored in `law_enforcement_agents`.** That row is the only link
+  between a police admin and an agency, but `Schema_Reference.md` describes the table as
+  `law_enforcement`-only. Either bless this and update the reference, or give the link a
+  home of its own (an `agency_id` on `users`, or an agency-admins table).
+  `badge_number` is `NOT NULL`, so every police admin must carry a badge number.
+- **Badge numbers are not unique.** `law_enforcement_agents` has no unique index on
+  `badge_number`, alone or per agency, and the officer form does not check for
+  duplicates. Decide whether they should be unique, and at what scope.
+- **`agency_id` is nullable and `nullOnDelete`.** Deleting an agency orphans its officers
+  and police admins: the officers become invisible to every police admin, and the police
+  admin loses all access. Nothing prevents it.
+- **"At least one police admin per agency" is enforced nowhere.** An agency can have none,
+  leaving its officers unmanageable.
+- **No "must change password on first login" flag.** The police admin chooses an officer's
+  first password and the officer is never made to replace it; forcing that needs a column
+  on `users`.
+- **Who creates police admins and agencies.** The §5 matrix gives that to `admin`; the
+  current intent is a future HarborSafe "super admin". Neither is built — police admins,
+  agencies and the police admins' `law_enforcement_agents` rows exist only through
+  `LocalStaffUserSeeder`.

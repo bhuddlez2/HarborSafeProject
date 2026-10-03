@@ -54,6 +54,32 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    // The agency this account belongs to, from its law_enforcement_agents row.
+    // Officers and police admins only - a police admin's row exists purely to
+    // carry this link. Null for every other role, and for an officer or
+    // police admin with no row or no agency on it. Reads the raw role string
+    // for the same reason canAccessPanel() does.
+    public function agencyId(): ?int
+    {
+        $role = UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? ''));
+
+        if (! in_array($role, [UserRole::LawEnforcement, UserRole::PoliceAdmin], true)) {
+            return null;
+        }
+
+        $agencyId = $this->lawEnforcementAgent?->agency_id;
+
+        return $agencyId === null ? null : (int) $agencyId;
+    }
+
+    // The agency whose officers this account may manage: an active police
+    // admin's own agency, and null for everyone else. Fails closed - a police
+    // admin with no agency manages nothing.
+    public function managedAgencyId(): ?int
+    {
+        return $this->hasActiveRole(UserRole::PoliceAdmin) ? $this->agencyId() : null;
+    }
+
     // Checked by Filament at login and on every panel request. Reads the raw
     // role string so an unrecognised value is refused rather than throwing
     // from the enum cast.

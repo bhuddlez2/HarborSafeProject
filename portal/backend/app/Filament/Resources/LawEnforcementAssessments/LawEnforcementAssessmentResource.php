@@ -21,8 +21,9 @@ use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 // "My Assessments": read-only list and view of law-enforcement assessments.
-// Officers get their own submissions, police admins and admins get all of
-// them, secretaries get nothing. Access is LawEnforcementAssessmentPolicy
+// Officers get their own submissions, police admins those submitted by
+// officers of their own agency (User::agencyId()), admins all of them,
+// secretaries nothing. Access is LawEnforcementAssessmentPolicy
 // (via Filament's default canAccess() -> canViewAny()) plus the query scope
 // below. No create, edit or delete: new assessments come only from the
 // NewAssessment wizard.
@@ -46,15 +47,29 @@ class LawEnforcementAssessmentResource extends Resource
     protected static ?int $navigationSort = 4;
 
     // Scopes the list, and the record lookup behind the view page, so an
-    // officer requesting someone else's record gets a 404. Unknown or
-    // inactive roles match nothing.
+    // officer requesting someone else's record, or a police admin requesting
+    // another agency's, gets a 404. Unknown or inactive roles, and a police
+    // admin with no agency, match nothing.
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = Filament::auth()->user();
 
-        if ($user?->hasActiveRole(UserRole::PoliceAdmin, UserRole::Admin)) {
+        if ($user?->hasActiveRole(UserRole::Admin)) {
             return $query;
+        }
+
+        if ($user?->hasActiveRole(UserRole::PoliceAdmin)) {
+            $agencyId = $user->agencyId();
+
+            if ($agencyId === null) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            return $query->whereHas(
+                'submitter.lawEnforcementAgent',
+                fn (Builder $agent): Builder => $agent->where('agency_id', $agencyId),
+            );
         }
 
         if ($user?->hasActiveRole(UserRole::LawEnforcement)) {

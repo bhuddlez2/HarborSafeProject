@@ -22,11 +22,19 @@ class LawEnforcementAssessmentPolicy
         );
     }
 
-    // Police admins and admins see every submission; officers only their own.
+    // Admins see every submission; police admins only those whose submitting
+    // officer is in their own agency (none at all without an agency);
+    // officers only their own.
     public function view(User $user, LawEnforcementAssessment $record): bool
     {
-        if ($user->hasActiveRole(UserRole::PoliceAdmin, UserRole::Admin)) {
+        if ($user->hasActiveRole(UserRole::Admin)) {
             return true;
+        }
+
+        if ($user->hasActiveRole(UserRole::PoliceAdmin)) {
+            $agencyId = $user->agencyId();
+
+            return $agencyId !== null && $record->submitter?->agencyId() === $agencyId;
         }
 
         return $user->hasActiveRole(UserRole::LawEnforcement)
