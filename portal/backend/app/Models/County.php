@@ -14,4 +14,11 @@ class County extends BaseModel
         'Name',
         'ChangeDate',
     ];
+
+    // Inverse of ResourceRequestForm::county(). Used by the panel to decide
+    // whether a county can still be deleted.
+    public function requests()
+    {
+        return $this->hasMany(ResourceRequestForm::class, 'CountyID');
+    }
 }

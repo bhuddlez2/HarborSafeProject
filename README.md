@@ -5,7 +5,7 @@ Three applications in one repository, backing Harbor Safe House & Advocacy Cente
 | Path | What it is | Dev URL |
 |---|---|---|
 | `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · panel at [/staff](http://127.0.0.1:8000/staff) |
-| `website/frontend/` | Next.js 16, static export. The public informational site. | http://localhost:3000 |
+| `website/frontend/` | Next.js 16, static export. The public informational site. Calls the API from the browser for the contact forms and the events page. | http://localhost:3000 |
 | `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment only. | http://localhost:3001 |
 
 If you are here to work on the staff portal, the code is in `portal/backend`
@@ -59,16 +59,26 @@ actually loads — it isn't always the one Apache uses.
 
 ### File uploads
 
-The content features (events, newsletters) store uploads on the **local disk**, not in
-cloud storage — no account or credentials needed. Run this once per environment, and
-again after any deploy that rebuilds the tree, or uploaded files return 404:
+Event images and newsletter PDFs are stored **in the database** (a `content_files` table
+on the `Content` connection), not on a disk and not in cloud storage. No account, no
+credentials, and nothing to re-run after a deploy — a database dump is a complete
+backup. See `Filament_CMS_Design.md` §4 for why.
 
-```bash
-php artisan storage:link
+**You must raise two php.ini limits or uploads fail confusingly.** The defaults are
+smaller than the panel allows, and PHP discards an oversized file *before* Laravel runs
+— so you get an opaque error rather than the panel's own "file too large" message:
+
+```ini
+upload_max_filesize = 8M   ; default is 2M
+post_max_size = 12M        ; default is 8M, and must stay above the line above
 ```
 
-That symlinks `public/storage` to `storage/app/public`. It is not part of the repo, so a
-fresh clone or a rebuilt deploy will not have it.
+Caps are 4 MB for an image and 8 MB for a PDF. Both sit under MariaDB's
+`max_allowed_packet` (16 MB by default), which bounds a single row in *both* directions
+— a blob that squeezes in past it can still fail to read back out.
+
+`php artisan storage:link` is no longer required by this feature. It is still worth
+running on a new environment, since Laravel's own tooling assumes it.
 
 ### Is my database already running?
 
@@ -221,12 +231,27 @@ npm install
 npm run dev              # http://localhost:3000
 ```
 
-The contact forms need the backend running (step 2). They read their option
-lists from `GET /api/public/{services,resources,counties}` and submit to
-`POST /api/public/{resource-requests,service-feedback}`.
+**Two parts of this site need the backend running (step 2).** Both fetch from
+the visitor's browser — it is a static export, so there is no server to fetch
+on its behalf:
+
+| Page | Reads | Writes |
+|---|---|---|
+| Contact (the two forms) | `GET /api/public/{services,resources,counties}` | `POST /api/public/{resource-requests,service-feedback}` |
+| Events & News | `GET /api/public/{events,newsletters}` and `/api/public/content-files/{id}` for images | — |
+
+Without the backend up, the contact forms cannot load their dropdowns and the
+events page shows its error state with the crisis line after a 12-second
+timeout. That is the intended behaviour, not a bug — but it does mean
+`npm run dev` alone is not enough to see those two pages working.
+
+Events and newsletters come from the staff panel, so the page is empty until
+someone publishes something there. Empty is a normal state and the page says so.
 
 The API base URL defaults to `http://127.0.0.1:8000`, so nothing to configure
-locally. To point at a different backend, create `website/frontend/.env.local`:
+locally. It is inlined at build time, so on a deploy target it must be set
+**before** `npm run build`. To point at a different backend, create
+`website/frontend/.env.local`:
 
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000

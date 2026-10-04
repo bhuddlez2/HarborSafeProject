@@ -26,17 +26,26 @@ class Police extends Page
 
     protected static string | UnitEnum | null $navigationGroup = 'Officer Portal';
 
-    // Content management is 1, so admins land there and officers here.
     protected static ?int $navigationSort = 2;
 
     protected Width | string | null $maxContentWidth = Width::Full;
 
+    /*
+    Officers and police admins only - NOT admins.
+
+    This page is an officer tool: it opens "What do you need to do?" over a
+    Start New Lethality Assessment card. An admin has their own landing page
+    (see App\Filament\StaffLanding) and reaches assessments through
+    App\Filament\Resources\AssessmentReview, which is the view-all list
+    section 5 of Filament_CMS_Design.md actually grants them. Granting admins
+    this page as well put the entire Officer Portal in their sidebar and left
+    content management looking like a copy of it.
+    */
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::LawEnforcement,
             UserRole::PoliceAdmin,
-            UserRole::Admin,
         );
     }
 
@@ -49,14 +58,6 @@ class Police extends Page
     public function isOfficer(): bool
     {
         return Filament::auth()->user()?->role === UserRole::LawEnforcement;
-    }
-
-    // TODO: replace with a real draft query once drafts are persisted
-    // server-side. Carried over as-is from the Next.js stub, which also
-    // always returned null.
-    public function getOpenDraft(): ?array
-    {
-        return null;
     }
 
     public function getSessionTimeoutMinutes(): int

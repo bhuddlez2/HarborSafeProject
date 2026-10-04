@@ -25,7 +25,7 @@
             aria-valuemax="100"
         >
             <div
-                class="h-full bg-gray-900 transition-all duration-300"
+                class="h-full bg-[#5C0F8B] transition-all duration-300"
                 style="width: {{ $percent }}%"
             ></div>
         </div>
@@ -47,7 +47,7 @@
                     <button
                         type="button"
                         wire:click="previousQuestion"
-                        class="text-sm text-gray-500 hover:text-gray-900 transition block mb-4"
+                        class="text-sm text-gray-500 hover:text-[#5C0F8B] transition block mb-4"
                     >
                         Previous question
                     </button>
@@ -58,9 +58,9 @@
                             type="button"
                             x-on:click="$wire.answerQuestion({{ $value }}).then((isLast) => isLast && requestNextStep())"
                             wire:loading.attr="disabled"
-                            class="flex-1 border-2 border-gray-900 text-gray-900 text-lg py-4 rounded-lg
-                                   hover:bg-gray-900 hover:text-white
-                                   focus:outline-none focus-visible:ring-4 focus-visible:ring-gray-400 transition"
+                            class="flex-1 border-2 border-[#5C0F8B] text-[#5C0F8B] text-lg py-4 rounded-lg
+                                   hover:bg-[#5C0F8B] hover:text-white
+                                   focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5C0F8B]/40 transition"
                         >
                             {{ $label }}
                         </button>

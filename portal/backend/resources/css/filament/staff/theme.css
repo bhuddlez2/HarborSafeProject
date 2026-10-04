@@ -148,7 +148,7 @@
 
 .hs-lap-wizard .fi-input-wrp:focus-within,
 .hs-login .fi-input-wrp:focus-within {
-    border-color: var(--color-gray-900);
+    border-color: #5c0f8b;
     box-shadow: none;
 }
 
@@ -204,17 +204,15 @@
 }
 
 /*
- * Login: app/login/page.js — bg-gray-100 screen, white rounded-2xl shadow-lg
- * max-w-md card, px-8 py-10 md:px-12 md:py-14, full-width gray-900 button.
- * It sat outside the officer layout, so it rendered in globals.css's body
- * font (Arial) rather than Nunito.
+ * Login: brand-matched to the website and civilian assessment.
+ * Background #F4F2F7, Montserrat font, #5C0F8B button and focus accents.
  */
 .hs-login {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--font-montserrat);
 }
 
 .fi-simple-layout:has(.hs-login) {
-    background-color: var(--color-gray-100);
+    background-color: #f4f2f7;
 }
 
 .fi-simple-main:has(.hs-login) {
@@ -235,20 +233,24 @@
     gap: 1.5rem;
 }
 
+.hs-login .fi-input-wrp:focus-within {
+    border-color: #5c0f8b;
+}
+
 .hs-login .fi-ac .fi-btn {
     margin-top: 1rem;
     padding: 1rem 2rem;
     border-radius: var(--radius-lg);
-    background-color: var(--color-gray-900);
+    background-color: #5c0f8b;
     font-size: 1.125rem;
     line-height: 1.75rem;
     color: #fff;
 }
 
 .hs-login .fi-ac .fi-btn:hover {
-    background-color: var(--color-gray-700);
+    background-color: #4a0c72;
 }
 
 .hs-login .fi-ac .fi-btn:focus-visible {
-    box-shadow: 0 0 0 4px var(--color-gray-400);
+    box-shadow: 0 0 0 4px rgb(92 15 139 / 0.4);
 }

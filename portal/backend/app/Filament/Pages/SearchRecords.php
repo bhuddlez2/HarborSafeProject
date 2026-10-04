@@ -30,13 +30,14 @@ class SearchRecords extends Page
 
     protected Width | string | null $maxContentWidth = Width::Full;
 
-    // Same roles as My Assessments.
+    // Officers and police admins, matching the rest of the Officer Portal.
+    // Admins use App\Filament\Resources\AssessmentReview instead - see the
+    // comment on Police::canAccess().
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::LawEnforcement,
             UserRole::PoliceAdmin,
-            UserRole::Admin,
         );
     }
 

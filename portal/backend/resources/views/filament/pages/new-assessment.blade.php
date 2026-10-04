@@ -4,7 +4,7 @@
     itself is that card (see NewAssessment::form()).
 --}}
 <x-filament-panels::page class="hs-officer-page">
-    <main class="min-h-dvh bg-gray-100 flex items-start md:items-center justify-center p-6">
+    <main class="min-h-dvh bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
         <div class="w-full max-w-2xl">
             @if ($submitted)
                 {{-- Submitted phase --}}
@@ -18,9 +18,9 @@
                     <button
                         type="button"
                         wire:click="startNewAssessment"
-                        class="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg
-                               hover:bg-gray-700 focus:outline-none
-                               focus:ring-4 focus:ring-gray-400 transition"
+                        class="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
+                               hover:bg-[#4C0B74] focus:outline-none
+                               focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
                     >
                         Start new assessment
                     </button>

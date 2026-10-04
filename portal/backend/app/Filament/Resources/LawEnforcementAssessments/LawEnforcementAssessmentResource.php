@@ -26,6 +26,9 @@ use UnitEnum;
 // secretaries nothing. Access is LawEnforcementAssessmentPolicy
 // (via Filament's default canAccess() -> canViewAny()) plus the query scope
 // below. No create, edit or delete: new assessments come only from the
+// Officers get their own submissions, police admins get all of them, everyone
+// else gets nothing. Access is canAccess() below plus the query scope, with
+// LawEnforcementAssessmentPolicy authorizing each record. No create, edit or delete: new assessments come only from the
 // NewAssessment wizard.
 class LawEnforcementAssessmentResource extends Resource
 {
@@ -46,6 +49,17 @@ class LawEnforcementAssessmentResource extends Resource
 
     protected static ?int $navigationSort = 4;
 
+    // Officer Portal only (section 5): not admin, even though the policy lets
+    // admin view these records - admin's all-submissions view is
+    // AssessmentReviewResource, which shares that policy.
+    public static function canAccess(): bool
+    {
+        return (bool) Filament::auth()->user()?->hasActiveRole(
+            UserRole::LawEnforcement,
+            UserRole::PoliceAdmin,
+        );
+    }
+
     // Scopes the list, and the record lookup behind the view page, so an
     // officer requesting someone else's record, or a police admin requesting
     // another agency's, gets a 404. Unknown or inactive roles, and a police
@@ -55,7 +69,7 @@ class LawEnforcementAssessmentResource extends Resource
         $query = parent::getEloquentQuery();
         $user = Filament::auth()->user();
 
-        if ($user?->hasActiveRole(UserRole::Admin)) {
+        if ($user?->hasActiveRole(UserRole::PoliceAdmin)) {
             return $query;
         }
 
@@ -98,7 +112,6 @@ class LawEnforcementAssessmentResource extends Resource
                 TextColumn::make('submitter.name')
                     ->visible(fn (): bool => (bool) Filament::auth()->user()?->hasActiveRole(
                         UserRole::PoliceAdmin,
-                        UserRole::Admin,
                     )),
             ])
             ->defaultSort('DateCreated', 'desc')

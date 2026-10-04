@@ -27,12 +27,13 @@ class Login extends BaseLogin
         return 'Sign in';
     }
 
+    // Put a subheading under the main heading, if desired.
     public function getSubheading(): string | Htmlable | null
     {
-        return 'HarborSafe staff portal';
+        return null;
     }
 
-    // The original had plain Email/Password fields: no "Remember me" (without
+// The original had plain Email/Password fields: no "Remember me" (without
     // it Filament's authenticate() signs in with remember = false), no
     // required asterisks and no show-password toggle.
     public function form(Schema $schema): Schema
