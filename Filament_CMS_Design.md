@@ -1,12 +1,23 @@
 # Filament staff panel — design and setup guide
 
-**Status:** design settled. Done (§11): Phases 1–6, 11 (officer screens and wizard in
-Filament) and 12 (Next.js cleanup); Phase 7 partly. Phases 8, 9, 10 and 13 are not yet
-built.
+**Status:** design settled. Done (§11): Phases 1–6, 8 (content management), 10 (public
+content API and website cutover), 11 (officer screens and wizard in Filament) and 12
+(Next.js cleanup); Phases 7 and 13 partly. Phase 9 is not yet built.
 
-Two things the Content work still needs from outside the codebase: the restricted
-`harborsafe_content_public` MySQL user (§6.5) does not exist in any environment, and
-`php artisan storage:link` has not been proven on the Ionos deploy target (§3.2).
+**The CMS is end to end as of 2026-10-01.** Staff publish an event in the panel and it
+appears on the public website without a deploy, image included. What remains is user
+management (§11 phase 8), the change-log observer (§8), Shield permissions and policies
+(§11 phase 7).
+
+The content side of the panel is now built and under test: events, newsletters,
+categories, the two public-form submission lists and the three form-option lookups, plus
+an admin/police-admin assessment review page. See §13 for the navigation layout and §4
+for the file-storage reversal that came with it.
+
+One thing the Content work still needs from outside the codebase: the restricted
+`harborsafe_content_public` MySQL user (§6.5) does not exist in any environment. The
+`storage:link` dependency is **gone** — uploads are database rows now (§4), which is what
+removed it.
 
 ## 1. What this is
 
@@ -59,32 +70,62 @@ before writing any code.
   your system. Install or enable PHP's intl extension.
 ```
 
-The DLL is already present at `C:\xampp\php\ext\php_intl.dll`; line 925 of
-`C:\xampp\php\php.ini` just has `;extension=intl` commented out. Uncomment it and
-restart.
+On Fedora/Debian it is a separate package (`php-intl`). On Windows it is a `php.ini`
+line — the DLL ships in PHP's `ext/` directory, commented out as `;extension=intl`.
 
-**Every teammate's machine and the deploy target needs this.** It is a one-line fix with
-an intimidating failure mode, so put it in the README rather than letting each person
-rediscover it.
+**Related, and worse on Windows: XAMPP cannot run this project at all.** XAMPP for
+Windows ships PHP 8.2.12 at most, and `laravel/framework` v13 requires `^8.3` (as do
+`spatie/laravel-permission` 8.3.0 and Pest 4), so there is no version to lower to. PHP
+has to be installed separately from XAMPP, which is then useful only for MariaDB. A
+standalone Windows PHP also ships **no `php.ini` at all** and has every optional
+extension off, so `intl` is one of eight lines to uncomment rather than one — the others
+being `extension_dir`, `curl`, `fileinfo`, `mbstring`, `openssl`, `pdo_mysql` and `zip`.
 
-### 3.2 `storage:link` has to work on the deploy target
+**Every teammate's machine and the deploy target needs this.** The failure modes are
+intimidating and don't name the cause clearly, so the full Windows path is written up in
+`PORTAL_SETUP.md` rather than left for each person to rediscover.
 
-File storage is the local public disk (§4), which means uploads land in
-`storage/app/public` and are served through a symlink at `public/storage` created by:
+### 3.2 `storage:link` — no longer required (resolved)
 
-```
-php artisan storage:link
-```
+**This prerequisite is retired.** It used to say that uploads landed in
+`storage/app/public` behind a `php artisan storage:link` symlink, and that the Ionos
+shared host had never been proven to allow that. Uploads are now rows in
+`content_files` (§4, §6.7), so there is no symlink, no document-root arrangement to
+confirm, and nothing to re-run after a deploy.
 
-Run it once per environment, and **again after any deploy that rebuilds the tree** — the
-symlink is not part of the repo.
+What replaced it is a set of size limits, and an upload has to clear **four** of them.
+The lowest one wins, and the first two are the ones that actually bite:
 
-The open risk is the deploy target: the website and portal are going on **a shared server
-through Ionos** (see `Public_Forms_Backend_Design.md`), and shared hosts vary in whether
-they permit symlinks and in how the document root is arranged. Confirm `storage:link`
-works there, and that the plan has disk headroom, before building the upload UI. If it
-turns out symlinks are blocked, see §4 for the fallback — it is a config change, not a
-rewrite.
+| Limit | Where | Default | Why it matters |
+|---|---|---|---|
+| `upload_max_filesize` | php.ini | **2M** | Rejects the file before Laravel runs |
+| `post_max_size` | php.ini | **8M** | Bounds the whole request; must exceed the above |
+| temporary upload rule | Livewire | 12M | `max:12288` unless the config is published |
+| `max_allowed_packet` | MariaDB | 16M | Caps a single row in **both** directions |
+
+`App\Filament\Forms\Components\DatabaseFileUpload` asks for 4 MB on an image and 8 MB
+on a PDF, and this project's php.ini therefore needs `upload_max_filesize = 8M` and
+`post_max_size = 12M` (see `PORTAL_SETUP.md`).
+
+**The first two are nastier than they look.** PHP discards an oversized upload before any
+application code runs, so none of Filament's validation messages appear and the failure
+looks like the panel being broken rather than the file being too big. This was reported
+as exactly that: a 3.5 MB event photo failing against a stock `upload_max_filesize` of
+2M, while the panel's own helper text promised 4 MB.
+
+So the component no longer hardcodes its cap. `effectiveLimitKb()` clamps the intended
+limit to `min(upload_max_filesize, post_max_size)` and the helper text prints whatever
+survives, which means a misconfigured server shows "up to 2 MB" and enforces it cleanly
+rather than advertising a size it cannot accept. `tests/Feature/Staff/UploadLimitsTest.php`
+asserts the arithmetic and, separately, asserts that the machine running the suite can
+actually carry the intended limits.
+
+`max_allowed_packet` remains the outer bound: do not raise the application's limits past
+it, because a blob that squeezes in can still fail to read back out.
+
+`storage:link` is still worth running on a new environment — Laravel's own tooling
+assumes it, and `PORTAL_SETUP.md` lists it — but nothing in this feature depends on it
+any more.
 
 ### 3.3 spatie/laravel-permission will silently target the wrong database
 
@@ -180,6 +221,26 @@ per-resource permissions on top. Be honest that this means two things describe a
 and they can drift; keep `role` authoritative for "which dashboard is this person" and
 spatie authoritative for "may they perform this action on this resource."
 
+**Exception: law-enforcement assessments are not governed by spatie.** Access to
+`LawEnforcementAssessment` is enforced by the hand-written
+`App\Policies\LawEnforcementAssessmentPolicy`, registered with `Gate::policy()` in
+`AppServiceProvider`. It decides on `users.role` (through `User::hasActiveRole()`) plus
+ownership — `submitted_by` must be the signed-in officer — because "own submissions
+only" is a per-record rule a permission string cannot express. Every write method
+returns `false`. The resource's `getEloquentQuery()` applies the same scope, so another
+officer's record is a 404 rather than a 403.
+
+`LawEnforcementAssessmentResource` is therefore listed in `resources.exclude` in
+`config/filament-shield.php`, which keeps it out of both `shield:generate` and the role
+editor. Do not remove it and do not generate a policy for this model: Shield would
+overwrite the file with one that checks `View:LawEnforcementAssessment`-style
+permissions and drops the ownership rule.
+
+**Leave `super_admin.define_via_gate` at `false`.** Set to `true`, Shield registers a
+`Gate::before` that answers `true` for anyone holding the `super_admin` role before any
+policy runs, so that role would bypass this policy entirely — including the `false` on
+update and delete (§5 rule 1).
+
 **New role: `police_admin`.** `App\Enums\UserRole` goes from three cases to four. The
 column is already a string, so this is an enum change, not a migration.
 
@@ -193,24 +254,42 @@ them into the JSON the website already consumes (§6).
 **Connection: a new dedicated `Content` database**, with a paired `Content` /
 `ContentPublic` arrangement mirroring `Feedback` / `FeedbackPublic`.
 
-**File storage: the local public disk** for event images and newsletter PDFs —
-`storage/app/public` served via `php artisan storage:link` (§3.2). No cloud account, no
-credentials, and nothing for a teammate to wait on before working on content locally.
+**File storage: the database.** Event images and newsletter PDFs are rows in
+`content_files` on the `Content` connection (§6.7), not files on a disk.
 
-This reverses an earlier decision to use Amazon S3. S3 was dropped for two reasons. The
-reasons to use object storage — files surviving ephemeral containers, several servers
-sharing one store, CDN-scale traffic — none apply to a single persistent Ionos server
-holding a few dozen images and a quarterly PDF. And it required an AWS account, which is
-ruled out.
+This is the second reversal on this question, so the whole history is worth stating
+plainly:
 
-**Fallback if `storage:link` cannot work on Ionos:** use an S3-compatible provider that
-is not AWS — Cloudflare R2 (no egress charge), Backblaze B2, or DigitalOcean Spaces.
-Laravel's `s3` driver speaks to all of them by setting an endpoint, so the change is
-`composer require league/flysystem-aws-s3-v3`, the disk config, and
-`FILESYSTEM_DISK`. **No application code changes**: `image_path` and `file_path` hold a
-path on whichever disk is configured, so the models and migrations are already
-storage-agnostic. Do not reach for this until §3.2 has actually been tested on the
-deploy target.
+1. **Amazon S3** — dropped. The reasons to want object storage (files surviving
+   ephemeral containers, several servers sharing one store, CDN-scale traffic) apply to
+   none of this, and it required an AWS account, which is ruled out.
+2. **The local public disk** — dropped. It depended on `php artisan storage:link`
+   working on a shared Ionos host, which was never proven and sat as an open blocker in
+   §3.2 for exactly that reason.
+3. **The database** — chosen. It removes the deploy-target unknown entirely, needs no
+   cloud account, and makes a database dump a complete backup rather than half of one.
+   Authorization also becomes ordinary application code: a file is served by a
+   controller that can check whether the caller should see it, which a public disk
+   cannot do at all.
+
+The volume is what makes this reasonable — a few dozen images and a quarterly PDF, on one
+persistent server. It is not a general recommendation, and two things keep it honest:
+
+- **`max_allowed_packet` caps a single file** (§3.2). Uploads are capped at 4 MB for an
+  image and 8 MB for a PDF, well under the 16 MB default.
+- **The blob is never in a listing query.** `App\Models\ContentFile` adds a global scope
+  that selects every column except `contents`, so a table page costs kilobytes rather
+  than megabytes. There is a test asserting the generated SQL, because removing the
+  scope would not break anything visibly until a page timed out in production.
+
+**Fallback, if the database turns out not to suit the deploy target:** an S3-compatible
+provider that is not AWS — Cloudflare R2 (no egress charge), Backblaze B2, or
+DigitalOcean Spaces. Laravel's `s3` driver speaks to all of them via an endpoint setting.
+The retreat stays cheap because **`events.image_path` and `newsletters.file_path` were
+deliberately left in place** alongside the new `image_file_id` / `file_id` columns:
+exactly one of each pair is populated, and `Event::imageUrl()` / `Newsletter::fileUrl()`
+decide which to serve. So a move back to a disk is a config change plus a backfill, not a
+rewrite.
 
 ## 5. Access matrix — four roles
 
@@ -245,6 +324,19 @@ Four rules that are easy to get wrong and must be enforced explicitly:
 
 Rule 2 is the one most likely to be "helpfully" widened by someone who assumes admin is
 a superset. It is not.
+
+**Rule 2 was in fact widened, and has been corrected.** `Police`, `MyAssessments` and
+`SearchRecords` each granted `UserRole::Admin`, which put the entire Officer Portal in an
+admin's sidebar — and since content management was still a "Coming soon" stub, the panel
+an admin actually saw was the officer portal with one empty page bolted on. Admins now
+reach assessments through `App\Filament\Resources\AssessmentReview` (view-all,
+read-only, which is what the matrix grants) and the Officer Portal is
+`law_enforcement` + `police_admin` only.
+
+The matrix is now **enforced by test**, not by review:
+`tests/Feature/Staff/PanelAccessTest.php` writes it out as a table and asserts that every
+role can reach exactly its own row and nothing else, with a second pass for inactive
+accounts. A component appearing in the wrong role's list is a failing test.
 
 ## 6. Schema to add
 
@@ -301,14 +393,18 @@ tables, nothing else, no write access of any kind:
 -- to the actual application server in production rather than '%'.
 CREATE USER 'harborsafe_content_public'@'%' IDENTIFIED BY 'CHANGE_ME';
 
-GRANT SELECT ON content_db.events            TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.newsletters       TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.event_categories  TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.events            TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.newsletters       TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.event_categories  TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.content_files     TO 'harborsafe_content_public'@'%';
 
 FLUSH PRIVILEGES;
 ```
 
 Credentials go in `DB_USERNAME_CONTENT_PUBLIC` / `DB_PASSWORD_CONTENT_PUBLIC`.
+
+`content_files` is on that list because uploads are database rows now (§4, §6.7) and the
+public site has to be able to read an event's image. SELECT only, like the rest.
 
 ### 6.6 File upload security
 
@@ -332,13 +428,94 @@ requirements; they predate the storage decision and apply whichever disk is used
 - **Cap file size** in both Filament's `FileUpload` and the server-side request
   validation. Client-side limits alone are not a control.
 
-## 7. Public content API
+### 6.7 `content_files` — uploads as rows
 
-`GET /api/public/events` and `GET /api/public/newsletters` — published records only,
-read through `ContentPublic`, shaped by a Laravel API Resource that reconstructs the
-nested `location` / `image` / `registration` / `file` objects exactly as the mock JSON
-has them. Add them to the existing `Route::prefix('public')` group in
-`portal/backend/routes/api.php` alongside the feedback endpoints.
+Added with Phase 8. One row per uploaded event image or newsletter PDF:
+
+`FileID` (uuid PK), `name` (as uploaded), `mime_type`, `size_bytes`, `contents`
+(LONGBLOB), `checksum` (sha256), `created_at`.
+
+Four decisions in that shape, each of which matters:
+
+- **It is its own table, not columns on `events`/`newsletters`.** Those two are read
+  constantly by the public API, and a blob on them could not be excluded from a
+  `SELECT *` as cleanly.
+- **`longText()->charset('binary')`, not `binary()`.** Laravel's `binary()` maps to
+  plain `BLOB` on MySQL/MariaDB — 65 KB, far too small for a PDF.
+- **`contents` is excluded by a global scope** on `App\Models\ContentFile`, so no
+  listing or relation load ever pulls the bytes. `ContentFile::contents()` fetches that
+  one column for one row with the query builder, without hydrating a model, so the blob
+  never enters an attribute array.
+- **`size_bytes` is derived, never supplied.** It comes from the bytes actually stored.
+  `Newsletter` keeps `file_size_bytes` in step with a `saving` hook rather than a form
+  callback, because a form callback is skipped by a programmatic fill, a seeder or
+  tinker — and the column would then sit null while a file was plainly attached.
+
+Serving them is two routes, with two different authorization rules:
+
+| Route | For | Rule |
+|---|---|---|
+| `GET /api/public/content-files/{file}` | the public site | served only while a **published** event or newsletter points at the file |
+| `GET /staff/files/{file}` | the panel | any signed-in staff member who passes `canAccessPanel()` |
+
+The public rule is phrased that way because `content_files` has no owner and no published
+flag of its own, so the row cannot answer "may this be served" — its reachability from
+published content can. The consequence is deliberate: **unpublishing an event takes its
+image offline**, which is what the public API already implies. Without it, a draft's
+image would stay readable forever to anyone who had ever seen the URL.
+
+The staff route needs `App\Http\Middleware\EnsureStaffPanelAccess` rather than plain
+`auth`, for a reason worth recording: Laravel's `auth` redirects an anonymous visitor to
+a route named `login`, which this application does not have — sign-in is Filament's at
+`filament.staff.auth.login` — so `auth` turns an anonymous request into a 500 rather
+than a redirect. Filament's own `Authenticate` is no good either, since it resolves its
+guard from the current panel and there is no panel context on a plain web route.
+
+**Orphan rows are not collected.** Clearing an upload in the panel clears the foreign key
+and leaves the row, because an unpublish-then-republish would otherwise lose the file
+irrecoverably and a stray row costs a few kilobytes. If cleanup is ever wanted it belongs
+in a scheduled command that checks both referencing columns, not in a form hook.
+
+## 7. Public content API — built
+
+`GET /api/public/events` and `GET /api/public/newsletters`. Published records only, read
+through `ContentPublic`, in the existing `Route::prefix('public')` group.
+`App\Http\Resources\PublicEventResource` and `PublicNewsletterResource` reconstruct the
+nested `location` / `image` / `registration` / `file` objects from the flattened columns.
+
+**Those two resources are now the contract.** `mock-events.json` and
+`mock-newsletters.json` were the original specification and were deleted at cutover, so
+the key structure asserted in `tests/Feature/Public/ContentEndpointsTest.php` is the only
+written record of it. Changing a field there means changing
+`website/frontend/src/app/lib/content.js` in the same commit.
+
+Four things in the implementation that are not obvious:
+
+- **The website fetches in the browser, at view time.** It is a static export, so there
+  is no server to fetch on its behalf, and baking content in at build time would mean a
+  rebuild and redeploy every time staff added an event — the thing the panel exists to
+  avoid. The cost is that the page depends on the API being reachable when someone looks
+  at it, which is why `EventsContent.js` has a loading state, an error state carrying the
+  crisis line, and a hard 12-second timeout.
+- **`PublicEventController` joins `event_categories` instead of eager-loading it.**
+  Eloquent resolves a relation on the *related* model's connection, and `EventCategory`
+  declares `Content` — so `->with('category')` would read the category through the
+  full-access connection while the events came through the restricted one, defeating the
+  point and leaving a query the restricted user is never tested against.
+- **Times go out in Eastern with an offset**, e.g. `2026-10-22T18:00:00-04:00`, matching
+  the mock. The columns are UTC. A `Z` string would render identically on the site, but
+  it would stop matching the contract.
+- **A nested object is null or whole, never partial.** The page guards on plain
+  truthiness, and `{name: null}` is truthy — it would render an empty row with a map
+  pin. The `has*` helpers on the models exist for that decision.
+
+CORS needed no change: `config/cors.php` already covers `api/*`, allows localhost:3000 in
+local, and uses `WEBSITE_URL` in production. `supports_credentials` stays `false`, which
+is correct — these are unauthenticated public reads and the site has no credentials.
+
+The website reads `NEXT_PUBLIC_API_URL` (default `http://127.0.0.1:8000`), the same
+pattern `forms.js` already used. It is inlined at build time, so it must be set before
+`npm run build` on the deploy target.
 
 No officer-scoped API is needed. Officers review and edit inside Filament, so policies
 handle it and no new authenticated endpoints are required.
@@ -407,10 +584,10 @@ authenticated caller. Owner-only editing belongs to the policies in Phases 7–8
 
 Each phase has a gate. Don't start the next one until the gate passes.
 
-**1 — Prerequisites.** Enable `ext-intl` (§3.1); run `php artisan storage:link` and
-confirm it works on the deploy target, not just locally (§3.2).
-*Gate:* `php -r "var_dump(extension_loaded('intl'));"` prints `true`, and a file written
-to `storage/app/public` is reachable under `/storage/...`.
+**1 — Prerequisites.** *(Done.)* Enable `ext-intl` (§3.1). The old second half of this
+phase — proving `php artisan storage:link` on the deploy target — is retired, because
+uploads are database rows now (§3.2, §4).
+*Gate:* `php -r "var_dump(extension_loaded('intl'));"` prints `true`.
 
 **2 — Install Filament.** `composer require filament/filament:"^5.0"`, then
 `php artisan filament:install --panels`.
@@ -438,28 +615,70 @@ vars, grants from §6.5.
 seeder creating one user per role for local development.
 *(Partly done: `canAccessPanel()` — `is_active` plus a valid role — and the local-only
 `LocalStaffUserSeeder` exist, with two placeholder pages (`/staff/content`,
-`/staff/police`) gated by `canAccess()`. Shield permissions and the super-admin are
-still to do.)*
+`/staff/police`) gated by `canAccess()`. The seeder also creates a second officer, with
+both officers badged in a "Local Test PD" agency, and `LocalAssessmentSeeder` gives each
+two assessments. The law-enforcement assessment row of the matrix is enforced by
+`LawEnforcementAssessmentPolicy` (§4). Shield permissions for everything else and the
+super-admin are still to do.)*
 *Gate:* each of the four roles sees exactly its matrix row; admin is refused when
 creating an officer; `police_admin` has no edit action on assessments.
 
-**8 — Resources.** Events, newsletters, event categories, form options, submissions,
-assessments, users.
-*Gate:* CRUD works; assessments expose no edit action except to the owning officer; and an
-upload renamed to an allowed extension is still rejected (§6.6).
+**8 — Resources.** *(Done, except user management.)* Built, with the navigation layout in
+§13:
+
+- **Content** cluster — events (full create/edit pages), newsletters and categories
+  (modal), plus database-backed uploads (§6.7).
+- **Submissions** cluster — service feedback and resource requests, both read-only.
+- **Form options** cluster — services, resource types and counties, sharing one
+  `LookupResource` base.
+- **Assessment review** — all law-enforcement submissions, view-only, for admin and
+  police_admin (§5).
+- **Civilian assessments** — submissions from the public civilian flow, view-only, for
+  admin alone (§5).
+- **My Assessments** — `App\Filament\Resources\LawEnforcementAssessments`, at
+  `/staff/police/assessments`, replacing the old mockup page. Read-only list and view;
+  officers see their own submissions, police admins all of them. Admin is kept out by the
+  resource's `canAccess()` (it is Officer Portal), while `LawEnforcementAssessmentPolicy`
+  still grants admin record view, because `Assessment review` authorizes through the same
+  policy.
+
+**The civilian page was missed on the first pass, and the matrix caught nothing.** This
+phase shipped with `Assessment review` only, so a civilian submission landed in
+`_private_assessment` and was invisible to every role in the panel — reported as
+"submitted assessments aren't showing on the admin page". The §5 matrix had granted admin
+`Civilian assessments: view` all along. The lesson is narrow and worth keeping: the
+matrix-enforcement test in `tests/Feature/Staff/PanelAccessTest.php` can only check the
+components that exist, so it proves no role sees too much and says nothing about a row
+that was never built. A matrix line with no resource behind it fails silently.
+
+**Still to build: user management.** Creating and deactivating accounts is not in the
+panel yet, and it is the phase's remaining piece — note that it carries §5 rule 2, which
+says admin cannot create officers.
+*Gate:* CRUD works; assessments expose no edit action at all outside the owning officer's
+own screens; an upload renamed to an allowed extension is still rejected (§6.6).
+*Status:* covered by `tests/Feature/Staff/` — 56 tests over the access matrix, page
+rendering, authoring and file storage.
 
 **9 — Change-log observer** (§8).
 *Gate:* editing an owned assessment writes one row per changed field, attributed to the
 editing user.
 
-**10 — Content API + website cutover.** Public endpoints and API Resource (§7), then
-repoint `content.js` and delete the two mock files.
-*Gate:* the response shape matches `mock-events.json` field for field, and the events
-page renders real data with no component changes.
+**10 — Content API + website cutover.** *(Done.)* Public endpoints and API Resources
+(§7), `content.js` repointed, both mock files deleted.
+*Gate passed:* the response shape matched `mock-events.json` key for key, and the events
+page rendered a real event — title, category badge, Eastern time, registration link and a
+database-stored image — with **no component changes**; only the two loader functions in
+`content.js` were touched, as §6.1 required.
+
+One knock-on for the Playwright suite: `playwright.config.js` boots the website only, so
+specs that expect content now stub the two endpoints via `tests/support/content-api.js`
+rather than depending on a developer having `php artisan serve` running. The response
+shape itself is pinned on the backend instead.
 
 **11 — Officer screens and wizard in Filament.** *(Done.)* Carry the officer portal over
 from `portal/frontend` faithfully: a custom Vite theme for the panel; Home (the existing
-`Police` page), My Assessments and Search Records (placeholders — they had no design),
+`Police` page), My Assessments and Search Records (placeholders — they had no design;
+My Assessments has since become a resource, see Phase 8),
 Account (Filament's profile page), all in an "Officer Portal" navigation group; the LAP
 wizard as a `Wizard` page writing both assessment rows in one `Portal` transaction with
 `submitted_by = auth()->id()`; the login page restyled. Lock the assessment API down:
@@ -473,13 +692,29 @@ routes return 401 unauthenticated.
 *Gate:* no officer screen is served by `portal/frontend`; its old URLs redirect to the
 panel.
 
-**13 — Tests.** Extend the pattern already documented in `portal/backend/tests/Pest.php`
-— run-token tagging, `afterEach` cleanup, deliberately no `RefreshDatabase` — with
-per-role user helpers and an `actingAs` wrapper. Cover panel access per role, the
-four-role matrix, the change-log observer and the public content endpoints. Note there
-is currently **no** scaffolding for authenticated or Portal-connection tests at all, so
-this is new ground.
-*Gate:* `php artisan test` passes with one pre-existing failure.
+**13 — Tests.** *(Partly done.)* The scaffolding now exists: `tests/Pest.php` gained
+`staffUser()` and `cleanupStaffData()`, following the same run-token tagging and
+`afterEach` cleanup as the public-form helpers, and deliberately still no
+`RefreshDatabase`. `tests/Feature/Staff/` covers panel access per role, the four-role
+matrix, inactive accounts, page rendering, event and newsletter authoring (including the
+DST round trip both sides of the boundary) and database file storage.
+
+Two notes for whoever extends this:
+
+- **Cleanup sweeps on the fixed `peststaff` prefix, not the per-run token**, so a run
+  killed by a PHP fatal before `afterEach` does not leave rows behind forever. The
+  trade-off is that these tests must not be run in parallel against one database.
+- **`UploadedFile::fake()` is not usable here.** `fake()->image()` needs the GD
+  extension, which this project does not require and the dev box lacks; and
+  `fake()->create()` reports a size while writing no bytes, so anything stored from it
+  lands as a zero-byte row and every size assertion is meaningless. Use
+  `Illuminate\Http\Testing\File` with a real `tmpfile()` resource — Livewire's upload
+  helper also reads `$file->name`, a property only that subclass has.
+
+**Still to cover:** the change-log observer (Phase 9) and the public content endpoints
+(Phase 10), neither of which is built.
+*Gate:* `php artisan test` passes with one pre-existing failure. Currently 87 passing,
+1 failing.
 
 > `tests/Feature/ExampleTest.php` fails by design — it is Pest's stock scaffold asserting
 > `GET /` returns 200, and `routes/web.php` is empty. Leave it failing; don't "fix" it.
@@ -501,4 +736,111 @@ Still undecided:
   is logged with your name and a timestamp." — carried over verbatim from the old
   portal. Nothing logs views: it is neither designed nor built. The change log (§8)
   records edits only. Either design and build view logging (per record, per user, with a
-  timestamp) before My Assessments ships, or change that copy.
+  timestamp) before My Assessments ships, or change that copy. **Now live and untrue:**
+  My Assessments exists as a read-only resource and records open without being logged.
+
+## 13. Panel navigation and addressing
+
+Phase 8's layout. Three sidebar groups, and content management has **its own address
+space** — the thing that was wrong before, when every destination an admin had was a
+`/staff/police/*` URL.
+
+```
+Content management                              roles
+  Content        /staff/content                 admin, secretary
+    Events       /staff/content/events
+    Newsletters  /staff/content/newsletters
+    Categories   /staff/content/categories
+  Submissions    /staff/submissions             admin, secretary
+    Service feedback   /staff/submissions/service-feedback
+    Resource requests  /staff/submissions/resource-requests
+  Form options   /staff/form-options            admin, secretary
+    Services       /staff/form-options/services
+    Resource types /staff/form-options/resource-types
+    Counties       /staff/form-options/counties
+
+Assessments
+  Assessment review      /staff/assessment-review     admin, police_admin
+  Civilian assessments   /staff/civilian-assessments  admin only
+
+Officer Portal                                  law_enforcement, police_admin
+  Home            /staff/police
+  New assessment  /staff/police/new-assessment  law_enforcement only
+  My Assessments  /staff/police/assessments
+  Search Records  /staff/police/search
+  Account         (Filament's profile page)
+```
+
+### Why clusters
+
+The three content groups are Filament **clusters**, not loose resources. A cluster gives
+one shared URL prefix and renders its members as **tabs across the top of each page**
+(`SubNavigationPosition::Top`), so moving between events and newsletters is one click
+rather than a round trip through the sidebar. It also collapses nine resources into three
+sidebar entries.
+
+Two cluster behaviours are load-bearing:
+
+- `Cluster::shouldRegisterNavigation()` hides a cluster when every resource inside it
+  refuses the user, so each resource carrying its own matrix rule is enough — the cluster
+  needs no separate visibility logic. It still declares `canAccess()` for a direct URL hit.
+- `Cluster::mount()` redirects the cluster root to the first tab the user can actually
+  open. That is why `StaffLanding` can point at `ContentCluster::getUrl()` rather than at
+  a specific page: `/staff/content` is never a dead end, and the landing target does not
+  have to be kept in step with the matrix by hand.
+
+**Clusters must be registered with `->discoverClusters(...)` in `StaffPanelProvider`.**
+An unregistered cluster still resolves as a class but registers no routes, so every
+resource inside it 404s.
+
+### Sign-in and landing
+
+Unchanged in principle, and now covered by tests: **everyone sees the same login screen
+first** at `/staff/login`, and where they land afterwards is decided in exactly one place,
+`App\Filament\StaffLanding` — admin and secretary to content management, officers and
+police admins to the officer portal. Both entry points consult it: `StaffLoginResponse`
+after a sign-in, and `RedirectStaffHome` when someone opens `/staff` directly.
+
+Do not switch this to `$panel->homeUrl()`. That only sets the sidebar brand link and has
+no effect on either redirect. Filament's own default is emergent rather than declared —
+`RedirectToHomeController` sends the user to whichever navigation item sorts first — so
+adding a page with a low `$navigationSort` would otherwise silently move every role's
+landing page.
+
+### The stub that was there before
+
+`App\Filament\Pages\ContentManagement` (slug `content`, a "Coming soon" Blade view) is
+deleted. It was ungrouped, which floated it above the sidebar, and being the only
+non-officer destination it made the admin experience look like the officer portal with an
+empty page attached. The `/staff/content` address it held is now the Content cluster's.
+
+- **Staff sessions persist across navigation, and the local `.env` has drifted.**
+  Reported 2026-10-01: navigating away from content management and back does not ask
+  for a login again.
+
+  Three separate things are tangled here, and they need separating before anyone
+  "fixes" it:
+
+  1. **A config drift, which is the immediate cause.** `.env.example` sets
+     `SESSION_LIFETIME=15`, and `CLAUDE.md` says 15 because the officer Home promises a
+     15-minute lock. The working `.env` on at least one machine says **120**. That is a
+     two-hour idle window, so of course the session is still good on return. Check
+     `SESSION_LIFETIME` in your own `.env` before concluding anything about the code.
+     Worth deciding whether 15 is actually right for the *content* side too — a
+     secretary editing an event has different needs from an officer with victim PII on
+     screen, and one number currently serves both.
+
+  2. **It is an idle timeout, not a per-navigation re-auth.** Even at 15, leaving the
+     panel and coming back five minutes later will not prompt, because Laravel refreshes
+     the session cookie on activity and `expire_on_close` is `false`. That is what being
+     signed in means, and it is correct behaviour.
+
+  3. **If re-authentication on return is genuinely wanted, that is a feature, not a
+     setting.** The options are roughly: Filament's password-confirmation action on
+     sensitive pages; a client-side idle lock driven by the Page Visibility API that
+     clears the session after N minutes hidden; or `SESSION_EXPIRE_ON_CLOSE=true`, which
+     only covers closing the browser and not navigating away. Each of these has a real
+     cost to a secretary doing bulk content entry, so pick deliberately.
+
+  Related and still unresolved: the officer Home's "Each view is logged with your name
+  and a timestamp" copy, immediately above, which nothing implements.

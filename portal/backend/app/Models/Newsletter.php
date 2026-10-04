@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Facades\Storage;
 
 /*
 A newsletter issue listed on the website's Events & News page. Columns mirror
@@ -41,6 +42,7 @@ class Newsletter extends BaseModel
         'issue_date',
         'summary',
         'file_path',
+        'file_id',
         'file_size_bytes',
         'file_pages',
         'is_published',
@@ -49,6 +51,31 @@ class Newsletter extends BaseModel
     public function uniqueIds(): array
     {
         return [$this->primaryKey];
+    }
+
+    protected static function booted(): void
+    {
+        // BaseModel::booted() enforces the $connection declaration.
+        parent::booted();
+
+        /*
+        Keep file_size_bytes in step with whatever file_id points at.
+
+        Done on save rather than in the panel's form, because a form hook
+        (afterStateUpdated) only fires on an interactive change - it is skipped
+        by a programmatic fill, a seeder, or tinker, and the column then silently
+        stays null while a file is plainly attached. Here it is correct however
+        the row is written.
+        */
+        static::saving(function (self $newsletter): void {
+            if (! $newsletter->isDirty('file_id')) {
+                return;
+            }
+
+            $newsletter->file_size_bytes = blank($newsletter->file_id)
+                ? null
+                : ContentFile::find($newsletter->file_id)?->size_bytes;
+        });
     }
 
     protected function casts(): array
@@ -72,6 +99,29 @@ class Newsletter extends BaseModel
 
     public function hasFile(): bool
     {
-        return filled($this->file_path);
+        return filled($this->file_id) || filled($this->file_path);
+    }
+
+    // The uploaded PDF, stored as a row in content_files rather than on a
+    // disk. Safe to eager-load: ContentFile's global scope keeps the blob out.
+    public function file()
+    {
+        return $this->belongsTo(ContentFile::class, 'file_id', 'FileID');
+    }
+
+    /*
+    The absolute URL the website wants at file.url, or null. Same two-path
+    arrangement as Event::imageUrl() - a content_files row (what the panel
+    writes) or a disk path (the documented fallback).
+    */
+    public function fileUrl(): ?string
+    {
+        if (filled($this->file_id)) {
+            return route('public.content-files.show', ['file' => $this->file_id]);
+        }
+
+        return filled($this->file_path)
+            ? Storage::disk(config('filesystems.default'))->url($this->file_path)
+            : null;
     }
 }

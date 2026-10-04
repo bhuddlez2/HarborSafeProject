@@ -68,6 +68,11 @@ class StaffPanelProvider extends PanelProvider
             ->navigationItems([
                 // The original sidebar's last link. Filament also keeps the
                 // profile page in the user menu, for every role.
+                // The original officer sidebar's last link. Scoped to the two
+                // officer-portal roles so the group does not appear for an
+                // admin containing nothing but this. Every role still reaches
+                // the profile page through the user menu in the sidebar
+                // footer, which Filament renders regardless.
                 NavigationItem::make('Account')
                     ->url(fn (): string => filament()->getProfileUrl())
                     ->icon(Heroicon::OutlinedUser)
@@ -77,10 +82,21 @@ class StaffPanelProvider extends PanelProvider
                     ->visible(fn (): bool => (bool) auth()->user()?->hasActiveRole(
                         UserRole::LawEnforcement,
                         UserRole::PoliceAdmin,
-                        UserRole::Admin,
                     )),
             ])
+            // Sidebar group order. Without this Filament orders groups by
+            // first appearance, which depends on discovery order and so moves
+            // when a file is added.
+            ->navigationGroups([
+                'Content management',
+                'Assessments',
+                'Officer Portal',
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            // Clusters must be discovered explicitly; a cluster that is not
+            // registered here still resolves as a class but registers no
+            // routes, so every resource inside it 404s.
+            ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             // No Dashboard: with nothing on the panel root, Filament's built-in
             // RedirectToHomeController sends /staff (and the post-login
             // redirect) to the first navigation item the user can see, so each

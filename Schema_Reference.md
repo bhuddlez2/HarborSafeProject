@@ -118,7 +118,7 @@ Framework/Sanctum tables also present but not shown above (no app-specific struc
 | `users` | Every account, any role | `id` (PK), `role`, `is_active` | `role` is a native PHP enum (`App\Enums\UserRole`) cast, not a raw string comparison. Two-factor columns are Fortify-compatible and currently unused (login not built yet). |
 | `agencies` | Lookup table for law-enforcement agency types | `id` (PK), `name` | |
 | `law_enforcement_agents` | Badge/agency data, only for `role = law_enforcement` accounts | `user_id` (PK, FK → `users.id`) | 1:1 profile extension — secretary/admin accounts simply have no row here, rather than null columns on `users`. |
-| `law_enforcement_assessment` | LE-submitted offender/victim record | `DocumentID` (PK, uuid), `submitted_by` (FK → `users.id`, not nullable) | `submitted_by` is the ownership column — this is what will make "law enforcement sees only their own submissions" enforceable once policies are built. |
+| `law_enforcement_assessment` | LE-submitted offender/victim record | `DocumentID` (PK, uuid), `submitted_by` (FK → `users.id`, not nullable) | `submitted_by` is the ownership column — this is what `LawEnforcementAssessmentPolicy` and the staff panel's My Assessments resource match against to enforce "law enforcement sees only their own submissions". |
 | `assessment_change_log` | Audit trail for edits to `law_enforcement_assessment` | `ChangeLogID` (PK), `DocumentID` (FK), `ChangedBy` (FK → `users.id`) | |
 | `assessment_answer_change_log` | Audit trail for edits to `_assessment_answers` | `LogID` (PK), `AssessmentDocID` (FK), `ChangedBy` (FK → `users.id`) | |
 | `_assessment_answers` | The 11-question risk-indicator answers | `AssessmentDocID` (PK, uuid) | Shared by both `law_enforcement_assessment` and `_private_assessment` |
@@ -297,14 +297,14 @@ As with `Feedback`/`FeedbackPublic`, `config/database.php` defines two connectio
 -- rather than allowing any host.
 CREATE USER 'harborsafe_content_public'@'%' IDENTIFIED BY 'CHANGE_ME';
 
-GRANT SELECT ON content_db.events           TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.newsletters      TO 'harborsafe_content_public'@'%';
-GRANT SELECT ON content_db.event_categories TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.events           TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.newsletters      TO 'harborsafe_content_public'@'%';
+GRANT SELECT ON content_app_db.event_categories TO 'harborsafe_content_public'@'%';
 
 FLUSH PRIVILEGES;
 ```
 
-Note what is deliberately *not* granted: no `INSERT`, `UPDATE` or `DELETE` on anything, and no access of any kind to `Portal` or the feedback database. Once created, put the credentials in `DB_USERNAME_CONTENT_PUBLIC`/`DB_PASSWORD_CONTENT_PUBLIC`. Substitute the real database name for `content_db` — it comes from `DB_DATABASE_CONTENT`.
+Note what is deliberately *not* granted: no `INSERT`, `UPDATE` or `DELETE` on anything, and no access of any kind to `Portal` or the feedback database. Once created, put the credentials in `DB_USERNAME_CONTENT_PUBLIC`/`DB_PASSWORD_CONTENT_PUBLIC`. The database name comes from `DB_DATABASE_CONTENT`; `content_app_db` is what `.env.example` and the README use.
 
 Like the `FeedbackPublic` grants, these have to be run by hand against each environment — migrations can't grant MySQL privileges.
 
@@ -330,4 +330,4 @@ Like the `FeedbackPublic` grants, these have to be run by hand against each envi
 ### Requirements captured in the original design notes — not yet implemented (this was a schema-only pass)
 - Password policy: minimum 15 characters, maximum 64, checked against a common-password list — this is application-layer validation, not a schema concern; the `password` column already comfortably fits any hash Laravel produces.
 - Two-factor authentication — the `users` table now has Fortify-compatible columns for this, but no 2FA logic exists yet.
-- Authorization rule (admins see everything, law-enforcement see only their own) — the schema now has what's needed to enforce this (`submitted_by`), but no policies/middleware exist yet. That's the next phase: building the actual login flow, not schema.
+- Authorization rule (admins see everything, law-enforcement see only their own) — enforced in the staff panel for law-enforcement assessments by `LawEnforcementAssessmentPolicy` (role plus `submitted_by`) and the My Assessments resource's query scope. The API's `auth:sanctum` routes still have no per-record ownership check.

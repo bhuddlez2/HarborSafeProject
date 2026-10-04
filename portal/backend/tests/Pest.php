@@ -142,3 +142,59 @@ function cleanupPublicFormData(): void
     $registry->resources = [];
     $registry->counties = [];
 }
+
+/*
+Helpers for the staff-panel tests in Feature/Staff.
+
+Same approach as the public-form helpers above and for the same reason: there
+is no sqlite stand-in for the app's named connections, so these tests use the
+real Portal and Content databases and clean up after themselves rather than
+leaning on a transaction.
+
+Everything created is tagged with staffRunToken() - in the email for users, in
+the title for events and newsletters, in the name for uploaded files - and
+cleanupStaffData() removes it in an afterEach hook. Nothing here touches the
+seeded *@harborsafe.test accounts.
+*/
+
+// The fixed prefix every staff-test artifact carries. Cleanup sweeps on THIS
+// rather than on the per-run token, so a run that dies before afterEach - a
+// PHP fatal kills the process outright - does not leave rows behind forever.
+// It also means these tests must not be run in parallel against one database.
+const STAFF_TEST_PREFIX = 'peststaff';
+
+function staffRunToken(): string
+{
+    static $token = null;
+
+    return $token ??= STAFF_TEST_PREFIX . Illuminate\Support\Str::random(8);
+}
+
+function staffUser(App\Enums\UserRole $role, bool $isActive = true): App\Models\User
+{
+    return App\Models\User::create([
+        'name' => 'Pest ' . $role->value,
+        'email' => staffRunToken() . '-' . $role->value . '-' . Illuminate\Support\Str::random(4) . '@pest.test',
+        'password' => 'password',
+        'role' => $role,
+        'is_active' => $isActive,
+    ]);
+}
+
+function cleanupStaffData(): void
+{
+    $token = STAFF_TEST_PREFIX;
+
+    $content = Illuminate\Support\Facades\DB::connection('Content');
+
+    // Events and newsletters first: they reference content_files, so clearing
+    // the referencing rows before the files keeps the order safe if a foreign
+    // key is ever added to those columns.
+    $content->table('events')->where('title', 'like', $token . '%')->delete();
+    $content->table('newsletters')->where('title', 'like', $token . '%')->delete();
+    $content->table('content_files')->where('name', 'like', $token . '%')->delete();
+    $content->table('event_categories')->where('Name', 'like', $token . '%')->delete();
+
+    Illuminate\Support\Facades\DB::connection('Portal')
+        ->table('users')->where('email', 'like', $token . '%')->delete();
+}

@@ -4,9 +4,14 @@ Three applications in one repository, backing Harbor Safe House & Advocacy Cente
 
 | Path | What it is | Dev URL |
 |---|---|---|
-| `portal/backend/` | Laravel 13 JSON API. Backs **both** other apps. | http://127.0.0.1:8000 |
-| `website/frontend/` | Next.js 16, static export. The public informational site. | http://localhost:3000 |
-| `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment. | http://localhost:3001 |
+| `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · panel at [/staff](http://127.0.0.1:8000/staff) |
+| `website/frontend/` | Next.js 16, static export. The public informational site. Calls the API from the browser for the contact forms and the events page. | http://localhost:3000 |
+| `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment only. | http://localhost:3001 |
+
+If you are here to work on the staff portal, the code is in `portal/backend`
+(PHP, Blade and Tailwind), not in `portal/frontend` — the officer screens moved
+into the Filament panel. See [PORTAL_SETUP.md](PORTAL_SETUP.md) if you have not
+run PHP before.
 
 Nothing but the backend talks to the database. The website reaches only a
 narrow `/api/public/*` slice of the API and can never read anything back —
@@ -18,10 +23,10 @@ see [Schema_Reference.md](Schema_Reference.md).
 
 | Tool | Version | Notes |
 |---|---|---|
-| PHP | 8.3+ | Comes with XAMPP; `php -v` to check |
+| PHP | 8.3+ | **Not from XAMPP on Windows** — it ships 8.2 at most, and Laravel 13 needs 8.3. See [PORTAL_SETUP.md](PORTAL_SETUP.md) |
 | Composer | 2.x | |
 | Node.js | 20+ | Next.js 16 requires it |
-| MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running** |
+| MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running.** On Windows, XAMPP is a fine way to get just this |
 
 ### PHP's `intl` extension
 
@@ -36,9 +41,10 @@ install` refuses to resolve with:
 **It's a one-line fix, not a dependency problem.** Enable it for your platform:
 
 - **Fedora/RHEL** — it's a separate package: `sudo dnf install php-intl`
-- **Windows/XAMPP** — the DLL already ships with XAMPP. In
-  `C:\xampp\php\php.ini`, change `;extension=intl` to `extension=intl`, then
-  restart Apache from the XAMPP control panel.
+- **Windows** — XAMPP's PHP is too old for this project, so PHP gets
+  installed separately, and it arrives with *no* `php.ini` and every extension
+  switched off. `intl` is one of eight lines to uncomment, not one. Full Windows
+  setup is in [PORTAL_SETUP.md](PORTAL_SETUP.md).
 - **Debian/Ubuntu** — `sudo apt install php-intl` (or `php8.x-intl` to match
   your PHP version)
 
@@ -53,16 +59,26 @@ actually loads — it isn't always the one Apache uses.
 
 ### File uploads
 
-The content features (events, newsletters) store uploads on the **local disk**, not in
-cloud storage — no account or credentials needed. Run this once per environment, and
-again after any deploy that rebuilds the tree, or uploaded files return 404:
+Event images and newsletter PDFs are stored **in the database** (a `content_files` table
+on the `Content` connection), not on a disk and not in cloud storage. No account, no
+credentials, and nothing to re-run after a deploy — a database dump is a complete
+backup. See `Filament_CMS_Design.md` §4 for why.
 
-```bash
-php artisan storage:link
+**You must raise two php.ini limits or uploads fail confusingly.** The defaults are
+smaller than the panel allows, and PHP discards an oversized file *before* Laravel runs
+— so you get an opaque error rather than the panel's own "file too large" message:
+
+```ini
+upload_max_filesize = 8M   ; default is 2M
+post_max_size = 12M        ; default is 8M, and must stay above the line above
 ```
 
-That symlinks `public/storage` to `storage/app/public`. It is not part of the repo, so a
-fresh clone or a rebuilt deploy will not have it.
+Caps are 4 MB for an image and 8 MB for a PDF. Both sit under MariaDB's
+`max_allowed_packet` (16 MB by default), which bounds a single row in *both* directions
+— a blob that squeezes in past it can still fail to read back out.
+
+`php artisan storage:link` is no longer required by this feature. It is still worth
+running on a new environment, since Laravel's own tooling assumes it.
 
 ### Is my database already running?
 
@@ -99,13 +115,27 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Then edit `.env` and fill in the database section. Two physical databases are
-needed — create them if they don't exist:
+Then edit `.env` and fill in the database section. **Three** physical databases
+are needed — create them if they don't exist:
+
+These are the names `.env.example` ships with and the ones every other
+document here uses, so this works unedited:
 
 ```sql
 CREATE DATABASE assessment_app_db;   -- the Portal connection
 CREATE DATABASE feedback_app_db;     -- the Feedback + FeedbackPublic connections
+CREATE DATABASE content_app_db;      -- the Content + ContentPublic connections
 ```
+
+Or skip the SQL entirely: `php artisan db:create` reads those three
+`DB_DATABASE_*` values and creates whichever are missing. On Linux, where
+MariaDB authenticates root over a unix socket and the passwordless root in
+`.env` fails, use [docs/local-db-setup.sql](docs/local-db-setup.sql) instead —
+it creates the databases and a dedicated dev user.
+
+Nothing in the application reads a database name — only `.env` does — so you
+*can* call them something else. Don't: every doc and GRANT block here assumes
+these names, and a teammate reading your `.env` should recognise it.
 
 The `.env` keys that matter:
 
@@ -113,6 +143,8 @@ The `.env` keys that matter:
 DB_HOST_PORTAL / DB_PORT_PORTAL / DB_DATABASE_PORTAL / DB_USERNAME_PORTAL / DB_PASSWORD_PORTAL
 DB_HOST_FEEDBACK / DB_PORT_FEEDBACK / DB_DATABASE_FEEDBACK / DB_USERNAME_FEEDBACK / DB_PASSWORD_FEEDBACK
 DB_USERNAME_FEEDBACK_PUBLIC / DB_PASSWORD_FEEDBACK_PUBLIC
+DB_HOST_CONTENT / DB_PORT_CONTENT / DB_DATABASE_CONTENT / DB_USERNAME_CONTENT / DB_PASSWORD_CONTENT
+DB_USERNAME_CONTENT_PUBLIC / DB_PASSWORD_CONTENT_PUBLIC
 ```
 
 `FeedbackPublic` points at the *same database* as `Feedback` but with a
@@ -122,6 +154,13 @@ forms will not work until that user exists.** Create it with the `GRANT` block
 in [Schema_Reference.md](Schema_Reference.md#two-connections-one-database--how-write-only-is-enforced),
 then put its credentials in `DB_USERNAME_FEEDBACK_PUBLIC` / `DB_PASSWORD_FEEDBACK_PUBLIC`.
 
+`ContentPublic` works the same way for the events/newsletters database — a
+SELECT-only user, so the website can read published content but never change
+it. That user **does not exist in any environment yet**; until it does, leave
+`DB_USERNAME_CONTENT_PUBLIC` / `DB_PASSWORD_CONTENT_PUBLIC` pointing at the
+same credentials as `DB_*_CONTENT` and nothing breaks locally. The `GRANT`
+block is in [Schema_Reference.md](Schema_Reference.md#contentpublic--the-read-only-half).
+
 Migrate and seed:
 
 ```bash
@@ -129,11 +168,37 @@ php artisan migrate --database=Portal     # ALWAYS --database=Portal - see gotch
 php artisan db:seed --class=ServiceSeeder
 php artisan db:seed --class=ResourceSeeder
 php artisan db:seed --class=CountySeeder
+php artisan db:seed --class=EventCategorySeeder
 ```
 
-Those three seeders fill the lookup tables (services / resources / counties)
-that the website's contact forms read their dropdowns from. Without them the
-forms load empty. They're idempotent — safe to re-run.
+Those seeders fill the lookup tables — services / resources / counties for the
+website's contact forms, event categories for the events page. Without them
+those dropdowns and badges come up empty. All are idempotent, so they're safe
+to re-run.
+
+**Then create accounts, or you cannot get into the staff panel.** There is no
+sign-up screen: `/staff/login` will reject everything until users exist.
+
+```bash
+php artisan db:seed --class=LocalStaffUserSeeder --database=Portal
+```
+
+That creates one login per role (plus a deactivated account, for checking that
+`is_active` is enforced). It refuses to run unless `APP_ENV=local`. The password
+comes from `LOCAL_SEED_PASSWORD` in `.env`, falling back to `password` when
+that is unset.
+
+| Email | Role | Lands on |
+|---|---|---|
+| `officer@harborsafe.test` | `law_enforcement` | `/staff/police` — **the only role that sees the officer screens and the assessment wizard** |
+| `police-admin@harborsafe.test` | `police_admin` | `/staff/police` |
+| `admin@harborsafe.test` | `admin` | `/staff/content` |
+| `secretary@harborsafe.test` | `secretary` | `/staff/content` |
+| `inactive@harborsafe.test` | `admin`, deactivated | nothing — refused at the login screen |
+
+Note that `/staff/content` and Search Records are still
+"Coming soon" placeholders, so sign in as the officer if you want to see
+something built.
 
 Build the staff panel's theme (the Filament panel at `/staff` — officer
 screens, the assessment wizard, content management — is styled by a custom
@@ -166,12 +231,27 @@ npm install
 npm run dev              # http://localhost:3000
 ```
 
-The contact forms need the backend running (step 2). They read their option
-lists from `GET /api/public/{services,resources,counties}` and submit to
-`POST /api/public/{resource-requests,service-feedback}`.
+**Two parts of this site need the backend running (step 2).** Both fetch from
+the visitor's browser — it is a static export, so there is no server to fetch
+on its behalf:
+
+| Page | Reads | Writes |
+|---|---|---|
+| Contact (the two forms) | `GET /api/public/{services,resources,counties}` | `POST /api/public/{resource-requests,service-feedback}` |
+| Events & News | `GET /api/public/{events,newsletters}` and `/api/public/content-files/{id}` for images | — |
+
+Without the backend up, the contact forms cannot load their dropdowns and the
+events page shows its error state with the crisis line after a 12-second
+timeout. That is the intended behaviour, not a bug — but it does mean
+`npm run dev` alone is not enough to see those two pages working.
+
+Events and newsletters come from the staff panel, so the page is empty until
+someone publishes something there. Empty is a normal state and the page says so.
 
 The API base URL defaults to `http://127.0.0.1:8000`, so nothing to configure
-locally. To point at a different backend, create `website/frontend/.env.local`:
+locally. It is inlined at build time, so on a deploy target it must be set
+**before** `npm run build`. To point at a different backend, create
+`website/frontend/.env.local`:
 
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
