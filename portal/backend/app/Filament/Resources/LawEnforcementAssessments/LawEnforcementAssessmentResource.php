@@ -20,16 +20,13 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
-// "My Assessments": read-only list and view of law-enforcement assessments.
-// Officers get their own submissions, police admins those submitted by
-// officers of their own agency (User::agencyId()), admins all of them,
-// secretaries nothing. Access is LawEnforcementAssessmentPolicy
-// (via Filament's default canAccess() -> canViewAny()) plus the query scope
-// below. No create, edit or delete: new assessments come only from the
-// Officers get their own submissions, police admins get all of them, everyone
-// else gets nothing. Access is canAccess() below plus the query scope, with
-// LawEnforcementAssessmentPolicy authorizing each record. No create, edit or delete: new assessments come only from the
-// NewAssessment wizard.
+// "My Assessments": read-only list and view of law-enforcement assessments,
+// for officers only, each seeing their own submissions. Police admins and
+// admins review submissions in AssessmentReviewResource instead (admin all,
+// police admin own agency). Access is canAccess() below plus the
+// LawEnforcementAssessment::visibleTo() query scope, with
+// LawEnforcementAssessmentPolicy authorizing each record. No create, edit or
+// delete: new assessments come only from the NewAssessment wizard.
 class LawEnforcementAssessmentResource extends Resource
 {
     protected static ?string $model = LawEnforcementAssessment::class;
@@ -49,48 +46,21 @@ class LawEnforcementAssessmentResource extends Resource
 
     protected static ?int $navigationSort = 4;
 
-    // Officer Portal only (section 5): not admin, even though the policy lets
-    // admin view these records - admin's all-submissions view is
+    // Officers only (section 5). Police admins and admins are kept out even
+    // though the policy lets them view some of these records: their view is
     // AssessmentReviewResource, which shares that policy.
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::LawEnforcement,
-            UserRole::PoliceAdmin,
         );
     }
 
     // Scopes the list, and the record lookup behind the view page, so an
-    // officer requesting someone else's record, or a police admin requesting
-    // another agency's, gets a 404. Unknown or inactive roles, and a police
-    // admin with no agency, match nothing.
+    // officer requesting someone else's record gets a 404.
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
-        $user = Filament::auth()->user();
-
-        if ($user?->hasActiveRole(UserRole::PoliceAdmin)) {
-            return $query;
-        }
-
-        if ($user?->hasActiveRole(UserRole::PoliceAdmin)) {
-            $agencyId = $user->agencyId();
-
-            if ($agencyId === null) {
-                return $query->whereRaw('1 = 0');
-            }
-
-            return $query->whereHas(
-                'submitter.lawEnforcementAgent',
-                fn (Builder $agent): Builder => $agent->where('agency_id', $agencyId),
-            );
-        }
-
-        if ($user?->hasActiveRole(UserRole::LawEnforcement)) {
-            return $query->where('submitted_by', $user->getKey());
-        }
-
-        return $query->whereRaw('1 = 0');
+        return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
     public static function table(Table $table): Table
@@ -109,10 +79,6 @@ class LawEnforcementAssessmentResource extends Resource
                 TextColumn::make('OffenderLastName')
                     ->searchable(),
                 TextColumn::make('OffenderVictimRelationship'),
-                TextColumn::make('submitter.name')
-                    ->visible(fn (): bool => (bool) Filament::auth()->user()?->hasActiveRole(
-                        UserRole::PoliceAdmin,
-                    )),
             ])
             ->defaultSort('DateCreated', 'desc')
             ->recordActions([

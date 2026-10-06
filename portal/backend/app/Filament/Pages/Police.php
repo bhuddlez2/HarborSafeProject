@@ -3,6 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
+use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
@@ -58,6 +60,16 @@ class Police extends Page
     public function isOfficer(): bool
     {
         return Filament::auth()->user()?->role === UserRole::LawEnforcement;
+    }
+
+    // Where the "past assessment" link goes. Police admins land here too but
+    // cannot open My Assessments (officers only); their past records are in
+    // Assessment review, scoped to their agency.
+    public function pastAssessmentsUrl(): string
+    {
+        return Filament::auth()->user()?->hasActiveRole(UserRole::PoliceAdmin)
+            ? AssessmentReviewResource::getUrl('index')
+            : LawEnforcementAssessmentResource::getUrl('index');
     }
 
     public function getSessionTimeoutMinutes(): int
