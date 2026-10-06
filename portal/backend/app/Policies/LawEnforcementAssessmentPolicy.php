@@ -38,9 +38,11 @@ class LawEnforcementAssessmentPolicy
         return false;
     }
 
+    // Officers may edit their own submissions only.
     public function update(User $user, LawEnforcementAssessment $record): bool
     {
-        return false;
+        return $user->hasActiveRole(UserRole::LawEnforcement)
+            && (int) $record->submitted_by === $user->id;
     }
 
     public function delete(User $user, LawEnforcementAssessment $record): bool

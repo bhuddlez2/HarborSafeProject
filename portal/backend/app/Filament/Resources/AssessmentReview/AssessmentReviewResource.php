@@ -148,6 +148,7 @@ class AssessmentReviewResource extends Resource
                     ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
                         ($record->OffenderFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
+                    ->description(fn (LawEnforcementAssessment $record): string => $record->OffenderVictimRelationship ?? '')
                     ->searchable(['OffenderFirstName', 'OffenderLastName']),
 
                 TextColumn::make('submitter.name')
