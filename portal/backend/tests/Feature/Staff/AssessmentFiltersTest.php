@@ -4,10 +4,8 @@ use App\Enums\UserRole;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Models\LawEnforcementAssessment;
-use Filament\Forms\Components\Select;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 
 /*
@@ -49,18 +47,6 @@ function pestDatedAssessments(): object
     pestSubmittedOn($w->assessmentB, '2026-06-15');
 
     return $w;
-}
-
-// One of the table's filter dropdowns, found by its filter name.
-function pestFilterSelect(Testable $list, string $filter): Select
-{
-    return $list->instance()
-        ->getTableFiltersForm()
-        ->getComponent(
-            fn ($component): bool => $component instanceof Select
-                && str_ends_with($component->getStatePath(), "{$filter}.value"),
-            withHidden: true,
-        );
 }
 
 dataset('assessment tables', [
@@ -244,13 +230,6 @@ function pestDetailedAssessments(): object
     $w->visible = [$w->assessmentA, $w->alpha, $w->annPercent, $w->annX, $w->mcUnderscore, $w->mcO];
 
     return $w;
-}
-
-// Applies one filter's typed value the way the card does: into the deferred
-// state, then Apply.
-function pestApplyFilter(Testable $list, string $filter, mixed $value): Testable
-{
-    return $list->set("tableDeferredFilters.{$filter}.value", $value)->call('applyTableFilters');
 }
 
 dataset('name filters', [

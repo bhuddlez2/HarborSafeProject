@@ -966,6 +966,42 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
   returns (§5 rule 5). The table's search box still searches victim and offender names
   too. Enforced by `tests/Feature/Staff/AssessmentFiltersTest.php`.
 
+### Change log filters
+
+The Change log (`/assessment-changes`, `AssessmentEditResource`) gets its filters from
+`App\Filament\Tables\ChangeLogFilters::apply($table)`, built from `AssessmentFilters`'
+public helpers (`layout()`, `dateRange()`, `nameFilters()`, `visibleAssessments()`,
+`showsAgency()`), so the card is the same one: above the table, three columns, deferred
+until **Apply**, **Reset** beside it, persisted in the session.
+
+The page lists `assessment_edits` rows — one per save — and both field-level tables
+(`assessment_change_log`, `assessment_answer_change_log`) hang off an edit by `EditID`,
+so every filter covers detail and answer changes alike.
+
+| Filter | Admin | Police admin |
+|---|---|---|
+| Changed by — `assessment_edits.ChangedBy` | yes | yes, own agency's people only |
+| Original submitter — the edited assessment's `submitted_by` | yes | yes, own agency's officers only |
+| Date changed — from/to on `assessment_edits.EditedAt` | yes | yes |
+| Agency — via `assessment.submitter.lawEnforcementAgent.agency` | yes | **no** |
+| Victim first/last name, offender first/last name | yes | yes |
+
+- Rows: changed by and original submitter; date changed and agency; victim names;
+  offender names.
+- **Date** is the save's own `EditedAt` (the table's "When" column), not the child rows'
+  `TimeStamp`, which is written in the same transaction.
+- **Agency** follows the same rule as Assessment review: active admins only by
+  `users.role` (`hasActiveRole(UserRole::Admin)`), never Shield's `super_admin`; hidden
+  from police admins, and a hidden filter is never applied.
+- **Names** match the edited assessment's current name columns — case-insensitive,
+  partial, `%` and `_` literal. **The logged `PreviousValue` / `NewValue` are deliberately
+  not searchable or filterable**: the log is read per record, not mined for values.
+- **Scoped:** the table's query is `AssessmentEdit::visibleTo()`, which is
+  `LawEnforcementAssessment::visibleTo()` on the edited assessment (§5 rule 5), and every
+  dropdown's options come from the same scope, so a police admin is never offered another
+  agency's officers or the agency. Enforced by
+  `tests/Feature/Staff/ChangeLogFiltersTest.php`.
+
 ### Why clusters
 
 The three content groups are Filament **clusters**, not loose resources. A cluster gives

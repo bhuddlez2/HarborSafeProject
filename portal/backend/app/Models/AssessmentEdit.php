@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\AppendOnly;
 use App\Support\AssessmentFields;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 // One save of a law-enforcement assessment: who, when and why. Its field-level
@@ -50,6 +51,17 @@ class AssessmentEdit extends BaseModel
     public function editor()
     {
         return $this->belongsTo(User::class, 'ChangedBy');
+    }
+
+    // Edits to assessments the user may see, and nothing else: the change log
+    // follows LawEnforcementAssessment::visibleTo() rather than a rule of its
+    // own (Filament_CMS_Design.md section 5, rule 5).
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        return $query->whereHas(
+            'assessment',
+            fn (Builder $assessment): Builder => $assessment->visibleTo($user),
+        );
     }
 
     public function detailChanges()

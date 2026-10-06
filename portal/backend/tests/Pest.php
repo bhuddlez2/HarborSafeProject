@@ -301,3 +301,26 @@ function pestTwoAgencies(): object
         'assessmentB' => pestOfficerAssessment($officerB, 'VictimB'),
     ];
 }
+
+/*
+Filter-card helpers shared by AssessmentFiltersTest and ChangeLogFiltersTest.
+*/
+
+// One of the table's filter dropdowns, found by its filter name.
+function pestFilterSelect(Livewire\Features\SupportTesting\Testable $list, string $filter): Filament\Forms\Components\Select
+{
+    return $list->instance()
+        ->getTableFiltersForm()
+        ->getComponent(
+            fn ($component): bool => $component instanceof Filament\Forms\Components\Select
+                && str_ends_with($component->getStatePath(), "{$filter}.value"),
+            withHidden: true,
+        );
+}
+
+// Applies one filter's typed value the way the card does: into the deferred
+// state, then Apply.
+function pestApplyFilter(Livewire\Features\SupportTesting\Testable $list, string $filter, mixed $value): Livewire\Features\SupportTesting\Testable
+{
+    return $list->set("tableDeferredFilters.{$filter}.value", $value)->call('applyTableFilters');
+}

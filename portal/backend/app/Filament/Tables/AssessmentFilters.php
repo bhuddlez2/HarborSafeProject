@@ -46,21 +46,25 @@ final class AssessmentFilters
         // One row per group - dates; officer and agency; victim; offender -
         // with columnStart(1) opening each row, whichever filters before it
         // the user is shown.
-        $filters = [self::dateSubmitted()];
+        $filters = [self::dateRange('date_submitted', 'DateCreated', 'Submitted')];
 
         if ($reviewScreen) {
             $filters[] = self::submittingOfficer()->columnStart(1);
             $filters[] = self::agency();
         }
 
-        array_push(
-            $filters,
-            self::textContains('victim_first_name', 'VictimFirstName', 'Victim first name')->columnStart(1),
-            self::textContains('victim_last_name', 'VictimLastName', 'Victim last name'),
-            self::textContains('offender_first_name', 'OffenderFirstName', 'Offender first name')->columnStart(1),
-            self::textContains('offender_last_name', 'OffenderLastName', 'Offender last name'),
-        );
+        return self::layout($table, [...$filters, ...self::nameFilters()]);
+    }
 
+    /*
+    The helpers below are shared with ChangeLogFilters, so the change log's
+    card behaves and reads like the assessment tables' rather than copying them.
+    */
+
+    // The card itself: above the table, three columns, deferred until Apply,
+    // Reset beside it, kept in the session.
+    public static function layout(Table $table, array $filters): Table
+    {
         return $table
             ->filters($filters)
             ->filtersLayout(FiltersLayout::AboveContent)
@@ -70,31 +74,58 @@ final class AssessmentFilters
             ->persistFiltersInSession();
     }
 
-    private static function dateSubmitted(): Filter
+    // A from/until pair on one date column, labelled "<verb> from" and
+    // "<verb> until", each with its own chip.
+    public static function dateRange(string $name, string $column, string $verb): Filter
     {
-        return Filter::make('date_submitted')
+        return Filter::make($name)
             ->schema([
-                DatePicker::make('from')->label('Submitted from'),
-                DatePicker::make('until')->label('Submitted until'),
+                DatePicker::make('from')->label($verb.' from'),
+                DatePicker::make('until')->label($verb.' until'),
             ])
             ->columns(2)
             ->columnSpan(2)
             ->query(fn (Builder $query, array $data): Builder => $query
-                ->when($data['from'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('DateCreated', '>=', $date))
-                ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('DateCreated', '<=', $date)))
-            ->indicateUsing(function (array $data): array {
+                ->when($data['from'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate($column, '>=', $date))
+                ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate($column, '<=', $date)))
+            ->indicateUsing(function (array $data) use ($verb): array {
                 $indicators = [];
 
                 if ($data['from'] ?? null) {
-                    $indicators[] = Indicator::make('Submitted from '.$data['from'])->removeField('from');
+                    $indicators[] = Indicator::make($verb.' from '.$data['from'])->removeField('from');
                 }
 
                 if ($data['until'] ?? null) {
-                    $indicators[] = Indicator::make('Submitted until '.$data['until'])->removeField('until');
+                    $indicators[] = Indicator::make($verb.' until '.$data['until'])->removeField('until');
                 }
 
                 return $indicators;
             });
+    }
+
+    // Victim first and last name, then offender first and last name, two
+    // rows. $relationship, when given, is the path from the table's model to
+    // the assessment whose name columns are matched.
+    public static function nameFilters(?string $relationship = null): array
+    {
+        return [
+            self::textContains('victim_first_name', 'VictimFirstName', 'Victim first name', $relationship)->columnStart(1),
+            self::textContains('victim_last_name', 'VictimLastName', 'Victim last name', $relationship),
+            self::textContains('offender_first_name', 'OffenderFirstName', 'Offender first name', $relationship)->columnStart(1),
+            self::textContains('offender_last_name', 'OffenderLastName', 'Offender last name', $relationship),
+        ];
+    }
+
+    // Agency filters are for active admins only, by users.role (hasActiveRole)
+    // - not the Shield / spatie super_admin role.
+    public static function showsAgency(): bool
+    {
+        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin);
+    }
+
+    public static function visibleAssessments(): Builder
+    {
+        return LawEnforcementAssessment::query()->visibleTo(Filament::auth()->user());
     }
 
     // Only officers whose submissions the user can see, so a police admin is
@@ -136,21 +167,25 @@ final class AssessmentFilters
             )
             ->searchable()
             ->preload()
-            ->visible(fn (): bool => (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin));
+            ->visible(fn (): bool => self::showsAgency());
     }
 
     // Case-insensitive (the columns use a _ci collation) partial match, with
     // the user's % and _ escaped so they match literally. Blank is off.
-    private static function textContains(string $name, string $column, string $label): Filter
+    private static function textContains(string $name, string $column, string $label, ?string $relationship = null): Filter
     {
         return Filter::make($name)
             ->schema([TextInput::make('value')->label($label)->maxLength(50)])
-            ->query(function (Builder $query, array $data) use ($column): void {
+            ->query(function (Builder $query, array $data) use ($column, $relationship): void {
                 $value = trim((string) ($data['value'] ?? ''));
 
-                if ($value !== '') {
-                    $query->where($column, 'like', '%'.self::escapeLike($value).'%');
+                if ($value === '') {
+                    return;
                 }
+
+                $match = fn (Builder $query): Builder => $query->where($column, 'like', '%'.self::escapeLike($value).'%');
+
+                $relationship === null ? $match($query) : $query->whereHas($relationship, $match);
             })
             ->indicateUsing(fn (array $data): array => filled(trim((string) ($data['value'] ?? '')))
                 ? [Indicator::make($label.': '.trim($data['value']))->removeField('value')]
@@ -160,10 +195,5 @@ final class AssessmentFilters
     private static function escapeLike(string $value): string
     {
         return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
-    }
-
-    private static function visibleAssessments(): Builder
-    {
-        return LawEnforcementAssessment::query()->visibleTo(Filament::auth()->user());
     }
 }

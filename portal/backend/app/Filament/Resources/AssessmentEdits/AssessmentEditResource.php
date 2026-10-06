@@ -6,20 +6,18 @@ use App\Enums\UserRole;
 use App\Filament\PoliceAdminNavigation;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Tables\ChangeLogFilters;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -112,12 +110,7 @@ class AssessmentEditResource extends Resource
     // the record lookup behind the View action.
     public static function getEloquentQuery(): Builder
     {
-        $user = Filament::auth()->user();
-
-        return parent::getEloquentQuery()->whereHas(
-            'assessment',
-            fn (Builder $assessment): Builder => $assessment->visibleTo($user),
-        );
+        return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
     public static function infolist(Schema $schema): Schema
@@ -143,9 +136,10 @@ class AssessmentEditResource extends Resource
             ]);
     }
 
+    // Filters: App\Filament\Tables\ChangeLogFilters.
     public static function table(Table $table): Table
     {
-        return $table
+        return ChangeLogFilters::apply($table
             ->columns([
                 TextColumn::make('EditedAt')
                     ->label('When')
@@ -179,36 +173,11 @@ class AssessmentEditResource extends Resource
             ->modifyQueryUsing(fn (Builder $query): Builder => $query
                 ->with(['editor', 'assessment'])
                 ->withCount(['detailChanges', 'answerChanges']))
-            ->filters([
-                // Only editors of edits the user can already see, so a police
-                // admin is never offered another agency's officer names.
-                SelectFilter::make('ChangedBy')
-                    ->label('Officer')
-                    ->relationship(
-                        'editor',
-                        'name',
-                        fn (Builder $query): Builder => $query->whereIn(
-                            $query->qualifyColumn('id'),
-                            static::getEloquentQuery()->select('ChangedBy'),
-                        ),
-                    )
-                    ->searchable(),
-
-                Filter::make('EditedAt')
-                    ->label('Date')
-                    ->schema([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
-                    ])
-                    ->query(fn (Builder $query, array $data): Builder => $query
-                        ->when($data['from'] ?? null, fn (Builder $q, string $date): Builder => $q->whereDate('EditedAt', '>=', $date))
-                        ->when($data['until'] ?? null, fn (Builder $q, string $date): Builder => $q->whereDate('EditedAt', '<=', $date))),
-            ])
             ->recordActions([
                 ViewAction::make(),
             ])
             ->emptyStateHeading('No edits yet')
-            ->emptyStateDescription('Edits officers make to their submitted assessments appear here.');
+            ->emptyStateDescription('Edits officers make to their submitted assessments appear here.'));
     }
 
     public static function getPages(): array
