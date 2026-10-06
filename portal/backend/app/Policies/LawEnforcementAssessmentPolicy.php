@@ -7,10 +7,12 @@ use App\Models\LawEnforcementAssessment;
 use App\Models\User;
 
 // Hand-written, not Shield-generated: access here is the users.role column
-// plus ownership (submitted_by), not spatie permissions. The resource is in
-// resources.exclude in config/filament-shield.php so shield:generate never
-// overwrites this file. Read-only for everyone - new assessments come from
-// the NewAssessment wizard, and editing arrives with the change log.
+// plus ownership (submitted_by) and the police admin's agency, not spatie
+// permissions. LawEnforcementAssessmentResource is in resources.exclude in
+// config/filament-shield.php so shield:generate never overwrites this file.
+// New assessments come only from the NewAssessment wizard; the submitting
+// officer may edit their own (update() below), which is not yet recorded in a
+// change log. Nothing else is writable.
 class LawEnforcementAssessmentPolicy
 {
     public function viewAny(User $user): bool
@@ -22,23 +24,14 @@ class LawEnforcementAssessmentPolicy
         );
     }
 
-    // Admins see every submission; police admins only those whose submitting
-    // officer is in their own agency (none at all without an agency);
-    // officers only their own.
+    // Exactly the rows LawEnforcementAssessment::visibleTo() lets the user
+    // list - see that scope for the rule. Asking the scope, rather than
+    // restating it here, is what keeps this check and the lists in step.
     public function view(User $user, LawEnforcementAssessment $record): bool
     {
-        if ($user->hasActiveRole(UserRole::Admin)) {
-            return true;
-        }
-
-        if ($user->hasActiveRole(UserRole::PoliceAdmin)) {
-            $agencyId = $user->agencyId();
-
-            return $agencyId !== null && $record->submitter?->agencyId() === $agencyId;
-        }
-
-        return $user->hasActiveRole(UserRole::LawEnforcement)
-            && (int) $record->submitted_by === $user->id;
+        return LawEnforcementAssessment::visibleTo($user)
+            ->whereKey($record->getKey())
+            ->exists();
     }
 
     public function create(User $user): bool

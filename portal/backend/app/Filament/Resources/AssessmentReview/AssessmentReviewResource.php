@@ -18,13 +18,17 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /*
-All law-enforcement assessment submissions, for police admins and admins.
+Law-enforcement assessment submissions, for admins and police admins: admins
+see all of them, a police admin only those submitted by officers of their own
+agency (section 5 rule 5 of Filament_CMS_Design.md). Both through
+LawEnforcementAssessment::visibleTo() - see getEloquentQuery() below.
 
-This page exists because section 5 of Filament_CMS_Design.md grants both roles
-"LE assessments: view all", and until now the only way an admin could see any
+This page exists because section 5 grants admin "LE assessments: view" and
+police_admin "own agency", and until now the only way an admin could see any
 assessment was through the Officer Portal's own screens - which are officer
 tools and no longer shown to admins.
 
@@ -35,8 +39,8 @@ wizard at App\Filament\Pages\NewAssessment is the only way a row is ever
 written, and it is officers-only.
 
 Deliberately NOT a replacement for the officer-facing My Assessments page
-(App\Filament\Resources\LawEnforcementAssessments), which is scoped to the
-signed-in officer. This one is the all-submissions view.
+(App\Filament\Resources\LawEnforcementAssessments), which is officers only
+and scoped to the signed-in officer. This one is the review view.
 
 Secretaries must never reach this: rule 3, secretary never sees assessment PII,
 neither civilian nor law-enforcement.
@@ -68,6 +72,17 @@ class AssessmentReviewResource extends Resource
             UserRole::Admin,
             UserRole::PoliceAdmin,
         );
+    }
+
+    /*
+    The only thing keeping another agency's records out of a police admin's
+    list: Filament does not run the policy per row. It also scopes the record
+    lookup behind the View action, so another agency's record cannot be
+    opened by key either. Never return an unscoped query here.
+    */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
     public static function infolist(Schema $schema): Schema
@@ -173,9 +188,19 @@ class AssessmentReviewResource extends Resource
             // Without this the Yes-answers column would issue a query per row.
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter']))
             ->filters([
+                // Options limited to officers whose submissions the user can
+                // see, so a police admin is never offered another agency's
+                // officer names (and nobody is offered admins or secretaries).
                 SelectFilter::make('submitted_by')
                     ->label('Officer')
-                    ->relationship('submitter', 'name')
+                    ->relationship(
+                        'submitter',
+                        'name',
+                        fn (Builder $query): Builder => $query->whereIn(
+                            $query->qualifyColumn('id'),
+                            LawEnforcementAssessment::visibleTo(Filament::auth()->user())->select('submitted_by'),
+                        ),
+                    )
                     ->searchable(),
             ])
             // View only - see the class comment. No edit, delete or bulk

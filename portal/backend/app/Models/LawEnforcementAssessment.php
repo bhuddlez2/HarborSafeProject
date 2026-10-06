@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class LawEnforcementAssessment extends BaseModel
@@ -46,5 +48,41 @@ class LawEnforcementAssessment extends BaseModel
     public function assessmentAnswers()
     {
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
+    }
+
+    // The one rule for who may see which law-enforcement assessments
+    // (Filament_CMS_Design.md section 5, rule 5). Both staff screens scope
+    // their queries with it and LawEnforcementAssessmentPolicy::view() asks
+    // it, so a list and a single-record check can never disagree.
+    //
+    // Admins see every submission; police admins only those whose submitting
+    // officer is currently in their own agency; officers only their own.
+    // Everyone else - no user, inactive, secretary, unknown role, or a police
+    // admin with no agency - matches nothing. Never widen the police admin
+    // branch to every agency: it was narrowed on purpose.
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        if ($user?->hasActiveRole(UserRole::Admin)) {
+            return $query;
+        }
+
+        if ($user?->hasActiveRole(UserRole::PoliceAdmin)) {
+            $agencyId = $user->agencyId();
+
+            if ($agencyId === null) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            return $query->whereHas(
+                'submitter.lawEnforcementAgent',
+                fn (Builder $agent): Builder => $agent->where('agency_id', $agencyId),
+            );
+        }
+
+        if ($user?->hasActiveRole(UserRole::LawEnforcement)) {
+            return $query->where('submitted_by', $user->getKey());
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 }

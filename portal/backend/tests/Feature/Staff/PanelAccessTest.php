@@ -84,13 +84,14 @@ dataset('role matrix', [
             'civilian-assessments',
         ],
     ],
-    // Views all law-enforcement submissions, provisions officers, edits
-    // nothing. No content access at all.
+    // Reviews its own agency's law-enforcement submissions in Assessment
+    // review (rule 5), provisions officers, edits nothing. Not My Assessments,
+    // which is officers only. No content access at all.
     'police_admin' => [
         UserRole::PoliceAdmin,
         [
             'assessment-review',
-            'police.home', 'police.my-assessments', 'police.search-records',
+            'police.home', 'police.search-records',
         ],
     ],
     // The only role that may submit an assessment, and the only one with no
