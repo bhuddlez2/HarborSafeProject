@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Enums\UserRole;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
+use App\Filament\PoliceAdminNavigation;
 use App\Http\Middleware\RedirectStaffHome;
 use App\Http\Responses\StaffLoginResponse;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
@@ -73,18 +74,18 @@ class StaffPanelProvider extends PanelProvider
                 fn (): string => view('filament.partials.officer-identity')->render(),
             )
             ->navigationItems([
-                // The original sidebar's last link. Filament also keeps the
-                // profile page in the user menu, for every role.
                 // The original officer sidebar's last link. Scoped to the two
                 // officer-portal roles so the group does not appear for an
                 // admin containing nothing but this. Every role still reaches
                 // the profile page through the user menu in the sidebar
-                // footer, which Filament renders regardless.
+                // footer, which Filament renders regardless. Officers find it
+                // last in Officer Portal, police admins last in their single
+                // Police Admin group (App\Filament\PoliceAdminNavigation).
                 NavigationItem::make('Account')
                     ->url(fn (): string => filament()->getProfileUrl())
                     ->icon(Heroicon::OutlinedUser)
-                    ->group('Officer Portal')
-                    ->sort(6)
+                    ->group(fn (): string => PoliceAdminNavigation::applies() ? PoliceAdminNavigation::GROUP : 'Officer Portal')
+                    ->sort(fn (): int => PoliceAdminNavigation::applies() ? PoliceAdminNavigation::ACCOUNT : 6)
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.staff.auth.profile'))
                     ->visible(fn (): bool => (bool) auth()->user()?->hasActiveRole(
                         UserRole::LawEnforcement,
@@ -98,6 +99,7 @@ class StaffPanelProvider extends PanelProvider
                 'Content management',
                 'Assessments',
                 'Officer Portal',
+                PoliceAdminNavigation::GROUP,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             // Clusters must be discovered explicitly; a cluster that is not

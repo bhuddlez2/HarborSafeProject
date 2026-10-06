@@ -899,19 +899,34 @@ Content management                              roles
     Resource types /form-options/resource-types
     Counties       /form-options/counties
 
-Assessments
-  Assessment review      /assessment-review     admin (all), police_admin (own agency)
-  Civilian assessments   /civilian-assessments  admin only
+Assessments                                     admin
+  Assessment review      /assessment-review     all agencies
+  Civilian assessments   /civilian-assessments
+  Change log             /assessment-changes
 
-Officer Portal                                  law_enforcement, police_admin
+Officer Portal                                  law_enforcement
   Home            /police
-  New assessment  /police/new-assessment  law_enforcement only
-  My Assessments  /police/assessments     law_enforcement only
+  New assessment  /police/new-assessment
+  My Assessments  /police/assessments
   Account         (Filament's profile page)
 
-Police Admin                                    police_admin (with an agency)
-  Officers        /police/officers        own agency's officers only
+Police Admin                                    police_admin - its ONLY group
+  Home               /police                    sort 10
+  Assessment review  /assessment-review         20  own agency
+  Change log         /assessment-changes        30  own agency
+  Officers           /police/officers           40  own agency's officers; needs an agency
+  Account            (Filament's profile page)  50
 ```
+
+**A police admin sees one group.** Home, Assessment review, Change log and Account are
+shared with other roles, which keep their own groups above. Each of those items picks its
+group and position by role: `getNavigationGroup()` / `getNavigationSort()` overrides on
+`Police`, `AssessmentReviewResource` and `AssessmentEditResource`, and closures on the
+Account `NavigationItem` in `StaffPanelProvider` (`group()` and `sort()` take closures in
+v5). All of them read `App\Filament\PoliceAdminNavigation`, the one place the police
+admin's group name and order are declared; sorts step by 10 so items can slot in.
+Grouping and order only — access is still each item's own `canAccess()`.
+`tests/Feature/Staff/NavigationTest.php` pins every role's sidebar.
 
 Search Records (`/police/search`, a "Coming soon" placeholder) was removed: filtering on
 the assessment tables replaces it.

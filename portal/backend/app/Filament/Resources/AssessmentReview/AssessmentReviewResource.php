@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AssessmentReview;
 
 use App\Enums\UserRole;
+use App\Filament\PoliceAdminNavigation;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
@@ -66,6 +67,19 @@ class AssessmentReviewResource extends Resource
     protected static string | UnitEnum | null $navigationGroup = 'Assessments';
 
     protected static ?int $navigationSort = 1;
+
+    // A police admin finds this in their single "Police Admin" group;
+    // everyone else keeps the group and position above. Grouping and order
+    // only - see App\Filament\PoliceAdminNavigation.
+    public static function getNavigationGroup(): string | UnitEnum | null
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::GROUP : parent::getNavigationGroup();
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::ASSESSMENT_REVIEW : parent::getNavigationSort();
+    }
 
     public static function canAccess(): bool
     {

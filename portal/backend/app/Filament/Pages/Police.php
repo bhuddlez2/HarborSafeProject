@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use BackedEnum;
@@ -29,6 +30,19 @@ class Police extends Page
     protected static string | UnitEnum | null $navigationGroup = 'Officer Portal';
 
     protected static ?int $navigationSort = 2;
+
+    // A police admin finds this in their single "Police Admin" group;
+    // everyone else keeps the group and position above. Grouping and order
+    // only - see App\Filament\PoliceAdminNavigation.
+    public static function getNavigationGroup(): string | UnitEnum | null
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::GROUP : parent::getNavigationGroup();
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::HOME : parent::getNavigationSort();
+    }
 
     protected Width | string | null $maxContentWidth = Width::Full;
 

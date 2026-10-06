@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OfficerAccounts;
 
 use App\Enums\UserRole;
+use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\OfficerAccounts\Pages\CreateOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\EditOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
@@ -47,9 +48,10 @@ class OfficerAccountResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Police Admin';
+    // Fourth in the police admin's sidebar - see App\Filament\PoliceAdminNavigation.
+    protected static string | UnitEnum | null $navigationGroup = PoliceAdminNavigation::GROUP;
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = PoliceAdminNavigation::OFFICERS;
 
     // The one place every check ends up: the can*() methods below, and the
     // table and page actions, which ask for the response directly. Anything
