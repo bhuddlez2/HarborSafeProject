@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
+use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
 use BackedEnum;
 use Filament\Actions\ViewAction;
@@ -17,7 +18,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
@@ -145,7 +145,7 @@ class AssessmentReviewResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AssessmentFilters::apply($table
             ->columns([
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
@@ -190,22 +190,6 @@ class AssessmentReviewResource extends Resource
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
-            ->filters([
-                // Options limited to officers whose submissions the user can
-                // see, so a police admin is never offered another agency's
-                // officer names (and nobody is offered admins or secretaries).
-                SelectFilter::make('submitted_by')
-                    ->label('Officer')
-                    ->relationship(
-                        'submitter',
-                        'name',
-                        fn (Builder $query): Builder => $query->whereIn(
-                            $query->qualifyColumn('id'),
-                            LawEnforcementAssessment::visibleTo(Filament::auth()->user())->select('submitted_by'),
-                        ),
-                    )
-                    ->searchable(),
-            ])
             // View only - see the class comment. No edit, delete or bulk
             // actions anywhere on this resource.
             ->recordActions([
@@ -213,7 +197,7 @@ class AssessmentReviewResource extends Resource
                 ViewAction::make(),
             ])
             ->emptyStateHeading('No assessments submitted yet')
-            ->emptyStateDescription('Assessments submitted by officers through the portal appear here.');
+            ->emptyStateDescription('Assessments submitted by officers through the portal appear here.'), reviewScreen: true);
     }
 
     public static function getPages(): array

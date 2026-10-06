@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
 use App\Support\AssessmentFields;
@@ -129,7 +130,7 @@ class LawEnforcementAssessmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AssessmentFilters::apply($table
             ->columns([
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
@@ -199,7 +200,7 @@ class LawEnforcementAssessmentResource extends Resource
                         return $record;
                     })
                     ->successNotificationTitle('Edit saved and recorded in the change history'),
-            ]);
+            ]), reviewScreen: false);
     }
 
     public static function infolist(Schema $schema): Schema

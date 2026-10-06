@@ -13,7 +13,6 @@ use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackR
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Pages\Police;
-use App\Filament\Pages\SearchRecords;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
@@ -26,7 +25,7 @@ Section 5 of Filament_CMS_Design.md as executable assertions - the access
 matrix, one row per role.
 
 This file exists because the matrix had drifted: Police, MyAssessments and
-SearchRecords all granted UserRole::Admin, which put the whole Officer Portal
+SearchRecords (since removed) all granted UserRole::Admin, which put the whole Officer Portal
 in an admin's sidebar and made content management look like a copy of it. The
 matrix said otherwise, but nothing checked.
 
@@ -59,7 +58,6 @@ function allStaffComponents(): array
         'police.home' => Police::class,
         'police.new-assessment' => NewAssessment::class,
         'police.my-assessments' => LawEnforcementAssessmentResource::class,
-        'police.search-records' => SearchRecords::class,
     ];
 }
 
@@ -101,7 +99,7 @@ dataset('role matrix', [
             'assessment-review',
             // LE change logs: own agency (section 5, rule 5).
             'assessment-changes',
-            'police.home', 'police.search-records',
+            'police.home',
         ],
     ],
     // The only role that may submit an assessment, and the only one with no
@@ -110,7 +108,7 @@ dataset('role matrix', [
         UserRole::LawEnforcement,
         [
             'police.home', 'police.new-assessment',
-            'police.my-assessments', 'police.search-records',
+            'police.my-assessments',
         ],
     ],
 ]);

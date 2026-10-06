@@ -196,10 +196,6 @@ that is unset.
 | `secretary@harborsafe.test` | `secretary` | `/content` |
 | `inactive@harborsafe.test` | `admin`, deactivated | nothing — refused at the login screen |
 
-Note that `/content` and Search Records are still
-"Coming soon" placeholders, so sign in as the officer if you want to see
-something built.
-
 Build the staff panel's theme (the Filament panel, served from the site root — officer
 screens, the assessment wizard, content management — is styled by a custom
 Tailwind theme in `resources/css/filament/staff/theme.css`, compiled by Vite):

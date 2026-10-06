@@ -1,5 +1,11 @@
 <?php
 
+use App\Enums\UserRole;
+use App\Models\Agency;
+use App\Models\AssessmentAnswers;
+use App\Models\LawEnforcementAgent;
+use App\Models\LawEnforcementAssessment;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -224,4 +230,72 @@ function cleanupStaffData(): void
     // law_enforcement_agents rows cascade with their user.
     $portal->table('users')->where('email', 'like', $token . '%')->delete();
     $portal->table('agencies')->where('name', 'like', $token . '%')->delete();
+}
+
+/*
+Agencies, their members and officer assessments, for the staff tests that
+check the agency scope (PoliceAdminAgencyScopeTest, AssessmentFiltersTest).
+Everything is tagged with STAFF_TEST_PREFIX: users and agencies through
+staffRunToken(), assessments through their submitting user, and
+cleanupStaffData() sweeps all of it.
+*/
+
+function pestAgency(string $name): Agency
+{
+    return Agency::withoutTimestamps(
+        fn (): Agency => Agency::create(['name' => staffRunToken().' '.$name]),
+    );
+}
+
+// A staff account with a law_enforcement_agents row in $agency - the row
+// User::agencyId() reads, for police admins as well as officers.
+function pestAgencyMember(UserRole $role, ?Agency $agency): User
+{
+    $user = staffUser($role);
+
+    LawEnforcementAgent::withoutTimestamps(fn () => LawEnforcementAgent::create([
+        'user_id' => $user->getKey(),
+        'badge_number' => 'PEST-'.$user->getKey(),
+        'agency_id' => $agency?->getKey(),
+    ]));
+
+    return $user;
+}
+
+function pestOfficerAssessment(User $officer, string $victim): LawEnforcementAssessment
+{
+    $answers = AssessmentAnswers::create(collect(range(1, 11))
+        ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => $id === 1])
+        ->all());
+
+    return LawEnforcementAssessment::create([
+        'submitted_by' => $officer->getKey(),
+        'VictimFirstName' => STAFF_TEST_PREFIX.$victim,
+        'VictimLastName' => 'Doe',
+        'VictimSex' => 'F',
+        'OffenderFirstName' => 'Test',
+        'OffenderLastName' => 'Offender',
+        'OffenderSex' => 'M',
+        'AssessmentDocID' => $answers->getKey(),
+    ]);
+}
+
+// Two agencies, A and B, each with a police admin, an officer and one
+// assessment by that officer.
+function pestTwoAgencies(): object
+{
+    $agencyA = pestAgency('Agency A');
+    $agencyB = pestAgency('Agency B');
+
+    $officerA = pestAgencyMember(UserRole::LawEnforcement, $agencyA);
+    $officerB = pestAgencyMember(UserRole::LawEnforcement, $agencyB);
+
+    return (object) [
+        'policeAdminA' => pestAgencyMember(UserRole::PoliceAdmin, $agencyA),
+        'policeAdminB' => pestAgencyMember(UserRole::PoliceAdmin, $agencyB),
+        'officerA' => $officerA,
+        'officerB' => $officerB,
+        'assessmentA' => pestOfficerAssessment($officerA, 'VictimA'),
+        'assessmentB' => pestOfficerAssessment($officerB, 'VictimB'),
+    ];
 }

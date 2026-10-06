@@ -189,8 +189,7 @@ management.
 
 **What stays in Next.js.** Only the anonymous civilian assessment at
 `portal/frontend/app/page.js`. It cannot move into Filament because it is anonymous and
-public. Everything officer-facing — the officer home, My Assessments, Search Records,
-Account and the law-enforcement assessment *wizard* — lives in the panel, carried over
+public. Everything officer-facing — the officer home, My Assessments, Account and the law-enforcement assessment *wizard* — lives in the panel, carried over
 from the former Next.js officer portal (`app/police/`, `components/portal/`) with the
 same copy, layout and colours. Everything else in `portal/frontend` is retired (§9).
 
@@ -353,7 +352,10 @@ Five rules that are easy to get wrong and must be enforced explicitly:
    `OfficerAccountResource`, which lists only that agency's `law_enforcement` accounts —
    never admins, secretaries, other police admins or the police admin themself. Officers
    are created with role and agency forced server-side, and are deactivated
-   (`is_active = false`), never deleted, so assessment history survives.
+   (`is_active = false`), never deleted, so assessment history survives. **Filter
+   options are scoped too:** every dropdown on an assessment table offers only officers
+   and agencies behind rows `visibleTo()` already returns (`App\Filament\Tables\AssessmentFilters`),
+   because a dropdown can leak names the table itself hides.
 
 Rule 2 is the one most likely to be "helpfully" widened by someone who assumes admin is
 a superset. It is not.
@@ -365,7 +367,7 @@ purpose: a police admin is one agency's supervisor, not a statewide one.
 means the rule was broken, not that the test is wrong.
 
 **Rule 2 was in fact widened, and has been corrected.** `Police`, `MyAssessments` and
-`SearchRecords` each granted `UserRole::Admin`, which put the entire Officer Portal in an
+`SearchRecords` (since removed) each granted `UserRole::Admin`, which put the entire Officer Portal in an
 admin's sidebar — and since content management was still a "Coming soon" stub, the panel
 an admin actually saw was the officer portal with one empty page bolted on. Admins now
 reach assessments through `App\Filament\Resources\AssessmentReview` (view-all for
@@ -777,7 +779,8 @@ shape itself is pinned on the backend instead.
 **11 — Officer screens and wizard in Filament.** *(Done.)* Carry the officer portal over
 from `portal/frontend` faithfully: a custom Vite theme for the panel; Home (the existing
 `Police` page), My Assessments and Search Records (placeholders — they had no design;
-My Assessments has since become a resource, see Phase 8),
+My Assessments has since become a resource, see Phase 8, and Search Records was removed,
+replaced by filters on the assessment tables — see §13),
 Account (Filament's profile page), all in an "Officer Portal" navigation group; the LAP
 wizard as a `Wizard` page writing both assessment rows in one `Portal` transaction with
 `submitted_by = auth()->id()`; the login page restyled. Lock the assessment API down:
@@ -904,12 +907,33 @@ Officer Portal                                  law_enforcement, police_admin
   Home            /police
   New assessment  /police/new-assessment  law_enforcement only
   My Assessments  /police/assessments     law_enforcement only
-  Search Records  /police/search
   Account         (Filament's profile page)
 
 Police Admin                                    police_admin (with an agency)
   Officers        /police/officers        own agency's officers only
 ```
+
+Search Records (`/police/search`, a "Coming soon" placeholder) was removed: filtering on
+the assessment tables replaces it.
+
+### Assessment table filters
+
+Both law-enforcement assessment tables — My Assessments and Assessment review — get their
+filters from one class, `App\Filament\Tables\AssessmentFilters::apply($table, $reviewScreen)`,
+so the two cannot drift apart. **Any future assessment table must use it too.**
+
+- **Layout:** a filter card above the table, always open (`FiltersLayout::AboveContent`).
+- **Deferred:** changing a filter does nothing until **Apply** (Filament's own apply action,
+  which renders in the card whenever filters are deferred); **Reset** sits beside it
+  (`FiltersResetActionPosition::Footer`) and clears and applies at once.
+- **Persisted in session**, so filters survive opening a record and coming back.
+- **Filters:** date submitted (from/to on `DateCreated`, both tables); submitting officer
+  (Assessment review); agency via `submitter.lawEnforcementAgent.agency` (Assessment
+  review, admin only — hidden filters are neither rendered nor applied).
+- **Scoped:** filters only narrow each screen's `visibleTo()` query, and every dropdown's
+  options come from the database, limited to rows `visibleTo()` returns (§5 rule 5).
+  Victim and offender names stay in the search box. Enforced by
+  `tests/Feature/Staff/AssessmentFiltersTest.php`.
 
 ### Why clusters
 
