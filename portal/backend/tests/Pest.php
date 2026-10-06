@@ -262,10 +262,12 @@ function pestAgencyMember(UserRole $role, ?Agency $agency): User
     return $user;
 }
 
-function pestOfficerAssessment(User $officer, string $victim): LawEnforcementAssessment
+// $details overrides any of the default victim/offender fields; $yesTo lists
+// the questions answered Yes (the rest are No).
+function pestOfficerAssessment(User $officer, string $victim, array $details = [], array $yesTo = [1]): LawEnforcementAssessment
 {
     $answers = AssessmentAnswers::create(collect(range(1, 11))
-        ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => $id === 1])
+        ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => in_array($id, $yesTo, true)])
         ->all());
 
     return LawEnforcementAssessment::create([
@@ -276,6 +278,7 @@ function pestOfficerAssessment(User $officer, string $victim): LawEnforcementAss
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
         'OffenderSex' => 'M',
+        ...$details,
         'AssessmentDocID' => $answers->getKey(),
     ]);
 }
