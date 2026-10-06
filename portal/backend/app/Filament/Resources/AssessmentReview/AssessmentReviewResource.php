@@ -172,6 +172,7 @@ class AssessmentReviewResource extends Resource
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter']))
+            ->stackedOnMobile()
             ->filters([
                 SelectFilter::make('submitted_by')
                     ->label('Officer')
