@@ -254,3 +254,72 @@
 .hs-login .fi-ac .fi-btn:focus-visible {
     box-shadow: 0 0 0 4px rgb(92 15 139 / 0.4);
 }
+
+/*
+ * Tables (My Assessments, Assessment Review, Civilian Assessments):
+ * brand border, rounded container, uppercase header, row hover, action buttons.
+ * Selectors confirmed from vendor/filament/tables/resources/views/index.blade.php.
+ * Record actions render as fi-link (LINK_VIEW), not fi-btn.
+ */
+
+.fi-ta-ctn {
+    border-radius: var(--radius-2xl);
+    border: 2px solid #c9c1d6;
+    overflow: hidden;
+}
+
+.fi-ta-header-cell {
+    background-color: #ede3f5;
+    color: #5c0f8b;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.fi-ta-row {
+    border-bottom-color: #ddd7e6;
+}
+
+.fi-ta-row:hover td {
+    background-color: #f5f0fb;
+}
+
+/* Mobile stacked record cards */
+.fi-ta-record {
+    border-bottom-color: #ddd7e6;
+}
+
+/* Description text below primary cell value (e.g. relationship under victim name) */
+.fi-ta-text-description {
+    color: #9068b8;
+    font-size: 0.8125rem;
+}
+
+/* Row action links: outlined pill buttons, fill purple on hover */
+.fi-ta-row .fi-ta-actions .fi-link,
+.fi-ta-record .fi-ta-actions .fi-link {
+    display: inline-block;
+    border: 1.5px solid #5c0f8b;
+    border-radius: 10px;
+    padding: 0.3125rem 0.875rem;
+    background-color: transparent;
+    color: #5c0f8b;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fi-ta-row .fi-ta-actions .fi-link:hover,
+.fi-ta-record .fi-ta-actions .fi-link:hover {
+    background-color: #5c0f8b !important;
+    border-color: #5c0f8b !important;
+    color: #f4f2f7 !important;
+    text-decoration: none !important;
+}
+
+.fi-ta-row .fi-ta-actions .fi-link:focus-visible,
+.fi-ta-record .fi-ta-actions .fi-link:focus-visible {
+    box-shadow: 0 0 0 3px rgb(92 15 139 / 0.3);
+    outline: none;
+}

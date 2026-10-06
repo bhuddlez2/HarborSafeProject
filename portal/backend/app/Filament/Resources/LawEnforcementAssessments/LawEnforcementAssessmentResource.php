@@ -5,11 +5,15 @@ namespace App\Filament\Resources\LawEnforcementAssessments;
 use App\Enums\UserRole;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
-use App\Filament\Resources\LawEnforcementAssessments\Pages\ViewLawEnforcementAssessment;
 use App\Models\LawEnforcementAssessment;
 use BackedEnum;
+use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Facades\Filament;
+use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -93,30 +97,87 @@ class LawEnforcementAssessmentResource extends Resource
         return $query->whereRaw('1 = 0');
     }
 
+    public static function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Victim')
+                    ->schema([
+                        TextInput::make('VictimFirstName')->label('First name')->required()->maxLength(50),
+                        TextInput::make('VictimLastName')->label('Last name')->required()->maxLength(50),
+                        Select::make('VictimSex')
+                            ->label('Sex')
+                            ->native()
+                            ->options(['M' => 'Male', 'F' => 'Female', 'O' => 'Other'])
+                            ->required(),
+                        DatePicker::make('VictimDOB')->label('Date of birth'),
+                        TextInput::make('VictimSafePhoneNumber')->label('Safe contact number')->maxLength(20),
+                    ]),
+                Section::make('Offender')
+                    ->schema([
+                        TextInput::make('OffenderFirstName')->label('First name')->required()->maxLength(50),
+                        TextInput::make('OffenderLastName')->label('Last name')->required()->maxLength(50),
+                        Select::make('OffenderSex')
+                            ->label('Sex')
+                            ->native()
+                            ->options(['M' => 'Male', 'F' => 'Female', 'O' => 'Other'])
+                            ->required(),
+                        DatePicker::make('OffenderDOB')->label('Date of birth'),
+                        TextInput::make('OffenderVictimRelationship')->label('Relationship to victim')->maxLength(50),
+                    ]),
+            ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
                 TextColumn::make('DateCreated')
-                    ->dateTime()
+                    ->label('Submitted')
+                    ->dateTime('M j, Y g:i a')
                     ->sortable(),
-                TextColumn::make('VictimFirstName')
-                    ->searchable(),
+
                 TextColumn::make('VictimLastName')
-                    ->searchable(),
-                TextColumn::make('OffenderFirstName')
-                    ->searchable(),
+                    ->label('Victim')
+                    ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
+                        ($record->VictimFirstName ?? '').' '.($state ?? ''),
+                    ) ?: '-')
+                    ->searchable(['VictimFirstName', 'VictimLastName']),
+
                 TextColumn::make('OffenderLastName')
-                    ->searchable(),
-                TextColumn::make('OffenderVictimRelationship'),
+                    ->label('Offender')
+                    ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
+                        ($record->OffenderFirstName ?? '').' '.($state ?? ''),
+                    ) ?: '-')
+                    ->description(fn (LawEnforcementAssessment $record): string => $record->OffenderVictimRelationship ?? '')
+                    ->searchable(['OffenderFirstName', 'OffenderLastName']),
+
                 TextColumn::make('submitter.name')
+                    ->label('Officer')
+                    ->placeholder('Unknown')
+                    ->sortable()
                     ->visible(fn (): bool => (bool) Filament::auth()->user()?->hasActiveRole(
                         UserRole::PoliceAdmin,
                     )),
+
+                TextColumn::make('risk_count')
+                    ->label('Yes answers')
+                    ->badge()
+                    ->state(fn (LawEnforcementAssessment $record): string => self::yesCount($record).' of 11')
+                    ->color(fn (LawEnforcementAssessment $record): string => match (true) {
+                        self::yesCount($record) >= 4 => 'danger',
+                        self::yesCount($record) >= 1 => 'warning',
+                        default => 'gray',
+                    }),
             ])
             ->defaultSort('DateCreated', 'desc')
+            ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter']))
+            ->stackedOnMobile()
+            ->emptyStateHeading('No assessments yet')
+            ->emptyStateDescription('Completed LAP screenings will appear here. Use the home page to start one.')
             ->recordActions([
                 ViewAction::make(),
+                EditAction::make(),
             ]);
     }
 
@@ -124,45 +185,88 @@ class LawEnforcementAssessmentResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Submitting officer')
+                Section::make('Submission')
                     ->schema([
-                        TextEntry::make('submitter.name'),
-                        TextEntry::make('submitter.lawEnforcementAgent.badge_number'),
-                        TextEntry::make('submitter.lawEnforcementAgent.agency.name'),
-                    ]),
+                        TextEntry::make('DateCreated')
+                            ->label('Submitted')
+                            ->dateTime('M j, Y g:i a'),
+                        TextEntry::make('submitter.name')
+                            ->label('Submitting officer')
+                            ->placeholder('Unknown'),
+                        TextEntry::make('DocumentID')
+                            ->label('Record ID')
+                            ->copyable(),
+                    ])
+                    ->columns(3),
+
                 Section::make('Victim')
                     ->schema([
-                        TextEntry::make('VictimFirstName'),
-                        TextEntry::make('VictimLastName'),
-                        TextEntry::make('VictimSex'),
-                        TextEntry::make('VictimDOB'),
-                        TextEntry::make('VictimSafePhoneNumber'),
-                    ]),
+                        TextEntry::make('VictimFirstName')->label('First name'),
+                        TextEntry::make('VictimLastName')->label('Last name'),
+                        TextEntry::make('VictimSex')->label('Sex'),
+                        TextEntry::make('VictimDOB')
+                            ->label('Date of birth')
+                            ->date('M j, Y')
+                            ->placeholder('Not recorded'),
+                        TextEntry::make('VictimSafePhoneNumber')
+                            ->label('Safe phone number')
+                            ->placeholder('Not recorded'),
+                    ])
+                    ->columns(3),
+
                 Section::make('Offender')
                     ->schema([
-                        TextEntry::make('OffenderFirstName'),
-                        TextEntry::make('OffenderLastName'),
-                        TextEntry::make('OffenderSex'),
-                        TextEntry::make('OffenderDOB'),
-                        TextEntry::make('OffenderVictimRelationship'),
-                    ]),
+                        TextEntry::make('OffenderFirstName')->label('First name'),
+                        TextEntry::make('OffenderLastName')->label('Last name'),
+                        TextEntry::make('OffenderSex')->label('Sex'),
+                        TextEntry::make('OffenderDOB')
+                            ->label('Date of birth')
+                            ->date('M j, Y')
+                            ->placeholder('Not recorded'),
+                        TextEntry::make('OffenderVictimRelationship')
+                            ->label('Relationship to victim')
+                            ->placeholder('Not recorded'),
+                    ])
+                    ->columns(3),
+
                 Section::make('Risk indicators')
-                    ->schema(
-                        collect(NewAssessment::QUESTIONS)
-                            ->map(fn (string $question, int $id): TextEntry => TextEntry::make("assessmentAnswers.RiskIndicator{$id}")
-                                ->label($question)
-                                ->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'))
-                            ->values()
-                            ->all(),
-                    ),
+                    ->description('The eleven Lethality Assessment questions, in the order they were asked.')
+                    ->schema(self::riskIndicatorEntries())
+                    ->columns(1),
             ]);
     }
 
     public static function getPages(): array
     {
+        // No 'view' or 'edit' pages: both actions open inline modals.
+        // Don't remove getPages; it's required by Filament to know which pages exist for this resource.
         return [
             'index' => ListLawEnforcementAssessments::route('/'),
-            'view' => ViewLawEnforcementAssessment::route('/{record}'),
         ];
+    }
+
+    private static function riskIndicatorEntries(): array
+    {
+        return collect(NewAssessment::QUESTIONS)
+            ->map(fn (string $question, int $id): IconEntry => IconEntry::make("assessmentAnswers.RiskIndicator{$id}")
+                ->label($id.'. '.$question)
+                ->boolean()
+                ->trueColor('danger')
+                ->falseColor('gray'))
+            ->values()
+            ->all();
+    }
+
+    private static function yesCount(LawEnforcementAssessment $record): int
+    {
+        $answers = $record->assessmentAnswers;
+
+        if (! $answers) {
+            return 0;
+        }
+
+        return collect(array_keys(NewAssessment::QUESTIONS))
+            ->filter(fn (int $id): bool => (bool) $answers->{"RiskIndicator{$id}"})
+            ->count();
     }
 }
