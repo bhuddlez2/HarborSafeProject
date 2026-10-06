@@ -9,10 +9,8 @@ use App\Models\LawEnforcementAssessment;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -74,56 +72,9 @@ class AssessmentReviewResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Submission')
-                    ->schema([
-                        TextEntry::make('DateCreated')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a'),
-
-                        TextEntry::make('submitter.name')
-                            ->label('Submitting officer')
-                            ->placeholder('Unknown'),
-
-                        TextEntry::make('DocumentID')
-                            ->label('Record ID')
-                            ->copyable(),
-                    ])
-                    ->columns(3),
-
-                Section::make('Victim')
-                    ->schema([
-                        TextEntry::make('VictimFirstName')->label('First name'),
-                        TextEntry::make('VictimLastName')->label('Last name'),
-                        TextEntry::make('VictimSex')->label('Sex'),
-                        TextEntry::make('VictimDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('VictimSafePhoneNumber')
-                            ->label('Safe phone number')
-                            ->placeholder('Not recorded'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Offender')
-                    ->schema([
-                        TextEntry::make('OffenderFirstName')->label('First name'),
-                        TextEntry::make('OffenderLastName')->label('Last name'),
-                        TextEntry::make('OffenderSex')->label('Sex'),
-                        TextEntry::make('OffenderDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('OffenderVictimRelationship')
-                            ->label('Relationship to victim')
-                            ->placeholder('Not recorded'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Risk indicators')
-                    ->description('The eleven Lethality Assessment questions, in the order they were asked.')
-                    ->schema(self::riskIndicatorEntries())
-                    ->columns(1),
+                ViewEntry::make('record')
+                    ->view('filament.infolists.components.assessment-record')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -193,24 +144,6 @@ class AssessmentReviewResource extends Resource
         return [
             'index' => ListAssessmentReview::route('/'),
         ];
-    }
-
-    /*
-    One IconEntry per risk indicator, labelled with the question text rather
-    than "RiskIndicator7". The wording comes from NewAssessment::QUESTIONS,
-    which is the wizard officers actually answer - reusing it means the review
-    screen cannot drift from the question that was asked.
-    */
-    private static function riskIndicatorEntries(): array
-    {
-        return collect(NewAssessment::QUESTIONS)
-            ->map(fn (string $question, int $id): IconEntry => IconEntry::make("assessmentAnswers.RiskIndicator{$id}")
-                ->label($id.'. '.$question)
-                ->boolean()
-                ->trueColor('danger')
-                ->falseColor('gray'))
-            ->values()
-            ->all();
     }
 
     private static function yesCount(LawEnforcementAssessment $record): int

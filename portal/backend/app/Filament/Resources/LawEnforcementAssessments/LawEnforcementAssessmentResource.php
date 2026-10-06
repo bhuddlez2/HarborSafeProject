@@ -13,8 +13,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Facades\Filament;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -162,58 +161,15 @@ class LawEnforcementAssessmentResource extends Resource
             ]);
     }
 
+    // Returns the infolist schema for displaying assessment details.
     public static function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Submission')
-                    ->schema([
-                        TextEntry::make('DateCreated')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a'),
-                        TextEntry::make('submitter.name')
-                            ->label('Submitting officer')
-                            ->placeholder('Unknown'),
-                        TextEntry::make('DocumentID')
-                            ->label('Record ID')
-                            ->copyable(),
-                    ])
-                    ->columns(3),
-
-                Section::make('Victim')
-                    ->schema([
-                        TextEntry::make('VictimFirstName')->label('First name'),
-                        TextEntry::make('VictimLastName')->label('Last name'),
-                        TextEntry::make('VictimSex')->label('Sex'),
-                        TextEntry::make('VictimDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('VictimSafePhoneNumber')
-                            ->label('Safe phone number')
-                            ->placeholder('Not recorded'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Offender')
-                    ->schema([
-                        TextEntry::make('OffenderFirstName')->label('First name'),
-                        TextEntry::make('OffenderLastName')->label('Last name'),
-                        TextEntry::make('OffenderSex')->label('Sex'),
-                        TextEntry::make('OffenderDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('OffenderVictimRelationship')
-                            ->label('Relationship to victim')
-                            ->placeholder('Not recorded'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Risk indicators')
-                    ->description('The eleven Lethality Assessment questions, in the order they were asked.')
-                    ->schema(self::riskIndicatorEntries())
-                    ->columns(1),
+                // points to the custom assessment record view component design.
+                ViewEntry::make('record')
+                    ->view('filament.infolists.components.assessment-record')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -224,18 +180,6 @@ class LawEnforcementAssessmentResource extends Resource
         return [
             'index' => ListLawEnforcementAssessments::route('/'),
         ];
-    }
-
-    private static function riskIndicatorEntries(): array
-    {
-        return collect(NewAssessment::QUESTIONS)
-            ->map(fn (string $question, int $id): IconEntry => IconEntry::make("assessmentAnswers.RiskIndicator{$id}")
-                ->label($id.'. '.$question)
-                ->boolean()
-                ->trueColor('danger')
-                ->falseColor('gray'))
-            ->values()
-            ->all();
     }
 
     private static function yesCount(LawEnforcementAssessment $record): int
