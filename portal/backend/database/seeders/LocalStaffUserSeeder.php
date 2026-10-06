@@ -29,7 +29,7 @@ officer records.
 
 Password comes from LOCAL_SEED_PASSWORD, falling back to "password" when it is
 unset or blank. Idempotent: keyed on email (agency on name, agent on user_id),
-so re-running resets name, role, password, is_active, badge and agency in place.
+so re-running resets first/last name, role, password, is_active, badge and agency in place.
 */
 class LocalStaffUserSeeder extends Seeder
 {
@@ -44,21 +44,22 @@ class LocalStaffUserSeeder extends Seeder
         $password = env('LOCAL_SEED_PASSWORD') ?: 'password';
 
         $users = [
-            ['admin@harborsafe.test', 'Local Admin', UserRole::Admin, true],
-            ['secretary@harborsafe.test', 'Local Secretary', UserRole::Secretary, true],
-            ['police-admin@harborsafe.test', 'Local Police Admin', UserRole::PoliceAdmin, true],
-            ['officer@harborsafe.test', 'Local Officer', UserRole::LawEnforcement, true],
-            ['officer2@harborsafe.test', 'Local Officer Two', UserRole::LawEnforcement, true],
-            ['inactive@harborsafe.test', 'Inactive Admin', UserRole::Admin, false],
-            ['police-admin2@harborsafe.test', 'Second Police Admin', UserRole::PoliceAdmin, true],
-            ['officer3@harborsafe.test', 'Second PD Officer', UserRole::LawEnforcement, true],
+            ['admin@harborsafe.test', 'Local', 'Admin', UserRole::Admin, true],
+            ['secretary@harborsafe.test', 'Local', 'Secretary', UserRole::Secretary, true],
+            ['police-admin@harborsafe.test', 'Local', 'Police Admin', UserRole::PoliceAdmin, true],
+            ['officer@harborsafe.test', 'Local', 'Officer', UserRole::LawEnforcement, true],
+            ['officer2@harborsafe.test', 'Local', 'Officer Two', UserRole::LawEnforcement, true],
+            ['inactive@harborsafe.test', 'Inactive', 'Admin', UserRole::Admin, false],
+            ['police-admin2@harborsafe.test', 'Second', 'Police Admin', UserRole::PoliceAdmin, true],
+            ['officer3@harborsafe.test', 'Second PD', 'Officer', UserRole::LawEnforcement, true],
         ];
 
-        foreach ($users as [$email, $name, $role, $isActive]) {
+        foreach ($users as [$email, $firstName, $lastName, $role, $isActive]) {
             User::updateOrCreate(
                 ['email' => $email],
                 [
-                    'name' => $name,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
                     'password' => $password,
                     'role' => $role,
                     'is_active' => $isActive,

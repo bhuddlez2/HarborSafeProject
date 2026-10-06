@@ -309,24 +309,30 @@ rewrite.
 ## 5. Access matrix — four roles
 
 ```
-                       LE      PoliceAdm  Secretary  Admin
-Panel access           yes     yes        yes        yes
-Events / Newsletters   —       —          edit       edit
-Event categories       —       —          edit       edit
-Form options           —       —          edit       edit
+                       LE      PoliceAdm    Secretary  Admin
+Panel access           yes     yes          yes        yes
+Events / Newsletters   —       —            edit       edit
+Event categories       —       —            edit       edit
+Form options           —       —            edit       edit
   (services/resources/counties)
 Service feedback       —       —          view       view
 Resource requests      —       —          view       view
 Civilian assessments   —       —          —          view
-LE assessments         own     own agency —          view
-LE change logs         own     own agency —          view
+LE assessments         own     own agency —          view all
+LE change logs         own     own agency —          view all
 ---------------------------------------------------------
 Manage officers        —       own agency —          NO
   (create/edit/deactivate)
-Create police admins   —       —          —          YES
+Create police admins   —       —          —          NO  (super admin)
 Create secretaries     —       —          —          YES
-Create admins          —       —          —          YES
+Create admins          —       —          —          NO  (super admin)
 ```
+
+Settled 2026-10-06. "Form options" is what admin edits on the feedback and
+resource-request forms: the dropdown choices. The submissions themselves stay view-only,
+since they are statements from the public. Police admins, admins and agencies are created
+by the planned super admin role only (not yet built), never through admin. Every account
+screen takes first and last name as separate fields, 50 characters each.
 
 Five rules that are easy to get wrong and must be enforced explicitly:
 
@@ -334,7 +340,8 @@ Five rules that are easy to get wrong and must be enforced explicitly:
    `law_enforcement_assessment.submitted_by`. `police_admin` and `admin` are view-only.
    Nobody else can change a submitted form, ever.
 2. **Admin cannot create officers.** Officer account provisioning belongs exclusively to
-   `police_admin`. Admin creates secretaries, admins and police admins.
+   `police_admin`, for their own agency (`OfficerAccountResource`). Admin creates
+   secretaries only.
 3. **Secretary never sees assessment PII** — not civilian, not law-enforcement.
 4. **`is_active = false` denies panel access regardless of role.**
 5. **Police admins are scoped to their own agency.** On every screen, existing and
@@ -491,7 +498,7 @@ Serving them is two routes, with two different authorization rules:
 | Route | For | Rule |
 |---|---|---|
 | `GET /api/public/content-files/{file}` | the public site | served only while a **published** event or newsletter points at the file |
-| `GET /staff/files/{file}` | the panel | any signed-in staff member who passes `canAccessPanel()` |
+| `GET /files/{file}` | the panel | any signed-in staff member who passes `canAccessPanel()` |
 
 The public rule is phrased that way because `content_files` has no owner and no published
 flag of its own, so the row cannot answer "may this be served" — its reachability from
@@ -557,13 +564,39 @@ handle it and no new authenticated endpoints are required.
 
 ## 8. Change logging
 
-`assessment_change_log` and `assessment_answer_change_log` already exist, already have
-models with working relations, and have never been used. They are **field-level**: one
-row per changed field, with `ChangeField`, `PreviousValue`, `NewValue`, `ChangedBy` and
-`TimeStamp`.
+**Built 2026-10-07.** Three tables:
 
-Implement as an Eloquent observer walking `getDirty()` on update, writing one row per
-changed attribute.
+- `assessment_edits`: **one row per save**, holding who (`ChangedBy`), when (`EditedAt`)
+  and a **required reason**. This is what makes the history readable: one edit touching
+  four fields reads as one entry with four changes, not four unrelated rows.
+- `assessment_change_log` and `assessment_answer_change_log`: **one row per changed
+  field** (`ChangeField`, `PreviousValue`, `NewValue`), linked to their save by `EditID`.
+  Values are stored raw and only formatted for display (`App\Support\AssessmentFields`:
+  "Victim last name", "Female", "Jun 30, 1988", "Q3: …"), so the log stays exact.
+
+**One write path.** `App\Services\AssessmentEditor::apply()` is the only way an assessment
+or its answers change. It reloads the record, discards non-changes ("" vs null, 1 vs true),
+and writes the edit, its field rows and the record in one `Portal` transaction. A save
+that changes nothing writes nothing. It is an explicit service rather than the observer
+first planned here, because a reason and per-save grouping span two models and an
+observer sees neither. To make it impossible to skip:
+`EditedOnlyThroughAssessmentEditor` makes both models throw on any other `update()` (the
+API controller, tinker, future code), and `AppendOnly` makes all three log models refuse
+updates and deletes.
+
+**Reading it.**
+- Every law-enforcement assessment row has a **Change log** button, left of View, that
+  opens the record's edits in their own pop-up, newest first. It is greyed out on a record
+  never edited.
+- **The View pop-up does not include the history.** View is the record as it is now,
+  complete on its own, so the planned export from it is the whole current document. An
+  export with history mixed in, or one that looks as though something was left out, is
+  exactly what this avoids.
+- Each list shows an **Amended** badge.
+- The **Change log** page (`/assessment-changes`) lists every edit for admins and
+  police admins.
+
+All of these come from `App\Filament\Assessments\ChangeHistory` and one Blade view.
 
 Sizing is already verified safe: every editable column on `law_enforcement_assessment`
 is `varchar(50)` or smaller, so the log's `varchar(50)` value columns cannot truncate,
@@ -584,7 +617,7 @@ only the owning officer can edit (§5, rule 1).
 Deleted (Phase 12): `app/login/`, `app/api/auth/`, `proxy.js`, `app/admin/`, the whole
 officer side under `app/police/` (layout, home, wizard), and `components/portal/`
 (sidebar, mobile header, icons). `next.config.mjs` redirects the old URLs — `/login` to
-`/staff/login`; `/admin`, `/police` and `/police/*` to `/staff` — built from
+`/login`; `/admin`, `/police` and `/police/*` to the panel root `/` — built from
 `NEXT_PUBLIC_API_URL`.
 
 With `proxy.js` gone the portal has no route protection, and needs none: nothing left in
@@ -651,8 +684,8 @@ vars, grants from §6.5.
 `canAccessPanel()`, Shield permissions encoding the §5 matrix, Shield super-admin plus a
 seeder creating one user per role for local development.
 *(Partly done: `canAccessPanel()` — `is_active` plus a valid role — and the local-only
-`LocalStaffUserSeeder` exist, with two placeholder pages (`/staff/content`,
-`/staff/police`) gated by `canAccess()`. The seeder also creates a second officer, with
+`LocalStaffUserSeeder` exist, with two placeholder pages (`/content`,
+`/police`) gated by `canAccess()`. The seeder also creates a second officer, with
 both officers badged in a "Local Test PD" agency, and `LocalAssessmentSeeder` gives each
 officer two assessments. The law-enforcement assessment row of the matrix is enforced by
 `LawEnforcementAssessmentPolicy` and the `LawEnforcementAssessment::visibleTo()` scope
@@ -677,14 +710,16 @@ creating an officer; `police_admin` has no edit action on assessments.
 - **Civilian assessments** — submissions from the public civilian flow, view-only, for
   admin alone (§5).
 - **My Assessments** — `App\Filament\Resources\LawEnforcementAssessments`, at
-  `/staff/police/assessments`, replacing the old mockup page. Read-only list and view,
-  **officers only**, each seeing their own submissions. Police admins and admins are kept
+  `/police/assessments`, replacing the old mockup page. List with view and edit
+  modals, **officers only**, each seeing their own submissions. Edit is the submitting
+  officer's only and is live **before** the Phase 9 change log, so edits are not yet
+  recorded. Police admins and admins are kept
   out by the resource's `canAccess()`, while `LawEnforcementAssessmentPolicy` still grants
   them record view (admin all, police admin own agency), because `Assessment review`
   authorizes through the same policy. The officer Home page's "past assessment" link
   (`Police::pastAssessmentsUrl()`) sends police admins to Assessment review instead.
 - **Officers** — `App\Filament\Resources\OfficerAccounts` (on `User`), at
-  `/staff/police/officers` in a "Police Admin" navigation group: officer provisioning,
+  `/police/officers` in a "Police Admin" navigation group: officer provisioning,
   list, create and edit, no delete. Police admins with an agency only, and only that
   agency's `law_enforcement` accounts (§5 rule 5). It authorizes itself on the resource
   (`getAuthorizationResponse()` and the `can*()` methods) rather than through a
@@ -692,7 +727,8 @@ creating an officer; `police_admin` has no edit action on assessments.
   same model, and is in `resources.exclude` in `config/filament-shield.php`. Create and
   edit write `users` and `law_enforcement_agents` in one `Portal` transaction, with role
   and agency forced server-side; passwords are 15–64 characters and checked against
-  breached passwords (`Password::uncompromised()`).
+  breached passwords (`Password::uncompromised()`). First and last name are separate
+  fields, as on Accounts below.
 
 **The civilian page was missed on the first pass, and the matrix caught nothing.** This
 phase shipped with `Assessment review` only, so a civilian submission landed in
@@ -703,18 +739,28 @@ matrix-enforcement test in `tests/Feature/Staff/PanelAccessTest.php` can only ch
 components that exist, so it proves no role sees too much and says nothing about a row
 that was never built. A matrix line with no resource behind it fails silently.
 
-**Still to build: admin user management.** Officers are provisioned by police admins
-(above), but creating and deactivating every other account — secretaries, admins,
-police admins — and agencies is not in the panel yet. Note that it carries §5 rule 2,
-which says admin cannot create officers.
+- **Accounts** — `App\Filament\Resources\StaffAccounts`, at `/accounts` in the
+  Content management group, admin only: create, edit and deactivate secretaries. Who
+  manages which roles is `StaffAccountResource::manageableRoles()`; the role is forced on
+  save, nothing is deleted, and nobody edits their own account here.
+
+First and last name (50 characters each) are separate fields on both account screens and
+on the Account (profile) page. They are the source of truth; `users.name` is kept, rebuilt
+as "First Last" on every save, because tables search and sort on it.
+
+**Still to build: the super admin role**, which creates police admins, admins and
+agencies (§5).
 *Gate:* CRUD works; assessments expose no edit action at all outside the owning officer's
 own screens; an upload renamed to an allowed extension is still rejected (§6.6).
 *Status:* covered by `tests/Feature/Staff/` — 56 tests over the access matrix, page
 rendering, authoring and file storage.
 
-**9 — Change-log observer** (§8).
-*Gate:* editing an owned assessment writes one row per changed field, attributed to the
-editing user.
+**9 — Change log** (§8). *(Done, 2026-10-07.)* Built as an explicit editor service rather
+than a model observer, because a required reason and one-entry-per-save grouping span two
+models (§8).
+*Gate passed:* editing an owned assessment writes one `assessment_edits` row and one row
+per changed field, attributed to the editing user; a no-change save writes nothing; any
+other update is refused (`tests/Feature/Staff/AssessmentChangeLogTest.php`).
 
 **10 — Content API + website cutover.** *(Done.)* Public endpoints and API Resources
 (§7), `content.js` repointed, both mock files deleted.
@@ -775,9 +821,8 @@ Two notes for whoever extends this:
 1 failing.
 
 > `tests/Feature/ExampleTest.php` fails by design — it is Pest's stock scaffold asserting
-> `GET /` returns 200, and `routes/web.php` is empty. Leave it failing; don't "fix" it.
-> Note that installing Filament adds routes under the panel path but does not add `/`, so
-> this stays failing. See `CLAUDE.md`.
+> `GET /` returns 200, and `/` is now the panel root, which redirects an anonymous visitor
+> to `/login` (302). Leave it failing; don't "fix" it. See `CLAUDE.md`.
 
 ## 12. Open items
 
@@ -835,35 +880,35 @@ schema change. These are what that left implicit or undecided:
 
 Phase 8's layout. Three sidebar groups, and content management has **its own address
 space** — the thing that was wrong before, when every destination an admin had was a
-`/staff/police/*` URL.
+`/police/*` URL.
 
 ```
 Content management                              roles
-  Content        /staff/content                 admin, secretary
-    Events       /staff/content/events
-    Newsletters  /staff/content/newsletters
-    Categories   /staff/content/categories
-  Submissions    /staff/submissions             admin, secretary
-    Service feedback   /staff/submissions/service-feedback
-    Resource requests  /staff/submissions/resource-requests
-  Form options   /staff/form-options            admin, secretary
-    Services       /staff/form-options/services
-    Resource types /staff/form-options/resource-types
-    Counties       /staff/form-options/counties
+  Content        /content                 admin, secretary
+    Events       /content/events
+    Newsletters  /content/newsletters
+    Categories   /content/categories
+  Submissions    /submissions             admin, secretary
+    Service feedback   /submissions/service-feedback
+    Resource requests  /submissions/resource-requests
+  Form options   /form-options            admin, secretary
+    Services       /form-options/services
+    Resource types /form-options/resource-types
+    Counties       /form-options/counties
 
 Assessments
-  Assessment review      /staff/assessment-review     admin (all), police_admin (own agency)
-  Civilian assessments   /staff/civilian-assessments  admin only
+  Assessment review      /assessment-review     admin (all), police_admin (own agency)
+  Civilian assessments   /civilian-assessments  admin only
 
 Officer Portal                                  law_enforcement, police_admin
-  Home            /staff/police
-  New assessment  /staff/police/new-assessment  law_enforcement only
-  My Assessments  /staff/police/assessments     law_enforcement only
-  Search Records  /staff/police/search
+  Home            /police
+  New assessment  /police/new-assessment  law_enforcement only
+  My Assessments  /police/assessments     law_enforcement only
+  Search Records  /police/search
   Account         (Filament's profile page)
 
 Police Admin                                    police_admin (with an agency)
-  Officers        /staff/police/officers        own agency's officers only
+  Officers        /police/officers        own agency's officers only
 ```
 
 ### Why clusters
@@ -881,7 +926,7 @@ Two cluster behaviours are load-bearing:
   needs no separate visibility logic. It still declares `canAccess()` for a direct URL hit.
 - `Cluster::mount()` redirects the cluster root to the first tab the user can actually
   open. That is why `StaffLanding` can point at `ContentCluster::getUrl()` rather than at
-  a specific page: `/staff/content` is never a dead end, and the landing target does not
+  a specific page: `/content` is never a dead end, and the landing target does not
   have to be kept in step with the matrix by hand.
 
 **Clusters must be registered with `->discoverClusters(...)` in `StaffPanelProvider`.**
@@ -891,10 +936,10 @@ resource inside it 404s.
 ### Sign-in and landing
 
 Unchanged in principle, and now covered by tests: **everyone sees the same login screen
-first** at `/staff/login`, and where they land afterwards is decided in exactly one place,
+first** at `/login`, and where they land afterwards is decided in exactly one place,
 `App\Filament\StaffLanding` — admin and secretary to content management, officers and
 police admins to the officer portal. Both entry points consult it: `StaffLoginResponse`
-after a sign-in, and `RedirectStaffHome` when someone opens `/staff` directly.
+after a sign-in, and `RedirectStaffHome` when someone opens the panel root `/` directly.
 
 Do not switch this to `$panel->homeUrl()`. That only sets the sidebar brand link and has
 no effect on either redirect. Filament's own default is emergent rather than declared —
@@ -907,7 +952,7 @@ landing page.
 `App\Filament\Pages\ContentManagement` (slug `content`, a "Coming soon" Blade view) is
 deleted. It was ungrouped, which floated it above the sidebar, and being the only
 non-officer destination it made the admin experience look like the officer portal with an
-empty page attached. The `/staff/content` address it held is now the Content cluster's.
+empty page attached. The `/content` address it held is now the Content cluster's.
 
 - **Staff sessions persist across navigation, and the local `.env` has drifted.**
   Reported 2026-10-01: navigating away from content management and back does not ask

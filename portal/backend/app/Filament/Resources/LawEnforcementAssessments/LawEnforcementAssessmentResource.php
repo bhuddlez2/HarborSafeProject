@@ -3,16 +3,22 @@
 namespace App\Filament\Resources\LawEnforcementAssessments;
 
 use App\Enums\UserRole;
+use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Models\LawEnforcementAssessment;
+use App\Services\AssessmentEditor;
+use App\Support\AssessmentFields;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -30,8 +36,10 @@ use UnitEnum;
 // admin own agency). Access is canAccess() below plus the
 // LawEnforcementAssessment::visibleTo() query scope, with
 // LawEnforcementAssessmentPolicy authorizing each record. Edit is the
-// submitting officer's only, and is NOT yet recorded in a change log (Phase 9).
-// No create or delete: new assessments come only from the NewAssessment wizard.
+// submitting officer's only, needs a reason, and goes through
+// App\Services\AssessmentEditor, which writes the change log - the models
+// refuse any other update. No create or delete: new assessments come only from
+// the NewAssessment wizard.
 class LawEnforcementAssessmentResource extends Resource
 {
     protected static ?string $model = LawEnforcementAssessment::class;
@@ -68,6 +76,8 @@ class LawEnforcementAssessmentResource extends Resource
         return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
+    // The edit pop-up. Details and answers are saved by AssessmentEditor, not
+    // by Filament directly - see the EditAction in table().
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -79,7 +89,7 @@ class LawEnforcementAssessmentResource extends Resource
                         Select::make('VictimSex')
                             ->label('Sex')
                             ->native()
-                            ->options(['M' => 'Male', 'F' => 'Female', 'O' => 'Other'])
+                            ->options(AssessmentFields::SEX_OPTIONS)
                             ->required(),
                         DatePicker::make('VictimDOB')->label('Date of birth'),
                         TextInput::make('VictimSafePhoneNumber')->label('Safe contact number')->maxLength(20),
@@ -91,10 +101,28 @@ class LawEnforcementAssessmentResource extends Resource
                         Select::make('OffenderSex')
                             ->label('Sex')
                             ->native()
-                            ->options(['M' => 'Male', 'F' => 'Female', 'O' => 'Other'])
+                            ->options(AssessmentFields::SEX_OPTIONS)
                             ->required(),
                         DatePicker::make('OffenderDOB')->label('Date of birth'),
                         TextInput::make('OffenderVictimRelationship')->label('Relationship to victim')->maxLength(50),
+                    ]),
+                Section::make('Risk indicators')
+                    ->schema(
+                        collect(NewAssessment::QUESTIONS)
+                            ->map(fn (string $question, int $id): Toggle => Toggle::make("RiskIndicator{$id}")
+                                ->label($id.'. '.$question))
+                            ->values()
+                            ->all(),
+                    ),
+                Section::make('Reason for change')
+                    ->schema([
+                        Textarea::make('reason')
+                            ->hiddenLabel()
+                            ->placeholder("e.g. Corrected the spelling of the victim's last name")
+                            ->helperText('Recorded with this edit in the change history, which cannot be altered.')
+                            ->required()
+                            ->maxLength(255)
+                            ->rows(2),
                     ]),
             ]);
     }
@@ -132,15 +160,45 @@ class LawEnforcementAssessmentResource extends Resource
                         self::yesCount($record) >= 1 => 'warning',
                         default => 'gray',
                     }),
+
+                ChangeHistory::amendedColumn(),
             ])
             ->defaultSort('DateCreated', 'desc')
-            ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
             ->stackedOnMobile()
             ->emptyStateHeading('No assessments yet')
             ->emptyStateDescription('Completed LAP screenings will appear here. Use the home page to start one.')
             ->recordActions([
+                ChangeHistory::action(),
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()
+                    ->modalHeading('Edit assessment')
+                    ->modalSubmitActionLabel('Save edit')
+                    // The answers live on _assessment_answers, not this record,
+                    // and the reason always starts empty.
+                    ->mutateRecordDataUsing(function (array $data, LawEnforcementAssessment $record): array {
+                        foreach (AssessmentEditor::answerFields() as $field) {
+                            $data[$field] = (bool) $record->assessmentAnswers?->{$field};
+                        }
+
+                        return [...$data, 'reason' => null];
+                    })
+                    ->using(function (LawEnforcementAssessment $record, array $data, EditAction $action): LawEnforcementAssessment {
+                        $edit = AssessmentEditor::apply($record, $data, $data, $data['reason'], Filament::auth()->user());
+
+                        if ($edit === null) {
+                            Notification::make()
+                                ->title('No changes to save')
+                                ->body('Nothing in the assessment was different, so no edit was recorded.')
+                                ->info()
+                                ->send();
+
+                            $action->halt();
+                        }
+
+                        return $record;
+                    })
+                    ->successNotificationTitle('Edit saved and recorded in the change history'),
             ]);
     }
 

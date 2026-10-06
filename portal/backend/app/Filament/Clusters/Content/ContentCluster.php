@@ -14,15 +14,15 @@ use UnitEnum;
 Website content: events, newsletters and the category lookup behind them.
 
 A cluster rather than three loose sidebar entries for two reasons. It gives the
-whole group one address space - /staff/content/events, /staff/content/newsletters
+whole group one address space - /content/events, /content/newsletters
 - which is what separates content management from the officer portal's
-/staff/police/*. And it renders its members as tabs across the top of each
+/police/*. And it renders its members as tabs across the top of each
 page (SubNavigationPosition::Top), so moving between events and newsletters
 does not mean a round trip through the sidebar.
 
 Visibility needs no canAccess() here: Cluster::shouldRegisterNavigation()
 already hides the cluster when every resource inside it refuses the user, and
-each resource carries the matrix rule itself. Opening /staff/content directly
+each resource carries the matrix rule itself. Opening /content directly
 redirects to the first tab the user can actually see (Cluster::mount()).
 */
 class ContentCluster extends Cluster

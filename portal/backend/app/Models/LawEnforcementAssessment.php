@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Models\Concerns\EditedOnlyThroughAssessmentEditor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class LawEnforcementAssessment extends BaseModel
 {
-    use HasUuids;
+    // Changes only through App\Services\AssessmentEditor, so every edit is logged.
+    use EditedOnlyThroughAssessmentEditor, HasUuids;
 
     protected $connection = 'Portal';
 
@@ -48,6 +50,12 @@ class LawEnforcementAssessment extends BaseModel
     public function assessmentAnswers()
     {
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
+    }
+
+    // Every save since submission, newest first. See App\Services\AssessmentEditor.
+    public function edits()
+    {
+        return $this->hasMany(AssessmentEdit::class, 'DocumentID')->latest('EditedAt');
     }
 
     // The one rule for who may see which law-enforcement assessments

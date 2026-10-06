@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /*
-Sends an authenticated user who opens the panel root (/staff) to their role's
+Sends an authenticated user who opens the panel root (/) to their role's
 landing page from App\Filament\StaffLanding, instead of letting Filament's
 RedirectToHomeController pick the first visible navigation item.
 

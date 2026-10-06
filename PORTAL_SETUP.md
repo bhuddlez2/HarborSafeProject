@@ -245,7 +245,7 @@ Start it:
 php artisan serve
 ```
 
-Open **http://127.0.0.1:8000/staff**.
+Open **http://127.0.0.1:8000** — you will be sent to the sign-in page at `/login`.
 
 ---
 

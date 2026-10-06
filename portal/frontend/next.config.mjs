@@ -43,10 +43,10 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      { source: '/police', destination: `${API_URL}/staff`, permanent: false },
-      { source: '/police/:path*', destination: `${API_URL}/staff`, permanent: false },
-      { source: '/admin', destination: `${API_URL}/staff`, permanent: false },
-      { source: '/login', destination: `${API_URL}/staff/login`, permanent: false },
+      { source: '/police', destination: `${API_URL}/`, permanent: false },
+      { source: '/police/:path*', destination: `${API_URL}/`, permanent: false },
+      { source: '/admin', destination: `${API_URL}/`, permanent: false },
+      { source: '/login', destination: `${API_URL}/login`, permanent: false },
     ];
   },
 };

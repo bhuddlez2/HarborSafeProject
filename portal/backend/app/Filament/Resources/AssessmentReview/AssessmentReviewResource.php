@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AssessmentReview;
 
 use App\Enums\UserRole;
+use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Models\LawEnforcementAssessment;
@@ -183,10 +184,12 @@ class AssessmentReviewResource extends Resource
                         self::yesCount($record) >= 1 => 'warning',
                         default => 'gray',
                     }),
+
+                ChangeHistory::amendedColumn(),
             ])
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.
-            ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
             ->filters([
                 // Options limited to officers whose submissions the user can
                 // see, so a police admin is never offered another agency's
@@ -206,6 +209,7 @@ class AssessmentReviewResource extends Resource
             // View only - see the class comment. No edit, delete or bulk
             // actions anywhere on this resource.
             ->recordActions([
+                ChangeHistory::action(),
                 ViewAction::make(),
             ])
             ->emptyStateHeading('No assessments submitted yet')

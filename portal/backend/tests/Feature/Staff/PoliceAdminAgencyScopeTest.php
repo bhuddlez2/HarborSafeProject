@@ -5,6 +5,7 @@ use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
 use App\Models\Agency;
 use App\Models\AssessmentAnswers;
@@ -227,4 +228,34 @@ test('a police admin lists only their own agency\'s officers', function () {
     Livewire::test(ListOfficerAccounts::class)
         ->assertCanSeeTableRecords([$w->officerA])
         ->assertCanNotSeeTableRecords([$w->officerB, $w->policeAdminA, $w->policeAdminB]);
+});
+
+test('officer accounts open only to a police admin with an agency', function () {
+    $w = pestTwoAgencies();
+
+    $cases = [
+        'police admin with an agency' => [$w->policeAdminA, true],
+        'police admin with no agency' => [pestAgencyMember(UserRole::PoliceAdmin, null), false],
+        // Admin creates secretaries, never officers (section 5 rule 2).
+        'admin' => [staffUser(UserRole::Admin), false],
+        'secretary' => [staffUser(UserRole::Secretary), false],
+        'officer' => [$w->officerA, false],
+    ];
+
+    foreach ($cases as $label => [$user, $expected]) {
+        $this->actingAs($user);
+
+        expect(OfficerAccountResource::canAccess())->toBe($expected, "officer accounts for: {$label}")
+            ->and(OfficerAccountResource::canCreate())->toBe($expected, "creating officers for: {$label}");
+    }
+});
+
+test('nobody but the submitting officer may edit an assessment', function () {
+    $w = pestTwoAgencies();
+
+    expect(staffUser(UserRole::Admin)->can('update', $w->assessmentA))->toBeFalse()
+        ->and($w->policeAdminA->can('update', $w->assessmentA))->toBeFalse()
+        ->and(staffUser(UserRole::Secretary)->can('update', $w->assessmentA))->toBeFalse()
+        ->and($w->officerB->can('update', $w->assessmentA))->toBeFalse()
+        ->and($w->officerA->can('update', $w->assessmentA))->toBeTrue();
 });

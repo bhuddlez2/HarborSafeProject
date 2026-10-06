@@ -14,7 +14,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 // Officer portal home, carried over from the former Next.js
-// portal/frontend/app/police/page.js. Slug stays `police` so /staff/police
+// portal/frontend/app/police/page.js. Slug stays `police` so /police
 // keeps working (portal/frontend redirects its old /police URLs here).
 class Police extends Page
 {

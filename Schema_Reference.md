@@ -11,12 +11,15 @@ erDiagram
     users {
         bigint id PK
         string name
+        string first_name "max 50, source of truth"
+        string last_name "max 50, source of truth"
         string email
         string password
-        string role "law_enforcement / secretary / admin"
+        string role "law_enforcement / secretary / admin / police_admin"
         bool is_active
         text two_factor_secret
         text two_factor_recovery_codes
+        timestamp two_factor_confirmed_at
     }
     agencies {
         bigint id PK
@@ -43,8 +46,16 @@ erDiagram
         string VictimSafePhoneNumber
         uuid AssessmentDocID FK
     }
+    assessment_edits {
+        uuid EditID PK
+        uuid DocumentID FK
+        bigint ChangedBy FK
+        string Reason "required, max 255"
+        timestamp EditedAt
+    }
     assessment_change_log {
         uuid ChangeLogID PK
+        uuid EditID FK
         uuid DocumentID FK
         string ChangeField
         string PreviousValue
@@ -54,6 +65,7 @@ erDiagram
     }
     assessment_answer_change_log {
         uuid LogID PK
+        uuid EditID FK
         uuid AssessmentDocID FK
         string ChangeField
         bool PreviousValue
@@ -103,6 +115,9 @@ erDiagram
     law_enforcement_agents }o--o| agencies : "agency_id"
     users ||--o{ law_enforcement_assessment : "submitted_by"
     law_enforcement_assessment }o--|| _assessment_answers : "AssessmentDocID"
+    law_enforcement_assessment ||--o{ assessment_edits : "DocumentID"
+    assessment_edits ||--o{ assessment_change_log : "EditID"
+    assessment_edits ||--o{ assessment_answer_change_log : "EditID"
     law_enforcement_assessment ||--o{ assessment_change_log : "DocumentID"
     _assessment_answers ||--o{ assessment_answer_change_log : "AssessmentDocID"
     _private_assessment }o--|| _assessment_answers : "AssessmentDocID"
@@ -115,12 +130,13 @@ Framework/Sanctum tables also present but not shown above (no app-specific struc
 
 | Table | Purpose | Key columns | Notes |
 |---|---|---|---|
-| `users` | Every account, any role | `id` (PK), `role`, `is_active` | `role` is a native PHP enum (`App\Enums\UserRole`) cast, not a raw string comparison. Two-factor columns are Fortify-compatible and currently unused (login not built yet). |
+| `users` | Every account, any role | `id` (PK), `role`, `is_active` | `role` is a native PHP enum (`App\Enums\UserRole`) cast, not a raw string comparison. `first_name`/`last_name` (50 chars each, added 2026-10-06) are the source of truth for a person's name, edited on every account screen and the Account page; `name` is kept as a real column (tables search and sort on it) and `User::booted()` rebuilds it as "First Last" on every save, so never write it directly. Existing rows were backfilled by splitting `name` at its first space, so every displayed name stayed the same. The columns are nullable only so a one-word legacy name can have no last name; every form requires both. Two-factor columns are Fortify-style and **unused**: nothing reads or writes them, and Filament's built-in MFA expects differently named columns (`app_authentication_secret`, `app_authentication_recovery_codes`). |
 | `agencies` | Lookup table for law-enforcement agency types | `id` (PK), `name` | |
 | `law_enforcement_agents` | Badge/agency data, only for `role = law_enforcement` accounts | `user_id` (PK, FK → `users.id`) | 1:1 profile extension — secretary/admin accounts simply have no row here, rather than null columns on `users`. |
 | `law_enforcement_assessment` | LE-submitted offender/victim record | `DocumentID` (PK, uuid), `submitted_by` (FK → `users.id`, not nullable) | `submitted_by` is the ownership column — this is what `LawEnforcementAssessmentPolicy` and the staff panel's My Assessments resource match against to enforce "law enforcement sees only their own submissions". It is also the path to the agency: a police admin sees an assessment when `submitted_by`'s `law_enforcement_agents.agency_id` is the police admin's own (`LawEnforcementAssessment::visibleTo()`). No agency is stored on the row itself, so assessments follow the officer's *current* agency. |
-| `assessment_change_log` | Audit trail for edits to `law_enforcement_assessment` | `ChangeLogID` (PK), `DocumentID` (FK), `ChangedBy` (FK → `users.id`) | |
-| `assessment_answer_change_log` | Audit trail for edits to `_assessment_answers` | `LogID` (PK), `AssessmentDocID` (FK), `ChangedBy` (FK → `users.id`) | |
+| `assessment_edits` | One row per save of a law-enforcement assessment: who, when, why | `EditID` (PK, uuid), `DocumentID` (FK), `ChangedBy` (FK → `users.id`), `Reason` | Added 2026-10-07. Groups the field-level rows below, so one save reads as one edit. `Reason` is required by the edit form. Written only by `App\Services\AssessmentEditor`; append-only. |
+| `assessment_change_log` | Field-level audit of edits to `law_enforcement_assessment` | `ChangeLogID` (PK), `EditID` (FK), `DocumentID` (FK), `ChangedBy` (FK → `users.id`) | One row per changed column. Values are stored raw (column name, sex code, `Y-m-d` date); `App\Support\AssessmentFields` turns them into readable labels at display time. `EditID` is nullable only so its migration could not fail on existing rows — the editor always sets it. Append-only. |
+| `assessment_answer_change_log` | Field-level audit of edits to `_assessment_answers` | `LogID` (PK), `EditID` (FK), `AssessmentDocID` (FK), `ChangedBy` (FK → `users.id`) | As above, for the 11 risk answers (boolean old/new). Append-only. |
 | `_assessment_answers` | The 11-question risk-indicator answers | `AssessmentDocID` (PK, uuid) | Shared by both `law_enforcement_assessment` and `_private_assessment` |
 | `_submitter_info` | Optional submitter contact info for public/anonymous submissions | `SubmissionID` (PK, uuid) | |
 | `_private_assessment` | Public/anonymous-capable offender/victim record | `DocumentID` (PK, uuid), `SubmissionID` (FK, nullable) | No `submitted_by` — there's no authenticated account behind a public submission. Unchanged by the schema-completion pass. |
@@ -329,5 +345,5 @@ Like the `FeedbackPublic` grants, these have to be run by hand against each envi
 
 ### Requirements captured in the original design notes — not yet implemented (this was a schema-only pass)
 - Password policy: minimum 15 characters, maximum 64, checked against a common-password list — this is application-layer validation, not a schema concern; the `password` column already comfortably fits any hash Laravel produces.
-- Two-factor authentication — the `users` table now has Fortify-compatible columns for this, but no 2FA logic exists yet.
+- Two-factor authentication — the `users` table has Fortify-style columns for this, but Fortify isn't installed and no 2FA logic exists yet. Filament's built-in MFA (the likely route, since sign-in is Filament's) uses its own column names, so these would be renamed, remapped, or dropped when 2FA is built.
 - Authorization rule (admins see everything, police admins only their own agency's officers' submissions, law-enforcement only their own) — enforced in the staff panel for law-enforcement assessments by the `LawEnforcementAssessment::visibleTo()` query scope, which `LawEnforcementAssessmentPolicy` and both assessment screens (My Assessments, Assessment review) go through. The API's `auth:sanctum` routes still have no per-record ownership check.

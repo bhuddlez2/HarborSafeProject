@@ -132,7 +132,7 @@ are different addresses.
 */
 test('opening the panel root sends each role to its own area', function (UserRole $role, string $landing) {
     $this->actingAs(staffUser($role))
-        ->get('/staff')
+        ->get('/')
         ->assertRedirect(route($landing));
 })->with([
     'secretary to content' => [UserRole::Secretary, 'filament.staff.content'],
@@ -141,8 +141,24 @@ test('opening the panel root sends each role to its own area', function (UserRol
     'police admin to the officer portal' => [UserRole::PoliceAdmin, 'filament.staff.pages.police'],
 ]);
 
+/*
+Sign-in has one neutral address shared by every role - /login, at the site
+root - rather than living under the content or the police side. An anonymous
+visit to / goes there first.
+*/
+test('sign-in is at /login, and an anonymous visit to / is sent there', function () {
+    expect(filament()->getPanel('staff')->getLoginUrl())->toBe(url('/login'));
+
+    $this->get('/')->assertRedirect(url('/login'));
+    $this->get('/login')->assertOk();
+
+    // The panel used to live under /staff; old links still arrive.
+    $this->get('/staff/login')->assertRedirect(url('/login'));
+    $this->get('/staff/police/assessments')->assertRedirect(url('/police/assessments'));
+});
+
 test('the content cluster root forwards to the first tab the user can open', function () {
-    // Cluster::mount() does this, so /staff/content is never a dead end.
+    // Cluster::mount() does this, so /content is never a dead end.
     $this->actingAs(staffUser(UserRole::Secretary))
         ->get(route('filament.staff.content'))
         ->assertRedirect(route('filament.staff.content.resources.events.index'));

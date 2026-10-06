@@ -17,6 +17,8 @@ use App\Filament\Pages\SearchRecords;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
+use App\Filament\Resources\AssessmentEdits\AssessmentEditResource;
+use App\Filament\Resources\StaffAccounts\StaffAccountResource;
 use App\Filament\StaffLanding;
 
 /*
@@ -50,6 +52,8 @@ function allStaffComponents(): array
         'form-options.services' => ServiceResource::class,
         'form-options.resource-types' => ResourceTypeResource::class,
         'form-options.counties' => CountyResource::class,
+        'accounts' => StaffAccountResource::class,
+        'assessment-changes' => AssessmentEditResource::class,
         'assessment-review' => AssessmentReviewResource::class,
         'civilian-assessments' => CivilianAssessmentResource::class,
         'police.home' => Police::class,
@@ -78,10 +82,14 @@ dataset('role matrix', [
             'submissions.cluster', 'submissions.service-feedback', 'submissions.resource-requests',
             'form-options.services', 'form-options.resource-types', 'form-options.counties',
             'assessment-review',
+            // LE change logs: view all (section 5).
+            'assessment-changes',
             // Section 5 gives admin "Civilian assessments: view" and gives it
             // to nobody else - not even police_admin, whose row covers
             // law-enforcement submissions only.
             'civilian-assessments',
+            // Creates secretaries, and nothing else (section 5).
+            'accounts',
         ],
     ],
     // Reviews its own agency's law-enforcement submissions in Assessment
@@ -91,6 +99,8 @@ dataset('role matrix', [
         UserRole::PoliceAdmin,
         [
             'assessment-review',
+            // LE change logs: own agency (section 5, rule 5).
+            'assessment-changes',
             'police.home', 'police.search-records',
         ],
     ],
@@ -157,7 +167,8 @@ test('the assessment review page offers no way to alter a submission', function 
         ->map(fn ($action) => $action->getName())
         ->all();
 
-    expect($actionNames)->toBe(['view'])
+    // Both read-only: the change log pop-up and the record view.
+    expect($actionNames)->toBe(['changeLog', 'view'])
         ->and($table->getToolbarActions())->toBe([]);
 });
 
@@ -181,7 +192,7 @@ test('the officer assessment wizard stays officers-only', function () {
 The routing complaint that started this work: everyone signs in at the same
 screen, and where they land afterwards depends on their role - police to the
 officer portal, admin and secretary to content management, which must not be a
-/staff/police/* address.
+/police/* address.
 */
 test('each role lands on its own area after signing in', function () {
     $contentUrl = ContentCluster::getUrl();
@@ -194,9 +205,9 @@ test('each role lands on its own area after signing in', function () {
 
     // The two areas are genuinely separate addresses, not one nested in the
     // other. This is what was wrong before.
-    expect($contentUrl)->toContain('/staff/content')
+    expect($contentUrl)->toContain('/content')
         ->and($contentUrl)->not->toContain('/police')
-        ->and($policeUrl)->toContain('/staff/police');
+        ->and($policeUrl)->toContain('/police');
 });
 
 test('an inactive account has no landing page at all', function () {

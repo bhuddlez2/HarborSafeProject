@@ -11,8 +11,9 @@ use App\Models\User;
 // permissions. LawEnforcementAssessmentResource is in resources.exclude in
 // config/filament-shield.php so shield:generate never overwrites this file.
 // New assessments come only from the NewAssessment wizard; the submitting
-// officer may edit their own (update() below), which is not yet recorded in a
-// change log. Nothing else is writable.
+// officer may edit their own (update() below), always through
+// App\Services\AssessmentEditor, which records the change log. Nothing else is
+// writable.
 class LawEnforcementAssessmentPolicy
 {
     public function viewAny(User $user): bool

@@ -127,9 +127,14 @@ class OfficerAccountResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('name')
+                TextInput::make('first_name')
+                    ->label('First name')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(User::NAME_PART_MAX),
+                TextInput::make('last_name')
+                    ->label('Last name')
+                    ->required()
+                    ->maxLength(User::NAME_PART_MAX),
                 TextInput::make('email')
                     ->email()
                     ->required()
@@ -166,7 +171,12 @@ class OfficerAccountResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
+                TextColumn::make('first_name')
+                    ->label('First name')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('last_name')
+                    ->label('Last name')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('email')
@@ -188,7 +198,7 @@ class OfficerAccountResource extends Resource
                     ->trueLabel('Active')
                     ->falseLabel('Inactive'),
             ])
-            ->defaultSort('name')
+            ->defaultSort('last_name')
             ->recordActions([
                 EditAction::make(),
             ]);

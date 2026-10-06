@@ -18,7 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'first_name', 'last_name', 'email', 'password', 'role', 'is_active'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -29,6 +29,30 @@ class User extends Authenticatable implements FilamentUser
     // were run with --database=Portal), not the default mariadb connection
     // this model would otherwise fall back to.
     protected $connection = 'Portal';
+
+    public const NAME_PART_MAX = 50;
+
+    /*
+    first_name and last_name are the source of truth for a person's name;
+    every screen that creates or edits an account (Accounts, Officers, the
+    Account/profile page) edits those two. `name` is derived: rebuilt as
+    "First Last" on every save, so nothing should write it directly - a direct
+    write is simply overwritten. It is kept as a real column, rather than an
+    accessor, because the assessment tables search and sort on submitter.name
+    in SQL, and it is what the sidebar and officer screens display.
+
+    The one exception is an account with neither part, which the
+    add_first_and_last_name migration's backfill makes impossible for existing
+    rows; its `name` is left as it is rather than blanked.
+    */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            if (filled($user->first_name) || filled($user->last_name)) {
+                $user->name = trim($user->first_name.' '.$user->last_name);
+            }
+        });
+    }
 
     public function lawEnforcementAgent()
     {

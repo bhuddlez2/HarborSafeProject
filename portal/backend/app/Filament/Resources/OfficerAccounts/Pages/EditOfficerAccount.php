@@ -22,7 +22,8 @@ class EditOfficerAccount extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         return [
-            'name' => $this->getRecord()->name,
+            'first_name' => $this->getRecord()->first_name,
+            'last_name' => $this->getRecord()->last_name,
             'email' => $this->getRecord()->email,
             'badge_number' => $this->getRecord()->lawEnforcementAgent?->badge_number,
             'is_active' => $this->getRecord()->is_active,
@@ -36,7 +37,8 @@ class EditOfficerAccount extends EditRecord
     {
         return DB::connection('Portal')->transaction(function () use ($record, $data): Model {
             $attributes = [
-                'name' => $data['name'],
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
                 'email' => $data['email'],
                 'is_active' => (bool) $data['is_active'],
             ];

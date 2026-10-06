@@ -19,7 +19,7 @@ move every role's landing page. Note $panel->homeUrl() does NOT affect this; it
 only sets the sidebar brand link.
 
 Both entry points consult this map instead: StaffLoginResponse (after a
-successful sign-in) and RedirectStaffHome (someone opening /staff directly).
+successful sign-in) and RedirectStaffHome (someone opening / directly).
 
 The content arm points at the cluster, not at a page. Opening a cluster runs
 Cluster::mount(), which redirects to the first tab the user can actually see -

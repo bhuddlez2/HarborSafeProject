@@ -1,8 +1,10 @@
 <?php
 
 declare(strict_types=1);
+use App\Filament\Resources\AssessmentEdits\AssessmentEditResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
+use App\Filament\Resources\StaffAccounts\StaffAccountResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -205,6 +207,12 @@ return [
             // through a policy on User. Excluded so shield:generate never
             // writes a permission-based UserPolicy over those rules.
             OfficerAccountResource::class,
+            // Same reason: authorizes itself through manageableRoles()
+            // (admin -> secretaries), not a policy on User.
+            StaffAccountResource::class,
+            // Authorizes itself through LawEnforcementAssessment::visibleTo();
+            // a generated policy would bypass that scope.
+            AssessmentEditResource::class,
         ],
     ],
 

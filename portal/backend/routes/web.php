@@ -22,6 +22,14 @@ Route::middleware([
     'web',
     EnsureStaffPanelAccess::class,
 ])->group(function () {
-    Route::get('/staff/files/{file}', [ContentFileController::class, 'showStaff'])
+    Route::get('/files/{file}', [ContentFileController::class, 'showStaff'])
         ->name('staff.content-files.show');
 });
+
+/*
+The panel moved from /staff to the site root (sign-in is /login). Old
+bookmarks and links - /staff, /staff/login, /staff/police/assessments - land
+on the same page at its new address rather than a 404.
+*/
+Route::get('/staff/{path?}', fn (?string $path = null) => redirect('/'.($path ?? '')))
+    ->where('path', '.*');

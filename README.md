@@ -4,7 +4,7 @@ Three applications in one repository, backing Harbor Safe House & Advocacy Cente
 
 | Path | What it is | Dev URL |
 |---|---|---|
-| `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · panel at [/staff](http://127.0.0.1:8000/staff) |
+| `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · sign-in at [/login](http://127.0.0.1:8000/login) |
 | `website/frontend/` | Next.js 16, static export. The public informational site. Calls the API from the browser for the contact forms and the events page. | http://localhost:3000 |
 | `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment only. | http://localhost:3001 |
 
@@ -177,7 +177,7 @@ those dropdowns and badges come up empty. All are idempotent, so they're safe
 to re-run.
 
 **Then create accounts, or you cannot get into the staff panel.** There is no
-sign-up screen: `/staff/login` will reject everything until users exist.
+sign-up screen: `/login` will reject everything until users exist.
 
 ```bash
 php artisan db:seed --class=LocalStaffUserSeeder --database=Portal
@@ -190,17 +190,17 @@ that is unset.
 
 | Email | Role | Lands on |
 |---|---|---|
-| `officer@harborsafe.test` | `law_enforcement` | `/staff/police` — **the only role that sees the officer screens and the assessment wizard** |
-| `police-admin@harborsafe.test` | `police_admin` | `/staff/police` |
-| `admin@harborsafe.test` | `admin` | `/staff/content` |
-| `secretary@harborsafe.test` | `secretary` | `/staff/content` |
+| `officer@harborsafe.test` | `law_enforcement` | `/police` — **the only role that sees the officer screens and the assessment wizard** |
+| `police-admin@harborsafe.test` | `police_admin` | `/police` |
+| `admin@harborsafe.test` | `admin` | `/content` |
+| `secretary@harborsafe.test` | `secretary` | `/content` |
 | `inactive@harborsafe.test` | `admin`, deactivated | nothing — refused at the login screen |
 
-Note that `/staff/content` and Search Records are still
+Note that `/content` and Search Records are still
 "Coming soon" placeholders, so sign in as the officer if you want to see
 something built.
 
-Build the staff panel's theme (the Filament panel at `/staff` — officer
+Build the staff panel's theme (the Filament panel, served from the site root — officer
 screens, the assessment wizard, content management — is styled by a custom
 Tailwind theme in `resources/css/filament/staff/theme.css`, compiled by Vite):
 
@@ -215,7 +215,7 @@ instead while editing styles, so changes recompile live.
 Start it:
 
 ```bash
-php artisan serve        # http://127.0.0.1:8000, staff panel at /staff
+php artisan serve        # http://127.0.0.1:8000, sign-in at /login
 ```
 
 ---
@@ -263,7 +263,7 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 
 Only the anonymous civilian assessment lives here, at `/`. Everything
 officer-facing — sign-in, the officer home, the law-enforcement assessment
-wizard — is in the backend's Filament staff panel (`/staff`). The old portal
+wizard — is in the backend's Filament staff panel (sign-in at `/login`). The old portal
 URLs `/login`, `/admin`, `/police` and `/police/*` redirect there.
 
 ```bash
@@ -294,7 +294,7 @@ cd portal/frontend && npm run dev
 ```
 
 Then: website http://localhost:3000, portal http://localhost:3001,
-API http://127.0.0.1:8000/api, staff panel http://127.0.0.1:8000/staff.
+API http://127.0.0.1:8000/api, staff panel http://127.0.0.1:8000 (sign-in at /login).
 
 ---
 
@@ -328,7 +328,7 @@ Neither frontend has a test runner configured.
 
 **`php artisan test` fails exactly one test, on purpose.**
 `tests/Feature/ExampleTest.php` is Pest's stock scaffold test asserting
-`GET /` returns 200; `routes/web.php` is empty so it genuinely 404s. Expected
+`GET /` returns 200; `/` is the staff panel root, which redirects to `/login`. Expected
 until it's rewritten against a real route. Anything *else* failing is real.
 
 **Always migrate with `--database=Portal`,** whatever connection the migration

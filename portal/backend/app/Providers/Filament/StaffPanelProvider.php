@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use App\Http\Middleware\RedirectStaffHome;
 use App\Http\Responses\StaffLoginResponse;
@@ -33,12 +34,18 @@ class StaffPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('staff')
-            ->path('staff')
+            // Served from the site root, so sign-in is a neutral /login shared
+            // by every role rather than living under one side's address; / sends
+            // a signed-in user to their own area (RedirectStaffHome). The id
+            // stays 'staff', so route names remain filament.staff.*. /api is
+            // the JSON API and is not part of the panel.
+            ->path('')
             ->viteTheme('resources/css/filament/staff/theme.css')
             ->login(Login::class)
             // Account page. Filament's EditProfile only edits the signed-in
             // user's own name, email and password - never role or is_active.
-            ->profile(isSimple: false)
+            // Ours swaps its Name field for first and last name.
+            ->profile(EditProfile::class, isSimple: false)
             // Look and feel carried over from the former Next.js officer
             // portal (PortalSidebar/PortalHeader): #5C0F8B primary, Nunito
             // body text, Montserrat headings, a dark full-height sidebar. The
@@ -98,7 +105,7 @@ class StaffPanelProvider extends PanelProvider
             // routes, so every resource inside it 404s.
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             // No Dashboard: with nothing on the panel root, Filament's built-in
-            // RedirectToHomeController sends /staff (and the post-login
+            // RedirectToHomeController sends / (and the post-login
             // redirect) to the first navigation item the user can see, so each
             // role lands on its own page. Order is set by $navigationSort.
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -119,7 +126,7 @@ class StaffPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                // Sends /staff to the signed-in user's landing page from
+                // Sends / to the signed-in user's landing page from
                 // App\Filament\StaffLanding rather than to whichever
                 // navigation item happens to sort first.
                 RedirectStaffHome::class,

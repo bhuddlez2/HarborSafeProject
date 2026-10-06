@@ -173,7 +173,8 @@ function staffRunToken(): string
 function staffUser(App\Enums\UserRole $role, bool $isActive = true): App\Models\User
 {
     return App\Models\User::create([
-        'name' => 'Pest ' . $role->value,
+        'first_name' => 'Pest',
+        'last_name' => $role->value,
         'email' => staffRunToken() . '-' . $role->value . '-' . Illuminate\Support\Str::random(4) . '@pest.test',
         'password' => 'password',
         'role' => $role,
@@ -195,6 +196,32 @@ function cleanupStaffData(): void
     $content->table('content_files')->where('name', 'like', $token . '%')->delete();
     $content->table('event_categories')->where('Name', 'like', $token . '%')->delete();
 
-    Illuminate\Support\Facades\DB::connection('Portal')
-        ->table('users')->where('email', 'like', $token . '%')->delete();
+    $portal = Illuminate\Support\Facades\DB::connection('Portal');
+
+    // Law-enforcement assessments before users: submitted_by restricts
+    // deletion of the submitting user. Then their answer rows, which the
+    // assessment pointed at.
+    $userIds = $portal->table('users')->where('email', 'like', $token . '%')->pluck('id');
+    $answerIds = $portal->table('law_enforcement_assessment')
+        ->whereIn('submitted_by', $userIds)
+        ->pluck('AssessmentDocID');
+
+    // The change log first: its rows point at the edits, which point at the
+    // assessments. Query builder deletes, because the log models refuse
+    // Eloquent deletes (AppendOnly). Edits by test users are swept too.
+    $docIds = $portal->table('law_enforcement_assessment')->whereIn('submitted_by', $userIds)->pluck('DocumentID');
+    $editIds = $portal->table('assessment_edits')
+        ->where(fn ($q) => $q->whereIn('DocumentID', $docIds)->orWhereIn('ChangedBy', $userIds))
+        ->pluck('EditID');
+
+    $portal->table('assessment_change_log')->whereIn('EditID', $editIds)->delete();
+    $portal->table('assessment_answer_change_log')->whereIn('EditID', $editIds)->delete();
+    $portal->table('assessment_edits')->whereIn('EditID', $editIds)->delete();
+
+    $portal->table('law_enforcement_assessment')->whereIn('submitted_by', $userIds)->delete();
+    $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $answerIds)->delete();
+
+    // law_enforcement_agents rows cascade with their user.
+    $portal->table('users')->where('email', 'like', $token . '%')->delete();
+    $portal->table('agencies')->where('name', 'like', $token . '%')->delete();
 }
