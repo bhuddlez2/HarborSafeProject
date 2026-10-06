@@ -214,21 +214,19 @@ test('Search Records is gone', function () {
     }
 });
 
-// pestTwoAgencies(), plus five rows by officer A built to tell the typed
-// filters apart. Every name column of a row holds the same value, so each text
-// filter can be checked against the same rows. 'alpha' is the only row that
-// answered Yes to both questions 1 and 3; the Ann/Mc pairs differ only where a
-// LIKE wildcard would blur them.
+// pestTwoAgencies(), plus five rows by officer A built to tell the name
+// filters apart. Every name column of a row holds the same value, so each name
+// filter can be checked against the same rows; the Ann/Mc pairs differ only
+// where a LIKE wildcard would blur them.
 function pestDetailedAssessments(): object
 {
     $w = pestTwoAgencies();
 
-    $names = fn (string $name, ?string $relationship = null): array => [
+    $names = fn (string $name): array => [
         'VictimFirstName' => $name,
         'VictimLastName' => $name,
         'OffenderFirstName' => $name,
         'OffenderLastName' => $name,
-        'OffenderVictimRelationship' => $relationship ?? $name,
     ];
 
     $w->alpha = pestOfficerAssessment($w->officerA, 'alpha', [
@@ -236,14 +234,11 @@ function pestDetailedAssessments(): object
         'VictimLastName' => 'Quillon',
         'OffenderFirstName' => 'Barnaby',
         'OffenderLastName' => 'Thistlewood',
-        'OffenderVictimRelationship' => 'Spouse',
-        'VictimSex' => 'M',
-        'OffenderSex' => 'F',
-    ], yesTo: [1, 3]);
-    $w->annPercent = pestOfficerAssessment($w->officerA, 'beta', [...$names('Ann%Lee'), 'VictimSex' => 'F', 'OffenderSex' => 'O'], yesTo: [1]);
-    $w->annX = pestOfficerAssessment($w->officerA, 'gamma', [...$names('AnnXLee', 'Partner'), 'VictimSex' => 'O', 'OffenderSex' => 'M'], yesTo: [3]);
-    $w->mcUnderscore = pestOfficerAssessment($w->officerA, 'delta', [...$names('Mc_Neil'), 'VictimSex' => 'F', 'OffenderSex' => 'M'], yesTo: []);
-    $w->mcO = pestOfficerAssessment($w->officerA, 'epsilon', [...$names('McONeil'), 'VictimSex' => 'F', 'OffenderSex' => 'M'], yesTo: [5]);
+    ]);
+    $w->annPercent = pestOfficerAssessment($w->officerA, 'beta', $names('Ann%Lee'));
+    $w->annX = pestOfficerAssessment($w->officerA, 'gamma', $names('AnnXLee'));
+    $w->mcUnderscore = pestOfficerAssessment($w->officerA, 'delta', $names('Mc_Neil'));
+    $w->mcO = pestOfficerAssessment($w->officerA, 'epsilon', $names('McONeil'));
 
     // Everything officer A and police admin A can see.
     $w->visible = [$w->assessmentA, $w->alpha, $w->annPercent, $w->annX, $w->mcUnderscore, $w->mcO];
@@ -253,36 +248,60 @@ function pestDetailedAssessments(): object
 
 // Applies one filter's typed value the way the card does: into the deferred
 // state, then Apply.
-function pestApplyFilter(Testable $list, string $filter, mixed $value, string $field = 'value'): Testable
+function pestApplyFilter(Testable $list, string $filter, mixed $value): Testable
 {
-    return $list->set("tableDeferredFilters.{$filter}.{$field}", $value)->call('applyTableFilters');
+    return $list->set("tableDeferredFilters.{$filter}.value", $value)->call('applyTableFilters');
 }
 
-dataset('text filters', [
-    // Each search term is a fragment of 'alpha's value in that column, in a
-    // different case, and in no other visible row.
-    'victim first name' => ['victim_first_name', 'EPHYR'],
-    'victim last name' => ['victim_last_name', 'uILLo'],
-    'offender first name' => ['offender_first_name', 'ARNAB'],
-    'offender last name' => ['offender_last_name', 'tlewOO'],
-    'relationship' => ['relationship', 'OUS'],
+dataset('name filters', [
+    'victim first name' => 'victim_first_name',
+    'victim last name' => 'victim_last_name',
+    'offender first name' => 'offender_first_name',
+    'offender last name' => 'offender_last_name',
 ]);
 
-dataset('sex filters', [
-    'victim sex' => ['victim_sex', 'VictimSex'],
-    'offender sex' => ['offender_sex', 'OffenderSex'],
+test('each screen offers exactly its filters, agency to admins only', function (string $role, string $page, array $expected) {
+    $w = pestTwoAgencies();
+    $user = match ($role) {
+        'admin' => staffUser(UserRole::Admin),
+        'police admin' => $w->policeAdminA,
+        'officer' => $w->officerA,
+    };
+    $this->actingAs($user);
+
+    expect(array_keys(Livewire::test($page)->instance()->getTable()->getFilters()))->toBe($expected);
+})->with([
+    'admin on Assessment review' => ['admin', ListAssessmentReview::class, [
+        'date_submitted', 'submitted_by', 'agency',
+        'victim_first_name', 'victim_last_name', 'offender_first_name', 'offender_last_name',
+    ]],
+    'police admin on Assessment review' => ['police admin', ListAssessmentReview::class, [
+        'date_submitted', 'submitted_by',
+        'victim_first_name', 'victim_last_name', 'offender_first_name', 'offender_last_name',
+    ]],
+    'officer on My Assessments' => ['officer', ListLawEnforcementAssessments::class, [
+        'date_submitted',
+        'victim_first_name', 'victim_last_name', 'offender_first_name', 'offender_last_name',
+    ]],
 ]);
 
-test('each text filter matches partially and case-insensitively', function (string $page, string $viewer, string $filter, string $term) {
+test('each name filter matches partially and case-insensitively', function (string $page, string $viewer, string $filter, string $term) {
     $w = pestDetailedAssessments();
     $this->actingAs($w->{$viewer});
 
     pestApplyFilter(Livewire::test($page), $filter, $term)
         ->assertCanSeeTableRecords([$w->alpha])
         ->assertCountTableRecords(1);
-})->with('assessment tables')->with('text filters');
+})->with('assessment tables')->with([
+    // Each term is a fragment of 'alpha's value in that column, in a
+    // different case, and in no other visible row.
+    'victim first name' => ['victim_first_name', 'EPHYR'],
+    'victim last name' => ['victim_last_name', 'uILLo'],
+    'offender first name' => ['offender_first_name', 'ARNAB'],
+    'offender last name' => ['offender_last_name', 'tlewOO'],
+]);
 
-test('% and _ in a text filter match literally', function (string $page, string $viewer, string $filter) {
+test('% and _ in a name filter match literally', function (string $page, string $viewer, string $filter) {
     $w = pestDetailedAssessments();
     $this->actingAs($w->{$viewer});
 
@@ -295,80 +314,22 @@ test('% and _ in a text filter match literally', function (string $page, string 
         ->assertCanSeeTableRecords([$w->mcUnderscore])
         ->assertCanNotSeeTableRecords([$w->mcO])
         ->assertCountTableRecords(1);
-})->with('assessment tables')->with([
-    'victim first name' => 'victim_first_name',
-    'victim last name' => 'victim_last_name',
-    'offender first name' => 'offender_first_name',
-    'offender last name' => 'offender_last_name',
-    'relationship' => 'relationship',
-]);
-
-test('relationship is a contains match', function (string $page, string $viewer) {
-    $w = pestDetailedAssessments();
-    $this->actingAs($w->{$viewer});
-
-    pestApplyFilter(Livewire::test($page), 'relationship', 'artn')
-        ->assertCanSeeTableRecords([$w->annX])
-        ->assertCountTableRecords(1);
-})->with('assessment tables');
-
-test('a sex filter takes the code or the word, in any case', function (string $page, string $viewer, string $filter, string $column) {
-    $w = pestDetailedAssessments();
-    $this->actingAs($w->{$viewer});
-
-    $inputs = [
-        'M' => ['M', 'm', 'male', 'Male', '  male '],
-        'F' => ['F', 'f', 'female', 'FEMALE'],
-        'O' => ['O', 'o', 'other', 'Other'],
-    ];
-
-    foreach ($inputs as $code => $typedValues) {
-        [$matching, $others] = collect($w->visible)->partition(fn ($row): bool => $row->{$column} === $code);
-
-        expect($matching)->not->toBeEmpty();
-
-        foreach ($typedValues as $typed) {
-            pestApplyFilter(Livewire::test($page), $filter, $typed)
-                ->assertCanSeeTableRecords($matching)
-                ->assertCanNotSeeTableRecords($others)
-                ->assertCountTableRecords($matching->count());
-        }
-    }
-
-    // Unrecognized: nothing, and no error.
-    foreach (['x', 'mal', 'males', 'M F'] as $typed) {
-        pestApplyFilter(Livewire::test($page), $filter, $typed)
-            ->assertHasNoErrors()
-            ->assertCountTableRecords(0);
-    }
-})->with('assessment tables')->with('sex filters');
-
-test('answered Yes to returns only rows where every selected question was Yes', function (string $page, string $viewer) {
-    $w = pestDetailedAssessments();
-    $this->actingAs($w->{$viewer});
-
-    pestApplyFilter(Livewire::test($page), 'answered_yes', ['1', '3'], 'values')
-        ->assertCanSeeTableRecords([$w->alpha])
-        ->assertCountTableRecords(1);
-
-    // Forced state that is not a question number is ignored, never turned
-    // into a column name.
-    pestApplyFilter(Livewire::test($page), 'answered_yes', ['1; drop', '99', 'RiskIndicator1'], 'values')
-        ->assertHasNoErrors()
-        ->assertCanSeeTableRecords($w->visible);
-})->with('assessment tables');
+})->with('assessment tables')->with('name filters');
 
 test('combined filters narrow to rows matching all of them', function (string $page, string $viewer) {
     $w = pestDetailedAssessments();
     $this->actingAs($w->{$viewer});
 
-    // 'Ann' alone matches both Ann rows; offender sex Other leaves one.
+    // Victim last name 'ann' and offender first name 'LEE' each match both
+    // Ann rows; the date range, which only the AnnX row is inside, leaves one.
+    pestSubmittedOn($w->annPercent, '2026-01-15');
+
     Livewire::test($page)
-        ->set('tableDeferredFilters.date_submitted.from', now()->subDay()->toDateString())
+        ->set('tableDeferredFilters.date_submitted.from', '2026-06-01')
         ->set('tableDeferredFilters.victim_last_name.value', 'ann')
-        ->set('tableDeferredFilters.offender_sex.value', 'other')
+        ->set('tableDeferredFilters.offender_first_name.value', 'LEE')
         ->call('applyTableFilters')
-        ->assertCanSeeTableRecords([$w->annPercent])
+        ->assertCanSeeTableRecords([$w->annX])
         ->assertCountTableRecords(1);
 })->with('assessment tables');
 
@@ -386,33 +347,28 @@ test('a police admin filtering on a name from another agency gets no rows', func
         ->assertCanSeeTableRecords([$w->assessmentB]);
 });
 
-test('the new filters do nothing until Apply', function (string $page, string $viewer) {
+test('name filters do nothing until Apply', function (string $page, string $viewer) {
     $w = pestDetailedAssessments();
     $this->actingAs($w->{$viewer});
 
     Livewire::test($page)
         ->set('tableDeferredFilters.victim_first_name.value', 'zeph')
-        ->set('tableDeferredFilters.victim_sex.value', 'male')
-        ->set('tableDeferredFilters.answered_yes.values', ['1', '3'])
+        ->set('tableDeferredFilters.offender_last_name.value', 'thistle')
         ->assertCanSeeTableRecords($w->visible)
         ->call('applyTableFilters')
         ->assertCanSeeTableRecords([$w->alpha])
         ->assertCountTableRecords(1);
 })->with('assessment tables');
 
-test('every new filter shows an active-filter chip', function (string $page, string $viewer) {
+test('every name filter shows an active-filter chip', function (string $page, string $viewer) {
     $w = pestDetailedAssessments();
     $this->actingAs($w->{$viewer});
 
     $list = Livewire::test($page)
         ->set('tableDeferredFilters.victim_first_name.value', 'z')
         ->set('tableDeferredFilters.victim_last_name.value', 'q')
-        ->set('tableDeferredFilters.victim_sex.value', 'm')
         ->set('tableDeferredFilters.offender_first_name.value', 'b')
         ->set('tableDeferredFilters.offender_last_name.value', 't')
-        ->set('tableDeferredFilters.offender_sex.value', 'zz')
-        ->set('tableDeferredFilters.relationship.value', 'sp')
-        ->set('tableDeferredFilters.answered_yes.values', ['3', '1'])
         ->call('applyTableFilters');
 
     $labels = collect($list->instance()->getTable()->getFilterIndicators())
@@ -422,20 +378,7 @@ test('every new filter shows an active-filter chip', function (string $page, str
     expect($labels)->toContain(
         'Victim first name: z',
         'Victim last name: q',
-        'Victim sex: Male',
         'Offender first name: b',
         'Offender last name: t',
-        'Offender sex: zz (no match)',
-        'Relationship to victim: sp',
-        'Answered Yes to: Q1, Q3',
     );
-})->with('assessment tables');
-
-test('the safe phone number is not filterable', function (string $page, string $viewer) {
-    $w = pestTwoAgencies();
-    $this->actingAs($w->{$viewer});
-
-    $columns = collect(Livewire::test($page)->instance()->getTable()->getFilters(withHidden: true))->keys();
-
-    expect($columns->filter(fn (string $name): bool => str_contains(strtolower($name), 'phone')))->toBeEmpty();
 })->with('assessment tables');

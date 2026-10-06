@@ -847,11 +847,6 @@ Still undecided:
   The same Home card is shown to police admins, whose link now goes to Assessment review
   while the copy still says "My Assessments".
 
-- **Victim/offender sex and relationship filters** are typed text for now. They will
-  become dropdowns once the team decides the allowed values (sex codes, and a fixed list
-  of relationships). When that happens, the wizard's relationship field should probably
-  become a dropdown too, so the stored values match the filter options.
-
 ### Notes for the database architect
 
 Officer provisioning and the police-admin agency scope (§5 rule 5) were built without any
@@ -932,30 +927,29 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
   which renders in the card whenever filters are deferred); **Reset** sits beside it
   (`FiltersResetActionPosition::Footer`) and clears and applies at once.
 - **Persisted in session**, so filters survive opening a record and coming back.
-- **Filters**, in card order (`filtersFormColumns(3)`, each group starting a new row):
-  1. Date submitted — from/to on `DateCreated` (both tables).
-  2. Submitting officer (Assessment review), and agency via
-     `submitter.lawEnforcementAgent.agency` (Assessment review, admin only — hidden filters
-     are neither rendered nor applied).
-  3. Victim first name, last name, sex (both tables).
-  4. Offender first name, last name, sex (both tables).
-  5. Relationship to victim, `OffenderVictimRelationship` (both tables).
-  6. Answered Yes to — a multi-select of the eleven questions (`NewAssessment::QUESTIONS`);
-     a row matches when *every* selected question was answered Yes in its
-     `_assessment_answers` row. Raw answers only, no score or danger summary. Only real
-     question numbers reach the query, so the filter state can never name another column.
+- **Filters** — the final set, and who sees each:
 
-  Names and relationship are typed text, a case-insensitive partial match, with `%` and
-  `_` in the input matched literally. Sex is typed text too: the stored code (`M`/`F`/`O`)
-  or its word (`male`/`female`/`other`), any case, from `AssessmentFields::SEX_OPTIONS`;
-  anything else matches nothing. Blank input turns a filter off, and every filter shows an
-  active-filter chip. **The victim's safe phone number is deliberately not filterable.**
-  Sex and relationship are text inputs only until their allowed values are decided (§12).
+  | Filter | My Assessments (officer) | Assessment review |
+  |---|---|---|
+  | Date submitted — from/to on `DateCreated` | yes | admin, police admin |
+  | Submitting officer | — | admin, police admin |
+  | Agency — via `submitter.lawEnforcementAgent.agency` | — | **admin only** |
+  | Victim first name, victim last name | yes | admin, police admin |
+  | Offender first name, offender last name | yes | admin, police admin |
+
+  Agency is shown to active admins only, decided by `users.role` through
+  `User::hasActiveRole(UserRole::Admin)` — not by the Shield/spatie `super_admin` role. A
+  hidden filter is neither rendered nor applied, so forcing its state does nothing. The
+  four name filters are typed text: a case-insensitive partial match, with `%` and `_` in
+  the input matched literally; blank turns a filter off, and each active filter shows a
+  chip. There is deliberately no filter on the victim's safe phone number.
+- **Layout:** `filtersFormColumns(3)`, one row per group, each opened with
+  `columnStart(1)`: dates; officer and agency; victim first and last name; offender
+  first and last name. An officer's card has three rows, a reviewer's four.
 - **Scoped:** filters only narrow each screen's `visibleTo()` query, and the officer and
   agency dropdowns take their options from the database, limited to rows `visibleTo()`
-  returns (§5 rule 5). (The "Answered Yes to" options are the fixed question list, not
-  data.) The table's search box still searches victim and offender names too. Enforced by
-  `tests/Feature/Staff/AssessmentFiltersTest.php`.
+  returns (§5 rule 5). The table's search box still searches victim and offender names
+  too. Enforced by `tests/Feature/Staff/AssessmentFiltersTest.php`.
 
 ### Why clusters
 
