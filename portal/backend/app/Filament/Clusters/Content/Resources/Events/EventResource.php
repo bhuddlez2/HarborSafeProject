@@ -21,7 +21,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -76,135 +77,135 @@ class EventResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Details')
-                    ->schema([
-                        TextInput::make('title')
-                            ->required()
-                            ->maxLength(200)
-                            ->columnSpanFull(),
+                Wizard::make([
+                    Step::make('Details')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([
+                            TextInput::make('title')
+                                ->required()
+                                ->maxLength(200)
+                                ->columnSpanFull(),
 
-                        TextInput::make('summary')
-                            ->maxLength(500)
-                            ->helperText('One or two lines, shown in the event list.')
-                            ->columnSpanFull(),
+                            TextInput::make('summary')
+                                ->maxLength(500)
+                                ->helperText('One or two lines, shown in the event list.')
+                                ->columnSpanFull(),
 
-                        Textarea::make('description')
-                            ->rows(8)
-                            ->columnSpanFull()
-                            ->helperText('Leave a blank line between paragraphs. Each paragraph is rendered separately on the website.')
-                            // The column is a json array of paragraphs; the
-                            // textarea is a single string. Convert both ways.
-                            ->afterStateHydrated(fn (Textarea $component, mixed $state) => $component->state(
-                                is_array($state) ? implode("\n\n", $state) : (string) ($state ?? ''),
-                            ))
-                            ->dehydrateStateUsing(fn (?string $state): ?array => self::toParagraphs($state)),
+                            Textarea::make('description')
+                                ->rows(6)
+                                ->columnSpanFull()
+                                ->helperText('Leave a blank line between paragraphs. Each paragraph is rendered separately on the website.')
+                                // The column is a json array of paragraphs; the
+                                // textarea is a single string. Convert both ways.
+                                ->afterStateHydrated(fn (Textarea $component, mixed $state) => $component->state(
+                                    is_array($state) ? implode("\n\n", $state) : (string) ($state ?? ''),
+                                ))
+                                ->dehydrateStateUsing(fn (?string $state): ?array => self::toParagraphs($state)),
 
-                        Select::make('category_id')
-                            ->label('Category')
-                            // Not ->relationship(): the relation crosses to the
-                            // Content connection and Filament would resolve the
-                            // option query on the default one.
-                            ->options(fn (): array => EventCategory::query()
-                                ->orderBy('Name')
-                                ->pluck('Name', 'id')
-                                ->all())
-                            ->searchable()
-                            ->placeholder('No category'),
+                            Select::make('category_id')
+                                ->label('Category')
+                                // Not ->relationship(): the relation crosses to the
+                                // Content connection and Filament would resolve the
+                                // option query on the default one.
+                                ->options(fn (): array => EventCategory::query()
+                                    ->orderBy('Name')
+                                    ->pluck('Name', 'id')
+                                    ->all())
+                                ->searchable()
+                                ->placeholder('No category'),
 
-                        TextInput::make('recurrence')
-                            ->maxLength(120)
-                            ->placeholder('Annually in September')
-                            ->helperText('Free text, shown as-is. Leave empty for a one-off event.'),
-                    ])
-                    ->columns(2),
+                            TextInput::make('recurrence')
+                                ->maxLength(120)
+                                ->placeholder('Annually in September')
+                                ->helperText('Free text, shown as-is. Leave empty for a one-off event.'),
+                        ])
+                        ->columns(2),
 
-                Section::make('When')
-                    ->description('Times are Eastern. They are stored as UTC and rendered back in Eastern on the website.')
-                    ->schema([
-                        DateTimePicker::make('starts_at')
-                            ->label('Starts')
-                            ->required()
-                            ->seconds(false)
-                            ->timezone(Event::DISPLAY_TIMEZONE),
+                    Step::make('Date & Time')
+                        ->icon('heroicon-o-calendar')
+                        ->description('Times are Eastern. Stored as UTC, displayed in Eastern on the website.')
+                        ->schema([
+                            DateTimePicker::make('starts_at')
+                                ->label('Starts')
+                                ->required()
+                                ->seconds(false)
+                                ->timezone(Event::DISPLAY_TIMEZONE),
 
-                        DateTimePicker::make('ends_at')
-                            ->label('Ends')
-                            ->seconds(false)
-                            ->timezone(Event::DISPLAY_TIMEZONE)
-                            ->after('starts_at')
-                            ->helperText('Optional.'),
+                            DateTimePicker::make('ends_at')
+                                ->label('Ends')
+                                ->seconds(false)
+                                ->timezone(Event::DISPLAY_TIMEZONE)
+                                ->after('starts_at')
+                                ->helperText('Optional.'),
 
-                        Toggle::make('all_day')
-                            ->label('All-day event')
-                            ->helperText('The website hides the times and shows the date only.'),
-                    ])
-                    ->columns(2),
+                            Toggle::make('all_day')
+                                ->label('All-day event')
+                                ->helperText('The website hides the times and shows only the date.'),
 
-                Section::make('Location')
-                    ->schema([
-                        Toggle::make('location_is_virtual')
-                            ->label('Virtual event')
-                            ->live()
-                            ->columnSpanFull(),
+                            Toggle::make('location_is_virtual')
+                                ->label('Virtual event')
+                                ->live(),
 
-                        TextInput::make('location_name')
-                            ->label('Venue name')
-                            ->maxLength(150)
-                            ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
+                            TextInput::make('location_name')
+                                ->label('Venue name')
+                                ->maxLength(150)
+                                ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
 
-                        TextInput::make('location_address')
-                            ->label('Address')
-                            ->maxLength(255)
-                            ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
+                            TextInput::make('location_address')
+                                ->label('Address')
+                                ->maxLength(255)
+                                ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
 
-                        TextInput::make('location_virtual_note')
-                            ->label('Joining note')
-                            ->maxLength(255)
-                            ->placeholder('A link will be emailed to registrants')
-                            ->visible(fn (callable $get): bool => (bool) $get('location_is_virtual'))
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2),
+                            TextInput::make('location_virtual_note')
+                                ->label('Joining note')
+                                ->maxLength(255)
+                                ->placeholder('A link will be emailed to registrants')
+                                ->visible(fn (callable $get): bool => (bool) $get('location_is_virtual'))
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(2),
 
-                Section::make('Image')
-                    ->schema([
-                        DatabaseFileUpload::forImage('image_file_id')
-                            ->label('Event image')
-                            ->columnSpanFull(),
+                    Step::make('Image')
+                        ->icon('heroicon-o-photo')
+                        ->schema([
+                            DatabaseFileUpload::forImage('image_file_id')
+                                ->label('Event image')
+                                ->columnSpanFull(),
 
-                        TextInput::make('image_alt')
-                            ->label('Image description')
-                            ->maxLength(255)
-                            ->helperText('Describes the image for screen readers. Required whenever an image is set.')
-                            ->required(fn (callable $get): bool => filled($get('image_file_id')))
-                            ->columnSpanFull(),
-                    ]),
+                            TextInput::make('image_alt')
+                                ->label('Image description')
+                                ->maxLength(255)
+                                ->helperText('Describes the image for screen readers. Required whenever an image is set.')
+                                ->required(fn (callable $get): bool => filled($get('image_file_id')))
+                                ->columnSpanFull(),
+                        ]),
 
-                Section::make('Registration')
-                    ->schema([
-                        TextInput::make('registration_url')
-                            ->label('Registration link')
-                            ->url()
-                            ->maxLength(255),
+                    Step::make('Registration & Visibility')
+                        ->icon('heroicon-o-eye')
+                        ->schema([
+                            TextInput::make('registration_url')
+                                ->label('Registration link')
+                                ->url()
+                                ->maxLength(255),
 
-                        TextInput::make('registration_label')
-                            ->label('Button text')
-                            ->maxLength(100)
-                            ->placeholder('Register now'),
-                    ])
-                    ->columns(2),
+                            TextInput::make('registration_label')
+                                ->label('Button text')
+                                ->maxLength(100)
+                                ->placeholder('Register now'),
 
-                Section::make('Visibility')
-                    ->schema([
-                        Toggle::make('is_published')
-                            ->label('Published')
-                            ->helperText('Off keeps it off the website entirely. Its image is unreachable too.'),
+                            Toggle::make('is_published')
+                                ->label('Published')
+                                ->helperText('Off keeps it off the website entirely. Its image is unreachable too.')
+                                ->columnSpanFull(),
 
-                        Toggle::make('is_cancelled')
-                            ->label('Cancelled')
-                            ->helperText('Shown with a cancelled badge and no registration link. Independent of Published.'),
-                    ])
-                    ->columns(2),
+                            Toggle::make('is_cancelled')
+                                ->label('Cancelled')
+                                ->helperText('Shown with a cancelled badge and no registration link. Independent of Published.')
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(2),
+                ])
+                ->columnSpanFull(),
             ]);
     }
 

@@ -20,7 +20,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -68,60 +69,62 @@ class NewsletterResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Issue')
-                    ->schema([
-                        TextInput::make('title')
-                            ->required()
-                            ->maxLength(200)
-                            ->placeholder('Autumn 2026'),
+                Wizard::make([
+                    Step::make('Issue')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([
+                            TextInput::make('title')
+                                ->required()
+                                ->maxLength(200)
+                                ->placeholder('Autumn 2026')
+                                ->columnSpanFull(),
 
-                        DatePicker::make('issue_date')
-                            ->label('Issue date')
-                            ->required()
-                            ->helperText('Used to order the list, newest first.'),
+                            DatePicker::make('issue_date')
+                                ->label('Issue date')
+                                ->required()
+                                ->helperText('Used to order the list, newest first.'),
 
-                        Textarea::make('summary')
-                            ->maxLength(500)
-                            ->rows(3)
-                            ->columnSpanFull()
-                            ->helperText('Optional. A line about what is in this issue.'),
-                    ])
-                    ->columns(2),
+                            Textarea::make('summary')
+                                ->maxLength(500)
+                                ->rows(3)
+                                ->columnSpanFull()
+                                ->helperText('Optional. A line about what is in this issue.'),
+                        ])
+                        ->columns(2),
 
-                Section::make('File')
-                    ->schema([
-                        DatabaseFileUpload::forDocument('file_id')
-                            ->label('PDF')
-                            ->columnSpanFull(),
+                    Step::make('File & Visibility')
+                        ->icon('heroicon-o-paper-clip')
+                        ->schema([
+                            DatabaseFileUpload::forDocument('file_id')
+                                ->label('PDF')
+                                ->columnSpanFull(),
 
-                        TextInput::make('file_pages')
-                            ->label('Page count')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(9999)
-                            ->helperText('Optional. Shown next to the file size.'),
+                            TextInput::make('file_pages')
+                                ->label('Page count')
+                                ->numeric()
+                                ->minValue(1)
+                                ->maxValue(9999)
+                                ->helperText('Optional. Shown next to the file size.'),
 
-                        /*
-                        Shown for reference only. The value is derived from the
-                        uploaded file by a saving hook on the model, not from
-                        this field - dehydrated(false) keeps the form from
-                        writing it and the two from ever disagreeing.
-                        */
-                        TextInput::make('file_size_bytes')
-                            ->label('File size (bytes)')
-                            ->numeric()
-                            ->readOnly()
-                            ->dehydrated(false)
-                            ->helperText('Set automatically from the uploaded file.'),
-                    ])
-                    ->columns(2),
+                            // Shown for reference only. The value is derived from
+                            // the uploaded file by a saving hook on the model, not
+                            // from this field — dehydrated(false) keeps the form
+                            // from writing it and the two from ever disagreeing.
+                            TextInput::make('file_size_bytes')
+                                ->label('File size (bytes)')
+                                ->numeric()
+                                ->readOnly()
+                                ->dehydrated(false)
+                                ->helperText('Set automatically from the uploaded file.'),
 
-                Section::make('Visibility')
-                    ->schema([
-                        Toggle::make('is_published')
-                            ->label('Published')
-                            ->helperText('Off keeps it off the website, and makes its PDF unreachable.'),
-                    ]),
+                            Toggle::make('is_published')
+                                ->label('Published')
+                                ->helperText('Off keeps it off the website, and makes its PDF unreachable.')
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(2),
+                ])
+                ->columnSpanFull(),
             ]);
     }
 
