@@ -112,12 +112,14 @@ class EventResource extends Resource
                                     ->pluck('Name', 'id')
                                     ->all())
                                 ->searchable()
-                                ->placeholder('No category'),
+                                ->helperText('Leave empty for no category.'),
 
+                            // Optional fields keep their box for the "Optional"
+                            // ghost text (App\Filament\Forms\RequirementMarkers),
+                            // so examples go in the helper text instead.
                             TextInput::make('recurrence')
                                 ->maxLength(120)
-                                ->placeholder('Annually in September')
-                                ->helperText('Free text, shown as-is. Leave empty for a one-off event.'),
+                                ->helperText('e.g. Annually in September. Free text, shown as-is. Leave empty for a one-off event.'),
                         ])
                         ->columns(2),
 
@@ -159,7 +161,7 @@ class EventResource extends Resource
                             TextInput::make('location_virtual_note')
                                 ->label('Joining note')
                                 ->maxLength(255)
-                                ->placeholder('A link will be emailed to registrants')
+                                ->helperText('e.g. A link will be emailed to registrants')
                                 ->visible(fn (callable $get): bool => (bool) $get('location_is_virtual'))
                                 ->columnSpanFull(),
                         ])
@@ -191,7 +193,7 @@ class EventResource extends Resource
                             TextInput::make('registration_label')
                                 ->label('Button text')
                                 ->maxLength(100)
-                                ->placeholder('Register now'),
+                                ->helperText('e.g. Register now'),
 
                             Toggle::make('is_published')
                                 ->label('Published')

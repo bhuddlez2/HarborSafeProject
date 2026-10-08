@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
 use BackedEnum;
@@ -166,7 +167,7 @@ class NewAssessment extends Page
                     $this->sexSelect('VictimSex'),
                 ]),
                 TextInput::make('VictimSafePhoneNumber')
-                    ->label($this->optionalLabel('Safe phone number'))
+                    ->label('Safe phone number')
                     ->tel()
                     ->maxLength(20),
             ]);
@@ -182,14 +183,13 @@ class NewAssessment extends Page
                     $this->nameInput('OffenderLastName', 'Last name'),
                 ]),
                 Flex::make([
-                    $this->dateOfBirthInput('OffenderDOB', $this->optionalLabel('Date of birth')),
+                    $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth')),
                     $this->sexSelect('OffenderSex'),
                 ]),
                 // Optional in the API; the original wizard required it.
                 TextInput::make('OffenderVictimRelationship')
                     ->label('Relationship to victim')
                     ->required()
-                    ->markAsRequired(false)
                     ->maxLength(50)
                     ->validationMessages(['required' => 'Required']),
             ]);
@@ -247,7 +247,6 @@ class NewAssessment extends Page
         return TextInput::make($name)
             ->label($label)
             ->required()
-            ->markAsRequired(false)
             ->maxLength(50)
             ->regex(self::NAME_PATTERN)
             ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? trim($state) : $state)
@@ -262,7 +261,6 @@ class NewAssessment extends Page
         return DatePicker::make($name)
             ->label($label)
             ->native()
-            ->markAsRequired(false)
             ->maxDate(now())
             ->grow(false)
             ->validationMessages([
@@ -285,18 +283,12 @@ class NewAssessment extends Page
                 'O' => 'Other',
             ])
             ->required()
-            ->markAsRequired(false)
             ->grow(false)
             ->extraAttributes(['class' => 'hs-lap-sex'])
             ->validationMessages([
                 'required' => 'Select an option',
                 'in' => 'Select an option',
             ]);
-    }
-
-    protected function optionalLabel(string $label): HtmlString
-    {
-        return new HtmlString(e($label).' <span class="text-gray-400 font-normal">(optional)</span>');
     }
 
     // Records the current question's answer and moves on. Returns true once

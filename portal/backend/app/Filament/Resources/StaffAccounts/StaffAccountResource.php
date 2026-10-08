@@ -182,7 +182,12 @@ class StaffAccountResource extends Resource
                             ->password()
                             ->revealable()
                             ->autocomplete('new-password')
+                            // Required on create, where the password is. On edit only once a new
+                            // password is typed, so it must not say "Optional" either - see
+                            // App\Filament\Forms\RequirementMarkers.
+                            ->required(fn (string $operation): bool => $operation === 'create')
                             ->requiredWith('password')
+                            ->placeholder(null)
                             ->dehydrated(false),
                     ])
                     ->columns(2),

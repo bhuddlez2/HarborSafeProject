@@ -5,7 +5,9 @@ import Link from "next/link";
 import { fetchRequestOptions, submitResourceRequest } from "../lib/forms";
 import {
   Field,
+  OPTIONAL_PLACEHOLDER,
   inputClass,
+  selectClass,
   describedBy,
   SubmitButton,
   FormMessage,
@@ -112,6 +114,7 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             maxLength={50}
             value={values.LastName}
             onChange={update("LastName")}
+            placeholder={OPTIONAL_PLACEHOLDER}
             aria-describedby={describedBy("last-name", false, errorFor("LastName"))}
             className={inputClass}
           />
@@ -122,7 +125,7 @@ function ResourceRequestForm({ resourceTypes, counties }) {
         <legend className="font-semibold text-gray-900 px-2">
           How can we reach you?
           <span className="text-red-700 ml-1" aria-hidden="true">*</span>
-          <span className="sr-only">(at least one of the two is required)</span>
+          <span className="text-sm font-normal text-gray-600 ml-2">At least one of these is required</span>
         </legend>
 
         <p id="contact-hint" className="text-sm text-gray-600 -mt-1">
@@ -169,7 +172,6 @@ function ResourceRequestForm({ resourceTypes, counties }) {
       <fieldset className="flex flex-col gap-3">
         <legend className="font-semibold text-gray-900 mb-1">
           Resources of interest
-          <span className="text-gray-500 font-normal ml-2 text-sm">Optional</span>
         </legend>
 
         <p className="text-sm text-gray-600 -mt-1">Select any that apply.</p>
@@ -213,9 +215,9 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             name="CountyID"
             value={values.CountyID}
             onChange={update("CountyID")}
-            className={inputClass}
+            className={selectClass(values.CountyID)}
           >
-            <option value="">Please choose…</option>
+            <option value="">{OPTIONAL_PLACEHOLDER}</option>
             {counties.map((county) => (
               <option key={county.id} value={county.id}>{county.Name}</option>
             ))}
@@ -235,6 +237,7 @@ function ResourceRequestForm({ resourceTypes, counties }) {
           maxLength={1000}
           value={values.Message}
           onChange={update("Message")}
+          placeholder={OPTIONAL_PLACEHOLDER}
           aria-describedby={describedBy("message", true, errorFor("Message"))}
           className={inputClass}
         />

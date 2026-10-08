@@ -7,14 +7,28 @@ Field wraps a label, its control and any server-side error for that field.
 htmlFor/id tie the label to the control, and aria-describedby points at the
 hint and the error so a screen reader reads them as part of the field rather
 than as loose text nearby.
+
+Required and optional markers - the same rule as the staff panel
+(portal/backend App\Filament\Forms\RequirementMarkers) and the civilian
+assessment:
+  - requirement="required": a red asterisk after the label, plus the
+    control's own `required` attribute.
+  - requirement="optional" (the default): nothing on the label. The control
+    itself shows OPTIONAL_PLACEHOLDER as faded grey ghost text - a text
+    box's placeholder, or a dropdown's empty choice. Text boxes and dropdowns
+    only; checkboxes and radio buttons get no optional marker.
+  - requirement="none": neither. For fields in a one-of-several group, where
+    the group's legend says which is needed (see the email/phone fieldset in
+    contact/ContactContent.js).
 */
+export const OPTIONAL_PLACEHOLDER = "Optional";
+
 export function Field({ id, label, hint, error, requirement = "optional", children }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="font-semibold text-gray-900">
         {label}
         {requirement === "required" && <span className="text-red-700 ml-1" aria-hidden="true">*</span>}
-        {requirement === "optional" && <span className="text-gray-500 font-normal ml-2 text-sm">Optional</span>}
       </label>
 
       {hint && <p id={`${id}-hint`} className="text-sm text-gray-600">{hint}</p>}
@@ -28,9 +42,18 @@ export function Field({ id, label, hint, error, requirement = "optional", childr
   );
 }
 
-export const inputClass =
-  "w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 " +
+const controlClass =
+  "w-full border border-gray-300 rounded-lg px-4 py-2.5 placeholder:text-gray-400 " +
   "focus:outline-none focus:border-brand focus:ring-2 focus:ring-purple-200 transition-all";
+
+export const inputClass = `${controlClass} text-gray-900`;
+
+// A dropdown shows its empty choice in the same faded grey as a placeholder
+// while that choice is selected. The options in the open list stay full
+// colour. One text colour at a time: two in one class list would leave the
+// winner to stylesheet order.
+export const selectClass = (value) =>
+  `${controlClass} ${value === "" ? "text-gray-400" : "text-gray-900"} [&>option]:text-gray-900`;
 
 export const describedBy = (id, hint, error) =>
   [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;

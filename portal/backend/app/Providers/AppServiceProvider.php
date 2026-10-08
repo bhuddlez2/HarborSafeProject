@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Filament\Forms\RequirementMarkers;
 use App\Models\LawEnforcementAssessment;
 use App\Policies\LawEnforcementAssessmentPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -25,5 +26,9 @@ class AppServiceProvider extends ServiceProvider
         // Registered explicitly rather than left to discovery, so Shield
         // always finds a policy already in place for this model.
         Gate::policy(LawEnforcementAssessment::class, LawEnforcementAssessmentPolicy::class);
+
+        // "Optional" ghost text on every optional text input, text area and
+        // dropdown in the staff panel - see that class for the full rule.
+        RequirementMarkers::register();
     }
 }

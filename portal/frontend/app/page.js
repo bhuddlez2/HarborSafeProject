@@ -9,6 +9,22 @@ import { submitterSchema, victimSchema, offenderSchema } from "@/app/lib/validat
 import { isValidEmail, isValidPhone, isNotFutureDate } from "@/app/lib/validators";
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
+// Required and optional markers - the same rule as the public website's forms
+// (website/frontend FormControls) and the staff panel: a red asterisk after a
+// required field's label, and faded grey "Optional" ghost text inside an
+// optional text box. A date can't hold ghost text (browsers ignore placeholders
+// on date inputs), so an optional date gets OptionalMark after its label
+// instead: the same word in the same faded grey.
+const OPTIONAL_PLACEHOLDER = "Optional";
+
+function RequiredMark() {
+  return <span className="text-red-600 ml-1" aria-hidden="true">*</span>;
+}
+
+function OptionalMark() {
+  return <span className="text-gray-400 font-normal ml-1">{OPTIONAL_PLACEHOLDER}</span>;
+}
+
 export default function AssessmentPage() {
   const [showSafetyModal, setShowSafetyModal] = useState(false);
 
@@ -300,7 +316,7 @@ export default function AssessmentPage() {
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                First name
+                First name<RequiredMark />
               </label>
               <input
                 type="text"
@@ -315,7 +331,7 @@ export default function AssessmentPage() {
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last name
+                Last name<RequiredMark />
               </label>
               <input
                 type="text"
@@ -332,30 +348,30 @@ export default function AssessmentPage() {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+              placeholder={OPTIONAL_PLACEHOLDER}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400
                          focus:outline-none focus:border-[#5C0F8B] transition"
             />
           </div>
 
           <div className="mb-10">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone number{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              Phone number
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              placeholder={OPTIONAL_PLACEHOLDER}
               maxLength={20}
               aria-invalid={!!phoneError}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400
                          focus:outline-none focus:border-[#5C0F8B] transition"
             />
             {phoneError && (
@@ -400,7 +416,7 @@ export default function AssessmentPage() {
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                First name
+                First name<RequiredMark />
               </label>
               <input
                 type="text"
@@ -415,7 +431,7 @@ export default function AssessmentPage() {
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last name
+                Last name<RequiredMark />
               </label>
               <input
                 type="text"
@@ -433,7 +449,7 @@ export default function AssessmentPage() {
           <div className="flex gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date of birth
+                Date of birth<RequiredMark />
               </label>
               <input
                 type="date"
@@ -445,7 +461,7 @@ export default function AssessmentPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sex
+                Sex<RequiredMark />
               </label>
               <select
                 value={victimSex}
@@ -467,14 +483,14 @@ export default function AssessmentPage() {
 
           <div className="mb-10">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {forWhom === "self" ? "Phone number" : "Safe phone number"}{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              {forWhom === "self" ? "Phone number" : "Safe phone number"}
             </label>
             <input
               type="tel"
               value={victimPhone}
               onChange={(e) => setVictimPhone(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+              placeholder={OPTIONAL_PLACEHOLDER}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400
                          focus:outline-none focus:border-[#5C0F8B] transition"
             />
           </div>
@@ -517,7 +533,7 @@ export default function AssessmentPage() {
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                First name
+                First name<RequiredMark />
               </label>
               <input
                 type="text"
@@ -532,7 +548,7 @@ export default function AssessmentPage() {
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last name
+                Last name<RequiredMark />
               </label>
               <input
                 type="text"
@@ -550,8 +566,7 @@ export default function AssessmentPage() {
           <div className="flex gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date of birth{" "}
-                <span className="text-gray-400 font-normal">(optional)</span>
+                Date of birth<OptionalMark />
               </label>
               <input
                 type="date"
@@ -563,7 +578,7 @@ export default function AssessmentPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sex
+                Sex<RequiredMark />
               </label>
               <select
                 value={offenderSex}
@@ -585,7 +600,7 @@ export default function AssessmentPage() {
 
           <div className="mb-10">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Relationship to victim
+              Relationship to victim<RequiredMark />
             </label>
             <input
               type="text"

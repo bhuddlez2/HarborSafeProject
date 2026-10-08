@@ -5,7 +5,9 @@ import Link from "next/link";
 import { fetchServices, submitServiceFeedback } from "../lib/forms";
 import {
   Field,
+  OPTIONAL_PLACEHOLDER,
   inputClass,
+  selectClass,
   describedBy,
   SubmitButton,
   FormMessage,
@@ -66,7 +68,7 @@ function ServiceFeedbackForm({ services }) {
           value={values.ServiceID}
           onChange={update("ServiceID")}
           aria-describedby={describedBy("service", false, errorFor("ServiceID"))}
-          className={inputClass}
+          className={selectClass(values.ServiceID)}
         >
           <option value="">Please choose…</option>
           {services.map((service) => (
@@ -131,6 +133,7 @@ function ServiceFeedbackForm({ services }) {
           maxLength={1000}
           value={values.Comment}
           onChange={update("Comment")}
+          placeholder={OPTIONAL_PLACEHOLDER}
           aria-describedby={describedBy("comment", false, errorFor("Comment"))}
           className={inputClass}
         />
