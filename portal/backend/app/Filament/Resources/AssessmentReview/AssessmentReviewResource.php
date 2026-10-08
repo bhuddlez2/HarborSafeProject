@@ -86,12 +86,10 @@ class AssessmentReviewResource extends Resource
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
-                    ->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('VictimLastName')
                     ->label('Victim')
-                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
                         ($record->VictimFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -99,7 +97,6 @@ class AssessmentReviewResource extends Resource
 
                 TextColumn::make('OffenderLastName')
                     ->label('Offender')
-                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
                         ($record->OffenderFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -108,7 +105,6 @@ class AssessmentReviewResource extends Resource
 
                 TextColumn::make('submitter.name')
                     ->label('Officer')
-                    ->alignCenter()
                     ->placeholder('Unknown')
                     ->sortable(),
 

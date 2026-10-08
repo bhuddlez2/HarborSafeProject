@@ -163,12 +163,10 @@ class CivilianAssessmentResource extends Resource
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
-                    ->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('VictimLastName')
                     ->label('Victim')
-                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
                         ($record->VictimFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -176,7 +174,6 @@ class CivilianAssessmentResource extends Resource
 
                 TextColumn::make('OffenderLastName')
                     ->label('Offender')
-                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
                         ($record->OffenderFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
