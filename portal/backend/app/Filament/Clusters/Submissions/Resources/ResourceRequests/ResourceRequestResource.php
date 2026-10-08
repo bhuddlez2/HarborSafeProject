@@ -150,7 +150,6 @@ class ResourceRequestResource extends Resource
 
                 TextColumn::make('county.Name')
                     ->label('County')
-                    ->alignCenter()
                     ->placeholder('-')
                     ->sortable(),
 

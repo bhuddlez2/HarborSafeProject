@@ -110,19 +110,16 @@ class ServiceFeedbackResource extends Resource
             ->columns([
                 TextColumn::make('SubmissionDate')
                     ->label('Submitted')
-                    ->alignCenter()
                     ->dateTime('M j, Y g:i a')
                     ->sortable(),
 
                 TextColumn::make('service.Name')
                     ->label('Service')
-                    ->alignCenter()
                     ->placeholder('-')
                     ->sortable(),
 
                 TextColumn::make('Rating')
                     ->label('Rating')
-                    ->alignCenter()
                     ->badge()
                     ->color(fn (?int $state): string => match (true) {
                         $state === null => 'gray',
