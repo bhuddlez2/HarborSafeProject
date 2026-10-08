@@ -4,9 +4,7 @@ namespace App\Filament\Clusters\Content\Resources\Events;
 
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
-use App\Filament\Clusters\Content\Resources\Events\Pages\CreateEvent;
-use App\Filament\Clusters\Content\Resources\Events\Pages\EditEvent;
-use App\Filament\Clusters\Content\Resources\Events\Pages\ListEvents;
+use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Filament\Forms\Components\DatabaseFileUpload;
 use App\Models\Event;
 use App\Models\EventCategory;
@@ -276,9 +274,7 @@ class EventResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListEvents::route('/'),
-            'create' => CreateEvent::route('/create'),
-            'edit' => EditEvent::route('/{record}/edit'),
+            'index' => ManageEvents::route('/'),
         ];
     }
 
