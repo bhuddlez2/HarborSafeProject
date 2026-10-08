@@ -83,13 +83,11 @@ abstract class LookupResource extends Resource
             ->columns([
                 TextColumn::make('Name')
                     ->label('Option')
-                    ->alignCenter()
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('ChangeDate')
                     ->label('Last changed')
-                    ->alignCenter()
                     ->dateTime('M j, Y g:i a')
                     ->placeholder('Never')
                     ->sortable(),

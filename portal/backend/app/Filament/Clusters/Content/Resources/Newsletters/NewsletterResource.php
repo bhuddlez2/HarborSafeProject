@@ -178,13 +178,11 @@ class NewsletterResource extends Resource
 
                 TextColumn::make('issue_date')
                     ->label('Issue')
-                    ->alignCenter()
                     ->date('F Y')
                     ->sortable(),
 
                 TextColumn::make('file.name')
                     ->label('File')
-                    ->alignCenter()
                     ->placeholder('None')
                     ->limit(30),
 

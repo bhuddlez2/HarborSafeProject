@@ -138,13 +138,11 @@ class ResourceRequestResource extends Resource
             ->columns([
                 TextColumn::make('SubmissionDate')
                     ->label('Submitted')
-                    ->alignCenter()
                     ->dateTime('M j, Y g:i a')
                     ->sortable(),
 
                 TextColumn::make('FirstName')
                     ->label('Name')
-                    ->alignCenter()
                     ->searchable(['FirstName', 'LastName'])
                     ->formatStateUsing(fn (?string $state, ResourceRequestForm $record): string => trim(
                         ($state ?? '').' '.($record->LastName ?? ''),
@@ -158,7 +156,6 @@ class ResourceRequestResource extends Resource
 
                 TextColumn::make('EmailAddress')
                     ->label('Email')
-                    ->alignCenter()
                     ->placeholder('-')
                     ->searchable()
                     ->copyable(),
@@ -168,7 +165,6 @@ class ResourceRequestResource extends Resource
 
                 TextColumn::make('resourceTypes.Name')
                     ->label('Interested in')
-                    ->alignCenter()
                     ->badge()
                     ->placeholder('-')
                     ->limitList(2)

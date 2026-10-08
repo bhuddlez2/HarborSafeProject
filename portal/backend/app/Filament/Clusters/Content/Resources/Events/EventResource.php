@@ -299,14 +299,12 @@ class EventResource extends Resource
 
                 TextColumn::make('starts_at')
                     ->label('Starts')
-                    ->alignCenter()
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Event::DISPLAY_TIMEZONE)
                     ->sortable(),
 
                 TextColumn::make('category.Name')
                     ->label('Category')
-                    ->alignCenter()
                     ->badge()
                     ->placeholder('None'),
 
