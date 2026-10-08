@@ -73,7 +73,6 @@ class EventCategoryResource extends Resource
             ->columns([
                 TextColumn::make('Name')
                     ->label('Category')
-                    ->alignCenter()
                     ->searchable()
                     ->sortable(),
 
