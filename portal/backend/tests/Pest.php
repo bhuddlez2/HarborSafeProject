@@ -274,6 +274,7 @@ function pestOfficerAssessment(User $officer, string $victim, array $details = [
         'VictimFirstName' => STAFF_TEST_PREFIX.$victim,
         'VictimLastName' => 'Doe',
         'VictimSex' => 'F',
+        'VictimSafePhoneNumber' => '423-555-0100',
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
         'OffenderSex' => 'M',

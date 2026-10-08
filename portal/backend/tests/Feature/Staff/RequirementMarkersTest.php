@@ -56,17 +56,16 @@ test('a dropdown that is required keeps its usual prompt', function () {
             && $field->isMarkedAsRequired());
 });
 
-test('the New Assessment wizard marks its required fields', function () use ($optional, $required) {
+test('the New Assessment wizard marks its required fields', function () use ($required) {
     // The wizard used to switch the asterisk off; it no longer does.
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Markers PD')));
 
     $wizard = Livewire::test(NewAssessment::class);
 
-    foreach (['VictimFirstName', 'VictimLastName', 'VictimDOB', 'OffenderFirstName', 'OffenderVictimRelationship'] as $field) {
+    // The safe phone number is required so the organisation can follow up.
+    foreach (['VictimFirstName', 'VictimLastName', 'VictimDOB', 'VictimSafePhoneNumber', 'OffenderFirstName', 'OffenderVictimRelationship'] as $field) {
         $wizard->assertSchemaComponentExists($field, checkComponentUsing: $required);
     }
-
-    $wizard->assertSchemaComponentExists('VictimSafePhoneNumber', checkComponentUsing: $optional);
 
     // A date can't hold ghost text, so the offender's date of birth says
     // "Optional" after its label instead.

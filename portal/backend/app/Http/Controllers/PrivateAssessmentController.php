@@ -43,7 +43,9 @@ class PrivateAssessmentController extends Controller
             'VictimLastName'                => 'required|string|max:50',
             'VictimSex'                     => 'required|string|max:10',
             'VictimDOB'                     => 'nullable|date',
-            'VictimSafePhoneNumber'         => 'nullable|string|max:20',
+            // Required so the organisation can follow up with the victim,
+            // anonymous submissions included.
+            'VictimSafePhoneNumber'         => 'required|string|max:20',
             'SubmissionID'                  => 'nullable|uuid|exists:Portal._submitter_info,SubmissionID',
             'AssessmentDocID'               => 'required|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);
@@ -74,7 +76,8 @@ class PrivateAssessmentController extends Controller
             'VictimLastName'                => 'nullable|string|max:50',
             'VictimSex'                     => 'nullable|string|max:10',
             'VictimDOB'                     => 'nullable|date',
-            'VictimSafePhoneNumber'         => 'nullable|string|max:20',
+            // May be changed, never cleared - the column is NOT NULL.
+            'VictimSafePhoneNumber'         => 'sometimes|required|string|max:20',
             'SubmissionID'                  => 'nullable|uuid|exists:Portal._submitter_info,SubmissionID',
             'AssessmentDocID'               => 'nullable|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);

@@ -166,10 +166,13 @@ class NewAssessment extends Page
                         ->required(),
                     $this->sexSelect('VictimSex'),
                 ]),
+                // Required so the organisation can follow up with the victim.
                 TextInput::make('VictimSafePhoneNumber')
                     ->label('Safe phone number')
                     ->tel()
-                    ->maxLength(20),
+                    ->required()
+                    ->maxLength(20)
+                    ->validationMessages(['required' => 'Required']),
             ]);
     }
 

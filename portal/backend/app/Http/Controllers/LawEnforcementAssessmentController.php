@@ -47,7 +47,8 @@ class LawEnforcementAssessmentController extends Controller
             'VictimLastName' => 'required|string|max:50',
             'VictimSex' => 'required|string|max:10',
             'VictimDOB' => 'nullable|date',
-            'VictimSafePhoneNumber' => 'nullable|string|max:20',
+            // Required so the organisation can follow up with the victim.
+            'VictimSafePhoneNumber' => 'required|string|max:20',
             'AssessmentDocID' => 'required|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);
 
@@ -81,7 +82,8 @@ class LawEnforcementAssessmentController extends Controller
             'VictimLastName' => 'nullable|string|max:50',
             'VictimSex' => 'nullable|string|max:10',
             'VictimDOB' => 'nullable|date',
-            'VictimSafePhoneNumber' => 'nullable|string|max:20',
+            // May be changed, never cleared - the column is NOT NULL.
+            'VictimSafePhoneNumber' => 'sometimes|required|string|max:20',
             'AssessmentDocID' => 'nullable|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);
 

@@ -94,7 +94,7 @@ class LawEnforcementAssessmentResource extends Resource
                             ->options(AssessmentFields::SEX_OPTIONS)
                             ->required(),
                         DatePicker::make('VictimDOB')->label('Date of birth'),
-                        TextInput::make('VictimSafePhoneNumber')->label('Safe contact number')->maxLength(20),
+                        TextInput::make('VictimSafePhoneNumber')->label('Safe contact number')->tel()->required()->maxLength(20),
                     ]),
                 Section::make('Offender')
                     ->schema([

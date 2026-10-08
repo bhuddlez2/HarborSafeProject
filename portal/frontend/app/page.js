@@ -483,16 +483,22 @@ export default function AssessmentPage() {
 
           <div className="mb-10">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {forWhom === "self" ? "Phone number" : "Safe phone number"}
+              {forWhom === "self" ? "Phone number" : "Safe phone number"}<RequiredMark />
             </label>
+            {/* Required so the organisation can follow up after the assessment. */}
             <input
               type="tel"
               value={victimPhone}
               onChange={(e) => setVictimPhone(e.target.value)}
-              placeholder={OPTIONAL_PLACEHOLDER}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400
+              maxLength={20}
+              aria-required="true"
+              aria-invalid={!!victimPhoneError}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
                          focus:outline-none focus:border-[#5C0F8B] transition"
             />
+            {victimPhoneError && (
+              <p className="text-red-600 text-sm mt-1">{victimPhoneError}</p>
+            )}
           </div>
 
           <div className="flex gap-4">
@@ -506,7 +512,8 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("offender")}
-              disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex}
+              disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !victimSex
+                || !victimPhone.trim() || !!victimPhoneError}
               className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-[#4C0B74] focus:outline-none
                          focus:ring-4 focus:ring-[#5C0F8B]/40 transition

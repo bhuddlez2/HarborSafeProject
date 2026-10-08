@@ -32,7 +32,8 @@ export const victimSchema = z.object({
   victimLastName: nameField,
   victimDob: pastDateField,
   victimSex: z.enum(["M", "F", "O"], { errorMap: () => ({ message: "Select an option" }) }),
-  victimPhone: z.string().trim().optional(),
+  // Required so the organisation can follow up after the assessment.
+  victimPhone: z.string().trim().min(1, "Required"),
 });
 
 export const offenderSchema = z.object({
