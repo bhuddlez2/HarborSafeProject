@@ -220,22 +220,26 @@ class EventResource extends Resource
 
                 TextColumn::make('starts_at')
                     ->label('Starts')
+                    ->alignCenter()
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Event::DISPLAY_TIMEZONE)
                     ->sortable(),
 
                 TextColumn::make('category.Name')
                     ->label('Category')
+                    ->alignCenter()
                     ->badge()
                     ->placeholder('None'),
 
                 IconColumn::make('is_published')
                     ->label('Published')
+                    ->alignCenter()
                     ->boolean()
                     ->sortable(),
 
                 IconColumn::make('is_cancelled')
                     ->label('Cancelled')
+                    ->alignCenter()
                     ->boolean()
                     ->falseColor('gray')
                     ->trueColor('danger')

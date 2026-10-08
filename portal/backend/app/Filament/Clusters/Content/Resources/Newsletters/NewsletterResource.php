@@ -135,16 +135,19 @@ class NewsletterResource extends Resource
 
                 TextColumn::make('issue_date')
                     ->label('Issue')
+                    ->alignCenter()
                     ->date('F Y')
                     ->sortable(),
 
                 TextColumn::make('file.name')
                     ->label('File')
+                    ->alignCenter()
                     ->placeholder('None')
                     ->limit(30),
 
                 TextColumn::make('file_size_bytes')
                     ->label('Size')
+                    ->alignCenter()
                     ->placeholder('—')
                     ->formatStateUsing(fn (?int $state): string => $state === null
                         ? '—'
