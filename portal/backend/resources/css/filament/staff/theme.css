@@ -476,6 +476,16 @@
     overflow: hidden;
 }
 
+/* Remove the gap between the search/filter toolbar and the column header row */
+.fi-ta-header-ctn {
+    padding-bottom: 0;
+}
+
+/* All thead cells, including the unlabelled actions column which uses fi-ta-actions-header-cell */
+.fi-ta-ctn thead th {
+    background-color: #ede3f5;
+}
+
 .fi-ta-header-cell {
     background-color: #ede3f5;
     color: #5c0f8b;
