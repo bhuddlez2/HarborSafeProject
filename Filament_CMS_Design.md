@@ -820,12 +820,11 @@ Two notes for whoever extends this:
 
 **Still to cover:** the change-log observer (Phase 9) and the public content endpoints
 (Phase 10), neither of which is built.
-*Gate:* `php artisan test` passes with one pre-existing failure. Currently 87 passing,
-1 failing.
+*Gate:* `php artisan test` passes in full.
 
-> `tests/Feature/ExampleTest.php` fails by design — it is Pest's stock scaffold asserting
-> `GET /` returns 200, and `/` is now the panel root, which redirects an anonymous visitor
-> to `/login` (302). Leave it failing; don't "fix" it. See `CLAUDE.md`.
+> `tests/Feature/ExampleTest.php` checks Laravel's `/up` health route. It used to be Pest's
+> stock scaffold asserting `GET /` returns 200 and failed by design, because `/` is the panel
+> root and redirects an anonymous visitor to `/login` (302). See `CLAUDE.md`.
 
 ## 12. Open items
 

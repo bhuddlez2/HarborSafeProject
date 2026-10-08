@@ -322,10 +322,10 @@ Neither frontend has a test runner configured.
 
 ## 7. Gotchas worth knowing before they bite
 
-**`php artisan test` fails exactly one test, on purpose.**
-`tests/Feature/ExampleTest.php` is Pest's stock scaffold test asserting
-`GET /` returns 200; `/` is the staff panel root, which redirects to `/login`. Expected
-until it's rewritten against a real route. Anything *else* failing is real.
+**`php artisan test` should pass in full; any failure is real.**
+`tests/Feature/ExampleTest.php` checks Laravel's `/up` health route, not `/`: `/` is the
+staff panel root, which redirects an anonymous visitor to `/login` (302), so the stock
+scaffold's `GET /` → 200 assertion failed for months before it was repointed.
 
 **Always migrate with `--database=Portal`,** whatever connection the migration
 actually targets. Portal's `migrations` table is this project's single
