@@ -9,6 +9,7 @@ use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -116,6 +117,7 @@ class AssessmentReviewResource extends Resource
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
+                    ->timezone(Timezones::DISPLAY)
                     ->alignCenter()
                     ->sortable(),
 

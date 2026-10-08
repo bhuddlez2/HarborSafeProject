@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Timezones;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Facades\Storage;
@@ -52,7 +53,8 @@ class Event extends BaseModel
     a DST boundary, where a hard-coded -05:00 or -04:00 silently shifts half
     the year's events by an hour.
     */
-    public const DISPLAY_TIMEZONE = 'America/New_York';
+    // The project-wide display zone - see App\Support\Timezones.
+    public const DISPLAY_TIMEZONE = Timezones::DISPLAY;
 
     protected $connection = 'Content';
 

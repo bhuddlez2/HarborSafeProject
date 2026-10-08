@@ -315,7 +315,7 @@ Event categories       —       —            edit       edit
 Form options           —       —            edit       edit
   (services/resources/counties)
 Service feedback       —       —          view,      view,
-  (paper forms)                           add paper  add paper
+  (staff-entered forms)                   add form   add form
 Resource requests      —       —          view       view
 Civilian assessments   —       —          —          view
 LE assessments         own     own agency —          view all
@@ -705,7 +705,7 @@ creating an officer; `police_admin` has no edit action on assessments.
 
 - **Content** cluster — events (full create/edit pages), newsletters and categories
   (modal), plus database-backed uploads (§6.7).
-- **Submissions** cluster — service feedback and resource requests, never edited. Resource requests are read-only; service feedback also has **Add paper form** (admin, secretary) for forms that arrive on paper, marked `Source = paper`, with an optional scan kept in `feedback_scans` (see `CLAUDE.md`).
+- **Submissions** cluster — service feedback and resource requests, never edited. Resource requests are read-only; service feedback also has **New feedback form** (admin, secretary) for forms filled in by staff, typically from paper, marked `Source = staff`, with an optional scan kept in `feedback_scans` (see `CLAUDE.md`).
 - **Form options** cluster — services, resource types and counties, sharing one
   `LookupResource` base.
 - **Assessment review** — law-enforcement submissions, view-only: admin sees all of

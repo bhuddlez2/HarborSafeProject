@@ -4,6 +4,7 @@ namespace App\Filament\Assessments;
 
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
+use App\Support\Timezones;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Support\Icons\Heroicon;
@@ -43,7 +44,7 @@ final class ChangeHistory
                 : 'No edits since submission')
             ->modalHeading('Change log')
             ->modalDescription(fn (LawEnforcementAssessment $record): string => 'Assessment submitted '
-                .($record->DateCreated ? Carbon::parse($record->DateCreated)->format('M j, Y g:i a') : '')
+                .($record->DateCreated ? Carbon::parse($record->DateCreated)->setTimezone(Timezones::DISPLAY)->format('M j, Y g:i a') : '')
                 .'. Every edit since, newest first. Edits cannot be changed or removed.')
             ->modalContent(fn (LawEnforcementAssessment $record) => view(self::VIEW, [
                 'edits' => self::entries(
@@ -84,7 +85,8 @@ final class ChangeHistory
     private static function entries(array $edits): array
     {
         return array_map(fn (AssessmentEdit $edit): array => [
-            'when' => $edit->EditedAt?->format('M j, Y g:i a') ?? '',
+            // Stored UTC, shown Eastern - see App\Support\Timezones.
+            'when' => $edit->EditedAt?->copy()->setTimezone(Timezones::DISPLAY)->format('M j, Y g:i a') ?? '',
             'editor' => $edit->editor?->name ?? 'Unknown',
             'reason' => $edit->Reason,
             'changes' => $edit->changes(),

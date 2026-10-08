@@ -9,6 +9,7 @@ use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Tables\ChangeLogFilters;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
@@ -127,7 +128,8 @@ class AssessmentEditResource extends Resource
                             ->formatStateUsing(fn (?string $state, AssessmentEdit $record): string => self::personName($record->assessment, 'Offender')),
                         TextEntry::make('assessment.DateCreated')
                             ->label('Submitted')
-                            ->dateTime('M j, Y g:i a'),
+                            ->dateTime('M j, Y g:i a')
+                            ->timezone(Timezones::DISPLAY),
                     ])
                     ->columns(3),
 
@@ -144,6 +146,7 @@ class AssessmentEditResource extends Resource
                 TextColumn::make('EditedAt')
                     ->label('When')
                     ->dateTime('M j, Y g:i a')
+                    ->timezone(Timezones::DISPLAY)
                     ->sortable(),
 
                 TextColumn::make('editor.name')

@@ -157,11 +157,13 @@ class DatabaseFileUpload extends FileUpload
     }
 
     /*
-    A scan or photo of a paper service-feedback form. Stored in
-    feedback_scans, beside the feedback, and previewed only through the
-    admin/secretary route - see App\Models\FeedbackScan for why not
-    content_files. PDF for a scanner, JPEG/PNG for a phone photo; the
-    document limit, since a multi-page scan is the larger case.
+    A scan or photo of a service-feedback form filled in by staff (typically
+    from paper). Stored in feedback_scans, beside the feedback, and previewed
+    only through the admin/secretary route - see App\Models\FeedbackScan for
+    why not content_files. PDF for a scanner, JPEG/PNG for a phone photo; the
+    document limit, since a multi-page scan is the larger case. The helper
+    text says nothing about who can open it: only admins and secretaries see
+    feedback at all, so to them the restriction is invisible.
     */
     public static function forScan(string $name): static
     {
@@ -172,7 +174,7 @@ class DatabaseFileUpload extends FileUpload
             ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
             ->maxSize($limit)
             ->helperText(sprintf(
-                'PDF, JPEG or PNG, up to %s. Only admins and secretaries can open it.',
+                'PDF, JPEG or PNG, up to %s.',
                 self::describeKb($limit),
             ));
     }

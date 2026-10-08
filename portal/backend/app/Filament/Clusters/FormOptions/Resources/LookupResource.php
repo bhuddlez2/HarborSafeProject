@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\FormOptions\Resources;
 
 use App\Enums\UserRole;
 use App\Filament\Clusters\FormOptions\FormOptionsCluster;
+use App\Support\Timezones;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -91,6 +92,7 @@ abstract class LookupResource extends Resource
                     ->label('Last changed')
                     ->alignCenter()
                     ->dateTime('M j, Y g:i a')
+                    ->timezone(Timezones::DISPLAY)
                     ->placeholder('Never')
                     ->sortable(),
             ])

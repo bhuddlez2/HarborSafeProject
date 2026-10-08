@@ -8,13 +8,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /*
-Service feedback: online from the website's form, or typed into the panel from
-a paper form by an admin or secretary (Source, below).
+Service feedback: online from the website's form, or filled in on the panel by
+an admin or secretary - typically from a form that arrived on paper (Source,
+below; shown as "Online" / "Staff").
 
 Only the three fields the public form sends are fillable. Source, EnteredBy,
-SubmissionDate and ScanFileID are set explicitly by recordPaperForm() and never
-mass-assigned, so the public endpoint - which creates from its validated input
-- cannot mark a submission as paper or claim a staff author.
+SubmissionDate and ScanFileID are set explicitly by recordStaffEntry() and
+never mass-assigned, so the public endpoint - which creates from its validated
+input - cannot mark a submission as staff-entered or claim a staff author.
 */
 class ServiceFeedback extends BaseModel
 {
@@ -22,7 +23,7 @@ class ServiceFeedback extends BaseModel
 
     public const SOURCE_ONLINE = 'online';
 
-    public const SOURCE_PAPER = 'paper';
+    public const SOURCE_STAFF = 'staff';
 
     protected $connection = 'Feedback';
 
@@ -52,8 +53,8 @@ class ServiceFeedback extends BaseModel
         // BaseModel::booted() enforces the $connection declaration.
         parent::booted();
 
-        // A scan goes with its entry: deleting a mistyped paper entry (the
-        // way to correct one - there is no edit) must not leave a handwritten
+        // A scan goes with its entry: deleting a mistyped staff entry (the
+        // way to correct one - there is no edit) must not leave a scanned
         // form behind. Query builder, so the blob is never loaded. Fires for
         // bulk deletes too, because the resource fetches the selected records
         // and deletes them one by one.
@@ -76,27 +77,28 @@ class ServiceFeedback extends BaseModel
         return $this->belongsTo(Service::class, 'ServiceID');
     }
 
-    public function isPaper(): bool
+    public function isStaffEntry(): bool
     {
-        return $this->Source === self::SOURCE_PAPER;
+        return $this->Source === self::SOURCE_STAFF;
     }
 
-    // The staff member who typed a paper form in. users is on Portal, so this
-    // is a lookup rather than a relation that could be joined.
+    // The staff member who filled the form in. users is on Portal, so this is
+    // a lookup rather than a relation that could be joined.
     public function enteredByName(): ?string
     {
         return $this->EnteredBy ? User::find($this->EnteredBy)?->name : null;
     }
 
     /*
-    Saves a paper form typed in by $enteredBy. $data is the panel form's
-    validated state, which used ServiceFeedbackStoreRequest's own rules, so a
-    paper entry passes exactly the checks an online one does.
+    Saves a form filled in by $enteredBy. $data is the panel form's validated
+    state, which used ServiceFeedbackStoreRequest's own rules, so a staff
+    entry passes exactly the checks an online one does.
 
-    SubmissionDate is the date written on the paper, at midnight - not when it
-    was typed in.
+    SubmissionDate arrives already in UTC: the form's picker is entered in
+    Eastern and converted on the way out (App\Support\Timezones), the same
+    UTC that online rows get from the column's useCurrent().
     */
-    public static function recordPaperForm(array $data, User $enteredBy): self
+    public static function recordStaffEntry(array $data, User $enteredBy): self
     {
         $feedback = new self;
 
@@ -104,8 +106,8 @@ class ServiceFeedback extends BaseModel
             'ServiceID' => (int) $data['ServiceID'],
             'Rating' => (int) $data['Rating'],
             'Comment' => ServiceFeedbackStoreRequest::normalizeText($data['Comment'] ?? null),
-            'SubmissionDate' => Carbon::parse($data['SubmissionDate'])->startOfDay(),
-            'Source' => self::SOURCE_PAPER,
+            'SubmissionDate' => Carbon::parse($data['SubmissionDate'])->format('Y-m-d H:i:s'),
+            'Source' => self::SOURCE_STAFF,
             'EnteredBy' => $enteredBy->getKey(),
             'ScanFileID' => $data['ScanFileID'] ?? null,
         ])->save();

@@ -10,13 +10,14 @@ use App\Filament\Forms\RequirementMarkers;
 use App\Http\Requests\Public\ServiceFeedbackStoreRequest;
 use App\Models\Service;
 use App\Models\ServiceFeedback;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ToggleButtons;
@@ -32,19 +33,24 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /*
-Service feedback: submitted through the public website's form, or typed in
-from a paper form by an admin or secretary ("Add paper form" on the list page,
-ListServiceFeedback; Source tells them apart).
+Service feedback: submitted through the public website's form, or filled in by
+an admin or secretary ("New feedback form" on the list page,
+ListServiceFeedback) - typically from a form that arrived on paper. Source
+tells them apart, shown as "Online" / "Staff".
 
 NEVER EDITED. These are statements made by members of the public, so there is
 no edit action anywhere - altering one would be falsifying a record. That
-holds for paper entries too: a mistyped one is deleted and typed in again.
+holds for staff entries too: a mistyped one is deleted and filled in again.
 View and delete are the only things offered; delete exists for spam and for
-those mistakes, and takes a paper entry's scan with it.
+those mistakes, and takes a staff entry's scan with it.
 
-The form() below is used only by the paper-form create action. Its rules are
-ServiceFeedbackStoreRequest::fieldRules(), the website's own, so a paper entry
+The form() below is used only by that create action. Its rules are
+ServiceFeedbackStoreRequest::fieldRules(), the website's own, so a staff entry
 passes exactly the checks an online one does.
+
+SubmissionDate is stored in UTC for both kinds - online rows by the column's
+useCurrent(), staff rows by the form - and shown in Eastern
+(App\Support\Timezones).
 
 The rating is 1-5 as submitted. The form's own validation is the only thing
 that has ever constrained it, so a stored 0 or 9 displays as-is rather than
@@ -90,7 +96,7 @@ class ServiceFeedbackResource extends Resource
         return $count > 0 ? (string) $count : null;
     }
 
-    // The "Add paper form" pop-up. Only ever used to create a paper entry.
+    // The "New feedback form" pop-up. Only ever used to create a staff entry.
     public static function form(Schema $schema): Schema
     {
         $rules = ServiceFeedbackStoreRequest::fieldRules();
@@ -117,12 +123,16 @@ class ServiceFeedbackResource extends Resource
                     ->required()
                     ->rules($rules['Rating']),
 
-                DatePicker::make('SubmissionDate')
-                    ->label('Date on the form')
+                // Entered and shown in Eastern, saved as UTC - Filament
+                // converts both ways because of ->timezone().
+                DateTimePicker::make('SubmissionDate')
+                    ->label('Date and time')
                     ->native()
-                    ->default(now())
-                    ->maxDate(now())
-                    ->helperText('The date written on the paper form, not the date you are typing it in.')
+                    ->seconds(false)
+                    ->timezone(Timezones::DISPLAY)
+                    ->default(fn () => now())
+                    ->maxDate(fn () => now())
+                    ->helperText('When the form was filled in. Defaults to now.')
                     ->required(),
 
                 Textarea::make('Comment')
@@ -133,7 +143,7 @@ class ServiceFeedbackResource extends Resource
                     ->columnSpanFull(),
 
                 DatabaseFileUpload::forScan('ScanFileID')
-                    ->label(RequirementMarkers::optionalLabel('Scan of the paper form'))
+                    ->label(RequirementMarkers::optionalLabel('Scan of the form'))
                     ->columnSpanFull(),
             ])
             ->columns(2);
@@ -156,20 +166,21 @@ class ServiceFeedbackResource extends Resource
                                 : $state.' out of 5'),
 
                         TextEntry::make('SubmissionDate')
-                            ->label(fn (ServiceFeedback $record): string => $record->isPaper() ? 'Date on the form' : 'Submitted')
-                            ->formatStateUsing(fn ($state, ServiceFeedback $record): string => self::formatDate($record)),
+                            ->label('Submitted')
+                            ->dateTime('M j, Y g:i a')
+                            ->timezone(Timezones::DISPLAY),
 
                         TextEntry::make('Source')
                             ->label('Source')
                             ->badge()
                             ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
-                            ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_PAPER ? 'info' : 'gray'),
+                            ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_STAFF ? 'info' : 'gray'),
 
                         TextEntry::make('EnteredBy')
                             ->label('Entered by')
                             ->state(fn (ServiceFeedback $record): ?string => $record->enteredByName())
                             ->placeholder('Unknown')
-                            ->visible(fn (ServiceFeedback $record): bool => $record->isPaper()),
+                            ->visible(fn (ServiceFeedback $record): bool => $record->isStaffEntry()),
 
                         TextEntry::make('ScanFileID')
                             ->label('Scan')
@@ -188,16 +199,9 @@ class ServiceFeedbackResource extends Resource
             ]);
     }
 
-    // A paper entry carries only the date written on the form; the time
-    // would be a meaningless midnight.
-    private static function formatDate(ServiceFeedback $record): string
-    {
-        return $record->SubmissionDate?->format($record->isPaper() ? 'M j, Y' : 'M j, Y g:i a') ?? '-';
-    }
-
     private static function sourceLabel(?string $source): string
     {
-        return $source === ServiceFeedback::SOURCE_PAPER ? 'Paper' : 'Online';
+        return $source === ServiceFeedback::SOURCE_STAFF ? 'Staff' : 'Online';
     }
 
     public static function table(Table $table): Table
@@ -207,7 +211,8 @@ class ServiceFeedbackResource extends Resource
                 TextColumn::make('SubmissionDate')
                     ->label('Submitted')
                     ->alignCenter()
-                    ->formatStateUsing(fn ($state, ServiceFeedback $record): string => self::formatDate($record))
+                    ->dateTime('M j, Y g:i a')
+                    ->timezone(Timezones::DISPLAY)
                     ->sortable(),
 
                 TextColumn::make('Source')
@@ -215,7 +220,7 @@ class ServiceFeedbackResource extends Resource
                     ->alignCenter()
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
-                    ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_PAPER ? 'info' : 'gray'),
+                    ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_STAFF ? 'info' : 'gray'),
 
                 TextColumn::make('service.Name')
                     ->label('Service')
@@ -251,7 +256,7 @@ class ServiceFeedbackResource extends Resource
                     ->label('Source')
                     ->options([
                         ServiceFeedback::SOURCE_ONLINE => 'Online',
-                        ServiceFeedback::SOURCE_PAPER => 'Paper',
+                        ServiceFeedback::SOURCE_STAFF => 'Staff',
                     ]),
 
                 SelectFilter::make('ServiceID')
@@ -275,7 +280,7 @@ class ServiceFeedbackResource extends Resource
                 ViewAction::make(),
                 DeleteAction::make()
                     ->modalHeading('Delete this feedback?')
-                    ->modalDescription('This is a submission from a member of the public. Deleting it cannot be undone. A paper form\'s scan is deleted with it.'),
+                    ->modalDescription('This is a submission from a member of the public. Deleting it cannot be undone. Any attached scan is deleted with it.'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -285,7 +290,7 @@ class ServiceFeedbackResource extends Resource
                 ]),
             ])
             ->emptyStateHeading('No feedback yet')
-            ->emptyStateDescription('Feedback left through the website, and paper forms typed in here, appear here.');
+            ->emptyStateDescription('Feedback left through the website, and forms filled in here, appear here.');
     }
 
     public static function getPages(): array

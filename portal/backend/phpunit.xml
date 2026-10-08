@@ -18,6 +18,12 @@
         </include>
     </source>
     <php>
+        <!-- The whole suite runs in one process against real databases, and
+             the upload tests move multi-megabyte blobs (a 3.5 MB photo, 8 MB
+             caps). By ~270 tests it outgrows PHP's default 128M, failing
+             UploadLimitsTest with "Allowed memory size exhausted" in a full
+             run while it passes alone. Test runs only. -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

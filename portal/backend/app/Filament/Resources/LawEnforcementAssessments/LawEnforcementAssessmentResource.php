@@ -11,6 +11,7 @@ use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
 use App\Support\AssessmentFields;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -136,6 +137,7 @@ class LawEnforcementAssessmentResource extends Resource
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
+                    ->timezone(Timezones::DISPLAY)
                     ->alignCenter()
                     ->sortable(),
 

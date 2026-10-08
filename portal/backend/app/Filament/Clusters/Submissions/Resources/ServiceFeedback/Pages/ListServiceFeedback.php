@@ -9,10 +9,12 @@ use Filament\Facades\Filament;
 use Filament\Resources\Pages\ListRecords;
 
 /*
-Online feedback arrives from the public form, never from staff. The one
-create action here is for PAPER forms: an admin or secretary types in a form
-that arrived on paper, so it sits in the database alongside the online ones,
-marked as paper (ServiceFeedback::recordPaperForm()).
+Online feedback arrives from the public form. The one create action here,
+"New feedback form", lets an admin or secretary fill a form in themselves -
+typically one that arrived on paper - so it sits in the database alongside the
+online ones, marked Source = staff (ServiceFeedback::recordStaffEntry()). The
+wording deliberately doesn't mention paper: to the person entering it, it is
+just a feedback form.
 
 ListRecords rather than ManageRecords so this stays the only create button -
 ManageRecords would add its own. Resource requests have no equivalent: they
@@ -26,14 +28,13 @@ class ListServiceFeedback extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('Add paper form')
+                ->label('New feedback form')
                 ->icon('heroicon-o-document-plus')
-                ->modalHeading('Add a paper feedback form')
-                ->modalDescription('Type in a service feedback form that arrived on paper. It is saved alongside online feedback and marked as paper.')
-                ->modalSubmitActionLabel('Save paper form')
+                ->modalHeading('New feedback form')
+                ->modalSubmitActionLabel('Save form')
                 ->createAnother(false)
-                ->using(fn (array $data): ServiceFeedback => ServiceFeedback::recordPaperForm($data, Filament::auth()->user()))
-                ->successNotificationTitle('Paper form saved'),
+                ->using(fn (array $data): ServiceFeedback => ServiceFeedback::recordStaffEntry($data, Filament::auth()->user()))
+                ->successNotificationTitle('Feedback form saved'),
         ];
     }
 }

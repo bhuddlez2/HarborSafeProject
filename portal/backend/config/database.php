@@ -50,6 +50,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Session time zone UTC, matching config/app.php, so MariaDB's NOW()
+            // and useCurrent() agree with Laravel's now() on every machine.
+            // Not an env value on purpose - see App\Support\Timezones.
+            'timezone' => '+00:00',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -72,6 +76,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Session time zone UTC, matching config/app.php, so MariaDB's NOW()
+            // and useCurrent() agree with Laravel's now() on every machine.
+            // Not an env value on purpose - see App\Support\Timezones.
+            'timezone' => '+00:00',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -95,6 +103,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Session time zone UTC, matching config/app.php, so MariaDB's NOW()
+            // and useCurrent() agree with Laravel's now() on every machine.
+            // Not an env value on purpose - see App\Support\Timezones.
+            'timezone' => '+00:00',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -122,6 +134,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Session time zone UTC, matching config/app.php, so MariaDB's NOW()
+            // and useCurrent() agree with Laravel's now() on every machine.
+            // Not an env value on purpose - see App\Support\Timezones.
+            'timezone' => '+00:00',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -147,6 +163,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Session time zone UTC, matching config/app.php, so MariaDB's NOW()
+            // and useCurrent() agree with Laravel's now() on every machine.
+            // Not an env value on purpose - see App\Support\Timezones.
+            'timezone' => '+00:00',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -174,6 +194,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Session time zone UTC, matching config/app.php, so MariaDB's NOW()
+            // and useCurrent() agree with Laravel's now() on every machine.
+            // Not an env value on purpose - see App\Support\Timezones.
+            'timezone' => '+00:00',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

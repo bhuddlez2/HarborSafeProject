@@ -38,7 +38,8 @@
         <div class="hs-ar-header-eyebrow">Harbor Safe</div>
         <div class="hs-ar-header-title">Lethality Assessment Protocol</div>
         <div class="hs-ar-header-meta">
-            <span>{{ $record->DateCreated ? \Carbon\Carbon::parse($record->DateCreated)->format('M j, Y \a\t g:i a') : '—' }}</span>
+            {{-- Stored UTC, shown Eastern - see App\Support\Timezones. --}}
+            <span>{{ $record->DateCreated ? \Carbon\Carbon::parse($record->DateCreated)->setTimezone(\App\Support\Timezones::DISPLAY)->format('M j, Y \a\t g:i a') : '—' }}</span>
             <span class="hs-ar-header-sep">·</span>
             <span>Officer: {{ $record->submitter?->name ?? 'Unknown' }}</span>
         </div>

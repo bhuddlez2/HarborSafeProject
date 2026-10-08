@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Models\PrivateAssessment;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
@@ -86,7 +87,8 @@ class CivilianAssessmentResource extends Resource
                     ->schema([
                         TextEntry::make('DateCreated')
                             ->label('Submitted')
-                            ->dateTime('M j, Y g:i a'),
+                            ->dateTime('M j, Y g:i a')
+                            ->timezone(Timezones::DISPLAY),
 
                         TextEntry::make('DocumentID')
                             ->label('Record ID')
@@ -163,6 +165,7 @@ class CivilianAssessmentResource extends Resource
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
+                    ->timezone(Timezones::DISPLAY)
                     ->alignCenter()
                     ->sortable(),
 

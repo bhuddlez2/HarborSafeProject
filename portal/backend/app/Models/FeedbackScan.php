@@ -3,8 +3,9 @@
 namespace App\Models;
 
 /*
-A scan of a paper service-feedback form, bytes and all, attached when staff
-type the form into the panel (ServiceFeedback::recordPaperForm()).
+A scan of a service-feedback form, bytes and all, attached when an admin or
+secretary fills the form in on the panel - typically one that arrived on paper
+(ServiceFeedback::recordStaffEntry()).
 
 Everything about storing and reading the bytes is inherited from ContentFile -
 the global scope that keeps `contents` out of every multi-row query, contents()

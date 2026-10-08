@@ -8,6 +8,7 @@ use App\Filament\Clusters\Submissions\SubmissionsCluster;
 use App\Models\County;
 use App\Models\Resource as ResourceType;
 use App\Models\ResourceRequestForm;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -94,7 +95,8 @@ class ResourceRequestResource extends Resource
 
                         TextEntry::make('SubmissionDate')
                             ->label('Submitted')
-                            ->dateTime('M j, Y g:i a'),
+                            ->dateTime('M j, Y g:i a')
+                            ->timezone(Timezones::DISPLAY),
                     ])
                     ->columns(3),
 
@@ -140,6 +142,7 @@ class ResourceRequestResource extends Resource
                     ->label('Submitted')
                     ->alignCenter()
                     ->dateTime('M j, Y g:i a')
+                    ->timezone(Timezones::DISPLAY)
                     ->sortable(),
 
                 TextColumn::make('FirstName')

@@ -5,6 +5,7 @@ namespace App\Filament\Tables;
 use App\Enums\UserRole;
 use App\Models\LawEnforcementAgent;
 use App\Models\LawEnforcementAssessment;
+use App\Support\Timezones;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
@@ -75,7 +76,9 @@ final class AssessmentFilters
     }
 
     // A from/until pair on one date column, labelled "<verb> from" and
-    // "<verb> until", each with its own chip.
+    // "<verb> until", each with its own chip. The picked days are Eastern
+    // days: the column is UTC, so "from 10 March" means from midnight
+    // Eastern on the 10th, not midnight UTC (App\Support\Timezones).
     public static function dateRange(string $name, string $column, string $verb): Filter
     {
         return Filter::make($name)
@@ -86,8 +89,8 @@ final class AssessmentFilters
             ->columns(2)
             ->columnSpan(2)
             ->query(fn (Builder $query, array $data): Builder => $query
-                ->when($data['from'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate($column, '>=', $date))
-                ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate($column, '<=', $date)))
+                ->when($data['from'] ?? null, fn (Builder $query, string $date): Builder => $query->where($column, '>=', Timezones::dayStartUtc($date)))
+                ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->where($column, '<=', Timezones::dayEndUtc($date))))
             ->indicateUsing(function (array $data) use ($verb): array {
                 $indicators = [];
 

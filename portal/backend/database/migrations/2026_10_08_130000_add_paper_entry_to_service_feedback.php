@@ -5,18 +5,22 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /*
-Paper service-feedback forms, typed into the panel by an admin or secretary
-(the "Add paper form" action on the Service feedback tab).
+Service-feedback forms filled in on the panel by an admin or secretary -
+typically ones that arrived on paper ("New feedback form" on the Service
+feedback tab).
 
 service_feedback gains:
   - Source: 'online' (the website's form - the default, so the public
-    endpoint and every existing row need no change) or 'paper'.
+    endpoint and every existing row need no change) or 'staff' (filled in on
+    the panel - see ServiceFeedback::SOURCE_STAFF; first written as 'paper',
+    renamed before release).
   - EnteredBy: the staff user who typed it in. users lives on Portal, a
     different database, so this cannot be a real foreign key.
-  - ScanFileID: an optional scan of the original paper, in feedback_scans.
+  - ScanFileID: an optional scan of the original form, in feedback_scans.
 
-SubmissionDate keeps its useCurrent() default for online feedback; for a paper
-form it holds the date written on the paper, at midnight.
+SubmissionDate keeps its useCurrent() default for online feedback; a staff
+entry stores the date and time entered on its form, in the same database-server
+time (ServiceFeedback::databaseNow()).
 
 feedback_scans mirrors content_files (see that migration for the LONGBLOB and
 max_allowed_packet notes, which apply unchanged). It is a separate table on
