@@ -15,6 +15,11 @@ class ManageNewsletters extends ManageRecords
 {
     protected static string $resource = NewsletterResource::class;
 
+    public function getBreadcrumb(): ?string
+    {
+        return 'Newsletters';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

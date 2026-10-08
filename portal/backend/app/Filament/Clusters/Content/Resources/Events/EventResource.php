@@ -12,6 +12,7 @@ use App\Models\Event;
 use App\Models\EventCategory;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -266,7 +267,10 @@ class EventResource extends Resource
                 ]),
             ])
             ->emptyStateHeading('No events yet')
-            ->emptyStateDescription('Events created here appear on the website once published.');
+            ->emptyStateDescription('Events created here appear on the website once published.')
+            ->emptyStateActions([
+                CreateAction::make()->label('Add an event'),
+            ]);
     }
 
     public static function getPages(): array
