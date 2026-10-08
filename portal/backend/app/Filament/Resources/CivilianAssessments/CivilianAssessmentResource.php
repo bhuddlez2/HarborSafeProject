@@ -163,10 +163,12 @@ class CivilianAssessmentResource extends Resource
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
+                    ->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('VictimLastName')
                     ->label('Victim')
+                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
                         ($record->VictimFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -174,6 +176,7 @@ class CivilianAssessmentResource extends Resource
 
                 TextColumn::make('OffenderLastName')
                     ->label('Offender')
+                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
                         ($record->OffenderFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -185,6 +188,7 @@ class CivilianAssessmentResource extends Resource
                 TextColumn::make('risk_count')
                     ->label('Yes answers')
                     ->badge()
+                    ->alignCenter()
                     ->state(fn (PrivateAssessment $record): string => self::yesCount($record).' of 11')
                     ->color(fn (PrivateAssessment $record): string => match (true) {
                         self::yesCount($record) >= 4 => 'danger',
