@@ -132,7 +132,12 @@ function cleanupPublicFormData(): void
     $feedback->table('resource_request_form')->where('FirstName', publicFormsRunToken())->delete();
 
     if ($registry->services !== []) {
+        // Paper entries may carry a scan; the feedback row points at it, so
+        // the row goes first, then the scan.
+        $scanIds = $feedback->table('service_feedback')->whereIn('ServiceID', $registry->services)
+            ->whereNotNull('ScanFileID')->pluck('ScanFileID');
         $feedback->table('service_feedback')->whereIn('ServiceID', $registry->services)->delete();
+        $feedback->table('feedback_scans')->whereIn('FileID', $scanIds)->delete();
         $feedback->table('services')->whereIn('id', $registry->services)->delete();
     }
 
@@ -201,6 +206,14 @@ function cleanupStaffData(): void
     $content->table('newsletters')->where('title', 'like', $token . '%')->delete();
     $content->table('content_files')->where('name', 'like', $token . '%')->delete();
     $content->table('event_categories')->where('Name', 'like', $token . '%')->delete();
+
+    // Paper-feedback scans left by a run that died before cleanupPublicFormData
+    // removed their feedback rows. Only unreferenced ones: a referenced scan's
+    // row is cleared with its service, which that helper owns.
+    Illuminate\Support\Facades\DB::connection('Feedback')->table('feedback_scans')
+        ->where('name', 'like', $token . '%')
+        ->whereNotIn('FileID', fn ($query) => $query->select('ScanFileID')->from('service_feedback')->whereNotNull('ScanFileID'))
+        ->delete();
 
     $portal = Illuminate\Support\Facades\DB::connection('Portal');
 

@@ -172,6 +172,18 @@ erDiagram
         tinyint Rating
         string Comment
         timestamp SubmissionDate
+        string Source
+        bigint EnteredBy
+        uuid ScanFileID FK
+    }
+    feedback_scans {
+        uuid FileID PK
+        string name
+        string mime_type
+        int size_bytes
+        longblob contents
+        char checksum
+        timestamp created_at
     }
     resource_request_form {
         uuid FormID PK
@@ -189,6 +201,7 @@ erDiagram
     }
 
     services ||--o{ service_feedback : "ServiceID"
+    feedback_scans |o--o| service_feedback : "ScanFileID (nullable, paper only)"
     counties ||--o{ resource_request_form : "CountyID (nullable)"
     resource_request_form ||--o{ resource_request_resource_types : "FormID"
     resources ||--o{ resource_request_resource_types : "ResourceTypeID"
@@ -201,7 +214,8 @@ erDiagram
 | `services` | Lookup table for the service-feedback form | `id` (PK) | |
 | `resources` | Lookup table for the resource-request form | `id` (PK) | |
 | `counties` | Lookup table for the resource-request form | `id` (PK) | |
-| `service_feedback` | Public service-rating submissions | `FormID` (PK, uuid), `ServiceID` (FK, required) | `Rating`'s 1–5 range is enforced in validation, not a DB constraint, matching how the rest of the app handles range checks. |
+| `service_feedback` | Public service-rating submissions | `FormID` (PK, uuid), `ServiceID` (FK, required) | `Rating`'s 1–5 range is enforced in validation, not a DB constraint, matching how the rest of the app handles range checks. Since 2026-10-08 a row is either `online` (the website's form) or `paper` (typed in by an admin/secretary from a paper form) — `Source`, default `online`, so the public INSERT never sets it. A paper row also has `EnteredBy` (the staff `users.id` — on Portal, a different database, so not a real FK), `SubmissionDate` = the date written on the form at midnight, and optionally `ScanFileID` → `feedback_scans`. `Source`/`EnteredBy`/`ScanFileID` are not mass-assignable, so the public endpoint can't forge them. |
+| `feedback_scans` | Scans of paper feedback forms | `FileID` (PK, uuid) | Same shape and rules as `content_files` (`App\Models\FeedbackScan` extends `ContentFile`: never select `contents` in a listing). Kept here, beside the feedback, rather than in `content_files`, so a handwritten form stays out of the content database and its open `/files/{file}` route: served only by `FeedbackScanController` (`/feedback-scans/{file}`) to admins and secretaries, `private, no-store`. Deleted with its feedback row. **No grant** for the restricted public user. |
 | `resource_request_form` | Public resource-request submissions | `FormID` (PK, uuid) | `LastName`, `CountyID`, `Message` are all nullable (optional on the form); `FirstName` is required. `EmailAddress`/`SafePhoneNumber` are each nullable, but the form requires at least one of the two (`required_without` on both, enforced in `ResourceRequestStoreRequest`) so there's always a way to reach the submitter back. `FirstName`/`LastName` are `varchar(50)` — shrunk from an original 100 to match what validation and the form input actually accept end-to-end. `SafePhoneNumber` is a string column, not numeric — an int would drop leading zeros and can't hold formatting. |
 | `resource_request_resource_types` | Junction table for the form's multi-select "resources of interest" field | `FormID` (FK), `ResourceTypeID` (FK), composite PK on both | Replaced an earlier singular `ResourceTypeID` FK column directly on `resource_request_form`, which couldn't represent more than one selection. |
 

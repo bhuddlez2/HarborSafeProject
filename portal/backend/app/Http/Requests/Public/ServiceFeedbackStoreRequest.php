@@ -24,11 +24,22 @@ class ServiceFeedbackStoreRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'Comment' => $this->normalizeText($this->input('Comment')),
+            'Comment' => self::normalizeText($this->input('Comment')),
         ]);
     }
 
     public function rules(): array
+    {
+        return self::fieldRules();
+    }
+
+    /*
+    The rules themselves, public and static so the staff panel's "Add paper
+    form" action (ServiceFeedbackResource) validates a typed-in paper form with
+    exactly these - one list, so the two can never drift apart. Add a rule
+    here and both the website and the panel enforce it.
+    */
+    public static function fieldRules(): array
     {
         return [
             'ServiceID' => ['required', 'integer', 'exists:FeedbackPublic.services,id'],
@@ -39,8 +50,9 @@ class ServiceFeedbackStoreRequest extends FormRequest
 
     // Trims and collapses a blank/whitespace-only string down to null so
     // "nullable" rules and required_without-style checks see it as absent
-    // rather than as a non-empty string.
-    private function normalizeText(?string $value): ?string
+    // rather than as a non-empty string. Public for the same reason as
+    // fieldRules(): paper entries are normalised the same way.
+    public static function normalizeText(?string $value): ?string
     {
         if ($value === null) {
             return null;

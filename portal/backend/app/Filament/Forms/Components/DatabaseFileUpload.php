@@ -3,6 +3,7 @@
 namespace App\Filament\Forms\Components;
 
 use App\Models\ContentFile;
+use App\Models\FeedbackScan;
 use Filament\Forms\Components\FileUpload;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -65,6 +66,16 @@ class DatabaseFileUpload extends FileUpload
 
     public const MAX_DOCUMENT_KB = 8192;
 
+    /*
+    Where the bytes go and which route previews them. Content files by
+    default; storedAs() points an upload elsewhere - a paper feedback scan
+    goes to FeedbackScan and its own admin/secretary-only route. The model
+    must be ContentFile or a subclass of it.
+    */
+    protected string $fileModel = ContentFile::class;
+
+    protected string $previewRoute = 'staff.content-files.show';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -73,12 +84,13 @@ class DatabaseFileUpload extends FileUpload
         // discards the existing upload.
         $this->fetchFileInformation(false);
 
+        // Read at call time, so storedAs() applies whenever it is chained.
         $this->saveUploadedFileUsing(
-            fn (TemporaryUploadedFile $file): ?string => ContentFile::storeUpload($file)->getKey(),
+            fn (TemporaryUploadedFile $file): ?string => $this->fileModel::storeUpload($file)->getKey(),
         );
 
         $this->getUploadedFileUsing(function (string $file): ?array {
-            $record = ContentFile::find($file);
+            $record = $this->fileModel::find($file);
 
             if (! $record) {
                 return null;
@@ -88,11 +100,20 @@ class DatabaseFileUpload extends FileUpload
                 'name' => $record->name,
                 'size' => $record->size_bytes,
                 'type' => $record->mime_type,
-                // The staff route, not the public one: the public endpoint
+                // A staff route, not the public one: the public endpoint
                 // serves published content only, and most previews are drafts.
-                'url' => route('staff.content-files.show', ['file' => $record->getKey()]),
+                'url' => route($this->previewRoute, ['file' => $record->getKey()]),
             ];
         });
+    }
+
+    /** @param  class-string<ContentFile>  $model */
+    public function storedAs(string $model, string $previewRoute): static
+    {
+        $this->fileModel = $model;
+        $this->previewRoute = $previewRoute;
+
+        return $this;
     }
 
     /*
@@ -131,6 +152,27 @@ class DatabaseFileUpload extends FileUpload
             ->maxSize($limit)
             ->helperText(sprintf(
                 'PDF, up to %s. Stored in the database.',
+                self::describeKb($limit),
+            ));
+    }
+
+    /*
+    A scan or photo of a paper service-feedback form. Stored in
+    feedback_scans, beside the feedback, and previewed only through the
+    admin/secretary route - see App\Models\FeedbackScan for why not
+    content_files. PDF for a scanner, JPEG/PNG for a phone photo; the
+    document limit, since a multi-page scan is the larger case.
+    */
+    public static function forScan(string $name): static
+    {
+        $limit = self::effectiveLimitKb(self::MAX_DOCUMENT_KB);
+
+        return static::make($name)
+            ->storedAs(FeedbackScan::class, 'staff.feedback-scans.show')
+            ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
+            ->maxSize($limit)
+            ->helperText(sprintf(
+                'PDF, JPEG or PNG, up to %s. Only admins and secretaries can open it.',
                 self::describeKb($limit),
             ));
     }

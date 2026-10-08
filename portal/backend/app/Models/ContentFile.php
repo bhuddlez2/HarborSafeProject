@@ -80,10 +80,12 @@ class ContentFile extends BaseModel
         // overriding without this call would quietly disable that guard.
         parent::booted();
 
+        // Qualified with the model's own table rather than 'content_files', so
+        // a subclass stored elsewhere (FeedbackScan) keeps the same protection.
         static::addGlobalScope(
             'withoutContents',
             fn (Builder $query) => $query->select(array_map(
-                fn (string $column): string => 'content_files.'.$column,
+                fn (string $column): string => $query->getModel()->getTable().'.'.$column,
                 self::METADATA_COLUMNS,
             )),
         );
@@ -115,7 +117,7 @@ class ContentFile extends BaseModel
     Getting this wrong stores a zero-byte row and fails nowhere until someone
     opens the file.
     */
-    public static function storeUpload(UploadedFile $file): self
+    public static function storeUpload(UploadedFile $file): static
     {
         $contents = method_exists($file, 'get')
             ? $file->get()
@@ -125,7 +127,7 @@ class ContentFile extends BaseModel
             throw new \RuntimeException('The uploaded file could not be read.');
         }
 
-        return self::store(
+        return static::store(
             $contents,
             $file->getClientOriginalName(),
             // getMimeType() sniffs the file itself rather than taking the
@@ -142,9 +144,11 @@ class ContentFile extends BaseModel
     is bound as a parameter and never enters the model's attribute array. Size
     comes from the bytes actually stored, never from a client-supplied length.
     */
-    public static function store(string $contents, string $name, string $mimeType): self
+    // static, not self, throughout: FeedbackScan inherits these and must get
+    // rows in its own table back.
+    public static function store(string $contents, string $name, string $mimeType): static
     {
-        $record = new self([
+        $record = new static([
             'name' => $name,
             'mime_type' => $mimeType,
             'size_bytes' => strlen($contents),

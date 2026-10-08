@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssessmentPdfController;
 use App\Http\Controllers\ContentFileController;
+use App\Http\Controllers\FeedbackScanController;
 use App\Http\Middleware\EnsureStaffPanelAccess;
 
 /*
@@ -28,6 +29,11 @@ Route::middleware([
 
     Route::get('/assessments/{id}/pdf', AssessmentPdfController::class)
         ->name('staff.assessments.pdf');
+
+    // Scans of paper feedback forms: admins and secretaries only, never
+    // cached - see FeedbackScanController for why not /files/{file}.
+    Route::get('/feedback-scans/{file}', [FeedbackScanController::class, 'show'])
+        ->name('staff.feedback-scans.show');
 });
 
 /*
