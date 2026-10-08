@@ -287,7 +287,6 @@
     font-family: var(--font-montserrat);
     font-size: 1.125rem;
     font-weight: 700;
-    margin-bottom: 0.5rem;
 }
 
 .hs-ar-header-meta {
@@ -341,30 +340,33 @@
 }
 
 .hs-ar-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem 0.75rem;
     margin: 0;
 }
 
 .hs-ar-field {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 0.5rem;
-    font-size: 0.875rem;
+    flex-direction: column;
+    gap: 0.125rem;
 }
 
 .hs-ar-field dt {
-    color: #6b7280;
-    flex-shrink: 0;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9068b8;
 }
 
 .hs-ar-field dd {
+    font-size: 0.875rem;
     font-weight: 600;
     color: #1b1726;
-    text-align: right;
     margin: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 /* Risk indicators */

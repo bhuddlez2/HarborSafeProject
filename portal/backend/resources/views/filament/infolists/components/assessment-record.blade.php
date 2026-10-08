@@ -33,7 +33,7 @@
 
 <div class="hs-assessment-record">
 
-    {{ Header }}
+    {{-- Header --}}
     <div class="hs-ar-header">
         <div class="hs-ar-header-eyebrow">Harbor Safe</div>
         <div class="hs-ar-header-title">Lethality Assessment Protocol</div>
@@ -45,7 +45,7 @@
         <div class="hs-ar-header-id">Record ID: {{ $record->DocumentID }}</div>
     </div>
 
-    {{ Victim / Offender  }}
+    {{-- Victim / Offender --}}
     <div class="hs-ar-parties">
 
         <div class="hs-ar-party">
@@ -94,7 +94,7 @@
 
     </div>
 
-    {{ Risk indicators }}
+    {{-- Risk indicators --}}
     <div class="hs-ar-risk">
         <div class="hs-ar-risk-header">
             <span class="hs-ar-risk-title">Risk Indicators</span>

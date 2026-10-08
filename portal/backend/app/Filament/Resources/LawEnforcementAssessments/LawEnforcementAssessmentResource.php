@@ -7,6 +7,7 @@ use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Models\LawEnforcementAssessment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -156,7 +157,13 @@ class LawEnforcementAssessmentResource extends Resource
             ->emptyStateHeading('No assessments yet')
             ->emptyStateDescription('Completed LAP screenings will appear here. Use the home page to start one.')
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->extraModalFooterActions(fn (LawEnforcementAssessment $record): array => [
+                        Action::make('download_pdf')
+                            ->label('Download PDF')
+                            ->url(route('staff.assessments.pdf', $record->DocumentID))
+                            ->openUrlInNewTab(),
+                    ]),
                 EditAction::make(),
             ]);
     }

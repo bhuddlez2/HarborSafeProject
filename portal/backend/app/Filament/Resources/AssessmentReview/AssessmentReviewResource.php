@@ -7,6 +7,7 @@ use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Models\LawEnforcementAssessment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\ViewEntry;
@@ -133,7 +134,13 @@ class AssessmentReviewResource extends Resource
             // View only - see the class comment. No edit, delete or bulk
             // actions anywhere on this resource.
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->extraModalFooterActions(fn (LawEnforcementAssessment $record): array => [
+                        Action::make('download_pdf')
+                            ->label('Download PDF')
+                            ->url(route('staff.assessments.pdf', $record->DocumentID))
+                            ->openUrlInNewTab(),
+                    ]),
             ])
             ->emptyStateHeading('No assessments submitted yet')
             ->emptyStateDescription('Assessments submitted by officers through the portal appear here.');
