@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Filament\Clusters\Content\Resources\Events\Pages\CreateEvent;
+use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Filament\Forms\Components\DatabaseFileUpload;
 use App\Models\ContentFile;
 use App\Models\Event;
@@ -76,16 +76,15 @@ test('a 3.5 MB event photo is accepted', function () {
 
     $title = staffRunToken().' Big photo event';
 
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => $title,
             'starts_at' => '2027-07-01 10:00',
             'image_file_id' => $upload,
             'image_alt' => 'A large test photo',
             'is_published' => true,
         ])
-        ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoActionErrors();
 
     $event = Event::where('title', $title)->firstOrFail();
     $file = ContentFile::find($event->image_file_id);
@@ -105,16 +104,15 @@ test('a file over the limit is rejected with a validation error', function () {
     $resource = tmpfile();
     fwrite($resource, str_repeat('x', $overBy));
 
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => staffRunToken().' Too big',
             'starts_at' => '2027-07-01 10:00',
             'image_file_id' => new TestingFile(staffRunToken().'-huge.png', $resource),
             'image_alt' => 'Too large',
         ])
-        ->call('create')
         // A clear message about the file, rather than a silent failure.
-        ->assertHasFormErrors(['image_file_id']);
+        ->assertHasActionErrors(['image_file_id']);
 });
 
 test('the limit stays inside the database packet ceiling', function () {

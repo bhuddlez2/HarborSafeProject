@@ -10,6 +10,11 @@ class ManageEventCategories extends ManageRecords
 {
     protected static string $resource = EventCategoryResource::class;
 
+    public function getBreadcrumb(): ?string
+    {
+        return 'Categories';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

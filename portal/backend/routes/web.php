@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AssessmentPdfController;
 use App\Http\Controllers\ContentFileController;
 use App\Http\Middleware\EnsureStaffPanelAccess;
 
@@ -24,6 +25,9 @@ Route::middleware([
 ])->group(function () {
     Route::get('/files/{file}', [ContentFileController::class, 'showStaff'])
         ->name('staff.content-files.show');
+
+    Route::get('/assessments/{id}/pdf', AssessmentPdfController::class)
+        ->name('staff.assessments.pdf');
 });
 
 /*

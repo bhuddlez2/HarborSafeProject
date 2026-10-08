@@ -1,10 +1,14 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Models\ContentFile;
 use App\Models\Event;
 use App\Models\EventCategory;
 use App\Models\Newsletter;
+use Filament\Actions\EditAction;
+use Filament\Actions\Testing\TestAction;
+use Livewire\Livewire;
 
 /*
 Every content-management page actually renders, with a row in it.
@@ -81,9 +85,14 @@ AuthenticateSession, which invalidates the session when the authenticated user
 changes - so signing in as a second user mid-test gets redirected to the login
 screen rather than serving the page.
 */
+// Events are created and edited in pop-ups on the list page, so these open the
+// pop-up rather than visiting a page of their own.
 test('the event create form renders', function () {
-    $this->actingAs(staffUser(UserRole::Secretary))
-        ->get(route('filament.staff.content.resources.events.create'))
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    Livewire::test(ManageEvents::class)
+        ->mountAction('create')
+        ->assertActionMounted('create')
         ->assertOk();
 });
 
@@ -92,8 +101,11 @@ test('the event edit form renders with an existing record', function () {
     // uuid-valued file upload are exercised.
     $event = seedContentRow();
 
-    $this->actingAs(staffUser(UserRole::Secretary))
-        ->get(route('filament.staff.content.resources.events.edit', ['record' => $event->getKey()]))
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    Livewire::test(ManageEvents::class)
+        ->mountAction(TestAction::make(EditAction::class)->table($event))
+        ->assertActionMounted(TestAction::make(EditAction::class)->table($event))
         ->assertOk()
         ->assertSee(staffRunToken().' Community meeting');
 });

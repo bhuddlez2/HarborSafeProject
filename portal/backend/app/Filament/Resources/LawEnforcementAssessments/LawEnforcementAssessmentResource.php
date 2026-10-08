@@ -11,6 +11,7 @@ use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
 use App\Support\AssessmentFields;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -19,9 +20,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Facades\Filament;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Notifications\Notification;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -135,10 +135,12 @@ class LawEnforcementAssessmentResource extends Resource
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
+                    ->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('VictimLastName')
                     ->label('Victim')
+                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
                         ($record->VictimFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -146,6 +148,7 @@ class LawEnforcementAssessmentResource extends Resource
 
                 TextColumn::make('OffenderLastName')
                     ->label('Offender')
+                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
                         ($record->OffenderFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -155,6 +158,7 @@ class LawEnforcementAssessmentResource extends Resource
                 TextColumn::make('risk_count')
                     ->label('Yes answers')
                     ->badge()
+                    ->alignCenter()
                     ->state(fn (LawEnforcementAssessment $record): string => self::yesCount($record).' of 11')
                     ->color(fn (LawEnforcementAssessment $record): string => match (true) {
                         self::yesCount($record) >= 4 => 'danger',
@@ -171,7 +175,13 @@ class LawEnforcementAssessmentResource extends Resource
             ->emptyStateDescription('Completed LAP screenings will appear here. Use the home page to start one.')
             ->recordActions([
                 ChangeHistory::action(),
-                ViewAction::make(),
+                ViewAction::make()
+                    ->extraModalFooterActions(fn (LawEnforcementAssessment $record): array => [
+                        Action::make('download_pdf')
+                            ->label('Download PDF')
+                            ->url(route('staff.assessments.pdf', $record->DocumentID))
+                            ->openUrlInNewTab(),
+                    ]),
                 EditAction::make()
                     ->modalHeading('Edit assessment')
                     ->modalSubmitActionLabel('Save edit')
@@ -203,58 +213,15 @@ class LawEnforcementAssessmentResource extends Resource
             ]), reviewScreen: false);
     }
 
+    // Returns the infolist schema for displaying assessment details.
     public static function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Submission')
-                    ->schema([
-                        TextEntry::make('DateCreated')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a'),
-                        TextEntry::make('submitter.name')
-                            ->label('Submitting officer')
-                            ->placeholder('Unknown'),
-                        TextEntry::make('DocumentID')
-                            ->label('Record ID')
-                            ->copyable(),
-                    ])
-                    ->columns(3),
-
-                Section::make('Victim')
-                    ->schema([
-                        TextEntry::make('VictimFirstName')->label('First name'),
-                        TextEntry::make('VictimLastName')->label('Last name'),
-                        TextEntry::make('VictimSex')->label('Sex'),
-                        TextEntry::make('VictimDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('VictimSafePhoneNumber')
-                            ->label('Safe phone number')
-                            ->placeholder('Not recorded'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Offender')
-                    ->schema([
-                        TextEntry::make('OffenderFirstName')->label('First name'),
-                        TextEntry::make('OffenderLastName')->label('Last name'),
-                        TextEntry::make('OffenderSex')->label('Sex'),
-                        TextEntry::make('OffenderDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('OffenderVictimRelationship')
-                            ->label('Relationship to victim')
-                            ->placeholder('Not recorded'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Risk indicators')
-                    ->description('The eleven Lethality Assessment questions, in the order they were asked.')
-                    ->schema(self::riskIndicatorEntries())
-                    ->columns(1),
+                // points to the custom assessment record view component design.
+                ViewEntry::make('record')
+                    ->view('filament.infolists.components.assessment-record')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -265,18 +232,6 @@ class LawEnforcementAssessmentResource extends Resource
         return [
             'index' => ListLawEnforcementAssessments::route('/'),
         ];
-    }
-
-    private static function riskIndicatorEntries(): array
-    {
-        return collect(NewAssessment::QUESTIONS)
-            ->map(fn (string $question, int $id): IconEntry => IconEntry::make("assessmentAnswers.RiskIndicator{$id}")
-                ->label($id.'. '.$question)
-                ->boolean()
-                ->trueColor('danger')
-                ->falseColor('gray'))
-            ->values()
-            ->all();
     }
 
     private static function yesCount(LawEnforcementAssessment $record): int

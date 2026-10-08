@@ -1,13 +1,14 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Filament\Clusters\Content\Resources\Events\Pages\CreateEvent;
-use App\Filament\Clusters\Content\Resources\Events\Pages\EditEvent;
+use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Filament\Clusters\Content\Resources\Newsletters\Pages\ManageNewsletters;
 use App\Models\ContentFile;
 use App\Models\Event;
 use App\Models\EventCategory;
 use App\Models\Newsletter;
+use Filament\Actions\EditAction;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Http\Testing\File as TestingFile;
 use Livewire\Livewire;
 
@@ -17,6 +18,10 @@ newsletter. Driven through Livewire rather than asserted on the form
 definition, because the parts most likely to break are the conversions that
 only happen on submit - the paragraph array, the timezone, and the upload
 becoming a content_files row.
+
+Events and newsletters are both edited in pop-ups on their list page
+(ManageEvents / ManageNewsletters), so these call the create and edit actions
+there rather than visiting separate create/edit pages.
 */
 
 afterEach(fn () => cleanupStaffData());
@@ -67,8 +72,8 @@ test('a secretary can create an event', function () {
     $category = EventCategory::create(['Name' => staffRunToken().' Fundraiser']);
     $title = staffRunToken().' Autumn fundraiser';
 
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => $title,
             'summary' => 'An evening of fundraising.',
             'description' => "First paragraph.\n\nSecond paragraph.\n\nThird.",
@@ -82,8 +87,7 @@ test('a secretary can create an event', function () {
             'registration_label' => 'Register now',
             'is_published' => true,
         ])
-        ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoActionErrors();
 
     $event = Event::where('title', $title)->firstOrFail();
 
@@ -113,14 +117,13 @@ test('an event date on the other side of the DST boundary also round-trips', fun
     $title = staffRunToken().' Winter meeting';
 
     // January: Eastern is -05:00, so 17:30 local is 22:30 UTC.
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => $title,
             'starts_at' => '2027-01-15 17:30',
             'is_published' => true,
         ])
-        ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoActionErrors();
 
     $event = Event::where('title', $title)->firstOrFail();
 
@@ -133,16 +136,15 @@ test('an event image is stored in the database and reachable once published', fu
 
     $title = staffRunToken().' Event with a picture';
 
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => $title,
             'starts_at' => '2027-05-01 10:00',
             'image_file_id' => pestImageUpload(),
             'image_alt' => 'People at a fundraiser',
             'is_published' => true,
         ])
-        ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoActionErrors();
 
     $event = Event::where('title', $title)->firstOrFail();
 
@@ -168,15 +170,14 @@ test('an image description is required once an image is attached', function () {
 
     // Accessibility rule from the form: an image without alt text is rejected
     // rather than quietly published.
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => staffRunToken().' Missing alt text',
             'starts_at' => '2027-05-01 10:00',
             'image_file_id' => pestImageUpload(),
             'image_alt' => null,
         ])
-        ->call('create')
-        ->assertHasFormErrors(['image_alt']);
+        ->assertHasActionErrors(['image_alt']);
 });
 
 test('an event edit loads its paragraphs back into the textarea', function () {
@@ -189,9 +190,10 @@ test('an event edit loads its paragraphs back into the textarea', function () {
         'is_published' => false,
     ]);
 
-    Livewire::test(EditEvent::class, ['record' => $event->getKey()])
+    Livewire::test(ManageEvents::class)
+        ->mountAction(TestAction::make(EditAction::class)->table($event))
         // The json array is shown as blank-line separated text, not as JSON.
-        ->assertFormSet(['description' => "One.\n\nTwo."]);
+        ->assertSchemaStateSet(['description' => "One.\n\nTwo."]);
 });
 
 test('editing an event keeps its paragraphs intact', function () {
@@ -204,10 +206,11 @@ test('editing an event keeps its paragraphs intact', function () {
         'is_published' => false,
     ]);
 
-    Livewire::test(EditEvent::class, ['record' => $event->getKey()])
-        ->fillForm(['description' => "One.\n\nTwo.\n\nThree."])
-        ->call('save')
-        ->assertHasNoFormErrors();
+    Livewire::test(ManageEvents::class)
+        ->callAction(TestAction::make(EditAction::class)->table($event), data: [
+            'description' => "One.\n\nTwo.\n\nThree.",
+        ])
+        ->assertHasNoActionErrors();
 
     expect($event->fresh()->description)->toBe(['One.', 'Two.', 'Three.']);
 });
@@ -219,14 +222,13 @@ test('an empty description is stored as null, not an empty array', function () {
     // an empty paragraph.
     $title = staffRunToken().' No description';
 
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => $title,
             'starts_at' => '2027-06-01 12:00',
             'description' => '   ',
         ])
-        ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoActionErrors();
 
     expect(Event::where('title', $title)->firstOrFail()->description)->toBeNull();
 });
@@ -268,29 +270,27 @@ test('a secretary can upload a newsletter and its size is recorded', function ()
 test('an event is rejected without a title or a start time', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 
-    Livewire::test(CreateEvent::class)
-        ->fillForm(['title' => null, 'starts_at' => null])
-        ->call('create')
-        ->assertHasFormErrors(['title', 'starts_at']);
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: ['title' => null, 'starts_at' => null])
+        ->assertHasActionErrors(['title', 'starts_at']);
 });
 
 test('an end time before the start is rejected', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 
-    Livewire::test(CreateEvent::class)
-        ->fillForm([
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
             'title' => staffRunToken().' Backwards',
             'starts_at' => '2027-05-01 18:00',
             'ends_at' => '2027-05-01 09:00',
         ])
-        ->call('create')
-        ->assertHasFormErrors(['ends_at']);
+        ->assertHasActionErrors(['ends_at']);
 });
 
-test('an officer cannot reach the event create page at all', function () {
+test('an officer cannot reach the events page at all', function () {
     $this->actingAs(staffUser(UserRole::LawEnforcement));
 
     // Belt and braces alongside the HTTP-level test: the Livewire component
     // itself must refuse, not just the route.
-    Livewire::test(CreateEvent::class)->assertForbidden();
+    Livewire::test(ManageEvents::class)->assertForbidden();
 });
