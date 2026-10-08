@@ -361,3 +361,16 @@ test('every name filter shows an active-filter chip', function (string $page, st
         'Offender last name: t',
     );
 })->with('assessment tables');
+
+test('the filter card is folded away until opened, with Apply and Reset kept', function (string $page, string $viewer) {
+    // To keep the top of the page uncluttered. The filters themselves are
+    // unchanged - the tests above still drive every one of them.
+    $w = pestTwoAgencies();
+    $this->actingAs($w->{$viewer});
+
+    $table = Livewire::test($page)->instance()->getTable();
+
+    expect($table->getFiltersLayout())->toBe(Filament\Tables\Enums\FiltersLayout::AboveContentCollapsible)
+        ->and($table->hasDeferredFilters())->toBeTrue()
+        ->and($table->persistsFiltersInSession())->toBeTrue();
+})->with('assessment tables');

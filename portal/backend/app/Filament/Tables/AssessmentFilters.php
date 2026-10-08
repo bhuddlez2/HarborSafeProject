@@ -35,10 +35,13 @@ victim first and last name; offender first and last name (both tables). Names
 are case-insensitive partial matches with LIKE wildcards taken literally. The
 victim's safe phone number is deliberately not filterable.
 
-Layout: an always-open card above the table. Filters are deferred - nothing
-changes until Apply - with Reset beside it, and kept in the session so they
-survive opening a record and coming back. Apply is Filament's own action: it
-renders in the above-content card whenever filters are deferred.
+Layout: a card above the table, folded away behind a Filters button until
+opened, to keep the top of the page uncluttered (FiltersLayout::
+AboveContentCollapsible). Filters are deferred - nothing changes until Apply -
+with Reset beside it, and kept in the session so they survive opening a record
+and coming back. Apply is Filament's own action: it renders in the card
+whenever filters are deferred. Applied filters show as chips above the table
+even while the card is closed.
 */
 final class AssessmentFilters
 {
@@ -62,13 +65,16 @@ final class AssessmentFilters
     card behaves and reads like the assessment tables' rather than copying them.
     */
 
-    // The card itself: above the table, three columns, deferred until Apply,
-    // Reset beside it, kept in the session.
+    // The card itself: above the table, folded away behind a Filters button
+    // until opened (so the top of the page stays uncluttered), three columns,
+    // deferred until Apply, Reset beside it, kept in the session. Applied
+    // filters still show as chips above the table while the card is closed.
+    // Shared by Assessment review, My Assessments and the Change log.
     public static function layout(Table $table, array $filters): Table
     {
         return $table
             ->filters($filters)
-            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
             ->filtersFormColumns(3)
             ->deferFilters()
             ->filtersResetActionPosition(FiltersResetActionPosition::Footer)

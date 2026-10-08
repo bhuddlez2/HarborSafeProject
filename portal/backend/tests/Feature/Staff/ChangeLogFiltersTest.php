@@ -330,3 +330,13 @@ test('a police admin filtering on a name from another agency gets no rows', func
     pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'victim_first_name', $otherAgencysVictim)
         ->assertCanSeeTableRecords([$w->editB]);
 });
+
+test('the change log\'s filter card is folded away until opened too', function () {
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    $table = Livewire::test(ListAssessmentEdits::class)->instance()->getTable();
+
+    expect($table->getFiltersLayout())->toBe(Filament\Tables\Enums\FiltersLayout::AboveContentCollapsible)
+        ->and($table->hasDeferredFilters())->toBeTrue()
+        ->and($table->persistsFiltersInSession())->toBeTrue();
+});
