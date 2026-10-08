@@ -144,6 +144,7 @@ class LawEnforcementAssessmentResource extends Resource
                 TextColumn::make('risk_count')
                     ->label('Yes answers')
                     ->badge()
+                    ->alignCenter()
                     ->state(fn (LawEnforcementAssessment $record): string => self::yesCount($record).' of 11')
                     ->color(fn (LawEnforcementAssessment $record): string => match (true) {
                         self::yesCount($record) >= 4 => 'danger',
