@@ -110,51 +110,9 @@ class AssessmentReviewResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('DateCreated')
-                    ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->alignCenter()
-                    ->sortable(),
-
-                TextColumn::make('VictimLastName')
-                    ->label('Victim')
-                    ->alignCenter()
-                    ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
-                        ($record->VictimFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->searchable(['VictimFirstName', 'VictimLastName']),
-
-                TextColumn::make('OffenderLastName')
-                    ->label('Offender')
-                    ->alignCenter()
-                    ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
-                        ($record->OffenderFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->description(fn (LawEnforcementAssessment $record): string => $record->OffenderVictimRelationship ?? '')
-                    ->searchable(['OffenderFirstName', 'OffenderLastName']),
-
-                TextColumn::make('submitter.name')
-                    ->label('Officer')
-                    ->alignCenter()
-                    ->placeholder('Unknown')
-                    ->sortable(),
-
-                // The screening result the eleven answers add up to. Counted
-                // in PHP rather than SQL so the column list stays readable;
-                // the relation is eager-loaded below.
-                TextColumn::make('risk_count')
-                    ->label('Yes answers')
-                    ->badge()
-                    ->alignCenter()
-                    ->state(fn (LawEnforcementAssessment $record): string => self::yesCount($record).' of 11')
-                    ->color(fn (LawEnforcementAssessment $record): string => match (true) {
-                        self::yesCount($record) >= 4 => 'danger',
-                        self::yesCount($record) >= 1 => 'warning',
-                        default => 'gray',
-                    }),
-            ])
+        return AssessmentFilters::apply($table
+            // Shared with the other assessment table - see AssessmentColumns.
+            ->columns(AssessmentColumns::for(reviewScreen: true))
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
