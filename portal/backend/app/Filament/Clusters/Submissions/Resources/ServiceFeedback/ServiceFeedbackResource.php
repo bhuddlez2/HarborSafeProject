@@ -11,6 +11,7 @@ use App\Http\Requests\Public\ServiceFeedbackStoreRequest;
 use App\Models\Service;
 use App\Models\ServiceFeedback;
 use App\Support\Timezones;
+use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -210,27 +211,23 @@ class ServiceFeedbackResource extends Resource
             ->columns([
                 TextColumn::make('SubmissionDate')
                     ->label('Submitted')
-                    ->alignCenter()
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
                     ->sortable(),
 
-                TextColumn::make('Source')
+                TableAlignment::symbol(TextColumn::make('Source')
                     ->label('Source')
-                    ->alignCenter()
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
-                    ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_STAFF ? 'info' : 'gray'),
+                    ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_STAFF ? 'info' : 'gray')),
 
                 TextColumn::make('service.Name')
                     ->label('Service')
-                    ->alignCenter()
                     ->placeholder('-')
                     ->sortable(),
 
-                TextColumn::make('Rating')
+                TableAlignment::symbol(TextColumn::make('Rating')
                     ->label('Rating')
-                    ->alignCenter()
                     ->badge()
                     ->color(fn (?int $state): string => match (true) {
                         $state === null => 'gray',
@@ -239,7 +236,7 @@ class ServiceFeedbackResource extends Resource
                         default => 'danger',
                     })
                     ->formatStateUsing(fn (?int $state): string => $state === null ? '-' : $state.'/5')
-                    ->sortable(),
+                    ->sortable()),
 
                 TextColumn::make('Comment')
                     ->label('Comment')

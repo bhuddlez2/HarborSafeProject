@@ -508,6 +508,28 @@
     border-bottom-color: #ddd7e6;
 }
 
+/*
+ * Symbol columns (App\Filament\Tables\TableAlignment::symbol()): centred
+ * under the heading's WORDS. Filament centres the label and its sort arrow
+ * together, which nudges the label left of the icons below it. Here the sort
+ * button shrinks to the label alone (so the centred cell centres the label)
+ * and the arrow, plus the spinner shown while sorting, hangs just after it.
+ */
+.fi-ta-header-cell.hs-symbol-header .fi-ta-header-cell-sort-btn {
+    position: relative;
+    display: inline-flex;
+    width: auto;
+}
+
+.fi-ta-header-cell.hs-symbol-header .fi-ta-header-cell-sort-btn > .fi-icon,
+.fi-ta-header-cell.hs-symbol-header .fi-ta-header-cell-sort-btn > .fi-loading-indicator {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    margin-inline-start: 0.25rem;
+    transform: translateY(-50%);
+}
+
 /* Description text below a primary cell value, where a table uses one */
 .fi-ta-text-description {
     color: #9068b8;

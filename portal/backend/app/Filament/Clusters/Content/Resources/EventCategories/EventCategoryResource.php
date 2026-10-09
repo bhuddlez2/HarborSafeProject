@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\EventCategories\Pages\ManageEventCategories;
 use App\Models\EventCategory;
+use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -73,16 +74,14 @@ class EventCategoryResource extends Resource
             ->columns([
                 TextColumn::make('Name')
                     ->label('Category')
-                    ->alignCenter()
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('events_count')
+                TableAlignment::symbol(TextColumn::make('events_count')
                     ->label('Events')
-                    ->alignCenter()
                     ->counts('events')
                     ->badge()
-                    ->color('gray'),
+                    ->color('gray')),
             ])
             ->defaultSort('Name')
             ->recordActions([

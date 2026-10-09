@@ -8,6 +8,7 @@ use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Filament\Forms\Components\DatabaseFileUpload;
 use App\Models\Event;
 use App\Models\EventCategory;
+use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -222,30 +223,26 @@ class EventResource extends Resource
 
                 TextColumn::make('starts_at')
                     ->label('Starts')
-                    ->alignCenter()
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Event::DISPLAY_TIMEZONE)
                     ->sortable(),
 
-                TextColumn::make('category.Name')
+                TableAlignment::symbol(TextColumn::make('category.Name')
                     ->label('Category')
-                    ->alignCenter()
                     ->badge()
-                    ->placeholder('None'),
+                    ->placeholder('None')),
 
-                IconColumn::make('is_published')
+                TableAlignment::symbol(IconColumn::make('is_published')
                     ->label('Published')
-                    ->alignCenter()
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()),
 
-                IconColumn::make('is_cancelled')
+                TableAlignment::symbol(IconColumn::make('is_cancelled')
                     ->label('Cancelled')
-                    ->alignCenter()
                     ->boolean()
                     ->falseColor('gray')
                     ->trueColor('danger')
-                    ->sortable(),
+                    ->sortable()),
             ])
             ->defaultSort('starts_at', 'desc')
             ->filters([

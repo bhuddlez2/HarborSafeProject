@@ -7,6 +7,7 @@ use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Models\PrivateAssessment;
 use App\Support\Timezones;
+use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
@@ -166,12 +167,10 @@ class CivilianAssessmentResource extends Resource
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
-                    ->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('VictimLastName')
                     ->label('Victim')
-                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
                         ($record->VictimFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
@@ -179,25 +178,28 @@ class CivilianAssessmentResource extends Resource
 
                 TextColumn::make('OffenderLastName')
                     ->label('Offender')
-                    ->alignCenter()
                     ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
                         ($record->OffenderFirstName ?? '').' '.($state ?? ''),
                     ) ?: '-')
                     ->searchable(['OffenderFirstName', 'OffenderLastName']),
 
+                // As on the law-enforcement tables (AssessmentColumns).
+                TextColumn::make('OffenderVictimRelationship')
+                    ->label('Relationship')
+                    ->placeholder('-'),
+
                 // VictimSafePhoneNumber is deliberately absent - see the class
                 // comment. It is in the detail view only.
 
-                TextColumn::make('risk_count')
+                TableAlignment::symbol(TextColumn::make('risk_count')
                     ->label('Yes')
                     ->badge()
-                    ->alignCenter()
                     ->state(fn (PrivateAssessment $record): string => self::yesCount($record).' of 11')
                     ->color(fn (PrivateAssessment $record): string => match (true) {
                         self::yesCount($record) >= 4 => 'danger',
                         self::yesCount($record) >= 1 => 'warning',
                         default => 'gray',
-                    }),
+                    })),
             ])
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.

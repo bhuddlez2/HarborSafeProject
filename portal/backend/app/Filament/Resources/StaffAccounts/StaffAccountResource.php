@@ -7,6 +7,8 @@ use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\EditStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
 use App\Models\User;
+use App\Filament\Tables\TableAlignment;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
@@ -208,15 +210,18 @@ class StaffAccountResource extends Resource
                     ->sortable(),
                 TextColumn::make('email')
                     ->searchable(),
-                TextColumn::make('role')
+                TableAlignment::symbol(TextColumn::make('role')
                     ->badge()
-                    ->formatStateUsing(fn (UserRole $state): string => str($state->value)->replace('_', ' ')->title()),
-                IconColumn::make('is_active')
+                    ->formatStateUsing(fn (UserRole $state): string => str($state->value)->replace('_', ' ')->title())),
+                TableAlignment::symbol(IconColumn::make('is_active')
                     ->label('Active')
-                    ->boolean(),
+                    ->boolean()),
+                // A moment, not a calendar date: shown as the Eastern day it
+                // happened on (App\Support\Timezones).
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->date()
+                    ->timezone(Timezones::DISPLAY)
                     ->sortable(),
             ])
             ->filters([

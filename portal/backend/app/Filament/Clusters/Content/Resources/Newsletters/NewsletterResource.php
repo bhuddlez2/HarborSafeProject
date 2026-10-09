@@ -7,6 +7,7 @@ use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\Newsletters\Pages\ManageNewsletters;
 use App\Filament\Forms\Components\DatabaseFileUpload;
 use App\Models\Newsletter;
+use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -138,19 +139,16 @@ class NewsletterResource extends Resource
 
                 TextColumn::make('issue_date')
                     ->label('Issue')
-                    ->alignCenter()
                     ->date('F Y')
                     ->sortable(),
 
                 TextColumn::make('file.name')
                     ->label('File')
-                    ->alignCenter()
                     ->placeholder('None')
                     ->limit(30),
 
                 TextColumn::make('file_size_bytes')
                     ->label('Size')
-                    ->alignCenter()
                     ->placeholder('—')
                     ->formatStateUsing(fn (?int $state): string => $state === null
                         ? '—'
@@ -158,10 +156,10 @@ class NewsletterResource extends Resource
                             ? round($state / 1048576, 1).' MB'
                             : round($state / 1024).' KB')),
 
-                IconColumn::make('is_published')
+                TableAlignment::symbol(IconColumn::make('is_published')
                     ->label('Published')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()),
             ])
             ->defaultSort('issue_date', 'desc')
             ->filters([
