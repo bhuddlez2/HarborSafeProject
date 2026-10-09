@@ -7,11 +7,11 @@ use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Forms\RequirementMarkers;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Tables\AssessmentColumns;
 use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
 use App\Support\AssessmentFields;
-use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -28,7 +28,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
@@ -133,44 +132,8 @@ class LawEnforcementAssessmentResource extends Resource
     public static function table(Table $table): Table
     {
         return AssessmentFilters::apply($table
-            ->columns([
-                TextColumn::make('DateCreated')
-                    ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->alignCenter()
-                    ->sortable(),
-
-                TextColumn::make('VictimLastName')
-                    ->label('Victim')
-                    ->alignCenter()
-                    ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
-                        ($record->VictimFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->searchable(['VictimFirstName', 'VictimLastName']),
-
-                TextColumn::make('OffenderLastName')
-                    ->label('Offender')
-                    ->alignCenter()
-                    ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
-                        ($record->OffenderFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->description(fn (LawEnforcementAssessment $record): string => $record->OffenderVictimRelationship ?? '')
-                    ->searchable(['OffenderFirstName', 'OffenderLastName']),
-
-                TextColumn::make('risk_count')
-                    ->label('Yes answers')
-                    ->badge()
-                    ->alignCenter()
-                    ->state(fn (LawEnforcementAssessment $record): string => self::yesCount($record).' of 11')
-                    ->color(fn (LawEnforcementAssessment $record): string => match (true) {
-                        self::yesCount($record) >= 4 => 'danger',
-                        self::yesCount($record) >= 1 => 'warning',
-                        default => 'gray',
-                    }),
-
-                ChangeHistory::amendedColumn(),
-            ])
+            // Shared with the other assessment table - see AssessmentColumns.
+            ->columns(AssessmentColumns::for(reviewScreen: false))
             ->defaultSort('DateCreated', 'desc')
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
             ->stackedOnMobile()
@@ -237,16 +200,4 @@ class LawEnforcementAssessmentResource extends Resource
         ];
     }
 
-    private static function yesCount(LawEnforcementAssessment $record): int
-    {
-        $answers = $record->assessmentAnswers;
-
-        if (! $answers) {
-            return 0;
-        }
-
-        return collect(array_keys(NewAssessment::QUESTIONS))
-            ->filter(fn (int $id): bool => (bool) $answers->{"RiskIndicator{$id}"})
-            ->count();
-    }
 }

@@ -508,7 +508,7 @@
     border-bottom-color: #ddd7e6;
 }
 
-/* Description text below primary cell value (e.g. relationship under victim name) */
+/* Description text below a primary cell value, where a table uses one */
 .fi-ta-text-description {
     color: #9068b8;
     font-size: 0.8125rem;
@@ -540,4 +540,27 @@
 .fi-ta-record .fi-ta-actions .fi-link:focus-visible {
     box-shadow: 0 0 0 3px rgb(92 15 139 / 0.3);
     outline: none;
+}
+
+/*
+ * A disabled row button - the Change log button on a record that has never
+ * been edited (ChangeHistory::action()). Light gray, not the faded purple the
+ * rules above would give it, so edited records' purple buttons stand out.
+ * No hover fill. Gray-500 text keeps the label readable (4.8:1 on white);
+ * gray-300 border.
+ */
+.fi-ta-row .fi-ta-actions .fi-link.fi-disabled,
+.fi-ta-record .fi-ta-actions .fi-link.fi-disabled,
+.fi-ta-row .fi-ta-actions .fi-link.fi-disabled:hover,
+.fi-ta-record .fi-ta-actions .fi-link.fi-disabled:hover {
+    background-color: transparent !important;
+    border-color: #d1d5db !important;
+    color: #6b7280 !important;
+    opacity: 1;
+    cursor: not-allowed;
+}
+
+.fi-ta-row .fi-ta-actions .fi-link.fi-disabled .fi-icon,
+.fi-ta-record .fi-ta-actions .fi-link.fi-disabled .fi-icon {
+    color: #9ca3af;
 }

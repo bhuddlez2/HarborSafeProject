@@ -30,14 +30,17 @@ final class ChangeHistory
     public const VIEW = 'filament.infolists.change-history';
 
     // The "Change log" row button: every edit since submission, newest first,
-    // in its own pop-up. Greyed out on a record never edited. Needs
-    // ->withCount('edits') on the table query; place it before ViewAction.
+    // in its own pop-up. Purple on an edited record, so edited ones stand out
+    // in the list; light gray and disabled on one never edited (the gray is
+    // theme.css's .fi-disabled rule - the theme would otherwise paint it
+    // purple like every row button). Needs ->withCount('edits') on the table
+    // query; place it before ViewAction.
     public static function action(): Action
     {
         return Action::make('changeLog')
             ->label('Change log')
             ->icon(Heroicon::OutlinedClock)
-            ->color('gray')
+            ->color(fn (LawEnforcementAssessment $record): string => $record->edits_count ? 'primary' : 'gray')
             ->disabled(fn (LawEnforcementAssessment $record): bool => ! $record->edits_count)
             ->tooltip(fn (LawEnforcementAssessment $record): string => $record->edits_count
                 ? 'Every edit since submission'

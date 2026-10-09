@@ -189,7 +189,7 @@ class CivilianAssessmentResource extends Resource
                 // comment. It is in the detail view only.
 
                 TextColumn::make('risk_count')
-                    ->label('Yes answers')
+                    ->label('Yes')
                     ->badge()
                     ->alignCenter()
                     ->state(fn (PrivateAssessment $record): string => self::yesCount($record).' of 11')
