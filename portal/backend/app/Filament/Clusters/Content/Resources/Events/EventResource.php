@@ -18,14 +18,17 @@ use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\HtmlString;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -207,6 +210,82 @@ class EventResource extends Resource
                                 ->columnSpanFull(),
                         ])
                         ->columns(2),
+
+                    Step::make('Preview')
+                        ->icon('heroicon-o-sparkles')
+                        ->description('How your event will appear on the website.')
+                        ->schema([
+                            /*
+                            Placeholder renders arbitrary HTML inside a form step.
+                            The ->content() closure runs when the step is first
+                            displayed and receives $get, a callable that reads any
+                            field's current value from the Livewire form state —
+                            so all the earlier steps' input is accessible here
+                            without the form needing to be saved first.
+                            */
+                            Placeholder::make('event_preview')
+                                ->label('')
+                                ->content(function (Get $get): HtmlString {
+                                    // category_id is an integer FK; look up the
+                                    // display name so the preview can show the badge.
+                                    $categoryName = null;
+                                    if ($categoryId = $get('category_id')) {
+                                        $categoryName = EventCategory::find($categoryId)?->Name;
+                                    }
+
+                                    // The DateTimePicker stores times in UTC internally.
+                                    // Carbon::parse() turns the raw string into a Carbon
+                                    // object, and ->timezone() converts it to Eastern so
+                                    // the preview shows the same wall-clock time the
+                                    // website will display.
+                                    $startsAt = filled($get('starts_at'))
+                                        ? \Carbon\Carbon::parse($get('starts_at'))->timezone(Event::DISPLAY_TIMEZONE)
+                                        : null;
+                                    $endsAt = filled($get('ends_at'))
+                                        ? \Carbon\Carbon::parse($get('ends_at'))->timezone(Event::DISPLAY_TIMEZONE)
+                                        : null;
+
+                                    // image_file_id holds two different things depending
+                                    // on context:
+                                    //   - Editing a saved event: a ContentFile UUID that
+                                    //     already exists in the database, so we can build
+                                    //     a real image URL for the preview.
+                                    //   - Creating a new event: a Livewire temporary file
+                                    //     path that hasn't been written to content_files
+                                    //     yet, so ContentFile::find() returns null and we
+                                    //     fall back to the "Image attached" placeholder.
+                                    $imageUrl = null;
+                                    if ($fileId = $get('image_file_id')) {
+                                        if (\App\Models\ContentFile::find($fileId)) {
+                                            $imageUrl = route('staff.content-files.show', ['file' => $fileId]);
+                                        }
+                                    }
+
+                                    // Render the Blade template with all the form values
+                                    // and wrap the resulting HTML in HtmlString so
+                                    // Filament doesn't escape it as plain text.
+                                    return new HtmlString(view('filament.forms.event-preview', [
+                                        'title'               => $get('title'),
+                                        'summary'             => $get('summary'),
+                                        'description'         => $get('description'),
+                                        'categoryName'        => $categoryName,
+                                        'startsAt'            => $startsAt,
+                                        'endsAt'              => $endsAt,
+                                        'allDay'              => (bool) $get('all_day'),
+                                        'locationIsVirtual'   => (bool) $get('location_is_virtual'),
+                                        'locationName'        => $get('location_name'),
+                                        'locationAddress'     => $get('location_address'),
+                                        'locationVirtualNote' => $get('location_virtual_note'),
+                                        'registrationUrl'     => $get('registration_url'),
+                                        'registrationLabel'   => $get('registration_label'),
+                                        'hasImage'            => filled($get('image_file_id')),
+                                        'imageUrl'            => $imageUrl,
+                                        'isPublished'         => (bool) $get('is_published'),
+                                        'isCancelled'         => (bool) $get('is_cancelled'),
+                                    ])->render());
+                                })
+                                ->columnSpanFull(),
+                        ]),
                 ])
                 ->columnSpanFull(),
             ]);

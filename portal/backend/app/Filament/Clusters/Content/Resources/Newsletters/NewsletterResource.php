@@ -17,14 +17,17 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\HtmlString;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
@@ -124,6 +127,43 @@ class NewsletterResource extends Resource
                                 ->columnSpanFull(),
                         ])
                         ->columns(2),
+
+                    Step::make('Preview')
+                        ->icon('heroicon-o-sparkles')
+                        ->description('How your newsletter will appear on the website.')
+                        ->schema([
+                            /*
+                            Same pattern as the event preview: Placeholder with a
+                            ->content() closure that reads all earlier steps' values
+                            via $get and renders a Blade template. HtmlString stops
+                            Filament from escaping the rendered HTML as plain text.
+                            */
+                            Placeholder::make('newsletter_preview')
+                                ->label('')
+                                ->content(function (Get $get): HtmlString {
+                                    // issue_date is stored as a plain date (no time),
+                                    // so Carbon::parse() gives us a Carbon instance we
+                                    // can format as "Month Year" in the template.
+                                    $issueDate = filled($get('issue_date'))
+                                        ? \Carbon\Carbon::parse($get('issue_date'))
+                                        : null;
+
+                                    // file_size_bytes is read-only and set by a model
+                                    // hook on save, so it's only available here when
+                                    // editing an existing newsletter — it will be null
+                                    // when creating a new one.
+                                    return new HtmlString(view('filament.forms.newsletter-preview', [
+                                        'title'         => $get('title'),
+                                        'summary'       => $get('summary'),
+                                        'issueDate'     => $issueDate,
+                                        'hasFile'       => filled($get('file_id')),
+                                        'fileSizeBytes' => $get('file_size_bytes'),
+                                        'filePages'     => $get('file_pages'),
+                                        'isPublished'   => (bool) $get('is_published'),
+                                    ])->render());
+                                })
+                                ->columnSpanFull(),
+                        ]),
                 ])
                 ->columnSpanFull(),
             ]);
@@ -158,6 +198,7 @@ class NewsletterResource extends Resource
 
                 TableAlignment::symbol(IconColumn::make('is_published')
                     ->label('Published')
+                    ->alignCenter()
                     ->boolean()
                     ->sortable()),
             ])
