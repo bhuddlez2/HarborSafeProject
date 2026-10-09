@@ -89,7 +89,7 @@ class LocalAssessmentSeeder extends Seeder
                         'OffenderLastName' => "Offender {$suffix}",
                         'OffenderSex' => 'M',
                         'OffenderDOB' => '1988-06-30',
-                        'OffenderVictimRelationship' => 'Spouse',
+                        'OffenderVictimRelationship' => 'spouse',
                         'AssessmentDocID' => $answerRow->getKey(),
                     ]);
                 });

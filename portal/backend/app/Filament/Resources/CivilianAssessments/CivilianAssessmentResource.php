@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CivilianAssessments;
 
+use App\Enums\OffenderRelationship;
 use App\Enums\UserRole;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
@@ -148,6 +149,7 @@ class CivilianAssessmentResource extends Resource
                             ->placeholder('Not recorded'),
                         TextEntry::make('OffenderVictimRelationship')
                             ->label('Relationship to victim')
+                            ->formatStateUsing(fn (?string $state, $record): ?string => OffenderRelationship::display($state, $record->OffenderVictimRelationshipOther))
                             ->placeholder('Not recorded'),
                     ])
                     ->columns(3),
@@ -186,6 +188,7 @@ class CivilianAssessmentResource extends Resource
                 // As on the law-enforcement tables (AssessmentColumns).
                 TextColumn::make('OffenderVictimRelationship')
                     ->label('Relationship')
+                    ->formatStateUsing(fn (?string $state, $record): ?string => OffenderRelationship::display($state, $record->OffenderVictimRelationshipOther))
                     ->placeholder('-'),
 
                 // VictimSafePhoneNumber is deliberately absent - see the class

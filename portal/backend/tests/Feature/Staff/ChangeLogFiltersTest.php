@@ -61,10 +61,10 @@ function pestChangeLogWorld(): object
     $w->officerA2 = pestAgencyMember(UserRole::LawEnforcement, $w->officerA->lawEnforcementAgent->agency);
     $w->assessmentA2 = pestOfficerAssessment($w->officerA2, 'VictimA2');
 
-    $w->editA = pestEditedOn(pestEdit($w->assessmentA, $w->officerA, ['OffenderVictimRelationship' => 'Spouse']), '2026-01-15');
+    $w->editA = pestEditedOn(pestEdit($w->assessmentA, $w->officerA, ['OffenderVictimRelationship' => 'spouse']), '2026-01-15');
     $w->editA2 = pestEditedOn(pestEdit($w->assessmentA2, $w->officerA2, answers: ['RiskIndicator2' => true]), '2026-03-15');
     $w->editCross = pestEditedOn(pestEdit($w->assessmentA, $w->officerA2, answers: ['RiskIndicator3' => true]), '2026-06-15');
-    $w->editB = pestEditedOn(pestEdit($w->assessmentB, $w->officerB, ['OffenderVictimRelationship' => 'Spouse']), '2026-06-15');
+    $w->editB = pestEditedOn(pestEdit($w->assessmentB, $w->officerB, ['OffenderVictimRelationship' => 'spouse']), '2026-06-15');
 
     $w->visibleToA = [$w->editA, $w->editA2, $w->editCross];
 
@@ -253,7 +253,7 @@ function pestNamedEdits(): object
         'OffenderLastName' => $name,
     ];
 
-    $edited = fn (LawEnforcementAssessment $assessment): AssessmentEdit => pestEdit($assessment, $w->officerA, ['OffenderVictimRelationship' => 'Spouse']);
+    $edited = fn (LawEnforcementAssessment $assessment): AssessmentEdit => pestEdit($assessment, $w->officerA, ['OffenderVictimRelationship' => 'spouse']);
 
     $w->alpha = $edited(pestOfficerAssessment($w->officerA, 'alpha', [
         'VictimFirstName' => 'Zephyrine',
@@ -266,7 +266,7 @@ function pestNamedEdits(): object
     $w->mcUnderscore = $edited(pestOfficerAssessment($w->officerA, 'delta', $names('Mc_Neil')));
     $w->mcO = $edited(pestOfficerAssessment($w->officerA, 'epsilon', $names('McONeil')));
     $w->renamed = pestEdit(pestOfficerAssessment($w->officerA, 'zeta', $names('Quorvath')), $w->officerA, $names('Plainfield'));
-    $w->editB = pestEdit($w->assessmentB, $w->officerB, ['OffenderVictimRelationship' => 'Spouse']);
+    $w->editB = pestEdit($w->assessmentB, $w->officerB, ['OffenderVictimRelationship' => 'spouse']);
 
     return $w;
 }

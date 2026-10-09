@@ -88,7 +88,7 @@
                 </div>
                 <div class="hs-ar-field">
                     <dt>Relationship</dt>
-                    <dd>{{ $record->OffenderVictimRelationship ?? '—' }}</dd>
+                    <dd>{{ \App\Enums\OffenderRelationship::display($record->OffenderVictimRelationship, $record->OffenderVictimRelationshipOther) ?? '—' }}</dd>
                 </div>
             </dl>
         </div>

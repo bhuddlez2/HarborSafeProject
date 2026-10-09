@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\OffenderRelationship;
 use App\Filament\Pages\NewAssessment;
 use Carbon\CarbonImmutable;
 
@@ -25,6 +26,7 @@ final class AssessmentFields
         'OffenderSex' => 'Offender sex',
         'OffenderDOB' => 'Offender date of birth',
         'OffenderVictimRelationship' => 'Relationship to victim',
+        'OffenderVictimRelationshipOther' => 'Relationship to victim (other)',
     ];
 
     public const SEX_OPTIONS = [
@@ -56,6 +58,12 @@ final class AssessmentFields
 
         if (str_ends_with($field, 'Sex')) {
             return self::SEX_OPTIONS[$value] ?? (string) $value;
+        }
+
+        // The stored code, as its label ("Dating Partner (...)"); the Other
+        // detail is its own field and reads as typed.
+        if ($field === 'OffenderVictimRelationship') {
+            return OffenderRelationship::tryFrom((string) $value)?->label() ?? (string) $value;
         }
 
         if (str_ends_with($field, 'DOB')) {

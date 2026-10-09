@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OffenderRelationship;
 use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use App\Models\LawEnforcementAssessment;
@@ -42,7 +43,8 @@ class LawEnforcementAssessmentController extends Controller
             'OffenderLastName' => 'required|string|max:50',
             'OffenderSex' => 'required|string|max:10',
             'OffenderDOB' => 'nullable|date',
-            'OffenderVictimRelationship' => 'nullable|string|max:50',
+            // A code from the list, required - see OffenderRelationship.
+            ...OffenderRelationship::validationRules(),
             'VictimFirstName' => 'required|string|max:50',
             'VictimLastName' => 'required|string|max:50',
             'VictimSex' => 'required|string|max:10',
@@ -77,7 +79,8 @@ class LawEnforcementAssessmentController extends Controller
             'OffenderLastName' => 'nullable|string|max:50',
             'OffenderSex' => 'nullable|string|max:10',
             'OffenderDOB' => 'nullable|date',
-            'OffenderVictimRelationship' => 'nullable|string|max:50',
+            // May be changed, never cleared.
+            ...OffenderRelationship::validationRules(partial: true),
             'VictimFirstName' => 'nullable|string|max:50',
             'VictimLastName' => 'nullable|string|max:50',
             'VictimSex' => 'nullable|string|max:10',

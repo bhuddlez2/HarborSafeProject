@@ -32,7 +32,7 @@ test('the civilian API rejects an assessment without a phone number', function (
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
         'OffenderSex' => 'M',
-        'OffenderVictimRelationship' => 'Spouse',
+        'OffenderVictimRelationship' => 'spouse',
         'VictimFirstName' => 'Test',
         'VictimLastName' => 'Victim',
         'VictimSex' => 'F',

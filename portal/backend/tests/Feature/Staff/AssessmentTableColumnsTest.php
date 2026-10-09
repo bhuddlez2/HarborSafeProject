@@ -59,13 +59,14 @@ test('Assessment review has no Edit button', function () {
 
 test('relationship is its own column, not a line under the offender', function () {
     $officer = pestAgencyMember(UserRole::LawEnforcement, pestAgency('Columns PD'));
-    $assessment = pestOfficerAssessment($officer, 'Rel', ['OffenderVictimRelationship' => 'Ex-partner']);
+    $assessment = pestOfficerAssessment($officer, 'Rel', ['OffenderVictimRelationship' => 'former_dating_partner']);
 
     $this->actingAs($officer);
 
+    // Shown as the option's label (App\Enums\OffenderRelationship).
     Livewire::test(ListLawEnforcementAssessments::class)
-        ->assertTableColumnStateSet('OffenderVictimRelationship', 'Ex-partner', $assessment)
-        ->assertTableColumnDoesNotHaveDescription('OffenderLastName', 'Ex-partner', $assessment);
+        ->assertTableColumnFormattedStateSet('OffenderVictimRelationship', 'Former Dating Partner', $assessment)
+        ->assertTableColumnDoesNotHaveDescription('OffenderLastName', 'Former Dating Partner', $assessment);
 });
 
 test('the civilian table calls the same column "Yes" too', function () {

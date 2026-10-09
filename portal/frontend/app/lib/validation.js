@@ -47,5 +47,7 @@ export const offenderSchema = z.object({
     .optional()
     .or(z.literal("")),
   offenderSex: z.enum(["M", "F", "O"], { errorMap: () => ({ message: "Select an option" }) }),
-  offenderRelationship: z.string().trim().min(1, "Required"),
+  // A code from GET /api/public/relationships; the detail only for "other".
+  offenderRelationship: z.string().trim().min(1, "Select an option"),
+  offenderRelationshipOther: z.string().trim().max(50).optional(),
 });

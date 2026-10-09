@@ -56,7 +56,7 @@ function pestCivilianAssessment(array $yesIndicators = [1], ?SubmitterInfo $subm
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
         'OffenderSex' => 'M',
-        'OffenderVictimRelationship' => 'Spouse',
+        'OffenderVictimRelationship' => 'spouse',
         'SubmissionID' => $submitter?->getKey(),
         'AssessmentDocID' => $answers->getKey(),
     ]);

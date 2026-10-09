@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Assessments\RelationshipFields;
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
@@ -189,12 +190,8 @@ class NewAssessment extends Page
                     $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth')),
                     $this->sexSelect('OffenderSex'),
                 ]),
-                // Optional in the API; the original wizard required it.
-                TextInput::make('OffenderVictimRelationship')
-                    ->label('Relationship to victim')
-                    ->required()
-                    ->maxLength(50)
-                    ->validationMessages(['required' => 'Required']),
+                // The shared dropdown + "Please specify" for Other.
+                ...RelationshipFields::make(),
             ]);
     }
 
@@ -335,6 +332,7 @@ class NewAssessment extends Page
                         'OffenderSex',
                         'OffenderDOB',
                         'OffenderVictimRelationship',
+                        'OffenderVictimRelationshipOther',
                         'VictimFirstName',
                         'VictimLastName',
                         'VictimSex',

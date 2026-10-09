@@ -14,6 +14,7 @@ use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\CountyController;
+use App\Http\Controllers\RelationshipController;
 use App\Http\Controllers\ServiceFeedbackController;
 use App\Http\Controllers\ResourceRequestFormController;
 use App\Http\Controllers\ContentFileController;
@@ -57,6 +58,9 @@ Route::prefix('public')->group(function () {
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/resources', [ResourceController::class, 'index']);
     Route::get('/counties', [CountyController::class, 'index']);
+    // The civilian assessment's "Relationship to victim" options - from
+    // App\Enums\OffenderRelationship, no database involved.
+    Route::get('/relationships', [RelationshipController::class, 'index']);
     Route::post('/service-feedback', [ServiceFeedbackController::class, 'store'])
         ->middleware('throttle:10,1');
     Route::post('/resource-requests', [ResourceRequestFormController::class, 'store'])

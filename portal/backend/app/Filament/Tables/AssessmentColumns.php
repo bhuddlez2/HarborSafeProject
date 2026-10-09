@@ -2,6 +2,7 @@
 
 namespace App\Filament\Tables;
 
+use App\Enums\OffenderRelationship;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Pages\NewAssessment;
 use App\Models\LawEnforcementAssessment;
@@ -68,6 +69,7 @@ final class AssessmentColumns
             TextColumn::make('OffenderVictimRelationship')
                 ->label('Relationship')
                 ->alignCenter()
+                ->formatStateUsing(fn (?string $state, $record): ?string => OffenderRelationship::display($state, $record->OffenderVictimRelationshipOther))
                 ->placeholder('-'),
 
             // The screening result the eleven answers add up to. Counted in

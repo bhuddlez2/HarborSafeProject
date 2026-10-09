@@ -34,6 +34,7 @@ class PrivateAssessment extends BaseModel
         'OffenderSex',
         'OffenderDOB',
         'OffenderVictimRelationship',
+        'OffenderVictimRelationshipOther',
         'VictimFirstName',
         'VictimLastName',
         'VictimSex',

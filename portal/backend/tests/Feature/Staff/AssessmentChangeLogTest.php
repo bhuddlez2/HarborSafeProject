@@ -60,7 +60,7 @@ function changeLogAssessment(User $officer): LawEnforcementAssessment
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
         'OffenderSex' => 'M',
-        'OffenderVictimRelationship' => 'Spouse',
+        'OffenderVictimRelationship' => 'spouse',
         'AssessmentDocID' => $answers->getKey(),
     ]);
 }

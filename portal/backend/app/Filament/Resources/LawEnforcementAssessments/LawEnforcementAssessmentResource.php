@@ -4,6 +4,7 @@ namespace App\Filament\Resources\LawEnforcementAssessments;
 
 use App\Enums\UserRole;
 use App\Filament\Assessments\ChangeHistory;
+use App\Filament\Assessments\RelationshipFields;
 use App\Filament\Forms\RequirementMarkers;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
@@ -106,7 +107,8 @@ class LawEnforcementAssessmentResource extends Resource
                             ->options(AssessmentFields::SEX_OPTIONS)
                             ->required(),
                         DatePicker::make('OffenderDOB')->label(RequirementMarkers::optionalLabel('Date of birth')),
-                        TextInput::make('OffenderVictimRelationship')->label('Relationship to victim')->maxLength(50),
+                        // Same dropdown + "Please specify" as the wizard.
+                        ...RelationshipFields::make(),
                     ]),
                 Section::make('Risk indicators')
                     ->schema(

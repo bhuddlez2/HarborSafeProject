@@ -86,6 +86,31 @@ async function postJson(path, payload, failureMessage) {
     return parsed;
 }
 
+/*
+The "Relationship to victim" options, from the backend's single list
+(App\Enums\OffenderRelationship via GET /api/public/relationships), so this
+form never keeps its own copy. [{ value: "spouse", label: "Spouse" }, ...];
+the form sends `value`. Throws when the list can't be loaded, so the caller
+can show a retry rather than an empty dropdown.
+*/
+export async function fetchRelationshipOptions() {
+    let response;
+
+    try {
+        response = await fetch(`${API_URL}/api/public/relationships`, {
+            headers: { 'Accept': 'application/json' },
+        });
+    } catch {
+        throw new Error(`Could not load the relationship options: could not reach the server at ${API_URL}.`);
+    }
+
+    if (!response.ok) {
+        throw new Error(`Could not load the relationship options (HTTP ${response.status}).`);
+    }
+
+    return await response.json();
+}
+
 export async function submitAssessment({
     anonymous,
     forWhom,
@@ -103,6 +128,7 @@ export async function submitAssessment({
     offenderDob,
     offenderSex,
     offenderRelationship,
+    offenderRelationshipOther,
     answers,
 }) {
     const answersPayload = {
@@ -153,7 +179,12 @@ export async function submitAssessment({
         OffenderLastName:            offenderLastName,
         OffenderSex:                 offenderSex || null,
         OffenderDOB:                 offenderDob || null,
+        // A code from the list; the typed detail only goes with "other"
+        // (the server refuses it otherwise).
         OffenderVictimRelationship:  offenderRelationship || null,
+        OffenderVictimRelationshipOther: offenderRelationship === 'other'
+            ? (offenderRelationshipOther?.trim() || null)
+            : null,
         VictimFirstName:             victimFirstName,
         VictimLastName:              victimLastName,
         VictimSex:                   victimSex || null,

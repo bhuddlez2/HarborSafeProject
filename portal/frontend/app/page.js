@@ -4,7 +4,7 @@
 
 import { useState, useEffect, startTransition } from "react";
 import { lethalityQuestions } from "@/app/lib/lethality-questions";
-import { submitAssessment } from "@/app/lib/api";
+import { submitAssessment, fetchRelationshipOptions } from "@/app/lib/api";
 import { submitterSchema, victimSchema, offenderSchema } from "@/app/lib/validation";
 import { isValidEmail, isValidPhone, isNotFutureDate } from "@/app/lib/validators";
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -73,7 +73,29 @@ export default function AssessmentPage() {
   const [offenderLastName, setOffenderLastName] = useState("");
   const [offenderDob, setOffenderDob] = useState("");
   const [offenderSex, setOffenderSex] = useState("");
+  // A code from the backend's list ("spouse", "other", ...), plus the typed
+  // detail when it's "other".
   const [offenderRelationship, setOffenderRelationship] = useState("");
+  const [offenderRelationshipOther, setOffenderRelationshipOther] = useState("");
+  // The options come from GET /api/public/relationships (no copy kept here).
+  // null while loading; an error message if they couldn't be loaded.
+  const [relationshipOptions, setRelationshipOptions] = useState(null);
+  const [relationshipOptionsError, setRelationshipOptionsError] = useState(null);
+
+  const loadRelationshipOptions = () => {
+    setRelationshipOptionsError(null);
+    fetchRelationshipOptions()
+      .then(setRelationshipOptions)
+      .catch(() => setRelationshipOptionsError("We couldn't load this list. Please try again."));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRelationshipOptions()
+      .then((options) => { if (!cancelled) setRelationshipOptions(options); })
+      .catch(() => { if (!cancelled) setRelationshipOptionsError("We couldn't load this list. Please try again."); });
+    return () => { cancelled = true; };
+  }, []);
 
 
   const [submitting, setSubmitting] = useState(false);
@@ -606,18 +628,56 @@ export default function AssessmentPage() {
           </div>
 
           <div className="mb-10">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="offender-relationship" className="block text-sm font-medium text-gray-700 mb-1">
               Relationship to victim<RequiredMark />
             </label>
-            <input
-              type="text"
-              value={offenderRelationship}
-              onChange={(e) => setOffenderRelationship(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
-                         focus:outline-none focus:border-[#5C0F8B] transition"
-            />
+            {relationshipOptionsError ? (
+              <div className="flex items-center gap-3">
+                <p role="alert" className="text-sm text-red-600">{relationshipOptionsError}</p>
+                <button
+                  type="button"
+                  onClick={loadRelationshipOptions}
+                  className="text-sm font-semibold text-[#5C0F8B] underline focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40 rounded"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <select
+                id="offender-relationship"
+                value={offenderRelationship}
+                onChange={(e) => setOffenderRelationship(e.target.value)}
+                disabled={relationshipOptions === null}
+                aria-required="true"
+                className="w-full h-12 border-2 border-gray-300 rounded-lg px-4 py-2 text-gray-900
+                           focus:outline-none focus:border-[#5C0F8B] transition disabled:opacity-60"
+              >
+                <option value="">{relationshipOptions === null ? "Loading…" : "Select"}</option>
+                {(relationshipOptions ?? []).map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            )}
             {offenderErrors.offenderRelationship && (
               <p className="text-sm text-red-600 mt-1">{offenderErrors.offenderRelationship[0]}</p>
+            )}
+
+            {offenderRelationship === "other" && (
+              <div className="mt-4">
+                <label htmlFor="offender-relationship-other" className="block text-sm font-medium text-gray-700 mb-1">
+                  Please specify<RequiredMark />
+                </label>
+                <input
+                  id="offender-relationship-other"
+                  type="text"
+                  value={offenderRelationshipOther}
+                  onChange={(e) => setOffenderRelationshipOther(e.target.value)}
+                  maxLength={50}
+                  aria-required="true"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900
+                             focus:outline-none focus:border-[#5C0F8B] transition"
+                />
+              </div>
             )}
           </div>
 
@@ -632,7 +692,8 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => setPhase("intro")}
-              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship.trim()}
+              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !offenderRelationship
+                || (offenderRelationship === "other" && !offenderRelationshipOther.trim())}
               className="bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg
                          hover:bg-[#4C0B74] focus:outline-none
                          focus:ring-4 focus:ring-[#5C0F8B]/40 transition"
@@ -739,6 +800,7 @@ export default function AssessmentPage() {
                           offenderDob,
                           offenderSex,
                           offenderRelationship,
+                          offenderRelationshipOther,
                           answers,
                       });
                       setPhase("submitted");
