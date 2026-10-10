@@ -1,6 +1,7 @@
 import Link from "next/link";
 import HashHighlight from "./HashHighlight";
 import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+import { CIVILIAN_ASSESSMENT_URL } from "../lib/portal";
 
 // Browser tab title and search description for this page (overrides the default in layout.js)
 export const metadata = {
@@ -34,11 +35,43 @@ export default function GetSupport() {
       <section className="py-32 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
 
-          <span className="inline-block text-xs font-semibold tracking-widest uppercase bg-purple-100 text-brand px-3 py-1 rounded-full mb-4">How we help</span>
-          <h2 className="text-3xl font-semibold text-brand mb-3">Ways we can support you</h2>
-          <p className="text-gray-600 leading-relaxed mb-16 max-w-xl">
-            No matter where you are in your journey, our advocates are here to walk alongside you.
-          </p>
+          {/* Scroll targets for the home page's "Learn more" links (#shelter, #counseling) */}
+          <span id="shelter" className="block scroll-mt-28" aria-hidden="true"></span>
+          <span id="counseling" className="block scroll-mt-28" aria-hidden="true"></span>
+
+          {/*
+          Heading on the left, how to ask about a service on the right (stacked below lg),
+          so who to contact is visible before the cards rather than after all five
+          */}
+          <div className="grid lg:grid-cols-[1fr_auto] gap-8 lg:gap-12 items-center mb-16">
+            <div>
+              <span className="inline-block text-xs font-semibold tracking-widest uppercase bg-purple-100 text-brand px-3 py-1 rounded-full mb-4">How we help</span>
+              <h2 className="text-3xl font-semibold text-brand mb-3">Ways we can support you</h2>
+              <p className="text-gray-600 leading-relaxed max-w-xl">
+                No matter where you are in your journey, our advocates are here to walk alongside you.
+              </p>
+            </div>
+
+            <div className="bg-purple-50 rounded-2xl p-6 lg:w-md">
+              <p className="text-sm font-semibold text-brand mb-1">Ask about any of these services</p>
+              <p className="text-sm text-gray-600 mb-4">Call or text any time, day or night. It&apos;s free and confidential.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <a href="tel:423-476-3886" className="text-center whitespace-nowrap bg-brand text-white py-2.5 px-3 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">
+                  Call (423) 476-3886
+                </a>
+                <a href="sms:423-715-9614" className="text-center whitespace-nowrap bg-white text-brand py-2.5 px-3 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">
+                  Text (423) 715-9614
+                </a>
+              </div>
+              <Link replace href="/contact" className="inline-block mt-3 text-sm font-semibold text-brand hover:underline">
+                Or send us a message →
+              </Link>
+              <p className="mt-4 pt-4 border-t border-purple-200 text-xs text-gray-600 leading-relaxed">
+                For court advocacy or community education, you can also call or text our office at{" "}
+                <a href="tel:423-889-1479" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 889-1479</a>.
+              </p>
+            </div>
+          </div>
 
           {/*
           Service cards,
@@ -47,13 +80,7 @@ export default function GetSupport() {
           (globals.css) has room around the content when a home page link lands on one
           */}
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-8">
-
-            {/*
-            Emergency Shelter,
-            id="shelter" is the target of the home page's Emergency Shelter "Learn more" link,
-            scroll-mt-28 clears the fixed navbar with a little breathing room
-            */}
-            <div id="shelter" data-highlight="shelter" className="service-card scroll-mt-28 rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+            <div data-highlight="shelter" className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
                   {/* home icon, feathericons.com */}
@@ -66,11 +93,7 @@ export default function GetSupport() {
               </p>
             </div>
 
-            {/*
-            Crisis Counseling, id="counseling" is the scroll target of the home page's Counseling & Advocacy "Learn more" link,
-            data-highlight="counseling" (shared with Court Advocacy) marks every card that link highlights
-            */}
-            <div id="counseling" data-highlight="counseling" className="service-card scroll-mt-28 rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+            <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
                   {/* message-circle icon, feathericons.com */}
@@ -128,22 +151,29 @@ export default function GetSupport() {
 
           </div>
 
-          {/*
-          One contact line for every service above, replacing per-card footers that mostly
-          repeated the same thing; court advocacy and community education keep their office number
-          */}
-          <p className="mt-16 text-center text-gray-600 leading-relaxed max-w-2xl mx-auto">
-            To ask about any of these services, call{" "}
-            <a href="tel:423-476-3886" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 476-3886</a>{" "}
-            or text{" "}
-            <a href="sms:423-715-9614" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 715-9614</a>{" "}
-            any time, or{" "}
-            <Link replace href="/contact" className="font-semibold text-brand hover:underline">submit a contact form</Link>.
-            For court advocacy or community education, you can also{" "}
-            <a href="tel:423-889-1479" className="font-semibold text-brand hover:underline">call</a> or{" "}
-            <a href="sms:423-889-1479" className="font-semibold text-brand hover:underline">text</a> our office at{" "}
-            <a href="tel:423-889-1479" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 889-1479</a>.
-          </p>
+          <div className="mt-24 border border-gray-200 rounded-2xl p-8 md:p-10 grid md:grid-cols-[auto_1fr_auto] gap-6 md:gap-8 items-center">
+            <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-brand stroke-2 fill-none" aria-hidden="true">
+                {/* clipboard icon, feathericons.com */}
+                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-brand mb-2">Do you feel safe?</h2>
+              <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
+                Our lethality assessment asks 11 yes/no questions that can help show whether a relationship is
+                becoming more dangerous. You can answer for yourself or for someone you&apos;re worried about.
+                Your answers are sent confidentially to Harbor Safe House. If you are in immediate danger,{" "}
+                <a href="tel:911" className="whitespace-nowrap font-semibold text-red-700 hover:underline">call 911</a>.
+              </p>
+            </div>
+            <a
+              href={CIVILIAN_ASSESSMENT_URL}
+              className="justify-self-start md:justify-self-end whitespace-nowrap bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
+            >
+              Take the assessment
+            </a>
+          </div>
         </div>
       </section>
 

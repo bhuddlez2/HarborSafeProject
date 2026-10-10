@@ -17,7 +17,7 @@ export default function Footer() {
     which would otherwise sit on top of the footer's last content on narrower screens,
     aria-label describes the footer region to screen readers
     */
-    <footer className="on-dark bg-brand text-white pt-12 pb-32 lg:pb-12 px-4" aria-label="Site footer with contact information and social media links">
+    <footer className="on-dark bg-brand text-white pt-12 pb-32 lg:pb-12 px-4" aria-label="Site footer with contact information, social media links and nondiscrimination notice">
 
       {/*
       Two-column layout: hotline info on the left, social links on the right,
@@ -112,6 +112,34 @@ export default function Footer() {
           height={100}
           className="h-40 w-auto rounded-2xl shadow-2xl"
         />
+      </div>
+
+      <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-purple-700 text-xs leading-relaxed text-purple-100">
+        {/* max-w-4xl keeps the lines readable and clear of the fixed Safe Exit button at the bottom right */}
+        <div className="max-w-4xl space-y-2">
+          <p>
+            <strong className="font-semibold text-white">Nondiscrimination notice.</strong>{" "}
+            Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc., does not
+            discriminate in employment or in the delivery of services on the basis of race, color, national
+            origin, sex, religion, disability, age, sexual orientation, or gender identity, and does not
+            retaliate against anyone who opposes discrimination or files or takes part in a complaint. Free
+            language assistance and disability aids and services are available on request.
+          </p>
+          <p>
+            If you believe you have been discriminated against, you may file a complaint within 180 days with
+            the Tennessee Department of Finance and Administration&apos;s Civil Rights Coordinator
+            (<a href="mailto:FA.CivilRights@tn.gov" className="underline hover:text-white transition-colors">FA.CivilRights@tn.gov</a>)
+            or the U.S. Department of Justice Office for Civil Rights.{" "}
+            <a
+              href="https://www.tn.gov/finance/office-of-criminal-justice-programs/ocjp/fa-ocjp-grants/fa-ocjp-civil-rights-compliance/f-a-civil-rights-complaint-form-documentation.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold text-white hover:text-purple-200 transition-colors"
+            >
+              Complaint form and filing instructions<span className="sr-only"> (opens in new tab)</span>
+            </a>
+          </p>
+        </div>
       </div>
 
     </footer>

@@ -1,0 +1,1 @@
+export const CIVILIAN_ASSESSMENT_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
