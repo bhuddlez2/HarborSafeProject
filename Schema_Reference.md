@@ -145,6 +145,31 @@ Framework/Sanctum tables also present but not shown above (no app-specific struc
 
 **Connections:** every table above lives on the `Portal` MySQL connection (see `config/database.php`), including `users` — this was a discovered inconsistency (the default `mariadb` connection is what `users`/`sessions`/etc. were originally intended for, but migrations were actually run with `--database=Portal`). `App\Models\User` now explicitly declares `protected $connection = 'Portal'` to match reality.
 
+### `PortalPublic` — how the website writes civilian assessments
+
+The civilian lethality assessment is a page of the public website (`website/frontend/src/app/assessment/`). It submits in one request to `POST /api/public/civilian-assessments` (`PublicCivilianAssessmentController`, validated by `App\Http\Requests\Public\CivilianAssessmentStoreRequest`, throttled 10 a minute), which writes `_assessment_answers`, `_submitter_info` (only when someone reports for another person and declines anonymity) and `_private_assessment` in **one transaction** through the **`PortalPublic`** connection. Every id is generated on the server; the response is `{ "message": "Assessment received" }` and nothing else.
+
+`PortalPublic` is the same physical database as `Portal` with a *restricted* MySQL user, so "the website can only add civilian assessments" is enforced by the database, not just the code. The user needs exactly this, and nothing more:
+
+```sql
+-- Replace CHANGE_ME with a strong, generated password. Scope the host
+-- portion (currently '%') to the actual application server in production
+-- rather than allowing any host.
+CREATE USER 'harborsafe_portal_public'@'%' IDENTIFIED BY 'CHANGE_ME';
+
+GRANT INSERT ON assessment_app_db._assessment_answers  TO 'harborsafe_portal_public'@'%';
+GRANT INSERT ON assessment_app_db._submitter_info      TO 'harborsafe_portal_public'@'%';
+GRANT INSERT ON assessment_app_db._private_assessment  TO 'harborsafe_portal_public'@'%';
+
+FLUSH PRIVILEGES;
+```
+
+Deliberately *not* granted: `SELECT`, `UPDATE` or `DELETE` on anything (a submission can never be read back or altered through this user, and the endpoint's validation uses no `exists:`/`unique:` rules for that reason), and no access of any kind to `users`, the law-enforcement tables, the logs or any other database. Verified 2026-10-11 against a real user with exactly these grants: the whole `CivilianAssessmentTest` suite passes through it, and its SELECT, UPDATE and DELETE attempts are refused. Foreign-key checks need no `SELECT` privilege on the parent table, so the three inserts work on their own.
+
+Once created, put the credentials in `DB_USERNAME_PORTAL_PUBLIC`/`DB_PASSWORD_PORTAL_PUBLIC` (database name from `DB_DATABASE_PORTAL`; `assessment_app_db` is what `.env.example` uses). **Required on every server**: the connection only borrows Portal's credentials when `APP_ENV` is `local` or `testing`, and has none otherwise, so a server without the restricted user refuses civilian submissions instead of making them with full access. Like the other restricted users, it has to be created by hand in each environment; migrations can't grant MySQL privileges.
+
+The three civilian tables' old per-table `store` routes (`POST /api/assessments`, `/api/private-assessments`, `/api/submitter-info`), which wrote through the full-access `Portal` connection with no throttle, are now behind `auth:sanctum` like their other actions.
+
 ---
 
 ## Feedback connection — current live schema

@@ -60,7 +60,7 @@ test('the server refuses free text, a missing value, and Other without a detail'
 
 test('both APIs use those rules', function () {
     // The civilian endpoint is public; free text is refused there.
-    $this->postJson('/api/private-assessments', ['OffenderVictimRelationship' => 'Boyfriend'])
+    $this->postJson('/api/public/civilian-assessments', ['OffenderVictimRelationship' => 'Boyfriend'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('OffenderVictimRelationship');
 

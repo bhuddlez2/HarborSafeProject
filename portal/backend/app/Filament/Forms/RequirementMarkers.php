@@ -11,7 +11,7 @@ use Illuminate\Support\HtmlString;
 /*
 How the staff panel marks required and optional inputs. The same rule applies
 on the public website (website/frontend FormControls) and in the civilian
-assessment (portal/frontend app/page.js):
+assessment (website/frontend app/assessment/AssessmentContent.js):
 
   - REQUIRED: a red asterisk after the label. Filament does this on its own
     for any field that is ->required(); nothing here is needed for it. The one

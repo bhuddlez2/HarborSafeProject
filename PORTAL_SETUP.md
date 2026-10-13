@@ -22,9 +22,8 @@ serves. So the portal UI now lives in `portal/backend`, and it is:
 - **PHP page classes** — small files that say which template to render and who
   may see it.
 
-`portal/frontend` still exists but is down to one page: the anonymous civilian
-assessment at `/`. Visiting `/login`, `/admin` or `/police` there just
-redirects you to the panel.
+`portal/frontend` is gone: its last page, the civilian assessment, moved to the
+public website (`website/frontend`, at `/assessment/`).
 
 You do **not** need to learn PHP to restyle these screens. You mostly need the
 PHP toolchain installed so you can run the app and see your changes.
@@ -370,16 +369,15 @@ php artisan view:clear        # if a Blade change seems not to apply
 
 ## 10. Running the rest
 
-You only need the backend for panel work. If you want everything up, three
+You only need the backend for panel work. If you want everything up, two
 terminals:
 
 ```bash
 cd portal\backend   && php artisan serve     # API + panel  :8000
-cd website\frontend && npm run dev           # public site  :3000
-cd portal\frontend  && npm run dev           # civilian flow :3001
+cd website\frontend && npm run dev           # public site + civilian assessment  :3000
 ```
 
-Both frontends need `npm install` first.
+The website needs `npm install` first.
 
 ---
 

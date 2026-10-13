@@ -26,9 +26,9 @@ test('both assessment tables refuse a missing phone number', function (string $t
 })->with(['law_enforcement_assessment', '_private_assessment']);
 
 test('the civilian API rejects an assessment without a phone number', function () {
-    // Public endpoint - the anonymous civilian flow posts here. Rejected at
-    // validation, so nothing is written.
-    $this->postJson('/api/private-assessments', [
+    // Public endpoint - the website's civilian assessment posts here.
+    // Rejected at validation, so nothing is written.
+    $this->postJson('/api/public/civilian-assessments', [
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
         'OffenderSex' => 'M',

@@ -4,9 +4,9 @@ import { fileURLToPath } from 'node:url';
 /*
 PIN TURBOPACK'S PROJECT ROOT TO THIS DIRECTORY. Do not remove this.
 
-The repo has three package-lock.json files - one here, one in the other
-frontend, one at the repo root - and Turbopack picks the outermost as its
-project root when it finds several. That makes Node resolution for this app's
+The repo has more than one package-lock.json - one here, one at the repo
+root - and Turbopack picks the outermost as its project root when it finds
+several. That makes Node resolution for this app's
 build tooling able to reach the REPO ROOT's node_modules, which is a different
 dependency set entirely.
 

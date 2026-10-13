@@ -25,8 +25,8 @@ use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /*
-Assessments submitted by members of the public through the anonymous civilian
-flow (portal/frontend, at its root).
+Assessments submitted by members of the public through the civilian
+assessment on the public website (website/frontend, /assessment/).
 
 WHY THIS EXISTS: section 5 of Filament_CMS_Design.md grants admin
 "Civilian assessments: view", and nothing in the panel provided it. Phase 8
@@ -248,7 +248,7 @@ class CivilianAssessmentResource extends Resource
     One entry per risk indicator, labelled with the question text rather than
     "RiskIndicator7". The wording comes from NewAssessment::QUESTIONS, which is
     also the officer wizard's source and matches
-    portal/frontend/app/lib/lethality-questions.js - so this screen cannot
+    website/frontend/src/app/lib/lethality-questions.js - so this screen cannot
     drift from the question that was actually asked.
     */
     private static function riskIndicatorEntries(): array

@@ -20,6 +20,7 @@ use App\Http\Controllers\ResourceRequestFormController;
 use App\Http\Controllers\ContentFileController;
 use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\PublicNewsletterController;
+use App\Http\Controllers\PublicCivilianAssessmentController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -32,17 +33,13 @@ Route::get('/', function () {
     ]);
 });
 
-// The anonymous civilian flow (portal/frontend/app/page.js) only ever
-// creates records, so store is the one public action on these three tables.
-// Reading, editing or deleting them - civilian PII included - needs auth.
-Route::apiResource('/private-assessments', PrivateAssessmentController::class)->only('store');
-Route::apiResource('/assessments', AssessmentController::class)->only('store');
-Route::apiResource('/submitter-info', SubmitterInfoController::class)->only('store');
-
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('/private-assessments', PrivateAssessmentController::class)->except('store');
-    Route::apiResource('/assessments', AssessmentController::class)->except('store');
-    Route::apiResource('/submitter-info', SubmitterInfoController::class)->except('store');
+    // The civilian tables. The public website no longer writes here: it
+    // submits through POST /api/public/civilian-assessments below, so every
+    // action on these - store included - needs an authenticated user.
+    Route::apiResource('/private-assessments', PrivateAssessmentController::class);
+    Route::apiResource('/assessments', AssessmentController::class);
+    Route::apiResource('/submitter-info', SubmitterInfoController::class);
 
     // Officers submit through the staff panel's wizard now, not this API;
     // every action here needs an authenticated user.
@@ -51,9 +48,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/agencies', AgencyController::class);
 });
 
-// Narrow public API surface for the website's feedback/resource-request
-// forms - reads and writes here go through the restricted FeedbackPublic
-// connection (see the controllers), never the full-access Feedback one.
+// Narrow public API surface for the website - its forms, the civilian
+// assessment and the published content. Every route here goes through a
+// restricted connection (FeedbackPublic, PortalPublic, ContentPublic - see
+// the controllers), never a full-access one, and every write is throttled.
 Route::prefix('public')->group(function () {
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/resources', [ResourceController::class, 'index']);
@@ -64,6 +62,11 @@ Route::prefix('public')->group(function () {
     Route::post('/service-feedback', [ServiceFeedbackController::class, 'store'])
         ->middleware('throttle:10,1');
     Route::post('/resource-requests', [ResourceRequestFormController::class, 'store'])
+        ->middleware('throttle:10,1');
+
+    // The civilian lethality assessment, in one request and one transaction,
+    // through the INSERT-only PortalPublic connection.
+    Route::post('/civilian-assessments', [PublicCivilianAssessmentController::class, 'store'])
         ->middleware('throttle:10,1');
 
     // Website content, managed in the staff panel. Published records only,

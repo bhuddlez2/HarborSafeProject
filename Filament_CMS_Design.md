@@ -187,9 +187,10 @@ admin, secretary, police admin and officer. It owns events, newsletters, event
 categories, the form dropdown options, submission review, assessment review and user
 management.
 
-**What stays in Next.js.** Only the anonymous civilian assessment at
-`portal/frontend/app/page.js`. It cannot move into Filament because it is anonymous and
-public. Everything officer-facing — the officer home, My Assessments, Account and the law-enforcement assessment *wizard* — lives in the panel, carried over
+**What stays in Next.js.** Only the anonymous civilian assessment, now a page of the
+public website (`website/frontend/src/app/assessment/`, moved there from
+`portal/frontend/app/page.js` on 2026-10-11, when `portal/frontend` was retired). It
+cannot move into Filament because it is anonymous and public. Everything officer-facing — the officer home, My Assessments, Account and the law-enforcement assessment *wizard* — lives in the panel, carried over
 from the former Next.js officer portal (`app/police/`, `components/portal/`) with the
 same copy, layout and colours. Everything else in `portal/frontend` is retired (§9).
 
@@ -612,6 +613,12 @@ agency's officers submitted (§5 rule 5) — scope any log screen through
 only the owning officer can edit (§5, rule 1).
 
 ## 9. Next.js cleanup — done
+
+**Update 2026-10-11:** the civilian flow moved to the public website
+(`website/frontend/src/app/assessment/`), submitting through one throttled endpoint,
+`POST /api/public/civilian-assessments`, on the INSERT-only `PortalPublic` connection
+(`Schema_Reference.md`). `portal/frontend` no longer exists, and with it the redirects
+described below. What follows is the state after Phase 12.
 
 `portal/frontend` keeps **only the civilian flow**: `app/page.js` and what it imports
 (`app/lib/{api,validation,validators,lethality-questions}.js`, `app/layout.js`,

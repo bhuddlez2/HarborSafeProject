@@ -16,7 +16,7 @@ use UnitEnum;
 
 // Officer portal home, carried over from the former Next.js
 // portal/frontend/app/police/page.js. Slug stays `police` so /police
-// keeps working (portal/frontend redirects its old /police URLs here).
+// keeps working.
 class Police extends Page
 {
     protected string $view = 'filament.pages.police';

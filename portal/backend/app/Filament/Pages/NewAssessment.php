@@ -38,8 +38,8 @@ use UnitEnum;
 // enforced (app/lib/validation.js) are layered on top.
 class NewAssessment extends Page
 {
-    // Same wording and order as portal/frontend/app/lib/lethality-questions.js,
-    // which the civilian flow still uses. Keys are RiskIndicator numbers.
+    // Same wording and order as website/frontend/src/app/lib/lethality-questions.js,
+    // which the civilian assessment uses. Keys are RiskIndicator numbers.
     public const QUESTIONS = [
         1 => 'Have they ever used a weapon against you or threatened you with a weapon?',
         2 => 'Have they threatened to kill you or your children?',

@@ -1,5 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-# Single consolidated .gitignore for the whole repo (website/frontend, portal/frontend,
+# Single consolidated .gitignore for the whole repo (website/frontend and
 # portal/backend). Per-app rules are grouped and path-prefixed below.
 
 # --- Global: dependencies, OS files, logs, misc ---
@@ -43,20 +43,6 @@ website/frontend/build/
 website/frontend/.vercel
 website/frontend/*.tsbuildinfo
 website/frontend/next-env.d.ts
-
-# --- portal/frontend (Next.js) ---
-portal/frontend/.yarn/*
-!portal/frontend/.yarn/patches
-!portal/frontend/.yarn/plugins
-!portal/frontend/.yarn/releases
-!portal/frontend/.yarn/versions
-portal/frontend/coverage/
-portal/frontend/.next/
-portal/frontend/out/
-portal/frontend/build/
-portal/frontend/.vercel
-portal/frontend/*.tsbuildinfo
-portal/frontend/next-env.d.ts
 
 # --- portal/backend (Laravel) ---
 portal/backend/.phpactor.json

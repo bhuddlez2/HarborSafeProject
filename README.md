@@ -1,16 +1,16 @@
 # HarborSafe
 
-Three applications in one repository, backing Harbor Safe House & Advocacy Center:
+Two applications in one repository, backing Harbor Safe House & Advocacy Center:
 
 | Path | What it is | Dev URL |
 |---|---|---|
 | `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · sign-in at [/login](http://127.0.0.1:8000/login) |
-| `website/frontend/` | Next.js 16, static export. The public informational site. Calls the API from the browser for the contact forms and the events page. | http://localhost:3000 |
-| `portal/frontend/` | Next.js 16, server mode. The anonymous civilian assessment only. | http://localhost:3001 |
+| `website/frontend/` | Next.js 16, static export. The public informational site, including the civilian lethality assessment at `/assessment/`. Calls the API from the browser for the contact forms, the events page and the assessment. | http://localhost:3000 |
 
 If you are here to work on the staff portal, the code is in `portal/backend`
-(PHP, Blade and Tailwind), not in `portal/frontend` — the officer screens moved
-into the Filament panel. See [PORTAL_SETUP.md](PORTAL_SETUP.md) if you have not
+(PHP, Blade and Tailwind) — every officer and staff screen is in the Filament
+panel. (A third app, `portal/frontend`, used to hold the civilian assessment;
+it moved to the website and is gone.) See [PORTAL_SETUP.md](PORTAL_SETUP.md) if you have not
 run PHP before.
 
 Nothing but the backend talks to the database. The website reaches only a
@@ -255,41 +255,34 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 
 ---
 
-## 4. Portal (`portal/frontend/`)
+## 4. The civilian assessment
 
-Only the anonymous civilian assessment lives here, at `/`. Everything
-officer-facing — sign-in, the officer home, the law-enforcement assessment
-wizard — is in the backend's Filament staff panel (sign-in at `/login`). The old portal
-URLs `/login`, `/admin`, `/police` and `/police/*` redirect there.
+The public lethality assessment is a page of the website, at
+[/assessment/](http://localhost:3000/assessment/), linked from Get Support. It
+submits in one request to `POST /api/public/civilian-assessments`, which writes
+through the restricted `PortalPublic` database user (INSERT-only, see
+[Schema_Reference.md](Schema_Reference.md)). Locally that user is optional: with
+`DB_USERNAME_PORTAL_PUBLIC` unset and `APP_ENV=local`, the backend uses the
+Portal credentials. On any other server it must be set.
 
-```bash
-cd portal/frontend
-npm install
-npm run dev              # http://localhost:3001
-```
-
-The `dev` and `start` scripts pin port 3001, since both frontends would
-otherwise default to 3000. The backend's CORS config allows 3000 and 3001 in
-local dev; any other port needs adding to `PORTAL_URL` in the backend's `.env`.
+The backend's CORS config allows `http://localhost:3000` in local dev; set
+`WEBSITE_URL` in the backend's `.env` for anything else.
 
 ---
 
 ## 5. Running everything at once
 
-Three terminals:
+Two terminals:
 
 ```bash
 # 1 - API
 cd portal/backend && php artisan serve
 
-# 2 - website
+# 2 - website (including the civilian assessment)
 cd website/frontend && npm run dev
-
-# 3 - portal
-cd portal/frontend && npm run dev
 ```
 
-Then: website http://localhost:3000, portal http://localhost:3001,
+Then: website http://localhost:3000 (assessment at /assessment/),
 API http://127.0.0.1:8000/api, staff panel http://127.0.0.1:8000 (sign-in at /login).
 
 ---

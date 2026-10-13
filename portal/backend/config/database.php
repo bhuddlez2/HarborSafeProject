@@ -112,6 +112,47 @@ return [
             ]) : [],
         ],
 
+        // Same physical database as Portal, different (restricted) MySQL
+        // credentials - what the public website's civilian assessment
+        // endpoint (POST /api/public/civilian-assessments) writes through.
+        // The MySQL user behind this connection should only ever be granted
+        // INSERT on _assessment_answers, _submitter_info and
+        // _private_assessment: no SELECT, UPDATE or DELETE on anything, and
+        // nothing else in Portal (users, officer assessments, logs). See the
+        // GRANT statements in Schema_Reference.md. So even a flaw in the
+        // endpoint could only add rows, never read or change one. Never point
+        // code that reads at this connection, and never use it for validation
+        // rules such as `exists:` (they SELECT).
+        //
+        // Fails closed: on a developer machine or in tests, unset credentials
+        // fall back to Portal's so nobody's setup breaks; anywhere else they
+        // fall back to nothing, so a server without the restricted user
+        // configured refuses civilian submissions rather than quietly making
+        // them with full access.
+        'PortalPublic' => [
+            'driver' => 'mariadb',
+            'url' => env('DB_URL_PORTAL_PUBLIC'),
+            'host' => env('DB_HOST_PORTAL_PUBLIC', env('DB_HOST_PORTAL', '127.0.0.1')),
+            'port' => env('DB_PORT_PORTAL_PUBLIC', env('DB_PORT_PORTAL', '3306')),
+            'database' => env('DB_DATABASE_PORTAL_PUBLIC', env('DB_DATABASE_PORTAL', 'laravel')),
+            'username' => env('DB_USERNAME_PORTAL_PUBLIC', in_array(env('APP_ENV'), ['local', 'testing'], true) ? env('DB_USERNAME_PORTAL', 'root') : ''),
+            'password' => env('DB_PASSWORD_PORTAL_PUBLIC', in_array(env('APP_ENV'), ['local', 'testing'], true) ? env('DB_PASSWORD_PORTAL', '') : ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            // Session time zone UTC, matching config/app.php, so MariaDB's NOW()
+            // and useCurrent() agree with Laravel's now() on every machine.
+            // Not an env value on purpose - see App\Support\Timezones.
+            'timezone' => '+00:00',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         // Same physical database as Feedback, different (restricted) MySQL
         // credentials — this is what the public website's form-submission
         // endpoints use. The MySQL user behind this connection should only
