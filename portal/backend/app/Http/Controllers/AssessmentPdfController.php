@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\LawEnforcementAssessment;
+use App\Support\AssessmentPdf;
 use Illuminate\Http\Request;
-use Spatie\Browsershot\Browsershot;
 use Symfony\Component\HttpFoundation\Response;
 
 class AssessmentPdfController extends Controller
@@ -24,32 +24,6 @@ class AssessmentPdfController extends Controller
             ->where('DocumentID', $id)
             ->firstOrFail();
 
-        // Render the assessment record as an HTML view for PDF generation.
-        $html = view('filament.pdf.assessment', [
-            'getRecord' => fn () => $record,
-        ])->render();
-
-        // Generate the PDF from the rendered HTML using Browsershot.
-        $pdf = Browsershot::html($html)
-            ->format('A4')
-            ->margins(15, 15, 15, 15)
-            ->noSandbox()
-            ->showBackground()
-            ->timeout(30)
-            ->addChromiumArguments([
-                '--disable-background-networking',
-                '--disable-extensions',
-                '--disable-sync',
-            ])
-            ->pdf();
-
-        // Prepare the filename for the PDF download.
-        $filename = 'assessment-' . substr($record->DocumentID, 0, 8) . '.pdf';
-
-        // Return the generated PDF as a response with appropriate headers for download.
-        return response($pdf, 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
+        return AssessmentPdf::download($record, 'assessment');
     }
 }

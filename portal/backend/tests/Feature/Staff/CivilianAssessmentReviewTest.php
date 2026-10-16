@@ -153,6 +153,72 @@ test('a named submission shows who sent it', function () {
         ->assertOk();
 });
 
+test('the view shows a named submitter in its own card', function () {
+    $submitter = SubmitterInfo::create([
+        'SubmitterFirstName' => STAFF_TEST_PREFIX.'Reporter',
+        'SubmitterLastName' => 'Friend',
+        'SubmitterEmail' => 'reporter@pest.test',
+        'SubmitterPhoneNumber' => '423-555-0199',
+    ]);
+
+    $record = pestCivilianAssessment(submitter: $submitter)->fresh(['assessmentAnswers', 'submitterInfo']);
+
+    $html = view('filament.infolists.components.assessment-record', ['getRecord' => fn () => $record])->render();
+
+    expect($html)
+        ->toContain('Submitted by')
+        ->toContain('reporter@pest.test')
+        ->toContain('Civilian submission')
+        ->not->toContain('Anonymous')
+        ->not->toContain('Officer:');
+});
+
+test('the view marks an anonymous submission and shows no submitter card', function () {
+    $record = pestCivilianAssessment()->fresh(['assessmentAnswers', 'submitterInfo']);
+
+    $html = view('filament.infolists.components.assessment-record', ['getRecord' => fn () => $record])->render();
+
+    expect($html)
+        ->toContain('Anonymous')
+        ->toContain('423-555-0100')
+        ->not->toContain('Submitted by');
+});
+
+/*
+The PDF route is outside the panel, so canAccess() does not guard it - the
+controller repeats the admin-only check. Only refusals are asserted, as in
+AssessmentPdfAccessTest: a real download launches headless Chromium.
+*/
+test('only an active admin may download a civilian assessment', function (UserRole $role, bool $isActive) {
+    $record = pestCivilianAssessment();
+
+    $this->actingAs(staffUser($role, isActive: $isActive))
+        ->get(route('staff.civilian-assessments.pdf', $record->DocumentID))
+        ->assertForbidden();
+})->with([
+    'secretary' => [UserRole::Secretary, true],
+    'police_admin' => [UserRole::PoliceAdmin, true],
+    'law_enforcement' => [UserRole::LawEnforcement, true],
+]);
+
+test('an inactive admin cannot download a civilian assessment', function () {
+    $record = pestCivilianAssessment();
+
+    // EnsureStaffPanelAccess turns deactivated accounts away before the
+    // controller runs; either way, no PDF.
+    $response = $this->actingAs(staffUser(UserRole::Admin, isActive: false))
+        ->get(route('staff.civilian-assessments.pdf', $record->DocumentID));
+
+    expect($response->status())->not->toBe(200);
+});
+
+test('an anonymous visitor is sent to sign in for a civilian PDF', function () {
+    $record = pestCivilianAssessment();
+
+    $this->get(route('staff.civilian-assessments.pdf', $record->DocumentID))
+        ->assertRedirect(filament()->getPanel('staff')->getLoginUrl());
+});
+
 test('the high-risk filter narrows to four or more yes answers', function () {
     // Counted in SQL, so this is worth asserting rather than assuming.
     pestCivilianAssessment(yesIndicators: [1]);

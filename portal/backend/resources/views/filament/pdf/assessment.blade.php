@@ -18,7 +18,6 @@
         font-size: 14px;
         color: #1b1726;
         background: #fff;
-        padding: 2rem;
     }
 
     /* Header */
@@ -103,6 +102,10 @@
         word-break: break-word;
     }
 
+    /* Civilian "Submitted by" card */
+    .hs-ar-submitter { margin-bottom: 1.25rem; }
+    .hs-ar-submitter .hs-ar-fields { grid-template-columns: repeat(3, 1fr); }
+
     /* Risk indicators */
     .hs-ar-risk {
         border: 2px solid #c9c1d6;
@@ -133,7 +136,7 @@
         display: flex;
         align-items: flex-start;
         gap: 12px;
-        padding: 10px 16px;
+        padding: 7px 16px;
         border-bottom: 1px solid #ede3f5;
     }
     .hs-ar-indicator:last-child { border-bottom: none; }

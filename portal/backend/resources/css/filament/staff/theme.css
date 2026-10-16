@@ -346,6 +346,21 @@
     margin: 0;
 }
 
+/* Civilian "Submitted by" card: full width above the parties, three across. */
+.hs-ar-submitter {
+    margin-bottom: 1.25rem;
+}
+
+.hs-ar-submitter .hs-ar-fields {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 36rem) {
+    .hs-ar-submitter .hs-ar-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
 .hs-ar-field {
     display: flex;
     flex-direction: column;
