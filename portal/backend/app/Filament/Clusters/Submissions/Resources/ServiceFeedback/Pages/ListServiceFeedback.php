@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages;
 
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackResource;
+use App\Filament\Concerns\BreadcrumbNamesThePage;
 use App\Models\ServiceFeedback;
 use Filament\Actions\CreateAction;
 use Filament\Facades\Filament;
@@ -22,6 +23,8 @@ come only from the website.
 */
 class ListServiceFeedback extends ListRecords
 {
+    use BreadcrumbNamesThePage;
+
     protected static string $resource = ServiceFeedbackResource::class;
 
     protected function getHeaderActions(): array
