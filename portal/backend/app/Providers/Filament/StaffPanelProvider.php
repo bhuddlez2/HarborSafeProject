@@ -9,6 +9,7 @@ use App\Filament\PoliceAdminNavigation;
 use App\Http\Middleware\RedirectStaffHome;
 use App\Http\Responses\StaffLoginResponse;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
+use Filament\Facades\Filament;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -72,6 +73,14 @@ class StaffPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_NAV_END,
                 fn (): string => view('filament.partials.officer-identity')->render(),
+            )
+            // Reloads an idle screen once the session has expired, so it
+            // shows the sign-in page instead of whatever was left open.
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => Filament::auth()->check()
+                    ? view('filament.partials.idle-logout', ['minutes' => config('session.lifetime')])->render()
+                    : '',
             )
             ->navigationItems([
                 // The original officer sidebar's last link. Scoped to the two

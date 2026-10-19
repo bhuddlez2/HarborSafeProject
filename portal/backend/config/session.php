@@ -32,9 +32,16 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    // 15 for every staff role, and the fallback too, so a missing .env value
+    // can't quietly mean two hours with victim details on screen. The officer
+    // Home quotes this number, and the idle-logout script reloads the page
+    // once it has passed (resources/views/filament/partials/idle-logout).
+    'lifetime' => (int) env('SESSION_LIFETIME', 15),
 
-    'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
+    // The session cookie dies when the browser quits (not when one tab
+    // closes; a browser set to restore its last session can bring it back,
+    // which the 15-minute limit still covers).
+    'expire_on_close' => (bool) env('SESSION_EXPIRE_ON_CLOSE', true),
 
     /*
     |--------------------------------------------------------------------------

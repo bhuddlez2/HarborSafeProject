@@ -211,8 +211,9 @@ cross-origin session design this section used to describe — a shared `SESSION_
 **Look and feel.** The panel's theme (`resources/css/filament/staff/theme.css`,
 compiled by Vite) carries over the officer portal's design for every role: `#5C0F8B`
 primary, Tailwind's gray, Nunito/Montserrat, a dark full-height sidebar, no topbar,
-no dark mode. The session lifetime is 15 minutes (`SESSION_LIFETIME`), because the
-officer home tells officers their session locks after that long.
+no dark mode. The session lifetime is 15 idle minutes for every role
+(`SESSION_LIFETIME`) and ends when the browser quits (`SESSION_EXPIRE_ON_CLOSE`); the
+officer home tells officers their session logs out after that long. See §12.
 
 **Authorization: Filament Shield + spatie/laravel-permission.**
 
@@ -1061,12 +1062,12 @@ empty page attached. The `/content` address it held is now the Content cluster's
 
   1. **A config drift, which is the immediate cause.** `.env.example` sets
      `SESSION_LIFETIME=15`, and `CLAUDE.md` says 15 because the officer Home promises a
-     15-minute lock. The working `.env` on at least one machine says **120**. That is a
-     two-hour idle window, so of course the session is still good on return. Check
-     `SESSION_LIFETIME` in your own `.env` before concluding anything about the code.
-     Worth deciding whether 15 is actually right for the *content* side too — a
-     secretary editing an event has different needs from an officer with victim PII on
-     screen, and one number currently serves both.
+     15-minute lock. The working `.env` on at least one machine said **120**. That is a
+     two-hour idle window, so of course the session is still good on return.
+     **Resolved 2026-10-19 (roadmap Phase V, team plan task 2):** 15 minutes for every
+     role, content side included, decided deliberately. `config/session.php` now falls
+     back to 15 (was 120) and `SESSION_EXPIRE_ON_CLOSE` to `true`, so a missing `.env`
+     value can no longer mean two hours. Set both in your own `.env` anyway.
 
   2. **It is an idle timeout, not a per-navigation re-auth.** Even at 15, leaving the
      panel and coming back five minutes later will not prompt, because Laravel refreshes
@@ -1079,6 +1080,17 @@ empty page attached. The `/content` address it held is now the Content cluster's
      clears the session after N minutes hidden; or `SESSION_EXPIRE_ON_CLOSE=true`, which
      only covers closing the browser and not navigating away. Each of these has a real
      cost to a secretary doing bulk content entry, so pick deliberately.
+     **Chosen 2026-10-19:** `SESSION_EXPIRE_ON_CLOSE=true`, plus an idle-logout script
+     (`resources/views/filament/partials/idle-logout.blade.php`, rendered for signed-in
+     users by a `SCRIPTS_AFTER` hook in `StaffPanelProvider`). The server only notices
+     an expired session on the next request, so the script reloads the page shortly
+     after the deadline; the expired session redirects to `/login`, and signing in
+     returns to the same page. The clock restarts on page loads and Livewire requests
+     (not mouse movement, which doesn't extend the server session), shared between tabs
+     through `localStorage`. Caveats: quitting the *browser* ends the session, not
+     closing a tab, and a browser set to restore its last session can bring the cookie
+     back, which the 15-minute limit still covers. No password confirmation per page.
+     Covered by `SessionTimeoutTest`.
 
   Related and still unresolved: the officer Home's "Each view is logged with your name
   and a timestamp" copy, immediately above, which nothing implements.
