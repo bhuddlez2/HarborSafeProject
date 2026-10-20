@@ -7,6 +7,7 @@ use App\Filament\PoliceAdminNavigation;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Tables\ChangeLogFilters;
+use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use App\Support\Timezones;
@@ -149,12 +150,12 @@ class AssessmentEditResource extends Resource
                     ->tooltip(fn (AssessmentEdit $record): string => $record->Reason)
                     ->wrap(),
 
-                TextColumn::make('changes_count')
+                TableAlignment::symbol(TextColumn::make('changes_count')
                     ->label('Changes')
                     ->state(fn (AssessmentEdit $record): int => (int) $record->detail_changes_count + (int) $record->answer_changes_count)
                     ->formatStateUsing(fn (int $state): string => $state.' '.str('field')->plural($state))
                     ->badge()
-                    ->color('gray'),
+                    ->color('gray')),
             ])
             ->defaultSort('EditedAt', 'desc')
             ->modifyQueryUsing(fn (Builder $query): Builder => $query

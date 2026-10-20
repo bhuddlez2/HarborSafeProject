@@ -2,6 +2,7 @@
 
 namespace App\Filament\Assessments;
 
+use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use App\Support\Timezones;
@@ -77,12 +78,12 @@ final class ChangeHistory
     // ->withCount('edits') on the table query.
     public static function amendedColumn(): TextColumn
     {
-        return TextColumn::make('edits_count')
+        return TableAlignment::symbol(TextColumn::make('edits_count')
             ->label('Status')
             ->badge()
             ->formatStateUsing(fn (?int $state): string => $state ? 'Amended' : 'Submitted')
             ->color(fn (?int $state): string => $state ? 'warning' : 'gray')
-            ->tooltip(fn (?int $state): ?string => $state ? "Edited {$state} ".str('time')->plural($state).' since submission' : null);
+            ->tooltip(fn (?int $state): ?string => $state ? "Edited {$state} ".str('time')->plural($state).' since submission' : null));
     }
 
     /**

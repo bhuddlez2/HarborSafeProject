@@ -9,7 +9,11 @@ use App\Filament\Clusters\FormOptions\Resources\Resources\Pages\ManageResourceTy
 use App\Filament\Clusters\FormOptions\Resources\Services\Pages\ManageServices;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
+use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
+use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
 use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
 use App\Filament\Tables\TableAlignment;
 use Filament\Support\Enums\Alignment;
@@ -20,13 +24,12 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 /*
-Roadmap Phase K for the content-management tables, Civilian assessments and
-Accounts (App\Filament\Tables\TableAlignment): text columns left-aligned with
-their heading, symbol columns - yes/no icons and badges - centred under it.
-Checked column by column, so a column added later the wrong way fails here.
-
-The police-side tables (Assessment review, My Assessments, Officers, Change
-log) are being aligned separately and are deliberately not listed.
+Roadmap Phase K for every table in the panel (App\Filament\Tables\TableAlignment):
+text columns left-aligned with their heading, symbol columns - yes/no icons
+and badges - centred under it. Checked column by column, so a column added
+later the wrong way fails here. Each table is opened as a role that can reach
+it: admin for most, an officer for My Assessments, a police admin with an
+agency for Officers.
 */
 
 afterEach(fn () => cleanupStaffData());
@@ -37,8 +40,10 @@ function isSymbolColumn(Column $column): bool
         || ($column instanceof TextColumn && $column->isBadge());
 }
 
-test('text columns sit left and symbol columns sit centred', function (string $page) {
-    $this->actingAs(staffUser(UserRole::Admin));
+test('text columns sit left and symbol columns sit centred', function (string $page, UserRole $role = UserRole::Admin) {
+    $this->actingAs($role === UserRole::Admin
+        ? staffUser($role)
+        : pestAgencyMember($role, pestAgency('Alignment PD')));
 
     $columns = Livewire::test($page)->instance()->getTable()->getColumns();
 
@@ -66,6 +71,10 @@ test('text columns sit left and symbol columns sit centred', function (string $p
     'Counties' => ManageCounties::class,
     'Civilian assessments' => ListCivilianAssessments::class,
     'Accounts' => ListStaffAccounts::class,
+    'Assessment review' => ListAssessmentReview::class,
+    'Change log' => ListAssessmentEdits::class,
+    'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
+    'Officers' => [ListOfficerAccounts::class, UserRole::PoliceAdmin],
 ]);
 
 test('Civilian assessments has a Relationship column after Offender', function () {
