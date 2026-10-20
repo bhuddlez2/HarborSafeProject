@@ -54,6 +54,27 @@ erDiagram
         string Reason "required, max 255"
         timestamp EditedAt
     }
+    follow_ups {
+        uuid FollowUpID PK
+        string Kind "officer / civilian assessment, resource request"
+        uuid LawEnforcementDocumentID FK "exactly one of the three"
+        uuid PrivateDocumentID FK "exactly one of the three"
+        uuid ResourceRequestFormID "exactly one of the three; no FK (Feedback)"
+        string Status
+        timestamp SubmittedAt
+        timestamp LastUpdatedAt "nullable"
+        bigint LastUpdatedBy FK "nullable"
+        tinyint RemindersSent
+    }
+    follow_up_entries {
+        uuid EntryID PK
+        uuid FollowUpID FK
+        string FromStatus "nullable: set only on a status change"
+        string Status
+        text Note
+        bigint EnteredBy FK
+        timestamp EnteredAt
+    }
     notifications {
         uuid id PK
         string type
@@ -140,6 +161,10 @@ erDiagram
     _private_assessment ||--o{ assessment_access_log : "PrivateDocumentID"
     users ||--o{ assessment_access_log : "AccessedBy"
     users ||--o{ notifications : "notifiable (morph)"
+    law_enforcement_assessment ||--o| follow_ups : "LawEnforcementDocumentID"
+    _private_assessment ||--o| follow_ups : "PrivateDocumentID"
+    follow_ups ||--o{ follow_up_entries : "FollowUpID"
+    users ||--o{ follow_up_entries : "EnteredBy"
     assessment_edits ||--o{ assessment_change_log : "EditID"
     assessment_edits ||--o{ assessment_answer_change_log : "EditID"
     law_enforcement_assessment ||--o{ assessment_change_log : "DocumentID"
@@ -159,6 +184,8 @@ Framework/Sanctum tables also present but not shown above (no app-specific struc
 | `law_enforcement_agents` | Badge/agency data, only for `role = law_enforcement` accounts | `user_id` (PK, FK → `users.id`) | 1:1 profile extension — secretary/admin accounts simply have no row here, rather than null columns on `users`. |
 | `law_enforcement_assessment` | LE-submitted offender/victim record | `DocumentID` (PK, uuid), `submitted_by` (FK → `users.id`, not nullable) | `OffenderVictimRelationship` is a code from `App\Enums\OffenderRelationship` plus `OffenderVictimRelationshipOther` for `other` (see `_private_assessment`). `submitted_by` is the ownership column — this is what `LawEnforcementAssessmentPolicy` and the staff panel's My Assessments resource match against to enforce "law enforcement sees only their own submissions". It is also the path to the agency: a police admin sees an assessment when `submitted_by`'s `law_enforcement_agents.agency_id` is the police admin's own (`LawEnforcementAssessment::visibleTo()`). No agency is stored on the row itself, so assessments follow the officer's *current* agency. `VictimSafePhoneNumber` is **required** (NOT NULL, varchar(20)) since 2026-10-08, so the organisation can follow up with every victim: every form and the API require it, and the migration filled pre-existing local/test rows with the placeholder `8658675309` (it refuses to run elsewhere while any row lacks a number). Since 2026-10-19 it must be a full 10-digit number with its area code and is stored as `(xxx)xxx-xxxx` (`App\Support\PhoneNumber`; migration `2026_10_19_130000` reformatted existing valid numbers). |
 | `assessment_edits` | One row per save of a law-enforcement assessment: who, when, why | `EditID` (PK, uuid), `DocumentID` (FK), `ChangedBy` (FK → `users.id`), `Reason` | Added 2026-10-07. Groups the field-level rows below, so one save reads as one edit. `Reason` is required by the edit form. Written only by `App\Services\AssessmentEditor`; append-only. |
+| `follow_ups` | Harbor Safe's follow-up on one form, as it stands now | `FollowUpID` (PK, uuid); exactly one of `LawEnforcementDocumentID` (FK), `PrivateDocumentID` (FK), `ResourceRequestFormID` (no FK — the form is in Feedback), each unique | Added 2026-10-20 (team plan task 16). One row per officer assessment, civilian assessment and resource request (never service feedback); a CHECK makes each point at exactly one form. `Status` is an `App\Enums\FollowUpStatus` code (needs_follow_up, attempted_contact, reached, could_not_reach, declined); `SubmittedAt` is the form's own submission time (UTC); `RemindersSent` counts the 24 h / 48 h reminders. Written only through `App\Services\FollowUps`. Existing forms were opened by migration `2026_10_20_130100`. Officers and police admins never see it. |
+| `follow_up_entries` | A form's follow-up history: each status change or note | `EntryID` (PK, uuid), `FollowUpID` (FK), `EnteredBy` (FK → `users.id`) | Added 2026-10-20. Append-only (`AppendOnly`). `Status` is the status after the entry; `FromStatus` is set only when the entry changed it, so a note on its own has none. `Note` is required on every entry. |
 | `notifications` | The staff panel's bell: one row per alert per recipient | `id` (PK, uuid), `notifiable_type` + `notifiable_id` (morph to `users`, no FK) | Added 2026-10-20 (team plan task 17). Laravel's standard table, on Portal; read and written through `App\Models\StaffNotification`. `data` is a Filament notification (`format = filament`); `read_at` is set when the bell's panel has been open ~5 s. Read rows drop out of the bell after 12 hours and are deleted by `php artisan model:prune` (scheduled daily). Who gets what: `App\Enums\NewSubmission`. |
 | `assessment_access_log` | Who viewed or downloaded which assessment, and when | `AccessID` (PK, uuid), `LawEnforcementDocumentID` (FK, nullable), `PrivateDocumentID` (FK, nullable), `AccessedBy` (FK → `users.id`) | Added 2026-10-19. One table for both kinds of assessment; a CHECK constraint makes each row point at exactly one. `Action` is `view` or `download` (`App\Enums\AssessmentAccess`). Written only by `AssessmentAccessLog::record()`; append-only. Logged today: every PDF download (both kinds) and every civilian View pop-up; law-enforcement views are team plan task 9. FKs restrict deletion, so an assessment can't lose its trail. |
 | `assessment_change_log` | Field-level audit of edits to `law_enforcement_assessment` | `ChangeLogID` (PK), `EditID` (FK), `DocumentID` (FK), `ChangedBy` (FK → `users.id`) | One row per changed column. Values are stored raw (column name, sex code, `Y-m-d` date); `App\Support\AssessmentFields` turns them into readable labels at display time. `EditID` is nullable only so its migration could not fail on existing rows — the editor always sets it. Append-only. |

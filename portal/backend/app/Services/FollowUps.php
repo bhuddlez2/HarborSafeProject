@@ -1,0 +1,118 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\FollowUpKind;
+use App\Enums\FollowUpStatus;
+use App\Models\FollowUp;
+use App\Models\FollowUpEntry;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Throwable;
+
+/*
+The one way a form's follow-up is opened or moved on (team plan task 16;
+roadmap Phase Z). The rules, as agreed with AS (2026-10-20):
+
+- Every new assessment and resource request opens a follow-up in Needs
+  follow-up. Service feedback never does.
+- Changing the status needs a note. A note can also be added on its own, at
+  any stage including a final one, and leaves the status where it is.
+- Nothing returns to Needs follow-up. Final statuses (Reached, Could not reach,
+  Declined) are locked for resource requests; an assessment may move between
+  them. FollowUpStatus::canMoveTo() holds the rule.
+- Only the people who work a kind may update it: admins for assessments,
+  secretaries and admins for resource requests (FollowUpKind::workedBy()).
+- Every update is an append-only entry - who, when, note, and the status
+  change if any - and records who last updated the form and when.
+*/
+class FollowUps
+{
+    public const NOTE_MAX = 2000;
+
+    // Opens the follow-up for a form just submitted. Never lets a failure stop
+    // the submission itself: it is reported instead (and the form can be
+    // opened again later; opening is idempotent).
+    public function open(FollowUpKind $kind, string $formId): ?FollowUp
+    {
+        try {
+            return FollowUp::firstOrCreate(
+                [$kind->pointerColumn() => $formId],
+                [
+                    'Kind' => $kind,
+                    'Status' => FollowUpStatus::NeedsFollowUp,
+                    'SubmittedAt' => now(),
+                    'RemindersSent' => 0,
+                ],
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return null;
+        }
+    }
+
+    /**
+     * Records a status change with its note, or - when $status is null or the
+     * current status - a note on its own.
+     *
+     * @throws AuthorizationException when $by doesn't work this kind of form
+     * @throws ValidationException on a missing note or a move the rules refuse
+     */
+    public function update(FollowUp $followUp, ?FollowUpStatus $status, ?string $note, User $by): FollowUpEntry
+    {
+        if (! $followUp->isWorkableBy($by)) {
+            throw new AuthorizationException('You can\'t update this follow-up.');
+        }
+
+        $note = trim((string) $note);
+
+        if ($note === '') {
+            throw ValidationException::withMessages([
+                'note' => $status !== null && $status !== $followUp->Status
+                    ? 'Add a note to change the status.'
+                    : 'Write a note to add.',
+            ]);
+        }
+
+        if (mb_strlen($note) > self::NOTE_MAX) {
+            throw ValidationException::withMessages([
+                'note' => 'Keep the note to '.self::NOTE_MAX.' characters.',
+            ]);
+        }
+
+        // The row is locked and its status read again inside the transaction,
+        // so two people updating the same form at once can't both move it.
+        return DB::connection('Portal')->transaction(function () use ($followUp, $status, $note, $by): FollowUpEntry {
+            $current = FollowUp::query()->lockForUpdate()->findOrFail($followUp->getKey());
+            $changes = $status !== null && $status !== $current->Status;
+
+            if ($changes && ! $current->Status->canMoveTo($status, $current->Kind)) {
+                throw ValidationException::withMessages([
+                    'status' => "A {$current->Kind->label()} can't move from {$current->Status->label()} to {$status->label()}.",
+                ]);
+            }
+
+            $entry = FollowUpEntry::create([
+                'FollowUpID' => $current->getKey(),
+                'FromStatus' => $changes ? $current->Status : null,
+                'Status' => $changes ? $status : $current->Status,
+                'Note' => $note,
+                'EnteredBy' => $by->getKey(),
+                'EnteredAt' => now(),
+            ]);
+
+            $current->forceFill([
+                'Status' => $changes ? $status : $current->Status,
+                'LastUpdatedAt' => now(),
+                'LastUpdatedBy' => $by->getKey(),
+            ])->save();
+
+            $followUp->setRawAttributes($current->getAttributes(), true);
+
+            return $entry;
+        });
+    }
+}

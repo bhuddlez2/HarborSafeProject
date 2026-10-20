@@ -129,6 +129,8 @@ function cleanupPublicFormData(): void
 
     // Submissions first - resource_request_resource_types cascades off
     // resource_request_form, so deleting the parent clears the junction rows.
+    // Their follow-ups (on Portal, no foreign key) go with them.
+    cleanupFollowUps('ResourceRequestFormID', $feedback->table('resource_request_form')->where('FirstName', publicFormsRunToken())->pluck('FormID'));
     $feedback->table('resource_request_form')->where('FirstName', publicFormsRunToken())->delete();
 
     if ($registry->services !== []) {
@@ -232,6 +234,7 @@ function cleanupStaffData(): void
     // assessments. Query builder deletes, because the log models refuse
     // Eloquent deletes (AppendOnly). Edits by test users are swept too.
     $docIds = $portal->table('law_enforcement_assessment')->whereIn('submitted_by', $userIds)->pluck('DocumentID');
+    cleanupFollowUps('LawEnforcementDocumentID', $docIds);
     $editIds = $portal->table('assessment_edits')
         ->where(fn ($q) => $q->whereIn('DocumentID', $docIds)->orWhereIn('ChangedBy', $userIds))
         ->pluck('EditID');
@@ -261,6 +264,9 @@ function cleanupStaffData(): void
 function cleanupCivilianAssessments(): void
 {
     cleanupAssessmentAccessLog();
+    cleanupFollowUps('PrivateDocumentID', Illuminate\Support\Facades\DB::connection('Portal')->table('_private_assessment')
+        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
+        ->pluck('DocumentID'));
 
     $portal = Illuminate\Support\Facades\DB::connection('Portal');
     $docs = $portal->table('_private_assessment')
@@ -278,6 +284,17 @@ function cleanupCivilianAssessments(): void
     $portal->table('_submitter_info')
         ->where('SubmitterFirstName', 'like', STAFF_TEST_PREFIX.'%')
         ->delete();
+}
+
+// Follow-ups on test forms and their history (App\Models\FollowUp), cleared
+// before the forms they point at. Query builder: entries are append-only.
+function cleanupFollowUps(string $column, iterable $formIds): void
+{
+    $portal = Illuminate\Support\Facades\DB::connection('Portal');
+    $ids = $portal->table('follow_ups')->whereIn($column, collect($formIds)->all())->pluck('FollowUpID');
+
+    $portal->table('follow_up_entries')->whereIn('FollowUpID', $ids)->delete();
+    $portal->table('follow_ups')->whereIn('FollowUpID', $ids)->delete();
 }
 
 // Views and PDF downloads by test users (App\Models\AssessmentAccessLog).

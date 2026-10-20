@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\FollowUpKind;
 use App\Enums\NewSubmission;
 use App\Http\Requests\Public\ResourceRequestStoreRequest;
 use App\Models\ResourceRequestForm;
+use App\Services\FollowUps;
 use App\Services\SubmissionAlerts;
 use Illuminate\Support\Facades\DB;
 
 class ResourceRequestFormController extends Controller
 {
     // POST /api/public/resource-requests
-    public function store(ResourceRequestStoreRequest $request, SubmissionAlerts $alerts)
+    public function store(ResourceRequestStoreRequest $request, SubmissionAlerts $alerts, FollowUps $followUps)
     {
         $validated = $request->validated();
         $resourceTypeIds = $validated['ResourceTypeIDs'] ?? [];
@@ -39,6 +41,8 @@ class ResourceRequestFormController extends Controller
 
         DB::disconnect('FeedbackPublic');
 
+        // Through Portal, where follow-ups live - never the restricted user.
+        $followUps->open(FollowUpKind::ResourceRequest, $resourceRequest->FormID);
         $alerts->raise(NewSubmission::ResourceRequest);
 
         return response()->json([

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\FollowUpKind;
 use App\Enums\NewSubmission;
 use App\Http\Requests\Public\CivilianAssessmentStoreRequest;
 use App\Models\AssessmentAnswers;
 use App\Models\PrivateAssessment;
 use App\Models\SubmitterInfo;
+use App\Services\FollowUps;
 use App\Services\SubmissionAlerts;
 use Illuminate\Support\Facades\DB;
 
@@ -24,12 +26,12 @@ class PublicCivilianAssessmentController extends Controller
     bare confirmation: no ids and none of what was submitted, so nothing about
     the record can be read back through this endpoint.
     */
-    public function store(CivilianAssessmentStoreRequest $request, SubmissionAlerts $alerts)
+    public function store(CivilianAssessmentStoreRequest $request, SubmissionAlerts $alerts, FollowUps $followUps)
     {
         $input = $request->validated();
         $identified = $request->submitterIdentified();
 
-        DB::connection('PortalPublic')->transaction(function () use ($input, $identified) {
+        $private = DB::connection('PortalPublic')->transaction(function () use ($input, $identified): PrivateAssessment {
             $answers = [];
             foreach (range(1, CivilianAssessmentStoreRequest::RISK_INDICATORS) as $n) {
                 $answers["RiskIndicator{$n}"] = (bool) $input["RiskIndicator{$n}"];
@@ -46,7 +48,7 @@ class PublicCivilianAssessmentController extends Controller
                 ])
                 : null;
 
-            PrivateAssessment::on('PortalPublic')->create([
+            return PrivateAssessment::on('PortalPublic')->create([
                 'VictimFirstName'                 => $input['VictimFirstName'],
                 'VictimLastName'                  => $input['VictimLastName'],
                 'VictimSex'                       => $input['VictimSex'],
@@ -65,8 +67,10 @@ class PublicCivilianAssessmentController extends Controller
 
         DB::disconnect('PortalPublic');
 
-        // Written through Portal, not the INSERT-only PortalPublic user, which
-        // can't read users to find who to alert.
+        // Both written through Portal, not the INSERT-only PortalPublic user,
+        // which can't read users to find who to alert. Harbor Safe follows up
+        // every submission, so each one opens a follow-up.
+        $followUps->open(FollowUpKind::CivilianAssessment, $private->DocumentID);
         $alerts->raise(NewSubmission::CivilianAssessment);
 
         return response()->json(['message' => 'Assessment received'], 201);

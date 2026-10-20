@@ -7,7 +7,9 @@ use App\Filament\Assessments\RelationshipFields;
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
+use App\Enums\FollowUpKind;
 use App\Enums\NewSubmission;
+use App\Services\FollowUps;
 use App\Services\SubmissionAlerts;
 use App\Support\PhoneNumber;
 use BackedEnum;
@@ -326,12 +328,12 @@ class NewAssessment extends Page
         $this->submitError = null;
 
         try {
-            DB::connection('Portal')->transaction(function () use ($data): void {
+            $assessment = DB::connection('Portal')->transaction(function () use ($data): LawEnforcementAssessment {
                 $answers = AssessmentAnswers::create(collect($data)
                     ->only(array_map(fn (int $id): string => "RiskIndicator{$id}", array_keys(self::QUESTIONS)))
                     ->all());
 
-                LawEnforcementAssessment::create([
+                return LawEnforcementAssessment::create([
                     ...collect($data)->only([
                         'OffenderFirstName',
                         'OffenderLastName',
@@ -357,8 +359,10 @@ class NewAssessment extends Page
             return;
         }
 
-        // Harbor Safe's admins hear about every officer assessment in their
-        // bell; the officer and their police admin are not alerted.
+        // Harbor Safe follows up every officer assessment, and its admins hear
+        // about each one in their bell. None of this is ever shown to the
+        // officer or their police admin.
+        app(FollowUps::class)->open(FollowUpKind::LawEnforcementAssessment, $assessment->DocumentID);
         app(SubmissionAlerts::class)->raise(NewSubmission::LawEnforcementAssessment);
 
         Notification::make()

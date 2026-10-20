@@ -19,8 +19,9 @@ afterEach(function () {
     $portal = DB::connection('Portal');
     $rows = $portal->table('_private_assessment')
         ->where('VictimFirstName', 'like', CIVILIAN_TEST_VICTIM.'%')
-        ->get(['AssessmentDocID', 'SubmissionID']);
+        ->get(['DocumentID', 'AssessmentDocID', 'SubmissionID']);
 
+    cleanupFollowUps('PrivateDocumentID', $rows->pluck('DocumentID'));
     $portal->table('_private_assessment')->where('VictimFirstName', 'like', CIVILIAN_TEST_VICTIM.'%')->delete();
     $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $rows->pluck('AssessmentDocID'))->delete();
     $portal->table('_submitter_info')->whereIn('SubmissionID', $rows->pluck('SubmissionID')->filter())->delete();
