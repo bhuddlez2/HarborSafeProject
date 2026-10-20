@@ -13,9 +13,7 @@ use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -116,25 +114,11 @@ class AssessmentEditResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
+        // The same design as each record's Change log pop-up: a header naming
+        // the assessment, then this one edit.
         return $schema
             ->components([
-                Section::make('Assessment')
-                    ->schema([
-                        TextEntry::make('assessment.VictimLastName')
-                            ->label('Victim')
-                            ->formatStateUsing(fn (?string $state, AssessmentEdit $record): string => self::personName($record->assessment, 'Victim')),
-                        TextEntry::make('assessment.OffenderLastName')
-                            ->label('Offender')
-                            ->formatStateUsing(fn (?string $state, AssessmentEdit $record): string => self::personName($record->assessment, 'Offender')),
-                        TextEntry::make('assessment.DateCreated')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a')
-                            ->timezone(Timezones::DISPLAY),
-                    ])
-                    ->columns(3),
-
-                Section::make('This edit')
-                    ->schema([ChangeHistory::entry()]),
+                ChangeHistory::entry(),
             ]);
     }
 

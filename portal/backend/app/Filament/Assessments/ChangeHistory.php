@@ -46,27 +46,31 @@ final class ChangeHistory
                 ? 'Every edit since submission'
                 : 'No edits since submission')
             ->modalHeading('Change log')
-            ->modalDescription(fn (LawEnforcementAssessment $record): string => 'Assessment submitted '
-                .($record->DateCreated ? Carbon::parse($record->DateCreated)->setTimezone(Timezones::DISPLAY)->format('M j, Y g:i a') : '')
-                .'. Every edit since, newest first. Edits cannot be changed or removed.')
-            ->modalContent(fn (LawEnforcementAssessment $record) => view(self::VIEW, [
-                'edits' => self::entries(
-                    $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all(),
-                ),
-            ]))
+            ->modalContent(function (LawEnforcementAssessment $record) {
+                $edits = $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all();
+
+                return view(self::VIEW, [
+                    'header' => self::header($record, count($edits)),
+                    'edits' => self::entries($edits),
+                ]);
+            })
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close');
     }
 
-    // A single edit, for the Change log page.
+    // A single edit, for the Change log page's View pop-up.
     public static function entry(): ViewEntry
     {
         return ViewEntry::make('change_history')
             ->hiddenLabel()
             ->view(self::VIEW)
-            ->state(fn (AssessmentEdit $record): array => self::entries([
-                $record->loadMissing(['editor', 'detailChanges', 'answerChanges']),
-            ]));
+            ->columnSpanFull()
+            ->state(fn (AssessmentEdit $record): array => [
+                'header' => self::header($record->assessment, null),
+                'edits' => self::entries([
+                    $record->loadMissing(['editor', 'detailChanges', 'answerChanges']),
+                ]),
+            ]);
     }
 
     // "Amended" on any record that has been edited since submission. Needs
@@ -79,6 +83,29 @@ final class ChangeHistory
             ->formatStateUsing(fn (?int $state): string => $state ? 'Amended' : 'Submitted')
             ->color(fn (?int $state): string => $state ? 'warning' : 'gray')
             ->tooltip(fn (?int $state): ?string => $state ? "Edited {$state} ".str('time')->plural($state).' since submission' : null);
+    }
+
+    /**
+     * Which record the history belongs to. $editCount is null on the Change
+     * log page, which shows one edit rather than the whole history.
+     *
+     * @return array{victim: string, offender: string, submitted: string, edits: ?int}
+     */
+    private static function header(?LawEnforcementAssessment $record, ?int $editCount): array
+    {
+        $name = fn (string $who): string => trim(
+            ($record?->{$who.'FirstName'} ?? '').' '.($record?->{$who.'LastName'} ?? ''),
+        ) ?: '—';
+
+        return [
+            'victim' => $name('Victim'),
+            'offender' => $name('Offender'),
+            // Stored UTC, shown Eastern - see App\Support\Timezones.
+            'submitted' => $record?->DateCreated
+                ? Carbon::parse($record->DateCreated)->setTimezone(Timezones::DISPLAY)->format('M j, Y g:i a')
+                : '—',
+            'edits' => $editCount,
+        ];
     }
 
     /**
