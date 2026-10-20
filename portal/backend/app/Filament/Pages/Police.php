@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
+use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
@@ -49,8 +50,9 @@ class Police extends Page
     /*
     Officers and police admins only - NOT admins.
 
-    This page is an officer tool: it opens "Welcome back, {first name}" over a
-    Start New Lethality Assessment card. An admin has their own landing page
+    It opens "Welcome back, {first name}" over a Start New Lethality
+    Assessment card for officers, or View Assessments and Personnel Management
+    cards for police admins. An admin has their own landing page
     (see App\Filament\StaffLanding) and reaches assessments through
     App\Filament\Resources\AssessmentReview, which is the view-all list
     section 5 of Filament_CMS_Design.md actually grants them. Granting admins
@@ -76,14 +78,30 @@ class Police extends Page
         return Filament::auth()->user()?->role === UserRole::LawEnforcement;
     }
 
-    // Where the "past assessment" link goes. Police admins land here too but
-    // cannot open My Assessments (officers only); their past records are in
-    // Assessment review, scoped to their agency.
+    // Officers get the Start New Lethality Assessment card and the
+    // past-assessment pointer; police admins get two cards for their own two
+    // jobs instead (team plan task 11).
+    public function isPoliceAdmin(): bool
+    {
+        return Filament::auth()->user()?->role === UserRole::PoliceAdmin;
+    }
+
+    // The officer's "past assessment" pointer: their own records.
     public function pastAssessmentsUrl(): string
     {
-        return Filament::auth()->user()?->hasActiveRole(UserRole::PoliceAdmin)
-            ? AssessmentReviewResource::getUrl('index')
-            : LawEnforcementAssessmentResource::getUrl('index');
+        return LawEnforcementAssessmentResource::getUrl('index');
+    }
+
+    // Police admin card: their agency's submissions.
+    public function assessmentReviewUrl(): string
+    {
+        return AssessmentReviewResource::getUrl('index');
+    }
+
+    // Police admin card: their agency's officer accounts.
+    public function officersUrl(): string
+    {
+        return OfficerAccountResource::getUrl('index');
     }
 
     public function getSessionTimeoutMinutes(): int

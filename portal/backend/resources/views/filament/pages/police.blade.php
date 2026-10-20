@@ -41,28 +41,71 @@
             </a>
         @endif
 
+        {{-- Police admins: their two jobs, one card each (team plan task 11). --}}
+        @if ($this->isPoliceAdmin())
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <a
+                    href="{{ $this->assessmentReviewUrl() }}"
+                    class="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
+                           transition-colors hover:bg-[#4C0B74]
+                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
+                           md:min-h-70 md:p-9"
+                >
+                    <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 p-4">
+                        <x-officer-icon name="clipboard" :size="32" />
+                    </span>
+                    <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
+                        View Assessments
+                    </span>
+                    <span class="text-[17px] text-[#EDE3F5]">
+                        Your agency's submitted LAP screenings and their change logs
+                    </span>
+                </a>
+
+                <a
+                    href="{{ $this->officersUrl() }}"
+                    class="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] border-2 border-[#5C0F8B] bg-[#EDE3F5] p-6 text-[#5C0F8B]
+                           transition-colors hover:bg-[#E2D3EF]
+                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
+                           md:min-h-70 md:p-9"
+                >
+                    <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5C0F8B]/10 p-4">
+                        <x-officer-icon name="users" :size="32" />
+                    </span>
+                    <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
+                        Personnel Management
+                    </span>
+                    <span class="text-[17px] text-[#5A5566]">
+                        Add and manage your agency's officer accounts
+                    </span>
+                </a>
+            </div>
+        @endif
+
         {{-- Mobile only -- session notice sits below the card stack where it's easy to read --}}
         <span class="md:hidden">
             @include('filament.partials.session-notice', ['minutes' => $minutes])
         </span>
 
-        {{-- Pointer to past records --}}
-        <section class="flex flex-col gap-4 rounded-2xl border border-[#DDD7E6] bg-white px-5.5 py-5.5 md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="text-[17px] font-bold">Looking for a past assessment?</h2>
-                <p class="text-[15px] text-[#5A5566]">
-                    Records are in My Assessments. Each view is logged with your name and a timestamp.
-                </p>
-            </div>
-            <a
-                href="{{ $this->pastAssessmentsUrl() }}"
-                class="flex h-12 shrink-0 items-center justify-center rounded-[10px] border border-[#C9C1D6] px-5 text-[15px] font-bold
-                       transition-colors hover:bg-[#F4F2F7]
-                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#231A33]"
-            >
-                Go to My Assessments
-            </a>
-        </section>
+        {{-- Officers: pointer to past records. Police admins reach theirs through View Assessments. --}}
+        @if ($this->isOfficer())
+            <section class="flex flex-col gap-4 rounded-2xl border border-[#DDD7E6] bg-white px-5.5 py-5.5 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-[17px] font-bold">Looking for a past assessment?</h2>
+                    <p class="text-[15px] text-[#5A5566]">
+                        Records are in My Assessments. Each view is logged with your name and a timestamp.
+                    </p>
+                </div>
+                <a
+                    href="{{ $this->pastAssessmentsUrl() }}"
+                    class="flex h-12 shrink-0 items-center justify-center rounded-[10px] border border-[#C9C1D6] px-5 text-[15px] font-bold
+                           transition-colors hover:bg-[#F4F2F7]
+                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#231A33]"
+                >
+                    Go to My Assessments
+                </a>
+            </section>
+        @endif
 
     </div>
 </x-filament-panels::page>
