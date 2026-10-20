@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Public;
 
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -44,7 +45,8 @@ class ResourceRequestStoreRequest extends FormRequest
             'FirstName'       => ['required', 'string', 'max:50'],
             'LastName'        => ['nullable', 'string', 'max:50'],
             'EmailAddress'    => ['required_without:SafePhoneNumber', 'nullable', 'email', 'max:250'],
-            'SafePhoneNumber' => ['required_without:EmailAddress', 'nullable', 'string', 'max:20', 'regex:/^[0-9+\-.() ]+$/'],
+            // A full 10-digit number, area code included (App\Support\PhoneNumber).
+            'SafePhoneNumber' => ['required_without:EmailAddress', 'nullable', 'string', 'max:20', PhoneNumber::rule()],
 
             'ResourceTypeIDs'   => ['nullable', 'array', 'max:8'],
             'ResourceTypeIDs.*' => ['integer', 'distinct', 'exists:FeedbackPublic.resources,id'],

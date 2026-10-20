@@ -53,26 +53,26 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function acceptNotice(page) {
-  const notice = page.getByRole('dialog', { name: 'Confidentiality notice' });
+  const notice = page.getByRole('dialog', { name: 'Confidentiality Notice' });
   await expect(notice).toBeVisible();
   await notice.getByRole('button', { name: 'I understand, continue' }).click();
   await expect(notice).toBeHidden();
 }
 
 async function fillVictim(page) {
-  await page.getByLabel('First name').fill('Jane');
-  await page.getByLabel('Last name').fill('Doe');
-  await page.getByLabel('Date of birth').fill('1990-04-12');
+  await page.getByLabel('First Name').fill('Jane');
+  await page.getByLabel('Last Name').fill('Doe');
+  await page.getByLabel('Date of Birth').fill('1990-04-12');
   await page.getByLabel('Sex').selectOption('F');
   await page.getByLabel(/phone number/i).fill('(423) 555-0100');
   await page.getByRole('button', { name: 'Continue' }).click();
 }
 
 async function fillOffender(page) {
-  await page.getByLabel('First name').fill('John');
-  await page.getByLabel('Last name').fill('Roe');
+  await page.getByLabel('First Name').fill('John');
+  await page.getByLabel('Last Name').fill('Roe');
   await page.getByLabel('Sex').selectOption('M');
-  await page.getByLabel('Relationship to victim').selectOption('spouse');
+  await page.getByLabel('Relationship to Victim').selectOption('spouse');
   await page.getByRole('button', { name: 'Continue' }).click();
 }
 
@@ -82,7 +82,7 @@ async function answerAll(page, pattern = (n) => n % 2 === 0) {
     // The answer buttons exist twice (desktop card, mobile bar); the desktop ones are visible here.
     await page.getByRole('button', { name: pattern(n) ? 'Yes' : 'No', exact: true }).first().click();
   }
-  await expect(page.getByRole('heading', { name: 'Review & submit' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
 }
 
 test('Get Support links to the assessment on this site', async ({ page }) => {
@@ -103,14 +103,14 @@ test('a submission for yourself sends one request with every answer and no conta
   await answerAll(page);
 
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await expect(page.getByRole('heading', { name: 'Assessment submitted' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
 
   expect(api.submissions).toHaveLength(1);
   const sent = api.submissions[0];
   expect(sent).toMatchObject({
     ForWhom: 'self',
     VictimFirstName: 'Jane',
-    VictimSafePhoneNumber: '(423) 555-0100',
+    VictimSafePhoneNumber: '(423)555-0100',
     OffenderVictimRelationship: 'spouse',
     OffenderVictimRelationshipOther: null,
     RiskIndicator1: false,
@@ -135,7 +135,7 @@ test('an anonymous report for someone else sends no contact details', async ({ p
   await fillOffender(page);
   await answerAll(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await expect(page.getByRole('heading', { name: 'Assessment submitted' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
 
   const sent = api.submissions[0];
   expect(sent.ForWhom).toBe('other');
@@ -153,8 +153,8 @@ test('a named report for someone else includes the submitter', async ({ page }) 
   await page.getByRole('button', { name: 'Continue' }).click();
 
   await expect(page.getByRole('heading', { name: 'Your information' })).toBeVisible();
-  await page.getByLabel('First name').fill('Sam');
-  await page.getByLabel('Last name').fill('Friend');
+  await page.getByLabel('First Name').fill('Sam');
+  await page.getByLabel('Last Name').fill('Friend');
   await page.getByLabel('Email').fill('sam@example.com');
   await page.getByRole('button', { name: 'Continue' }).click();
 
@@ -163,7 +163,7 @@ test('a named report for someone else includes the submitter', async ({ page }) 
   await answerAll(page);
   await expect(page.getByText('Sam Friend')).toBeVisible();
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await expect(page.getByRole('heading', { name: 'Assessment submitted' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
 
   expect(api.submissions[0]).toMatchObject({
     ForWhom: 'other',
@@ -194,7 +194,7 @@ test('fields are not remembered by the browser, and the details are cleared afte
 
   await page.getByRole('button', { name: 'Myself' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
-  await expect(page.getByLabel('First name')).toHaveValue('');
+  await expect(page.getByLabel('First Name')).toHaveValue('');
   await expect(page.getByLabel(/phone number/i)).toHaveValue('');
 });
 
@@ -217,10 +217,59 @@ test('a throttled submission says so and keeps the answers for another try', asy
 test('the Safe Exit button stays clickable above the confidentiality notice', async ({ page }) => {
   await stubAssessmentApi(page);
   await page.goto('/assessment/');
-  await expect(page.getByRole('dialog', { name: 'Confidentiality notice' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Confidentiality Notice' })).toBeVisible();
 
   // globals.css raises #exit-button above any open Modal (body.modal-open)
   await expect(page.locator('body')).toHaveClass(/modal-open/);
   await expect(page.locator('#exit-button')).toBeVisible();
   await page.locator('#exit-button').click({ trial: true });
+});
+
+test('the confidentiality notice can only be closed with its own button', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  const notice = page.getByRole('dialog', { name: 'Confidentiality Notice' });
+  await expect(notice).toBeVisible();
+
+  // No X, and a click on the dimmed page doesn't close it. (Escape isn't
+  // tried: on this site it is the Safe Exit shortcut and leaves the page.)
+  await expect(notice.getByRole('button', { name: 'Close' })).toHaveCount(0);
+  await page.mouse.click(5, 5);
+  await expect(notice).toBeVisible();
+
+  await acceptNotice(page);
+});
+
+test('the safe phone number formats as it is typed and needs all 10 digits', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+  await page.getByRole('button', { name: 'Myself' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  // Labelled as the safe number even when reporting for yourself.
+  const phone = page.getByLabel('Safe Phone Number');
+  await page.getByLabel('First Name').fill('Jane');
+  await page.getByLabel('Last Name').fill('Doe');
+  await page.getByLabel('Date of Birth').fill('1990-04-12');
+  await page.getByLabel('Sex').selectOption('F');
+
+  // Seven digits: formatted, but refused - no area code.
+  await phone.pressSequentially('5550100');
+  await expect(phone).toHaveValue('(555)010-0');
+  await phone.fill('');
+  await phone.pressSequentially('4235550');
+  await expect(phone).toHaveValue('(423)555-0');
+  await expect(page.getByText('Enter a 10-digit phone number, starting with the area code.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
+
+  // All ten: accepted. A leading country code 1 is dropped as it's typed,
+  // and a pasted number keeps every digit, however it was punctuated.
+  await phone.fill('');
+  await phone.pressSequentially('14235550100');
+  await expect(phone).toHaveValue('(423)555-0100');
+  await phone.fill('+1 (423) 555-0100');
+  await expect(phone).toHaveValue('(423)555-0100');
+  await expect(page.getByText('Enter a 10-digit phone number, starting with the area code.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled();
 });

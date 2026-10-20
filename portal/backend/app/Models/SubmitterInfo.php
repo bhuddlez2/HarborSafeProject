@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\PhoneNumber;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class SubmitterInfo extends BaseModel
@@ -31,6 +33,13 @@ class SubmitterInfo extends BaseModel
         'SubmitterFirstName',
         'SubmitterLastName'
     ];
+
+    // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
+    // App\Support\PhoneNumber, which also validates it.
+    protected function submitterPhoneNumber(): Attribute
+    {
+        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+    }
 
     public function uniqueIds(): array
     {

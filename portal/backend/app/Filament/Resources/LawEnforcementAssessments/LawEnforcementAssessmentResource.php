@@ -7,6 +7,7 @@ use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Assessments\RelationshipFields;
 use App\Filament\Forms\RequirementMarkers;
 use App\Filament\Pages\NewAssessment;
+use App\Support\PhoneNumber;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Filament\Tables\AssessmentColumns;
 use App\Filament\Tables\AssessmentFilters;
@@ -95,7 +96,7 @@ class LawEnforcementAssessmentResource extends Resource
                             ->options(AssessmentFields::SEX_OPTIONS)
                             ->required(),
                         DatePicker::make('VictimDOB')->label('Date of birth'),
-                        TextInput::make('VictimSafePhoneNumber')->label('Safe contact number')->tel()->required()->maxLength(20),
+                        TextInput::make('VictimSafePhoneNumber')->label('Safe contact number')->tel()->mask(PhoneNumber::MASK)->required()->maxLength(20)->rule(PhoneNumber::rule()),
                     ]),
                 Section::make('Offender')
                     ->schema([
@@ -144,6 +145,7 @@ class LawEnforcementAssessmentResource extends Resource
             ->recordActions([
                 ChangeHistory::action(),
                 ViewAction::make()
+                    ->modalHeading('View Assessment')
                     ->extraModalFooterActions(fn (LawEnforcementAssessment $record): array => [
                         Action::make('download_pdf')
                             ->label('Download PDF')

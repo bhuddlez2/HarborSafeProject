@@ -84,7 +84,7 @@ class LocalAssessmentSeeder extends Seeder
                         'VictimLastName' => "Victim {$suffix}",
                         'VictimSex' => 'F',
                         'VictimDOB' => '1990-01-15',
-                        'VictimSafePhoneNumber' => '555-0100',
+                        'VictimSafePhoneNumber' => '(423)555-0100',
                         'OffenderFirstName' => 'Test',
                         'OffenderLastName' => "Offender {$suffix}",
                         'OffenderSex' => 'M',

@@ -18,7 +18,7 @@ import Modal from "../components/Modal";
 import { OPTIONAL_PLACEHOLDER } from "../components/FormControls";
 import { lethalityQuestions } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
-import { isValidEmail, isValidPhone, isNotFutureDate } from "../lib/validators";
+import { isValidEmail, isValidPhone, isNotFutureDate, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
 
 // pt-22.5 on the layout already clears the fixed navbar (5.625rem), so the grey
 // backdrop fills the rest of the viewport.
@@ -95,6 +95,9 @@ function SexSelect({ id, value, onChange }) {
 
 const RELATIONSHIP_LOAD_ERROR = "We couldn't load this list. Please try again.";
 
+// The backend's message for the same rule (App\Support\PhoneNumber::MESSAGE).
+const PHONE_ERROR = "Enter a 10-digit phone number, starting with the area code.";
+
 export default function AssessmentContent() {
   const [showSafetyModal, setShowSafetyModal] = useState(true);
 
@@ -157,9 +160,9 @@ export default function AssessmentContent() {
   // Per-phase checks, computed live so each phase can block "Continue" and show
   // feedback before Submit. The API applies the same rules again.
   const emailError = email.trim() && !isValidEmail(email.trim()) ? "Enter a valid email address." : null;
-  const phoneError = phone.trim() && !isValidPhone(phone.trim()) ? "Enter a valid phone number." : null;
+  const phoneError = phone.trim() && !isValidPhone(phone.trim()) ? PHONE_ERROR : null;
   const victimDobError = !isNotFutureDate(victimDob) ? "Date of birth can't be in the future." : null;
-  const victimPhoneError = victimPhone.trim() && !isValidPhone(victimPhone.trim()) ? "Enter a valid phone number." : null;
+  const victimPhoneError = victimPhone.trim() && !isValidPhone(victimPhone.trim()) ? PHONE_ERROR : null;
   const offenderDobError = !isNotFutureDate(offenderDob) ? "Date of birth can't be in the future." : null;
 
   const total = lethalityQuestions.length;
@@ -237,9 +240,10 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
 
-        {/* Confidentiality notice, shown each time the assessment is opened, before the form begins */}
+        {/* Confidentiality Notice, shown each time the assessment is opened, before the form begins.
+            Not dismissible: "I understand, continue" is the only way on. Safe Exit stays usable above it. */}
         {showSafetyModal && (
-          <Modal title="Confidentiality notice" subtitle="Before you begin" onClose={() => setShowSafetyModal(false)}>
+          <Modal title="Confidentiality Notice" subtitle="Before you begin" dismissible={false} onClose={() => setShowSafetyModal(false)}>
             <div className="px-6 py-5">
               <p className="text-sm text-gray-600 leading-relaxed mb-5">
                 Information you provide in this assessment is kept confidential and used solely to
@@ -309,7 +313,7 @@ export default function AssessmentContent() {
         )}
 
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-8`}>Before we begin</h1>
+          <h1 className={`${HEADING} mb-8`}>Before We Begin</h1>
 
           <p className="text-gray-700 text-lg font-medium mb-4">Who is this report for?</p>
           <div className="flex gap-4 mb-10">
@@ -352,16 +356,16 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-10`}>Your information</h1>
+          <h1 className={`${HEADING} mb-10`}>Your Information</h1>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
-              <Label htmlFor="submitter-first-name" required>First name</Label>
+              <Label htmlFor="submitter-first-name" required>First Name</Label>
               <input id="submitter-first-name" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
-              <Label htmlFor="submitter-last-name" required>Last name</Label>
+              <Label htmlFor="submitter-last-name" required>Last Name</Label>
               <input id="submitter-last-name" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
@@ -376,9 +380,9 @@ export default function AssessmentContent() {
           </div>
 
           <div className="mb-10">
-            <Label htmlFor="submitter-phone">Phone number</Label>
-            <input id="submitter-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-              placeholder={OPTIONAL_PLACEHOLDER} maxLength={20} autoComplete="off"
+            <Label htmlFor="submitter-phone">Phone Number</Label>
+            <input id="submitter-phone" type="tel" value={phone} onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+              placeholder={OPTIONAL_PLACEHOLDER} maxLength={PHONE_INPUT_MAX_LENGTH} autoComplete="off"
               aria-invalid={!!phoneError} aria-describedby={phoneError ? "submitter-phone-error" : undefined} className={INPUT} />
             <FieldError id="submitter-phone-error">{phoneError}</FieldError>
           </div>
@@ -403,16 +407,16 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-10`}>{forWhom === "self" ? "Your information" : "About the victim"}</h1>
+          <h1 className={`${HEADING} mb-10`}>{forWhom === "self" ? "Your Information" : "About the Victim"}</h1>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
-              <Label htmlFor="victim-first-name" required>First name</Label>
+              <Label htmlFor="victim-first-name" required>First Name</Label>
               <input id="victim-first-name" type="text" value={victimFirstName} onChange={(e) => setVictimFirstName(e.target.value)}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
-              <Label htmlFor="victim-last-name" required>Last name</Label>
+              <Label htmlFor="victim-last-name" required>Last Name</Label>
               <input id="victim-last-name" type="text" value={victimLastName} onChange={(e) => setVictimLastName(e.target.value)}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
@@ -420,7 +424,7 @@ export default function AssessmentContent() {
 
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
-              <Label htmlFor="victim-dob" required>Date of birth</Label>
+              <Label htmlFor="victim-dob" required>Date of Birth</Label>
               <input id="victim-dob" type="date" value={victimDob} onChange={(e) => setVictimDob(e.target.value)}
                 autoComplete="off" aria-required="true"
                 aria-invalid={!!victimDobError} aria-describedby={victimDobError ? "victim-dob-error" : undefined}
@@ -434,10 +438,10 @@ export default function AssessmentContent() {
           </div>
 
           <div className="mb-10">
-            <Label htmlFor="victim-phone" required>{forWhom === "self" ? "Phone number" : "Safe phone number"}</Label>
+            <Label htmlFor="victim-phone" required>Safe Phone Number</Label>
             {/* Required so Harbor Safe can follow up after the assessment. */}
-            <input id="victim-phone" type="tel" value={victimPhone} onChange={(e) => setVictimPhone(e.target.value)}
-              maxLength={20} autoComplete="off" aria-required="true"
+            <input id="victim-phone" type="tel" value={victimPhone} onChange={(e) => setVictimPhone(formatPhoneInput(e.target.value))}
+              maxLength={PHONE_INPUT_MAX_LENGTH} autoComplete="off" aria-required="true"
               aria-invalid={!!victimPhoneError} aria-describedby={victimPhoneError ? "victim-phone-error" : undefined} className={INPUT} />
             <FieldError id="victim-phone-error">{victimPhoneError}</FieldError>
           </div>
@@ -463,16 +467,16 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-10`}>About the offender</h1>
+          <h1 className={`${HEADING} mb-10`}>About the Offender</h1>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
-              <Label htmlFor="offender-first-name" required>First name</Label>
+              <Label htmlFor="offender-first-name" required>First Name</Label>
               <input id="offender-first-name" type="text" value={offenderFirstName} onChange={(e) => setOffenderFirstName(e.target.value)}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
-              <Label htmlFor="offender-last-name" required>Last name</Label>
+              <Label htmlFor="offender-last-name" required>Last Name</Label>
               <input id="offender-last-name" type="text" value={offenderLastName} onChange={(e) => setOffenderLastName(e.target.value)}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
@@ -480,7 +484,7 @@ export default function AssessmentContent() {
 
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
-              <Label htmlFor="offender-dob" optional>Date of birth</Label>
+              <Label htmlFor="offender-dob" optional>Date of Birth</Label>
               <input id="offender-dob" type="date" value={offenderDob} onChange={(e) => setOffenderDob(e.target.value)}
                 autoComplete="off"
                 aria-invalid={!!offenderDobError} aria-describedby={offenderDobError ? "offender-dob-error" : undefined}
@@ -494,7 +498,7 @@ export default function AssessmentContent() {
           </div>
 
           <div className="mb-10">
-            <Label htmlFor="offender-relationship" required>Relationship to victim</Label>
+            <Label htmlFor="offender-relationship" required>Relationship to Victim</Label>
             {relationshipOptionsError ? (
               <div className="flex items-center gap-3">
                 <p role="alert" className="text-sm text-red-700">{relationshipOptionsError}</p>
@@ -524,7 +528,7 @@ export default function AssessmentContent() {
 
             {offenderRelationship === "other" && (
               <div className="mt-4">
-                <Label htmlFor="offender-relationship-other" required>Please specify</Label>
+                <Label htmlFor="offender-relationship-other" required>Please Specify</Label>
                 <input id="offender-relationship-other" type="text" value={offenderRelationshipOther}
                   onChange={(e) => setOffenderRelationshipOther(e.target.value)}
                   maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
@@ -571,7 +575,7 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-6`}>Review &amp; submit</h1>
+          <h1 className={`${HEADING} mb-6`}>Review &amp; Submit</h1>
 
           <div className="divide-y divide-gray-100 mb-10">
             <div className="py-4">
@@ -584,12 +588,12 @@ export default function AssessmentContent() {
             </div>
             {identified && (
               <div className="py-4">
-                <p className="text-sm font-medium text-gray-500 mb-1">Reported by</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">Reported By</p>
                 <p className="text-gray-900">{firstName} {lastName}</p>
               </div>
             )}
             <div className="py-4">
-              <p className="text-sm font-medium text-gray-500 mb-1">Questions answered</p>
+              <p className="text-sm font-medium text-gray-500 mb-1">Questions Answered</p>
               <p className="text-gray-900">{total} of {total}</p>
             </div>
           </div>
@@ -612,7 +616,7 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-6`}>Assessment submitted</h1>
+          <h1 className={`${HEADING} mb-6`}>Assessment Submitted</h1>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
             The assessment has been saved successfully.
           </p>

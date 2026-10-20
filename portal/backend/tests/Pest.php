@@ -217,6 +217,9 @@ function cleanupStaffData(): void
 
     $portal = Illuminate\Support\Facades\DB::connection('Portal');
 
+    // Views and downloads first: they point at assessments and users.
+    cleanupAssessmentAccessLog();
+
     // Law-enforcement assessments before users: submitted_by restricts
     // deletion of the submitting user. Then their answer rows, which the
     // assessment pointed at.
@@ -243,6 +246,66 @@ function cleanupStaffData(): void
     // law_enforcement_agents rows cascade with their user.
     $portal->table('users')->where('email', 'like', $token . '%')->delete();
     $portal->table('agencies')->where('name', 'like', $token . '%')->delete();
+}
+
+// Civilian submissions made by the staff tests (pestCivilianAssessment()),
+// tagged on the victim name. Children first: _private_assessment has foreign
+// keys to its answers and submitter, and the access log points at it.
+function cleanupCivilianAssessments(): void
+{
+    cleanupAssessmentAccessLog();
+
+    $portal = Illuminate\Support\Facades\DB::connection('Portal');
+    $docs = $portal->table('_private_assessment')
+        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
+        ->pluck('AssessmentDocID', 'SubmissionID');
+
+    $portal->table('_private_assessment')
+        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
+        ->delete();
+
+    foreach ($docs as $assessmentDocId) {
+        $portal->table('_assessment_answers')->where('AssessmentDocID', $assessmentDocId)->delete();
+    }
+
+    $portal->table('_submitter_info')
+        ->where('SubmitterFirstName', 'like', STAFF_TEST_PREFIX.'%')
+        ->delete();
+}
+
+// Views and PDF downloads by test users (App\Models\AssessmentAccessLog).
+// Cleared before the assessments and users they point at. Query builder,
+// because the model refuses Eloquent deletes (AppendOnly).
+function cleanupAssessmentAccessLog(): void
+{
+    $portal = Illuminate\Support\Facades\DB::connection('Portal');
+
+    $portal->table('assessment_access_log')
+        ->whereIn('AccessedBy', $portal->table('users')->where('email', 'like', STAFF_TEST_PREFIX.'%')->select('id'))
+        ->delete();
+}
+
+// Creates one civilian submission, the way the public flow does: answers
+// first, then the identity record pointing at it.
+function pestCivilianAssessment(array $yesIndicators = [1], ?App\Models\SubmitterInfo $submitter = null): App\Models\PrivateAssessment
+{
+    $answers = App\Models\AssessmentAnswers::create(collect(range(1, 11))
+        ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => in_array($id, $yesIndicators, true)])
+        ->all());
+
+    return App\Models\PrivateAssessment::create([
+        'VictimFirstName' => STAFF_TEST_PREFIX.'Victim',
+        'VictimLastName' => 'Doe',
+        'VictimSex' => 'F',
+        'VictimDOB' => '1990-01-01',
+        'VictimSafePhoneNumber' => '423-555-0100',
+        'OffenderFirstName' => 'Test',
+        'OffenderLastName' => 'Offender',
+        'OffenderSex' => 'M',
+        'OffenderVictimRelationship' => 'spouse',
+        'SubmissionID' => $submitter?->getKey(),
+        'AssessmentDocID' => $answers->getKey(),
+    ]);
 }
 
 /*

@@ -54,5 +54,21 @@ test('an officer cannot clear the phone number when editing', function () {
         ])
         ->assertHasActionErrors(['VictimSafePhoneNumber' => 'required']);
 
-    expect($assessment->fresh()->VictimSafePhoneNumber)->toBe('423-555-0100');
+    expect($assessment->fresh()->VictimSafePhoneNumber)->toBe('(423)555-0100');
+});
+
+test('an officer cannot save a number without its area code', function () {
+    $officer = pestAgencyMember(UserRole::LawEnforcement, pestAgency('Phone PD'));
+    $assessment = pestOfficerAssessment($officer, 'Phone');
+
+    $this->actingAs($officer);
+
+    Livewire::test(ListLawEnforcementAssessments::class)
+        ->callAction(TestAction::make(EditAction::class)->table($assessment), [
+            'VictimSafePhoneNumber' => '555-0199',
+            'reason' => 'New number',
+        ])
+        ->assertHasActionErrors(['VictimSafePhoneNumber']);
+
+    expect($assessment->fresh()->VictimSafePhoneNumber)->toBe('(423)555-0100');
 });

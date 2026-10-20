@@ -183,3 +183,20 @@ test('the restricted FeedbackPublic user cannot read back submissions', function
     expect(fn () => DB::connection('FeedbackPublic')->table('resource_request_form')->count())
         ->toThrow(Illuminate\Database\QueryException::class);
 });
+
+test('a phone number needs all 10 digits, and is stored as (xxx)xxx-xxxx', function () {
+    $this->postJson('/api/public/resource-requests', [
+        'FirstName'       => publicFormsRunToken(),
+        'SafePhoneNumber' => '555-0100',
+    ])->assertStatus(422)->assertJsonValidationErrors(['SafePhoneNumber' => 'area code']);
+
+    $response = $this->postJson('/api/public/resource-requests', [
+        'FirstName'       => publicFormsRunToken(),
+        'SafePhoneNumber' => '423.555.0100',
+    ])->assertStatus(201);
+
+    $this->assertDatabaseHas('resource_request_form', [
+        'FormID'          => $response->json('FormID'),
+        'SafePhoneNumber' => '(423)555-0100',
+    ], 'Feedback');
+});

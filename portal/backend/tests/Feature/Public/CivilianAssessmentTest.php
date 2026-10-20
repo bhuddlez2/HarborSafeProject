@@ -63,7 +63,7 @@ test('a submission for yourself writes the answers and the record, and no submit
     $row = civilianStoredRow();
     expect($row)->not->toBeNull()
         ->and($row->SubmissionID)->toBeNull()
-        ->and($row->VictimSafePhoneNumber)->toBe('(423) 555-0100')
+        ->and($row->VictimSafePhoneNumber)->toBe('(423)555-0100')
         ->and($row->OffenderVictimRelationship)->toBe('spouse');
 
     $answers = DB::connection('Portal')->table('_assessment_answers')
@@ -229,3 +229,15 @@ test('the restricted database user can insert but cannot read or change anything
     fn () => config('database.connections.PortalPublic.username') === config('database.connections.Portal.username'),
     'PortalPublic uses the same credentials as Portal here; create the restricted user (Schema_Reference.md) to run this.',
 );
+
+test('phone numbers need all 10 digits, for the victim and the submitter alike', function (string $field) {
+    $payload = $field === 'SubmitterPhoneNumber'
+        ? civilianPayload(['ForWhom' => 'other', 'Anonymous' => false, 'SubmitterFirstName' => 'Sam', 'SubmitterLastName' => 'Reporter', $field => '555-0100'])
+        : civilianPayload([$field => '555-0100']);
+
+    $this->postJson('/api/public/civilian-assessments', $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([$field => 'area code']);
+
+    expect(civilianStoredRow())->toBeNull();
+})->with(['VictimSafePhoneNumber', 'SubmitterPhoneNumber']);

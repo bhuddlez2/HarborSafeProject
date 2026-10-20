@@ -52,7 +52,7 @@ class StaffPanelProvider extends PanelProvider
             // portal (PortalSidebar/PortalHeader): #5C0F8B primary, Nunito
             // body text, Montserrat headings, a dark full-height sidebar. The
             // rest of it lives in resources/css/filament/staff/theme.css.
-            ->brandName('HarborSafe')
+            ->brandName('Harbor Safe')
             ->colors([
                 'primary' => Color::hex('#5C0F8B'),
                 // Tailwind's own gray, which the original pages used; Filament

@@ -2,10 +2,8 @@
 
 use App\Enums\UserRole;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
-use App\Models\AssessmentAnswers;
 use App\Models\PrivateAssessment;
 use App\Models\SubmitterInfo;
-use Illuminate\Support\Facades\DB;
 
 /*
 The admin view of assessments submitted through the public civilian flow.
@@ -17,50 +15,9 @@ so it cannot go missing again.
 */
 
 afterEach(function () {
-    // Children first: _private_assessment has FKs to both parents. Tagged on
-    // the victim name, following the suite's prefix convention.
-    $portal = DB::connection('Portal');
-    $docs = $portal->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->pluck('AssessmentDocID', 'SubmissionID');
-
-    $portal->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->delete();
-
-    foreach ($docs as $assessmentDocId) {
-        $portal->table('_assessment_answers')->where('AssessmentDocID', $assessmentDocId)->delete();
-    }
-
-    $portal->table('_submitter_info')
-        ->where('SubmitterFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->delete();
-
+    cleanupCivilianAssessments();
     cleanupStaffData();
 });
-
-// Creates one civilian submission, the way the public flow does: answers
-// first, then the identity record pointing at it.
-function pestCivilianAssessment(array $yesIndicators = [1], ?SubmitterInfo $submitter = null): PrivateAssessment
-{
-    $answers = AssessmentAnswers::create(collect(range(1, 11))
-        ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => in_array($id, $yesIndicators, true)])
-        ->all());
-
-    return PrivateAssessment::create([
-        'VictimFirstName' => STAFF_TEST_PREFIX.'Victim',
-        'VictimLastName' => 'Doe',
-        'VictimSex' => 'F',
-        'VictimDOB' => '1990-01-01',
-        'VictimSafePhoneNumber' => '423-555-0100',
-        'OffenderFirstName' => 'Test',
-        'OffenderLastName' => 'Offender',
-        'OffenderSex' => 'M',
-        'OffenderVictimRelationship' => 'spouse',
-        'SubmissionID' => $submitter?->getKey(),
-        'AssessmentDocID' => $answers->getKey(),
-    ]);
-}
 
 test('an admin sees a civilian submission on the page', function () {
     pestCivilianAssessment();

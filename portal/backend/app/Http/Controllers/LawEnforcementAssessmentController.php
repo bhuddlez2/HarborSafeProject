@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\OffenderRelationship;
 use App\Enums\UserRole;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use App\Models\LawEnforcementAssessment;
 
@@ -50,7 +51,7 @@ class LawEnforcementAssessmentController extends Controller
             'VictimSex' => 'required|string|max:10',
             'VictimDOB' => 'nullable|date',
             // Required so the organisation can follow up with the victim.
-            'VictimSafePhoneNumber' => 'required|string|max:20',
+            'VictimSafePhoneNumber' => ['required', 'string', 'max:20', PhoneNumber::rule()],
             'AssessmentDocID' => 'required|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);
 
@@ -86,7 +87,7 @@ class LawEnforcementAssessmentController extends Controller
             'VictimSex' => 'nullable|string|max:10',
             'VictimDOB' => 'nullable|date',
             // May be changed, never cleared - the column is NOT NULL.
-            'VictimSafePhoneNumber' => 'sometimes|required|string|max:20',
+            'VictimSafePhoneNumber' => ['sometimes', 'required', 'string', 'max:20', PhoneNumber::rule()],
             'AssessmentDocID' => 'nullable|uuid|exists:Portal._assessment_answers,AssessmentDocID',
         ]);
 

@@ -7,6 +7,7 @@ use App\Filament\Assessments\RelationshipFields;
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
+use App\Support\PhoneNumber;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -168,11 +169,14 @@ class NewAssessment extends Page
                     $this->sexSelect('VictimSex'),
                 ]),
                 // Required so the organisation can follow up with the victim.
+                // A full 10-digit number, shown as (xxx)xxx-xxxx while typing.
                 TextInput::make('VictimSafePhoneNumber')
                     ->label('Safe phone number')
                     ->tel()
+                    ->mask(PhoneNumber::MASK)
                     ->required()
                     ->maxLength(20)
+                    ->rule(PhoneNumber::rule())
                     ->validationMessages(['required' => 'Required']),
             ]);
     }

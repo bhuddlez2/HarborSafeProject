@@ -2,14 +2,17 @@
 
 namespace App\Filament\Resources\CivilianAssessments;
 
+use App\Enums\AssessmentAccess;
 use App\Enums\OffenderRelationship;
 use App\Enums\UserRole;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
+use App\Models\AssessmentAccessLog;
 use App\Models\PrivateAssessment;
 use App\Support\Timezones;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\IconEntry;
@@ -79,6 +82,13 @@ class CivilianAssessmentResource extends Resource
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin);
+    }
+
+    // The same rule as the PDF download (CivilianAssessmentPdfController), so
+    // the screen and the route outside the panel can't disagree.
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
     public static function infolist(Schema $schema): Schema
@@ -229,9 +239,22 @@ class CivilianAssessmentResource extends Resource
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('SubmissionID')),
             ])
             // View only - no edit, no delete, no bulk actions. See the class
-            // comment.
+            // comment. Opening View and downloading the PDF both show the safe
+            // phone number, so both are recorded (AssessmentAccessLog).
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->modalHeading('View Civilian Assessment')
+                    ->afterFormFilled(fn (PrivateAssessment $record) => AssessmentAccessLog::record(
+                        $record,
+                        AssessmentAccess::View,
+                        Filament::auth()->user(),
+                    ))
+                    ->extraModalFooterActions(fn (PrivateAssessment $record): array => [
+                        Action::make('download_pdf')
+                            ->label('Download PDF')
+                            ->url(route('staff.civilian-assessments.pdf', $record->DocumentID))
+                            ->openUrlInNewTab(),
+                    ]),
             ])
             ->emptyStateHeading('No civilian assessments yet')
             ->emptyStateDescription('Assessments submitted through the public civilian flow appear here.');

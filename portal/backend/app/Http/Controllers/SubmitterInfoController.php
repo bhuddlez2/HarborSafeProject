@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\SubmitterInfo;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 
 class SubmitterInfoController extends Controller
@@ -14,7 +15,7 @@ class SubmitterInfoController extends Controller
             'SubmitterFirstName'    => 'required|string|max:50',
             'SubmitterLastName'     => 'required|string|max:50',
             'SubmitterEmail'        => 'nullable|email|max:100',
-            'SubmitterPhoneNumber'  => 'nullable|string|max:20'
+            'SubmitterPhoneNumber'  => ['nullable', 'string', 'max:20', PhoneNumber::rule()]
         ]);
 
         $submitter = SubmitterInfo::create($validated);

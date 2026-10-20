@@ -4,6 +4,12 @@
     $record   = $getRecord();
     $answers  = $record->assessmentAnswers;
 
+    // The same record serves both kinds of assessment: law-enforcement (View
+    // pop-up and PDF) and civilian (PDF). A civilian one has no officer; it
+    // has a submitter instead, or none when it was sent anonymously.
+    $civilian  = $record instanceof \App\Models\PrivateAssessment;
+    $submitter = $civilian ? $record->submitterInfo : null;
+
     $yesCount = $answers
         ? collect(array_keys(NewAssessment::QUESTIONS))
             ->filter(fn (int $id): bool => (bool) $answers->{"RiskIndicator{$id}"})
@@ -41,10 +47,36 @@
             {{-- Stored UTC, shown Eastern - see App\Support\Timezones. --}}
             <span>{{ $record->DateCreated ? \Carbon\Carbon::parse($record->DateCreated)->setTimezone(\App\Support\Timezones::DISPLAY)->format('M j, Y \a\t g:i a') : '—' }}</span>
             <span class="hs-ar-header-sep">·</span>
-            <span>Officer: {{ $record->submitter?->name ?? 'Unknown' }}</span>
+            @if ($civilian)
+                <span>Civilian submission</span>
+            @else
+                <span>Officer: {{ $record->submitter?->name ?? 'Unknown' }}</span>
+            @endif
         </div>
         <div class="hs-ar-header-id">Record ID: {{ $record->DocumentID }}</div>
     </div>
+
+    {{-- Civilian only: who sent it. Contact details exist only when someone
+         reporting for another person chose not to be anonymous. --}}
+    @if ($civilian)
+        <div class="hs-ar-party" style="margin-bottom: 1.25rem">
+            <div class="hs-ar-party-label">Submitted by</div>
+            <dl class="hs-ar-fields">
+                <div class="hs-ar-field">
+                    <dt>Name</dt>
+                    <dd>{{ $submitter ? (trim(($submitter->SubmitterFirstName ?? '') . ' ' . ($submitter->SubmitterLastName ?? '')) ?: '—') : 'Anonymous' }}</dd>
+                </div>
+                <div class="hs-ar-field">
+                    <dt>Email</dt>
+                    <dd>{{ $submitter?->SubmitterEmail ?: '—' }}</dd>
+                </div>
+                <div class="hs-ar-field">
+                    <dt>Phone</dt>
+                    <dd>{{ $submitter?->SubmitterPhoneNumber ?: '—' }}</dd>
+                </div>
+            </dl>
+        </div>
+    @endif
 
     {{-- Victim / Offender --}}
     <div class="hs-ar-parties">

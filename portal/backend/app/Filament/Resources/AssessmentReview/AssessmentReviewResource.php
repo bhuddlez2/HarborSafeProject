@@ -122,6 +122,7 @@ class AssessmentReviewResource extends Resource
             ->recordActions([
                 ChangeHistory::action(),
                 ViewAction::make()
+                    ->modalHeading('View Assessment')
                     ->extraModalFooterActions(fn (LawEnforcementAssessment $record): array => [
                         Action::make('download_pdf')
                             ->label('Download PDF')

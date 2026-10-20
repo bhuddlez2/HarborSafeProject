@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AssessmentAccess;
+use App\Models\AssessmentAccessLog;
 use App\Models\LawEnforcementAssessment;
+use App\Services\AssessmentPdf;
 use Illuminate\Http\Request;
-use Spatie\Browsershot\Browsershot;
 use Symfony\Component\HttpFoundation\Response;
 
 class AssessmentPdfController extends Controller
 {
-    public function __invoke(Request $request, string $id): Response
+    public function __invoke(Request $request, string $id, AssessmentPdf $pdf): Response
     {
         // EnsureStaffPanelAccess (routes/web.php) has already turned away
         // anonymous and deactivated users.
@@ -24,30 +26,20 @@ class AssessmentPdfController extends Controller
             ->where('DocumentID', $id)
             ->firstOrFail();
 
-        // Render the assessment record as an HTML view for PDF generation.
-        $html = view('filament.pdf.assessment', [
-            'getRecord' => fn () => $record,
-        ])->render();
+        // Rendered by App\Services\AssessmentPdf (Browsershot), shared with
+        // the civilian download.
+        $bytes = $pdf->render($record);
 
-        // Generate the PDF from the rendered HTML using Browsershot.
-        $pdf = Browsershot::html($html)
-            ->format('A4')
-            ->margins(15, 15, 15, 15)
-            ->noSandbox()
-            ->showBackground()
-            ->timeout(30)
-            ->addChromiumArguments([
-                '--disable-background-networking',
-                '--disable-extensions',
-                '--disable-sync',
-            ])
-            ->pdf();
+        // The PDF carries the victim's safe phone number, so every download
+        // is recorded: who and when. Only once the file exists - a failed
+        // render downloads nothing.
+        AssessmentAccessLog::record($record, AssessmentAccess::Download, $request->user());
 
         // Prepare the filename for the PDF download.
         $filename = 'assessment-' . substr($record->DocumentID, 0, 8) . '.pdf';
 
         // Return the generated PDF as a response with appropriate headers for download.
-        return response($pdf, 200, [
+        return response($bytes, 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);

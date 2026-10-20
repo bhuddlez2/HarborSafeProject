@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\PhoneNumber;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Enums\UserRole;
 use App\Models\Concerns\EditedOnlyThroughAssessmentEditor;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,6 +39,13 @@ class LawEnforcementAssessment extends BaseModel
         'VictimSafePhoneNumber',
         'AssessmentDocID',
     ];
+
+    // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
+    // App\Support\PhoneNumber, which also validates it.
+    protected function victimSafePhoneNumber(): Attribute
+    {
+        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+    }
 
     public function uniqueIds(): array
     {

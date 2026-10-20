@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { fetchRequestOptions, submitResourceRequest } from "../lib/forms";
+import { formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
 import {
   Field,
   OPTIONAL_PLACEHOLDER,
@@ -160,9 +161,9 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             id="phone"
             name="SafePhoneNumber"
             type="tel"
-            maxLength={20}
+            maxLength={PHONE_INPUT_MAX_LENGTH}
             value={values.SafePhoneNumber}
-            onChange={update("SafePhoneNumber")}
+            onChange={(event) => setValues((current) => ({ ...current, SafePhoneNumber: formatPhoneInput(event.target.value) }))}
             aria-describedby={describedBy("phone", true, errorFor("SafePhoneNumber"))}
             className={inputClass}
           />

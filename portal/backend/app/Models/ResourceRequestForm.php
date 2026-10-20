@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\PhoneNumber;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class ResourceRequestForm extends BaseModel
@@ -26,6 +28,13 @@ class ResourceRequestForm extends BaseModel
         'CountyID',
         'Message',
     ];
+
+    // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
+    // App\Support\PhoneNumber, which also validates it.
+    protected function safePhoneNumber(): Attribute
+    {
+        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+    }
 
     public function uniqueIds(): array
     {

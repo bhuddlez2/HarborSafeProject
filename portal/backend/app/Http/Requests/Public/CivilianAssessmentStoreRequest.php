@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Public;
 
 use App\Enums\OffenderRelationship;
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,9 +33,6 @@ class CivilianAssessmentStoreRequest extends FormRequest
     // App\Support\AssessmentFields.
     public const SEXES = ['M', 'F', 'O'];
 
-    // Digits, spaces and + - . ( ), 7 to 20 characters - the same rule the
-    // website checks before sending (lib/validators.js isValidPhone).
-    public const PHONE_PATTERN = '/^[0-9+\-.() ]{7,20}$/';
 
     private const TEXT_FIELDS = [
         'VictimFirstName', 'VictimLastName', 'VictimSafePhoneNumber',
@@ -71,7 +69,10 @@ class CivilianAssessmentStoreRequest extends FormRequest
         }
 
         $date = ['nullable', 'date_format:Y-m-d', 'after_or_equal:1900-01-01', 'before_or_equal:today'];
-        $phone = ['string', 'max:20', 'regex:'.self::PHONE_PATTERN];
+        // A full 10-digit number, area code included - App\Support\PhoneNumber,
+        // the same rule the website checks before sending (lib/validators.js
+        // isValidPhone).
+        $phone = ['string', 'max:20', PhoneNumber::rule()];
 
         return [
             'ForWhom'   => ['required', Rule::in(['self', 'other'])],
@@ -107,8 +108,6 @@ class CivilianAssessmentStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'VictimSafePhoneNumber.regex' => 'Enter a valid phone number.',
-            'SubmitterPhoneNumber.regex'  => 'Enter a valid phone number.',
             'VictimDOB.before_or_equal'   => "Date of birth can't be in the future.",
             'OffenderDOB.before_or_equal' => "Date of birth can't be in the future.",
         ];

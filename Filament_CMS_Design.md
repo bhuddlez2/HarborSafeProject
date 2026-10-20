@@ -719,7 +719,9 @@ creating an officer; `police_admin` has no edit action on assessments.
 - **Assessment review** — law-enforcement submissions, view-only: admin sees all of
   them, police_admin only its own agency's (§5 rule 5).
 - **Civilian assessments** — submissions from the public civilian flow, view-only, for
-  admin alone (§5).
+  admin alone (§5). Each record's View pop-up has **Download PDF**
+  (`/civilian-assessments/{id}/pdf`, the same template as the law-enforcement PDF), and
+  every View and download is logged in `assessment_access_log` (2026-10-19).
 - **My Assessments** — `App\Filament\Resources\LawEnforcementAssessments`, at
   `/police/assessments`, replacing the old mockup page. List with view and edit
   modals, **officers only**, each seeing their own submissions. Edit is the submitting
@@ -846,7 +848,10 @@ Two notes for whoever extends this:
 
 Still undecided:
 
-- **View logging.** The officer Home page says "Records are in My Assessments. Each view
+- **View logging.** *Partly built 2026-10-19:* `assessment_access_log` records every PDF
+  download (both kinds of assessment) and every civilian View pop-up. Law-enforcement
+  View pop-ups are not logged yet (team plan task 9), and nothing in the panel shows the
+  log yet (task 22, the Log pop-up). Original note: the officer Home page says "Records are in My Assessments. Each view
   is logged with your name and a timestamp." — carried over verbatim from the old
   portal. Nothing logs views: it is neither designed nor built. The change log (§8)
   records edits only. Either design and build view logging (per record, per user, with a

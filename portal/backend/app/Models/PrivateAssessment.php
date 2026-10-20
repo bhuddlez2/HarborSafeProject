@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\PhoneNumber;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Enums\UserRole;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Str;
@@ -44,6 +48,13 @@ class PrivateAssessment extends BaseModel
         'AssessmentDocID'        
     ];
 
+    // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
+    // App\Support\PhoneNumber, which also validates it.
+    protected function victimSafePhoneNumber(): Attribute
+    {
+        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+    }
+
     public function uniqueIds(): array
     {
         return [$this->primaryKey];
@@ -58,5 +69,16 @@ class PrivateAssessment extends BaseModel
     public function assessmentAnswers()
     {
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
+    }
+
+    // Who may see civilian assessments: active admins, all of them; nobody
+    // else, any of them (Filament_CMS_Design.md section 5). The Civilian
+    // assessments screen and the PDF download both go through this, as the
+    // law-enforcement side goes through LawEnforcementAssessment::visibleTo().
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        return $user?->hasActiveRole(UserRole::Admin)
+            ? $query
+            : $query->whereRaw('1 = 0');
     }
 }
