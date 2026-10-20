@@ -234,6 +234,29 @@ test('the change log button shows the history with readable labels', function ()
         ]);
 });
 
+test('the edit pop-up\'s Yes / No buttons save an answer change and log only that', function () {
+    // RiskIndicator1 starts Yes, the rest No (changeLogAssessment()). The
+    // buttons hand back 1 / 0 rather than true / false; unchanged answers must
+    // not be logged as changes because of that.
+    $officer = changeLogMember(UserRole::LawEnforcement, changeLogAgency('A'));
+    $assessment = changeLogAssessment($officer);
+
+    $this->actingAs($officer);
+
+    Livewire::test(ListLawEnforcementAssessments::class)
+        ->callAction(TestAction::make(EditAction::class)->table($assessment), [
+            'RiskIndicator2' => true,
+            'reason' => 'Victim disclosed a threat on follow-up',
+        ])
+        ->assertHasNoActionErrors();
+
+    $edit = AssessmentEdit::where('DocumentID', $assessment->getKey())->sole();
+
+    expect((bool) $assessment->fresh()->assessmentAnswers->RiskIndicator2)->toBeTrue()
+        ->and(AssessmentAnswerChangeLog::where('EditID', $edit->getKey())->pluck('ChangeField')->all())->toBe(['RiskIndicator2'])
+        ->and(AssessmentChangeLog::where('EditID', $edit->getKey())->count())->toBe(0);
+});
+
 /*
 View shows the record as it is now and nothing else, so that what it shows -
 and anything exported from it - is the complete current document, with no
