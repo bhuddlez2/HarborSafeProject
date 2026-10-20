@@ -7,8 +7,9 @@ use App\Models\Concerns\AppendOnly;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use InvalidArgumentException;
 
-// One view or PDF download of an assessment, law-enforcement or civilian: who,
-// what and when. Written through record(), never changed afterwards.
+// One view or PDF download of a form that shows a safe phone number - an
+// officer or civilian assessment, or a resource request: who, what and when.
+// Written through record(), never changed afterwards.
 class AssessmentAccessLog extends BaseModel
 {
     use AppendOnly, HasUuids;
@@ -26,6 +27,7 @@ class AssessmentAccessLog extends BaseModel
     protected $fillable = [
         'LawEnforcementDocumentID',
         'PrivateDocumentID',
+        'ResourceRequestFormID',
         'Action',
         'AccessedBy',
     ];
@@ -45,12 +47,15 @@ class AssessmentAccessLog extends BaseModel
 
     // The one way rows are written. AccessedAt is the database's own time
     // (UTC, see App\Support\Timezones).
-    public static function record(LawEnforcementAssessment | PrivateAssessment $assessment, AssessmentAccess $action, User $user): self
+    // A resource request counts too (since 2026-10-20): its follow-up page and
+    // PDF show the requester's safe phone number.
+    public static function record(LawEnforcementAssessment | PrivateAssessment | ResourceRequestForm $assessment, AssessmentAccess $action, User $user): self
     {
         $column = match (true) {
             $assessment instanceof LawEnforcementAssessment => 'LawEnforcementDocumentID',
             $assessment instanceof PrivateAssessment => 'PrivateDocumentID',
-            default => throw new InvalidArgumentException('Not an assessment.'),
+            $assessment instanceof ResourceRequestForm => 'ResourceRequestFormID',
+            default => throw new InvalidArgumentException('Not a form the log records.'),
         };
 
         return static::create([

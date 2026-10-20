@@ -11,6 +11,7 @@ use App\Models\ResourceRequestForm;
 use App\Support\Timezones;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -231,7 +232,15 @@ class ResourceRequestResource extends Resource
                         )),
             ])
             ->recordActions([
-                ViewAction::make(),
+                // The plain form as a PDF, through its own logged route
+                // (ResourceRequestPdfController), as civilian assessments do.
+                ViewAction::make()
+                    ->extraModalFooterActions(fn (ResourceRequestForm $record): array => [
+                        Action::make('download_pdf')
+                            ->label('Download PDF')
+                            ->url(route('staff.resource-requests.pdf', $record->FormID))
+                            ->openUrlInNewTab(),
+                    ]),
                 DeleteAction::make()
                     ->modalHeading('Delete this request?')
                     ->modalDescription('Someone asked for help with this form. Deleting it cannot be undone.'),

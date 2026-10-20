@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LAP Assessment</title>
+<title>{{ $title ?? 'LAP Assessment' }}</title>
 <style>
     * {
         box-sizing: border-box;
@@ -171,9 +171,14 @@
     }
     .hs-ar-indicator-badge--yes { background-color: #fee2e2; color: #b91c1c; }
 
+    /* Resource request layout (filament/follow-ups/resource-request). */
+    .hs-fu-single { grid-template-columns: 1fr; }
+    .hs-fu-message { white-space: pre-wrap; font-weight: 400; }
+
 </style>
 </head>
 <body>
-@include('filament.infolists.components.assessment-record')
+{{-- An assessment by default; a resource request passes its own view (App\Services\AssessmentPdf). --}}
+@include($recordView ?? 'filament.infolists.components.assessment-record')
 </body>
 </html>

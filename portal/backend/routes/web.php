@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssessmentPdfController;
 use App\Http\Controllers\CivilianAssessmentPdfController;
+use App\Http\Controllers\ResourceRequestPdfController;
 use App\Http\Controllers\ContentFileController;
 use App\Http\Controllers\FeedbackScanController;
 use App\Http\Middleware\EnsureStaffPanelAccess;
@@ -34,6 +35,10 @@ Route::middleware([
     // Civilian assessments: admins only (PrivateAssessment::visibleTo()).
     Route::get('/civilian-assessments/{id}/pdf', CivilianAssessmentPdfController::class)
         ->name('staff.civilian-assessments.pdf');
+
+    // Resource requests: admins and secretaries (ResourceRequestForm::visibleTo()).
+    Route::get('/resource-requests/{id}/pdf', ResourceRequestPdfController::class)
+        ->name('staff.resource-requests.pdf');
 
     // Scans of paper feedback forms: admins and secretaries only, never
     // cached - see FeedbackScanController for why not /files/{file}.

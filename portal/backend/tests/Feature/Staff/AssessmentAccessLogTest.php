@@ -33,7 +33,7 @@ AssessmentPdfAccessTest).
 beforeEach(function () {
     $this->instance(AssessmentPdf::class, new class extends AssessmentPdf
     {
-        public function render(LawEnforcementAssessment | PrivateAssessment $record): string
+        public function render(LawEnforcementAssessment | PrivateAssessment | App\Models\ResourceRequestForm $record): string
         {
             return '%PDF-fake';
         }

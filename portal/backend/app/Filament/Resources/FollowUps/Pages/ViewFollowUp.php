@@ -39,8 +39,9 @@ link here, so staff can read the form and start at once.
 
 The record is looked up through FollowUpResource::getEloquentQuery(), scoped
 by FollowUp::visibleTo(): a follow-up outside the user's kinds is a 404.
-Opening an assessment's page shows the victim's safe phone number, so it is
-recorded as a view in assessment_access_log (never in the follow-up Log).
+Opening the page shows a safe phone number - the victim's or the requester's
+- so it is recorded as a view in assessment_access_log (never in the
+follow-up Log).
 Merely opening the page never changes the status.
 */
 class ViewFollowUp extends Page
@@ -57,9 +58,10 @@ class ViewFollowUp extends Page
 
         abort_unless(FollowUpResource::canView($this->getRecord()), 404);
 
+        // Every kind of form here shows a safe phone number.
         $form = $this->followUp()->form();
 
-        if ($form instanceof LawEnforcementAssessment || $form instanceof PrivateAssessment) {
+        if ($form !== null) {
             AssessmentAccessLog::record($form, AssessmentAccess::View, Filament::auth()->user());
         }
     }
@@ -306,7 +308,7 @@ class ViewFollowUp extends Page
         return match (true) {
             $form instanceof LawEnforcementAssessment => route('staff.assessments.pdf', $form->DocumentID),
             $form instanceof PrivateAssessment => route('staff.civilian-assessments.pdf', $form->DocumentID),
-            // Resource request PDFs come with part 5 of the follow-up build.
+            $form instanceof ResourceRequestForm => route('staff.resource-requests.pdf', $form->FormID),
             default => null,
         };
     }

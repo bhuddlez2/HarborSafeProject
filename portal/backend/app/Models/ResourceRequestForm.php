@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\FollowUpKind;
 use App\Http\Requests\Public\ResourceRequestStoreRequest;
+use Illuminate\Database\Eloquent\Builder;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -78,6 +80,16 @@ class ResourceRequestForm extends BaseModel
     public function county()
     {
         return $this->belongsTo(County::class, 'CountyID');
+    }
+
+    // Who may see resource requests: the people who work them (admins and
+    // secretaries; FollowUpKind::workedBy()). The Submissions screen and the
+    // PDF download route both go through this.
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        return in_array(FollowUpKind::ResourceRequest, FollowUp::kindsFor($user), true)
+            ? $query
+            : $query->whereRaw('1 = 0');
     }
 
     // How a request arrived: from the website, or started by staff from an
