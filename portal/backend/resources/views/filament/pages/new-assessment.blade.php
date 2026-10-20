@@ -12,9 +12,13 @@
                     <h1 class="text-3xl font-semibold text-gray-900 mb-6">
                         Assessment submitted
                     </h1>
-                    <p class="text-gray-700 text-lg mb-10 leading-relaxed">
+                    <p class="text-gray-700 text-lg mb-8 leading-relaxed">
                         The assessment has been saved successfully.
                     </p>
+
+                    <div class="mb-10">
+                        @include('filament.pages.new-assessment.hotlines')
+                    </div>
                     <button
                         type="button"
                         wire:click="startNewAssessment"

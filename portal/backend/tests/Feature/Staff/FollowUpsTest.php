@@ -60,6 +60,7 @@ test('every new assessment and resource request opens a follow-up in Needs follo
             'VictimSafePhoneNumber' => '(423)555-0100',
             'OffenderFirstName' => 'Test', 'OffenderLastName' => 'Offender', 'OffenderSex' => 'M',
             'OffenderVictimRelationship' => 'spouse',
+            'SafePhoneConfirmed' => true,
         ])
         ->call('create')
         ->assertSet('submitted', true);

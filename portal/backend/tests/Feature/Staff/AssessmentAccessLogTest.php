@@ -33,7 +33,7 @@ AssessmentPdfAccessTest).
 beforeEach(function () {
     $this->instance(AssessmentPdf::class, new class extends AssessmentPdf
     {
-        public function render(LawEnforcementAssessment | PrivateAssessment | App\Models\ResourceRequestForm $record): string
+        public function render(LawEnforcementAssessment | PrivateAssessment | App\Models\ResourceRequestForm | App\Models\ServiceFeedback $record): string
         {
             return '%PDF-fake';
         }
@@ -140,7 +140,7 @@ test('the civilian PDF holds the whole record, submitter included', function () 
     ]);
     $assessment = pestCivilianAssessment([1, 4], $submitter)->load(['assessmentAnswers', 'submitterInfo']);
 
-    $html = view('filament.pdf.assessment', ['getRecord' => fn () => $assessment])->render();
+    $html = App\Support\RecordPdf::html($assessment);
 
     expect($html)
         ->toContain('Civilian submission')
@@ -163,17 +163,16 @@ test('the civilian PDF holds the whole record, submitter included', function () 
 test('an anonymous civilian PDF says so, and the officer PDF is unchanged', function () {
     $anonymous = pestCivilianAssessment()->load(['assessmentAnswers', 'submitterInfo']);
 
-    expect(view('filament.pdf.assessment', ['getRecord' => fn () => $anonymous])->render())
+    expect(App\Support\RecordPdf::html($anonymous))
         ->toContain('Anonymous');
 
     $w = pestTwoAgencies();
-    $officerPdf = view('filament.pdf.assessment', [
-        'getRecord' => fn () => $w->assessmentA->load(['assessmentAnswers', 'submitter']),
-    ])->render();
+    $officerPdf = App\Support\RecordPdf::html($w->assessmentA->load(['assessmentAnswers', 'submitter']));
 
     expect($officerPdf)
         ->toContain('Officer: '.$w->officerA->name)
-        ->not->toContain('Submitted by')
+        // The label, not the PDF stylesheet's comment that names the card.
+        ->not->toContain('Submitted by</div>')
         ->not->toContain('Civilian submission');
 });
 

@@ -26,7 +26,7 @@ App\Services\AssessmentPdf is faked: a real render launches Chromium.
 beforeEach(function () {
     $this->instance(AssessmentPdf::class, new class extends AssessmentPdf
     {
-        public function render(LawEnforcementAssessment | PrivateAssessment | ResourceRequestForm $record): string
+        public function render(LawEnforcementAssessment | PrivateAssessment | ResourceRequestForm | App\Models\ServiceFeedback $record): string
         {
             return '%PDF-fake';
         }
@@ -88,20 +88,17 @@ test('the PDF is the plain form: nothing from its follow-up, nothing about staff
         'Message' => 'Needs a ride to court.',
     ], $admin)->resourceRequest;
 
-    $html = view('filament.pdf.assessment', [
-        'title' => 'Resource request',
-        'recordView' => 'filament.follow-ups.resource-request',
-        'request' => $started->load(['county', 'resourceTypes']),
-    ])->render();
+    $html = App\Support\RecordPdf::html($started->load(['county', 'resourceTypes']));
 
     expect($html)
-        ->toContain('Resource request')
+        ->toContain('Resource Request')
         ->toContain(publicFormsRunToken().' Requester')
         ->toContain('(423)555-0199')
         ->toContain('Needs a ride to court.')
         ->not->toContain('A note that must stay out of the PDF.')
         ->not->toContain('Started by staff')
         ->not->toContain('Entered by')
+        ->not->toContain('entered by')
         ->not->toContain($admin->name)
         ->not->toContain('Needs follow-up')
         ->not->toContain('Log');

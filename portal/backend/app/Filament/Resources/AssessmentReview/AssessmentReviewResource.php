@@ -16,7 +16,6 @@ use Filament\Facades\Filament;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
@@ -57,7 +56,9 @@ class AssessmentReviewResource extends Resource
 
     protected static ?string $modelLabel = 'assessment';
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+    // A police badge for law-enforcement submissions; resources/svg, registered
+    // in AppServiceProvider (Heroicons has none).
+    protected static string | BackedEnum | null $navigationIcon = 'hs-police-badge';
 
     // Its own group, not "Content management": police_admin reaches this page
     // and nothing else in the panel's content side, so filing it under content

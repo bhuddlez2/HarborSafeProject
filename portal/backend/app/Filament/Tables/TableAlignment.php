@@ -21,9 +21,9 @@ tags the header (hs-symbol-header) so theme.css takes the arrow out of that
 calculation; the label sits dead centre over the icons, with the arrow just
 after it.
 
-Applied to the content-management tables, Civilian assessments and Accounts.
-The police-side tables (Assessment review, My Assessments, Officers, Change
-log) are being aligned separately and can adopt this when they are.
+Applied to every table in the panel, including the police-side ones
+(Assessment review and My Assessments through AssessmentColumns, Officers,
+Change log). TableAlignmentTest checks each one column by column.
 */
 final class TableAlignment
 {

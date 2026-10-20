@@ -15,10 +15,8 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -72,7 +70,7 @@ class CivilianAssessmentResource extends Resource
 
     protected static ?string $modelLabel = 'civilian assessment';
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedShieldExclamation;
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
     protected static string | UnitEnum | null $navigationGroup = 'Assessments';
 
@@ -91,83 +89,15 @@ class CivilianAssessmentResource extends Resource
         return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
+    // The same record design as the law-enforcement View pop-up and PDF. The
+    // partial adds a "Submitted by" card when there is a named submitter.
     public static function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Submission')
-                    ->schema([
-                        TextEntry::make('DateCreated')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a')
-                            ->timezone(Timezones::DISPLAY),
-
-                        TextEntry::make('DocumentID')
-                            ->label('Record ID')
-                            ->copyable(),
-                    ])
-                    ->columns(2),
-
-                Section::make('Who submitted it')
-                    ->description('Contact details are only collected when someone submits on behalf of another person and chooses not to be anonymous. An anonymous submission is the normal case.')
-                    ->schema([
-                        TextEntry::make('submitterInfo.SubmitterFirstName')
-                            ->label('First name')
-                            ->placeholder('Anonymous'),
-
-                        TextEntry::make('submitterInfo.SubmitterLastName')
-                            ->label('Last name')
-                            ->placeholder('Anonymous'),
-
-                        TextEntry::make('submitterInfo.SubmitterEmail')
-                            ->label('Email')
-                            ->placeholder('Not given')
-                            ->copyable(),
-
-                        TextEntry::make('submitterInfo.SubmitterPhoneNumber')
-                            ->label('Phone')
-                            ->placeholder('Not given')
-                            ->copyable(),
-                    ])
-                    ->columns(2),
-
-                Section::make('Victim')
-                    ->schema([
-                        TextEntry::make('VictimFirstName')->label('First name'),
-                        TextEntry::make('VictimLastName')->label('Last name'),
-                        TextEntry::make('VictimSex')->label('Sex')->placeholder('Not recorded'),
-                        TextEntry::make('VictimDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('VictimSafePhoneNumber')
-                            ->label('Safe phone number')
-                            ->placeholder('Not given')
-                            ->copyable()
-                            ->helperText('The number they told us is safe to call. Others may not be.'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Offender')
-                    ->schema([
-                        TextEntry::make('OffenderFirstName')->label('First name'),
-                        TextEntry::make('OffenderLastName')->label('Last name'),
-                        TextEntry::make('OffenderSex')->label('Sex')->placeholder('Not recorded'),
-                        TextEntry::make('OffenderDOB')
-                            ->label('Date of birth')
-                            ->date('M j, Y')
-                            ->placeholder('Not recorded'),
-                        TextEntry::make('OffenderVictimRelationship')
-                            ->label('Relationship to victim')
-                            ->formatStateUsing(fn (?string $state, $record): ?string => OffenderRelationship::display($state, $record->OffenderVictimRelationshipOther))
-                            ->placeholder('Not recorded'),
-                    ])
-                    ->columns(3),
-
-                Section::make('Risk indicators')
-                    ->description('The eleven Lethality Assessment questions, in the order they were asked.')
-                    ->schema(self::riskIndicatorEntries())
-                    ->columns(1),
+                ViewEntry::make('record')
+                    ->view('filament.infolists.components.assessment-record')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -265,25 +195,6 @@ class CivilianAssessmentResource extends Resource
         return [
             'index' => ListCivilianAssessments::route('/'),
         ];
-    }
-
-    /*
-    One entry per risk indicator, labelled with the question text rather than
-    "RiskIndicator7". The wording comes from NewAssessment::QUESTIONS, which is
-    also the officer wizard's source and matches
-    website/frontend/src/app/lib/lethality-questions.js - so this screen cannot
-    drift from the question that was actually asked.
-    */
-    private static function riskIndicatorEntries(): array
-    {
-        return collect(NewAssessment::QUESTIONS)
-            ->map(fn (string $question, int $id): IconEntry => IconEntry::make("assessmentAnswers.RiskIndicator{$id}")
-                ->label($id.'. '.$question)
-                ->boolean()
-                ->trueColor('danger')
-                ->falseColor('gray'))
-            ->values()
-            ->all();
     }
 
     private static function yesCount(PrivateAssessment $record): int

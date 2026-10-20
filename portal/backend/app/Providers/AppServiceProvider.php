@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\LawEnforcementAssessment;
 use App\Policies\LawEnforcementAssessmentPolicy;
+use BladeUI\Icons\Factory as IconFactory;
 use Filament\Support\View\Components\ModalComponent;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -16,7 +17,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // The project's own icons (resources/svg), for what Heroicons lacks -
+        // e.g. 'hs-police-badge'. Usable anywhere Filament takes an icon name.
+        $this->callAfterResolving(IconFactory::class, function (IconFactory $factory): void {
+            $factory->add('harborsafe', [
+                'path' => resource_path('svg'),
+                'prefix' => 'hs',
+            ]);
+        });
     }
 
     /**

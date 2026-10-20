@@ -3,9 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssessmentPdfController;
 use App\Http\Controllers\CivilianAssessmentPdfController;
-use App\Http\Controllers\ResourceRequestPdfController;
 use App\Http\Controllers\ContentFileController;
 use App\Http\Controllers\FeedbackScanController;
+use App\Http\Controllers\ResourceRequestPdfController;
+use App\Http\Controllers\SubmissionPdfController;
 use App\Http\Middleware\EnsureStaffPanelAccess;
 
 /*
@@ -33,11 +34,17 @@ Route::middleware([
         ->name('staff.assessments.pdf');
 
     // Civilian assessments: admins only (PrivateAssessment::visibleTo()).
+    // Every download recorded (assessment_access_log).
     Route::get('/civilian-assessments/{id}/pdf', CivilianAssessmentPdfController::class)
         ->name('staff.civilian-assessments.pdf');
 
+    // Service feedback: admins and secretaries; the form only, not logged.
+    Route::get('/submissions/service-feedback/{id}/pdf', [SubmissionPdfController::class, 'serviceFeedback'])
+        ->name('staff.service-feedback.pdf');
+
     // Resource requests: admins and secretaries (ResourceRequestForm::visibleTo()).
-    Route::get('/resource-requests/{id}/pdf', ResourceRequestPdfController::class)
+    // Every download recorded (assessment_access_log).
+    Route::get('/submissions/resource-requests/{id}/pdf', ResourceRequestPdfController::class)
         ->name('staff.resource-requests.pdf');
 
     // Scans of paper feedback forms: admins and secretaries only, never

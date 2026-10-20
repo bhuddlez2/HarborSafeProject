@@ -1,41 +1,82 @@
 {{--
-    Change history of a law-enforcement assessment: one card per edit, newest
-    first. Data comes from App\Filament\Assessments\ChangeHistory - already
-    labelled and formatted, so nothing here interprets raw values. Rendered two
-    ways: as the "Change log" button's pop-up ($edits passed in) and as an
-    infolist entry on the Change log page ($getState()).
+    Change history of a law-enforcement assessment: a header naming the record,
+    then one card per edit, newest first. Data comes from
+    App\Filament\Assessments\ChangeHistory - already labelled and formatted, so
+    nothing here interprets raw values. Rendered two ways: as the "Change log"
+    button's pop-up ($header and $edits passed in) and as an infolist entry on
+    the Change log page ($getState()).
 --}}
 @php
-    $edits ??= isset($getState) ? ($getState() ?? []) : [];
+    $state = isset($getState) ? ($getState() ?? []) : [];
+    $edits ??= $state['edits'] ?? [];
+    $header ??= $state['header'] ?? null;
+    $total = count($edits);
 @endphp
 
-<div class="flex flex-col gap-3">
-    @forelse ($edits as $edit)
-        <article class="rounded-xl border border-gray-200 bg-white p-4">
-            <header class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <p class="text-sm font-semibold text-gray-900">{{ $edit['editor'] }}</p>
-                <p class="text-sm text-gray-500">{{ $edit['when'] }}</p>
-            </header>
+<div class="hs-assessment-record">
 
-            <p class="mt-1 text-sm text-gray-700">
-                <span class="font-semibold">Reason:</span> {{ $edit['reason'] }}
-            </p>
+    @if ($header)
+        <div class="hs-ar-header">
+            <div class="hs-ar-header-eyebrow">Harbor Safe</div>
+            <div class="hs-ar-header-title">Change Log</div>
+            <div class="hs-ar-header-meta">
+                <span>Victim: {{ $header['victim'] }}</span>
+                <span class="hs-ar-header-sep">·</span>
+                <span>Offender: {{ $header['offender'] }}</span>
+            </div>
+            <div class="hs-ar-header-meta hs-cl-header-sub">
+                <span>Submitted {{ $header['submitted'] }}</span>
+                @if ($header['edits'] !== null)
+                    <span class="hs-ar-header-sep">·</span>
+                    <span>{{ $header['edits'] }} {{ str('edit')->plural($header['edits']) }} since</span>
+                @endif
+            </div>
+        </div>
+        <p class="hs-cl-notice">Edits are listed newest first and cannot be changed or removed.</p>
+    @endif
 
-            <dl class="mt-3 divide-y divide-gray-100 border-t border-gray-100">
-                @foreach ($edit['changes'] as $change)
-                    <div class="grid gap-1 py-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-4">
-                        <dt class="text-sm text-gray-600">{{ $change['label'] }}</dt>
-                        <dd class="flex flex-wrap items-center gap-2 text-sm">
-                            <span class="text-gray-500 line-through decoration-gray-300">{{ $change['from'] }}</span>
-                            <span aria-hidden="true" class="text-gray-400">&rarr;</span>
-                            <span class="sr-only">changed to</span>
-                            <span class="font-semibold text-gray-900">{{ $change['to'] }}</span>
-                        </dd>
+    <div class="hs-cl-list">
+        @forelse ($edits as $index => $edit)
+            <article class="hs-ar-party hs-cl-edit">
+                <header class="hs-cl-edit-head">
+                    <div>
+                        @if ($header && $header['edits'] !== null)
+                            <span class="hs-ar-party-label">Edit {{ $total - $index }}</span>
+                        @else
+                            <span class="hs-ar-party-label">This edit</span>
+                        @endif
+                        <p class="hs-cl-editor">{{ $edit['editor'] }}</p>
                     </div>
-                @endforeach
-            </dl>
-        </article>
-    @empty
-        <p class="text-sm text-gray-500">No edits since submission.</p>
-    @endforelse
+                    <p class="hs-cl-when">{{ $edit['when'] }}</p>
+                </header>
+
+                <div class="hs-cl-reason">
+                    <span class="hs-cl-reason-label">Reason</span>
+                    <p>{{ $edit['reason'] }}</p>
+                </div>
+
+                <table class="hs-cl-changes">
+                    <thead>
+                        <tr>
+                            <th scope="col">Field</th>
+                            <th scope="col">Before</th>
+                            <th scope="col">After</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($edit['changes'] as $change)
+                            <tr>
+                                <th scope="row">{{ $change['label'] }}</th>
+                                <td><span class="hs-cl-before">{{ $change['from'] }}</span></td>
+                                <td><span class="hs-cl-after">{{ $change['to'] }}</span></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </article>
+        @empty
+            <p class="hs-ar-text hs-ar-text--empty">No edits since submission.</p>
+        @endforelse
+    </div>
+
 </div>

@@ -15,6 +15,7 @@ use App\Support\PhoneNumber;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -23,6 +24,8 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -181,6 +184,10 @@ class NewAssessment extends Page
                     ->required()
                     ->maxLength(20)
                     ->rule(PhoneNumber::rule())
+                    // A confirmation given for one number never carries over
+                    // to another (see reviewStep()).
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(fn (Set $set) => $set('SafePhoneConfirmed', false))
                     ->validationMessages(['required' => 'Required']),
             ]);
     }
@@ -233,7 +240,7 @@ class NewAssessment extends Page
 
     protected function reviewStep(): Step
     {
-        return Step::make('Review & submit')
+        return Step::make('Review & Submit')
             ->schema([
                 View::make('filament.pages.new-assessment.review')
                     ->viewData(fn (): array => [
@@ -241,6 +248,22 @@ class NewAssessment extends Page
                         'total' => count(self::QUESTIONS),
                         'submitError' => $this->submitError,
                     ]),
+
+                /*
+                A second check that the safe number really is safe, required
+                by validation in create(), not only by the disabled button.
+                Unticked whenever the number changes. Not stored yet: the
+                column arrives with entered_by (team plan tasks 7 and 20).
+                Draft wording until Harbor Safe approves it.
+                */
+                Checkbox::make('SafePhoneConfirmed')
+                    ->label(fn (Get $get): string => 'I have confirmed that '
+                        .(filled($get('VictimSafePhoneNumber')) ? $get('VictimSafePhoneNumber') : 'the safe phone number')
+                        .' is safe to use to contact the victim.')
+                    ->accepted()
+                    ->live()
+                    ->dehydrated(false)
+                    ->validationMessages(['accepted' => 'Confirm the safe phone number before submitting.']),
             ]);
     }
 

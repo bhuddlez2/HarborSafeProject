@@ -3,17 +3,15 @@
 namespace App\Filament\Clusters\Content\Resources\Events\Pages;
 
 use App\Filament\Clusters\Content\Resources\Events\EventResource;
+use App\Filament\Concerns\BreadcrumbNamesThePage;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ManageRecords;
 
 class ManageEvents extends ManageRecords
 {
-    protected static string $resource = EventResource::class;
+    use BreadcrumbNamesThePage;
 
-    public function getBreadcrumb(): ?string
-    {
-        return 'Events';
-    }
+    protected static string $resource = EventResource::class;
 
     protected function getHeaderActions(): array
     {

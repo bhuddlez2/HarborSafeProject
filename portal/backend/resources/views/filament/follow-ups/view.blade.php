@@ -13,7 +13,7 @@ the whole form on the left, its follow-up history on the right.
             @if ($form === null)
                 <p class="hs-fu-missing">The form this follow-up belongs to can't be found.</p>
             @elseif ($form instanceof \App\Models\ResourceRequestForm)
-                @include('filament.follow-ups.resource-request', ['request' => $form])
+                @include(\App\Support\RecordPdf::RESOURCE_REQUEST, ['getRecord' => fn () => $form])
             @else
                 @include('filament.infolists.components.assessment-record', ['getRecord' => fn () => $form])
             @endif

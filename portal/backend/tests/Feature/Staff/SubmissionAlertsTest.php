@@ -138,6 +138,7 @@ test('an officer\'s assessment alerts admins only, not the officer or their poli
             'OffenderLastName' => 'Offender',
             'OffenderSex' => 'M',
             'OffenderVictimRelationship' => 'spouse',
+            'SafePhoneConfirmed' => true,
         ])
         ->call('create')
         ->assertSet('submitted', true);

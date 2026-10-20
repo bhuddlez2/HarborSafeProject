@@ -7,6 +7,7 @@ use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\OfficerAccounts\Pages\CreateOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\EditOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
+use App\Filament\Tables\TableAlignment;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -191,9 +192,9 @@ class OfficerAccountResource extends Resource
                 TextColumn::make('lawEnforcementAgent.badge_number')
                     ->label('Badge number')
                     ->searchable(),
-                IconColumn::make('is_active')
+                TableAlignment::symbol(IconColumn::make('is_active')
                     ->label('Active')
-                    ->boolean(),
+                    ->boolean()),
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->date()

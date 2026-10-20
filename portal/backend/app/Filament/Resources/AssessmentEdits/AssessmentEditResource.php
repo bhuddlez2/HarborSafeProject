@@ -7,15 +7,14 @@ use App\Filament\PoliceAdminNavigation;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Tables\ChangeLogFilters;
+use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -116,25 +115,11 @@ class AssessmentEditResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
+        // The same design as each record's Change log pop-up: a header naming
+        // the assessment, then this one edit.
         return $schema
             ->components([
-                Section::make('Assessment')
-                    ->schema([
-                        TextEntry::make('assessment.VictimLastName')
-                            ->label('Victim')
-                            ->formatStateUsing(fn (?string $state, AssessmentEdit $record): string => self::personName($record->assessment, 'Victim')),
-                        TextEntry::make('assessment.OffenderLastName')
-                            ->label('Offender')
-                            ->formatStateUsing(fn (?string $state, AssessmentEdit $record): string => self::personName($record->assessment, 'Offender')),
-                        TextEntry::make('assessment.DateCreated')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a')
-                            ->timezone(Timezones::DISPLAY),
-                    ])
-                    ->columns(3),
-
-                Section::make('This edit')
-                    ->schema([ChangeHistory::entry()]),
+                ChangeHistory::entry(),
             ]);
     }
 
@@ -165,12 +150,12 @@ class AssessmentEditResource extends Resource
                     ->tooltip(fn (AssessmentEdit $record): string => $record->Reason)
                     ->wrap(),
 
-                TextColumn::make('changes_count')
+                TableAlignment::symbol(TextColumn::make('changes_count')
                     ->label('Changes')
                     ->state(fn (AssessmentEdit $record): int => (int) $record->detail_changes_count + (int) $record->answer_changes_count)
                     ->formatStateUsing(fn (int $state): string => $state.' '.str('field')->plural($state))
                     ->badge()
-                    ->color('gray'),
+                    ->color('gray')),
             ])
             ->defaultSort('EditedAt', 'desc')
             ->modifyQueryUsing(fn (Builder $query): Builder => $query

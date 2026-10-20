@@ -14,6 +14,7 @@ use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
 use App\Support\AssessmentFields;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -22,16 +23,19 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use UnitEnum;
 
 // "My Assessments": list, view and edit of law-enforcement assessments, for
@@ -82,11 +86,25 @@ class LawEnforcementAssessmentResource extends Resource
 
     // The edit pop-up. Details and answers are saved by AssessmentEditor, not
     // by Filament directly - see the EditAction in table().
+    // Styled to match the View pop-up: purple header, light-purple cards
+    // (the hs-edit-* rules in theme.css).
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
+                View::make('filament.forms.assessment-edit-header')
+                    ->columnSpanFull()
+                    ->viewData(fn (?LawEnforcementAssessment $record): array => [
+                        'record' => $record,
+                        'submitted' => $record?->DateCreated
+                            ? Carbon::parse($record->DateCreated)->setTimezone(Timezones::DISPLAY)->format('M j, Y \a\t g:i a')
+                            : null,
+                    ]),
+
                 Section::make('Victim')
+                    ->extraAttributes(['class' => 'hs-edit-card'])
+                    ->columnSpanFull()
+                    ->columns(2)
                     ->schema([
                         TextInput::make('VictimFirstName')->label('First name')->required()->maxLength(50),
                         TextInput::make('VictimLastName')->label('Last name')->required()->maxLength(50),
@@ -95,10 +113,22 @@ class LawEnforcementAssessmentResource extends Resource
                             ->native()
                             ->options(AssessmentFields::SEX_OPTIONS)
                             ->required(),
-                        DatePicker::make('VictimDOB')->label('Date of birth'),
-                        TextInput::make('VictimSafePhoneNumber')->label('Safe contact number')->tel()->mask(PhoneNumber::MASK)->required()->maxLength(20)->rule(PhoneNumber::rule()),
+                        DatePicker::make('VictimDOB')->label('Date of birth')->native(),
+                        TextInput::make('VictimSafePhoneNumber')
+                            ->label('Safe contact number')
+                            ->tel()
+                            ->mask(PhoneNumber::MASK)
+                            ->required()
+                            ->maxLength(20)
+                            ->rule(PhoneNumber::rule())
+                            ->helperText('The number the victim said is safe to call. Other numbers may not be.')
+                            ->columnSpanFull(),
                     ]),
+
                 Section::make('Offender')
+                    ->extraAttributes(['class' => 'hs-edit-card'])
+                    ->columnSpanFull()
+                    ->columns(2)
                     ->schema([
                         TextInput::make('OffenderFirstName')->label('First name')->required()->maxLength(50),
                         TextInput::make('OffenderLastName')->label('Last name')->required()->maxLength(50),
@@ -107,24 +137,37 @@ class LawEnforcementAssessmentResource extends Resource
                             ->native()
                             ->options(AssessmentFields::SEX_OPTIONS)
                             ->required(),
-                        DatePicker::make('OffenderDOB')->label(RequirementMarkers::optionalLabel('Date of birth')),
+                        DatePicker::make('OffenderDOB')->label(RequirementMarkers::optionalLabel('Date of birth'))->native(),
                         // Same dropdown + "Please specify" as the wizard.
                         ...RelationshipFields::make(),
                     ]),
+
+                // Numbered rows with Yes / No, like the View pop-up's checklist.
                 Section::make('Risk indicators')
+                    ->extraAttributes(['class' => 'hs-edit-card hs-edit-risk'])
+                    ->columnSpanFull()
                     ->schema(
                         collect(NewAssessment::QUESTIONS)
-                            ->map(fn (string $question, int $id): Toggle => Toggle::make("RiskIndicator{$id}")
-                                ->label($id.'. '.$question))
+                            ->map(fn (string $question, int $id): ToggleButtons => ToggleButtons::make("RiskIndicator{$id}")
+                                ->label($id.'. '.$question)
+                                ->boolean('Yes', 'No')
+                                ->colors([1 => 'danger', 0 => 'gray'])
+                                ->icons([1 => null, 0 => null])
+                                ->inline()
+                                ->grouped()
+                                ->inlineLabel())
                             ->values()
                             ->all(),
                     ),
+
                 Section::make('Reason for change')
+                    ->extraAttributes(['class' => 'hs-edit-card hs-edit-reason'])
+                    ->columnSpanFull()
                     ->schema([
                         Textarea::make('reason')
                             ->hiddenLabel()
                             ->placeholder("e.g. Corrected the spelling of the victim's last name")
-                            ->helperText('Recorded with this edit in the change history, which cannot be altered.')
+                            ->helperText('Required. Recorded with this edit in the change log, which cannot be altered.')
                             ->required()
                             ->maxLength(255)
                             ->rows(2),
@@ -154,6 +197,7 @@ class LawEnforcementAssessmentResource extends Resource
                     ]),
                 EditAction::make()
                     ->modalHeading('Edit assessment')
+                    ->modalWidth(Width::FourExtraLarge)
                     ->modalSubmitActionLabel('Save edit')
                     // The answers live on _assessment_answers, not this record,
                     // and the reason always starts empty.
