@@ -57,7 +57,7 @@ class AssessmentReviewResource extends Resource
 
     protected static ?string $modelLabel = 'assessment';
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedShieldExclamation;
 
     // Its own group, not "Content management": police_admin reaches this page
     // and nothing else in the panel's content side, so filing it under content

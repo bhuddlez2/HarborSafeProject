@@ -68,7 +68,7 @@ class CivilianAssessmentResource extends Resource
 
     protected static ?string $modelLabel = 'civilian assessment';
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedShieldExclamation;
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
     protected static string | UnitEnum | null $navigationGroup = 'Assessments';
 
