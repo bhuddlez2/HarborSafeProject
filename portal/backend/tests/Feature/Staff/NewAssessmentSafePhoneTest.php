@@ -57,6 +57,26 @@ test('a confirmed assessment is saved', function () {
         ->toBe('423-555-0150');
 });
 
+test('the submitted screen lists every hotline as text and as a working link', function () {
+    // Team plan task 12: 911, Harbor Safe call and text, the national DV
+    // hotline and 988, each shown and tappable.
+    $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
+
+    Livewire::test(NewAssessment::class)
+        ->fillForm(completedWizardData(['SafePhoneConfirmed' => true]))
+        ->call('create')
+        ->assertSee('Assessment submitted')
+        ->assertSeeHtml('href="tel:911"')
+        ->assertSee('(423) 476-3886')
+        ->assertSeeHtml('href="tel:423-476-3886"')
+        ->assertSee('(423) 715-9614')
+        ->assertSeeHtml('href="sms:423-715-9614"')
+        ->assertSee('1-800-799-7233')
+        ->assertSeeHtml('href="tel:18007997233"')
+        ->assertSee('988')
+        ->assertSeeHtml('href="tel:988"');
+});
+
 test('changing the number clears the confirmation', function () {
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
 
