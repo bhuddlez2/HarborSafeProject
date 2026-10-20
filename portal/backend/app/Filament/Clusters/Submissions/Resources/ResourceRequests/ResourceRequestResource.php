@@ -98,6 +98,20 @@ class ResourceRequestResource extends Resource
                             ->label('Submitted')
                             ->dateTime('M j, Y g:i a')
                             ->timezone(Timezones::DISPLAY),
+
+                        // Started by staff from an earlier form (follow-ups),
+                        // or from the website.
+                        TextEntry::make('Source')
+                            ->label('Source')
+                            ->badge()
+                            ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
+                            ->color(fn (?string $state): string => $state === ResourceRequestForm::SOURCE_STAFF ? 'info' : 'gray'),
+
+                        TextEntry::make('EnteredBy')
+                            ->label('Entered by')
+                            ->state(fn (ResourceRequestForm $record): ?string => $record->enteredByName())
+                            ->placeholder('Unknown')
+                            ->visible(fn (ResourceRequestForm $record): bool => $record->isStaffEntry()),
                     ])
                     ->columns(3),
 
@@ -135,6 +149,11 @@ class ResourceRequestResource extends Resource
             ]);
     }
 
+    private static function sourceLabel(?string $source): string
+    {
+        return $source === ResourceRequestForm::SOURCE_STAFF ? 'Staff' : 'Online';
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -144,6 +163,12 @@ class ResourceRequestResource extends Resource
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
                     ->sortable(),
+
+                TableAlignment::symbol(TextColumn::make('Source')
+                    ->label('Source')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
+                    ->color(fn (?string $state): string => $state === ResourceRequestForm::SOURCE_STAFF ? 'info' : 'gray')),
 
                 TextColumn::make('FirstName')
                     ->label('Name')
@@ -175,6 +200,13 @@ class ResourceRequestResource extends Resource
             ])
             ->defaultSort('SubmissionDate', 'desc')
             ->filters([
+                SelectFilter::make('Source')
+                    ->label('Source')
+                    ->options([
+                        ResourceRequestForm::SOURCE_ONLINE => 'Online',
+                        ResourceRequestForm::SOURCE_STAFF => 'Staff',
+                    ]),
+
                 SelectFilter::make('CountyID')
                     ->label('County')
                     ->options(fn (): array => County::query()

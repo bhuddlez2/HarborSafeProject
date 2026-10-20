@@ -36,6 +36,14 @@ class ResourceRequestStoreRequest extends FormRequest
 
     public function rules(): array
     {
+        return self::fieldRules();
+    }
+
+    // The fields' rules, shared with requests staff start in the panel
+    // (ResourceRequestForm::recordStaffEntry()), so a staff-started request
+    // passes exactly the checks a website one does.
+    public static function fieldRules(): array
+    {
         return [
             // Contact rule: the form only needs one way to reach the
             // submitter back (see Public_Forms_Backend_Design.md #2) -
@@ -70,7 +78,7 @@ class ResourceRequestStoreRequest extends FormRequest
         });
     }
 
-    private function normalizeText(?string $value): ?string
+    public static function normalizeText(?string $value): ?string
     {
         if ($value === null) {
             return null;

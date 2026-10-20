@@ -514,6 +514,12 @@
     font-weight: 400;
 }
 
+.hs-fu-link {
+    color: #5c0f8b;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
 .hs-fu-missing {
     color: #b91c1c;
     font-weight: 600;

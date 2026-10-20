@@ -6,6 +6,7 @@ use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
 use App\Models\FollowUp;
 use App\Models\FollowUpEntry;
+use App\Models\ResourceRequestForm;
 use App\Models\User;
 use App\Notifications\FollowUpReminder;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -87,6 +88,48 @@ class FollowUps
             });
 
         return $sent;
+    }
+
+    /*
+    Starts a new resource request from a form whose follow-up is final (AS,
+    2026-10-20): "New request from this one" on a resource request, or - admins
+    only, since only they work assessments - "New resource request for this
+    victim" on an assessment. Never a new assessment.
+
+    The request is saved as staff-entered (ResourceRequestForm::
+    recordStaffEntry(), the website's own rules) and opens its own follow-up
+    in Needs follow-up, so the 24 h / 48 h reminders apply. No new-submission
+    alert: whoever started it already knows.
+
+    @throws AuthorizationException when $by may not do this
+    @throws ValidationException on what the website would refuse too
+    */
+    public function startResourceRequest(FollowUp $from, array $data, User $by): FollowUp
+    {
+        if (! self::canStartResourceRequest($from, $by)) {
+            throw new AuthorizationException('You can\'t start a request from this form.');
+        }
+
+        $request = ResourceRequestForm::recordStaffEntry($data, $by, $from);
+
+        return FollowUp::firstOrCreate(
+            ['ResourceRequestFormID' => $request->FormID],
+            [
+                'Kind' => FollowUpKind::ResourceRequest,
+                'Status' => FollowUpStatus::NeedsFollowUp,
+                'SubmittedAt' => now(),
+                'RemindersSent' => 0,
+            ],
+        );
+    }
+
+    // A final form, worked by $by, who also works resource requests: admins
+    // from any kind, secretaries from resource requests only.
+    public static function canStartResourceRequest(FollowUp $from, ?User $by): bool
+    {
+        return $from->Status->isFinal()
+            && $from->isWorkableBy($by)
+            && in_array(FollowUpKind::ResourceRequest, FollowUp::kindsFor($by), true);
     }
 
     /*

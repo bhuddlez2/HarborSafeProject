@@ -24,6 +24,27 @@ the whole form on the left, its follow-up history on the right.
                 <h2 class="hs-fu-card-title">Follow-up</h2>
                 <dl class="hs-fu-facts">
                     <div><dt>Status</dt><dd>{{ $followUp->Status->label() }}</dd></div>
+                    @if ($started = $this->startedFrom())
+                        <div>
+                            <dt>Started by staff</dt>
+                            <dd>
+                                {{ $started['by'] ?? 'Unknown' }}
+                                @if ($started['from'])
+                                    <br><a href="{{ $started['from']['url'] }}" class="hs-fu-link">From {{ $started['from']['label'] }}</a>
+                                @endif
+                            </dd>
+                        </div>
+                    @endif
+                    @if ($later = $this->requestsStartedHere())
+                        <div>
+                            <dt>Requests started from this form</dt>
+                            <dd>
+                                @foreach ($later as $link)
+                                    <a href="{{ $link['url'] }}" class="hs-fu-link">{{ $link['label'] }}</a>@if (! $loop->last)<br>@endif
+                                @endforeach
+                            </dd>
+                        </div>
+                    @endif
                     <div>
                         <dt>Last updated</dt>
                         <dd>

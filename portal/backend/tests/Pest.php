@@ -246,6 +246,14 @@ function cleanupStaffData(): void
     $portal->table('law_enforcement_assessment')->whereIn('submitted_by', $userIds)->delete();
     $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $answerIds)->delete();
 
+    // Resource requests test users started from a follow-up (and their own
+    // follow-ups): their names may come from a test assessment, which the
+    // public-form cleanup wouldn't recognise.
+    $feedback = Illuminate\Support\Facades\DB::connection('Feedback');
+    $staffRequests = $feedback->table('resource_request_form')->whereIn('EnteredBy', $userIds)->pluck('FormID');
+    cleanupFollowUps('ResourceRequestFormID', $staffRequests);
+    $feedback->table('resource_request_form')->whereIn('FormID', $staffRequests)->delete();
+
     // Bell alerts addressed to test users (no foreign key, so nothing else
     // would clear them).
     $portal->table('notifications')
