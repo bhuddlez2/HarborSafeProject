@@ -1,14 +1,20 @@
 @php
     $minutes = $this->getSessionTimeoutMinutes();
+    $firstName = \Filament\Facades\Filament::auth()->user()?->first_name;
 @endphp
 
 <x-filament-panels::page class="hs-officer-page">
     <div class="mx-auto flex w-full max-w-250 flex-col gap-7 px-5 py-8 md:px-14 md:py-12">
 
         <div class="flex items-end justify-between">
-            <h1 class="font-montserrat text-2xl font-bold md:text-[32px]">
-                What do you need to do?
-            </h1>
+            <div>
+                <h1 class="font-montserrat text-2xl font-bold md:text-[32px]">
+                    {{ filled($firstName) ? "Welcome back, {$firstName}" : 'Welcome back' }}
+                </h1>
+                <p class="mt-1 text-base text-[#5A5566] md:text-lg">
+                    What would you like to do today?
+                </p>
+            </div>
             {{-- Desktop only -- on mobile this appears below the card stack --}}
             <span class="hidden md:flex">
                 @include('filament.partials.session-notice', ['minutes' => $minutes])

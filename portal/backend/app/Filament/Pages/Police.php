@@ -49,7 +49,7 @@ class Police extends Page
     /*
     Officers and police admins only - NOT admins.
 
-    This page is an officer tool: it opens "What do you need to do?" over a
+    This page is an officer tool: it opens "Welcome back, {first name}" over a
     Start New Lethality Assessment card. An admin has their own landing page
     (see App\Filament\StaffLanding) and reaches assessments through
     App\Filament\Resources\AssessmentReview, which is the view-all list
