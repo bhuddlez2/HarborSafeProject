@@ -473,7 +473,23 @@
 .fi-ta-ctn {
     border-radius: var(--radius-2xl);
     border: 2px solid #c9c1d6;
+}
+
+/*
+ * Clip only a table with no toolbar, as Filament itself does. Clipping every
+ * table cut the filter menu off inside short tables (two rows or fewer), since
+ * the menu hangs below the toolbar. With a toolbar, the rows stay inside the
+ * rounded corners because the rows' own scroll box rounds its bottom, matched
+ * here to this border's radius (Filament's default is a little tighter, which
+ * let a hovered last row show past the corner).
+ */
+.fi-ta-ctn:not(.fi-ta-ctn-with-header) {
     overflow: hidden;
+}
+
+.fi-ta-ctn:not(.fi-ta-ctn-with-footer) .fi-ta-content-ctn {
+    border-bottom-left-radius: calc(var(--radius-2xl) - 2px);
+    border-bottom-right-radius: calc(var(--radius-2xl) - 2px);
 }
 
 /* Remove the gap between the search/filter toolbar and the column header row */
