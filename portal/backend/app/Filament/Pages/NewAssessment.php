@@ -362,8 +362,8 @@ class NewAssessment extends Page
         // Harbor Safe follows up every officer assessment, and its admins hear
         // about each one in their bell. None of this is ever shown to the
         // officer or their police admin.
-        app(FollowUps::class)->open(FollowUpKind::LawEnforcementAssessment, $assessment->DocumentID);
-        app(SubmissionAlerts::class)->raise(NewSubmission::LawEnforcementAssessment);
+        $followUp = app(FollowUps::class)->open(FollowUpKind::LawEnforcementAssessment, $assessment->DocumentID);
+        app(SubmissionAlerts::class)->raise(NewSubmission::LawEnforcementAssessment, $followUp);
 
         Notification::make()
             ->title('Assessment submitted')

@@ -7,8 +7,12 @@ use App\Enums\FollowUpStatus;
 use App\Models\FollowUp;
 use App\Models\FollowUpEntry;
 use App\Models\User;
+use App\Notifications\FollowUpReminder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -31,6 +35,98 @@ roadmap Phase Z). The rules, as agreed with AS (2026-10-20):
 class FollowUps
 {
     public const NOTE_MAX = 2000;
+
+    // Hours after submission at which a form still in Needs follow-up sends a
+    // bell reminder - once each, then never again (AS, 2026-10-20).
+    public const REMINDER_HOURS = [24, 48];
+
+    /*
+    Sends the "still needs follow-up" reminders that are due (hourly, from
+    `php artisan follow-ups:remind`). Only forms still in Needs follow-up:
+    opening a form doesn't count, only a status change. If both moments have
+    passed at once (the scheduler was down), one reminder goes out, saying 48
+    hours. A reminder only counts as sent once it has been written, so a
+    failure is retried on the next run. Returns how many went out.
+
+    $among narrows which follow-ups are considered (tests use it to stay off
+    the shared local database's real forms); the scheduled run checks all.
+    */
+    public function sendReminders(?Builder $among = null): int
+    {
+        $sent = 0;
+        $now = now();
+
+        ($among ?? FollowUp::query())
+            ->where('Status', FollowUpStatus::NeedsFollowUp->value)
+            ->where('RemindersSent', '<', count(self::REMINDER_HOURS))
+            ->where('SubmittedAt', '<=', $now->copy()->subHours(self::REMINDER_HOURS[0]))
+            ->orderBy('SubmittedAt')
+            ->each(function (FollowUp $followUp) use ($now, &$sent): void {
+                $due = count(array_filter(
+                    self::REMINDER_HOURS,
+                    fn (int $hours): bool => $followUp->SubmittedAt->lte($now->copy()->subHours($hours)),
+                ));
+
+                if ($due <= $followUp->RemindersSent) {
+                    return;
+                }
+
+                try {
+                    Notification::send(
+                        SubmissionAlerts::recipients($followUp->Kind->submission()),
+                        new FollowUpReminder($followUp, self::REMINDER_HOURS[$due - 1]),
+                    );
+                } catch (Throwable $exception) {
+                    report($exception);
+
+                    return;
+                }
+
+                $followUp->forceFill(['RemindersSent' => $due])->save();
+                $sent++;
+            });
+
+        return $sent;
+    }
+
+    /*
+    Opens a follow-up for any assessment or resource request that has none -
+    the safety net for a submission whose open() failed. Uses the form's real
+    submission time, so a form found late still gets its reminders. Returns
+    how many were opened.
+    */
+    public function openMissing(): int
+    {
+        $portal = DB::connection('Portal');
+        $opened = 0;
+
+        $sources = [
+            [FollowUpKind::LawEnforcementAssessment, $portal->table('law_enforcement_assessment')->select(['DocumentID as id', 'DateCreated as at'])],
+            [FollowUpKind::CivilianAssessment, $portal->table('_private_assessment')->select(['DocumentID as id', 'DateCreated as at'])],
+            [FollowUpKind::ResourceRequest, DB::connection('Feedback')->table('resource_request_form')->select(['FormID as id', 'SubmissionDate as at'])],
+        ];
+
+        foreach ($sources as [$kind, $forms]) {
+            $existing = $portal->table('follow_ups')->whereNotNull($kind->pointerColumn())->pluck($kind->pointerColumn())->flip();
+
+            foreach ($forms->get() as $form) {
+                if (isset($existing[$form->id])) {
+                    continue;
+                }
+
+                FollowUp::create([
+                    'Kind' => $kind,
+                    $kind->pointerColumn() => $form->id,
+                    'Status' => FollowUpStatus::NeedsFollowUp,
+                    'SubmittedAt' => Carbon::parse($form->at ?? now(), 'UTC'),
+                    'RemindersSent' => 0,
+                ]);
+                $opened++;
+            }
+        }
+
+        return $opened;
+    }
 
     // Opens the follow-up for a form just submitted. Never lets a failure stop
     // the submission itself: it is reported instead (and the form can be

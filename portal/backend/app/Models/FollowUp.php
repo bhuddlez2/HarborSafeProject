@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
+use App\Filament\Resources\FollowUps\FollowUpResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
@@ -76,6 +77,13 @@ class FollowUp extends BaseModel
             FollowUpKind::CivilianAssessment => $this->privateAssessment,
             FollowUpKind::ResourceRequest => $this->resourceRequest,
         };
+    }
+
+    // This form's follow-up page, relative, so it works whichever address the
+    // link is followed from (bell alerts are raised from API requests too).
+    public function url(): string
+    {
+        return FollowUpResource::getUrl('view', ['record' => $this], isAbsolute: false, panel: 'staff');
     }
 
     // Who the form is about, as the queue shows it: the victim for an

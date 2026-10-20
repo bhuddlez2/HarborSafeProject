@@ -14,7 +14,12 @@ use Illuminate\Notifications\Notification;
 // bell. See App\Enums\NewSubmission for who gets which.
 class NewSubmissionAlert extends Notification
 {
-    public function __construct(public readonly NewSubmission $submission) {}
+    // $url: where View goes - the form's own follow-up page for an assessment
+    // or resource request (so staff can start at once), else the list.
+    public function __construct(
+        public readonly NewSubmission $submission,
+        public readonly ?string $url = null,
+    ) {}
 
     /** @return list<string> */
     public function via(object $notifiable): array
@@ -33,7 +38,7 @@ class NewSubmissionAlert extends Notification
             ->actions([
                 Action::make('view')
                     ->label('View')
-                    ->url($this->submission->url())
+                    ->url($this->url ?? $this->submission->url())
                     ->markAsRead(),
             ])
             ->getDatabaseMessage();

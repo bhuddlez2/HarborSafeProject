@@ -42,8 +42,8 @@ class ResourceRequestFormController extends Controller
         DB::disconnect('FeedbackPublic');
 
         // Through Portal, where follow-ups live - never the restricted user.
-        $followUps->open(FollowUpKind::ResourceRequest, $resourceRequest->FormID);
-        $alerts->raise(NewSubmission::ResourceRequest);
+        $followUp = $followUps->open(FollowUpKind::ResourceRequest, $resourceRequest->FormID);
+        $alerts->raise(NewSubmission::ResourceRequest, $followUp);
 
         return response()->json([
             'message' => 'Request received',

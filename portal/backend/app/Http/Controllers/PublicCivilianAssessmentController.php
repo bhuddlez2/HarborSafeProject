@@ -70,8 +70,8 @@ class PublicCivilianAssessmentController extends Controller
         // Both written through Portal, not the INSERT-only PortalPublic user,
         // which can't read users to find who to alert. Harbor Safe follows up
         // every submission, so each one opens a follow-up.
-        $followUps->open(FollowUpKind::CivilianAssessment, $private->DocumentID);
-        $alerts->raise(NewSubmission::CivilianAssessment);
+        $followUp = $followUps->open(FollowUpKind::CivilianAssessment, $private->DocumentID);
+        $alerts->raise(NewSubmission::CivilianAssessment, $followUp);
 
         return response()->json(['message' => 'Assessment received'], 201);
     }
