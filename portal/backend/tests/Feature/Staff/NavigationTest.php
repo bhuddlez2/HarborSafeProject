@@ -51,16 +51,21 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
         fn () => staffUser(UserRole::LawEnforcement),
         ['Officer Portal' => ['Home', 'New assessment', 'My Assessments', 'Account']],
     ],
+    // Follow-ups is the day's work queue, above every group.
     'admin' => [
         fn () => staffUser(UserRole::Admin),
         [
+            '' => ['Follow-ups'],
             'Content management' => ['Content', 'Submissions', 'Form options', 'Accounts'],
             'Assessments' => ['Assessment review', 'Civilian assessments', 'Change log'],
         ],
     ],
     'secretary' => [
         fn () => staffUser(UserRole::Secretary),
-        ['Content management' => ['Content', 'Submissions', 'Form options']],
+        [
+            '' => ['Follow-ups'],
+            'Content management' => ['Content', 'Submissions', 'Form options'],
+        ],
     ],
 ]);
 

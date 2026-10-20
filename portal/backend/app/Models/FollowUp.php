@@ -68,6 +68,33 @@ class FollowUp extends BaseModel
         return $this->belongsTo(ResourceRequestForm::class, 'ResourceRequestFormID', 'FormID');
     }
 
+    // The form this follow-up is about, whichever kind it is.
+    public function form(): LawEnforcementAssessment | PrivateAssessment | ResourceRequestForm | null
+    {
+        return match ($this->Kind) {
+            FollowUpKind::LawEnforcementAssessment => $this->lawEnforcementAssessment,
+            FollowUpKind::CivilianAssessment => $this->privateAssessment,
+            FollowUpKind::ResourceRequest => $this->resourceRequest,
+        };
+    }
+
+    // Who the form is about, as the queue shows it: the victim for an
+    // assessment, the requester for a resource request.
+    public function formName(): ?string
+    {
+        $form = $this->form();
+
+        if ($form === null) {
+            return null;
+        }
+
+        $name = $form instanceof ResourceRequestForm
+            ? "{$form->FirstName} {$form->LastName}"
+            : "{$form->VictimFirstName} {$form->VictimLastName}";
+
+        return trim($name) ?: null;
+    }
+
     public function entries()
     {
         return $this->hasMany(FollowUpEntry::class, 'FollowUpID')->orderBy('EnteredAt')->orderBy('EntryID');

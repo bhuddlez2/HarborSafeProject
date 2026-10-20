@@ -28,24 +28,6 @@ function followUps(): FollowUps
     return app(FollowUps::class);
 }
 
-// One follow-up of each kind, opened the way a submission opens it.
-function followUpOf(FollowUpKind $kind): FollowUp
-{
-    $formId = match ($kind) {
-        FollowUpKind::LawEnforcementAssessment => pestOfficerAssessment(
-            pestAgencyMember(UserRole::LawEnforcement, pestAgency('Follow-up PD')),
-            'FollowUp',
-        )->DocumentID,
-        FollowUpKind::CivilianAssessment => pestCivilianAssessment()->DocumentID,
-        FollowUpKind::ResourceRequest => test()->postJson('/api/public/resource-requests', [
-            'FirstName' => publicFormsRunToken(),
-            'EmailAddress' => publicFormsEmail(),
-        ])->json('FormID'),
-    };
-
-    return followUps()->open($kind, $formId);
-}
-
 test('every new assessment and resource request opens a follow-up in Needs follow-up', function () {
     // Website resource request.
     $requestId = $this->postJson('/api/public/resource-requests', [
@@ -111,7 +93,7 @@ test('service feedback never opens a follow-up', function () {
 });
 
 test('opening a form\'s follow-up twice keeps the one', function () {
-    $followUp = followUpOf(FollowUpKind::CivilianAssessment);
+    $followUp = pestFollowUp(FollowUpKind::CivilianAssessment);
 
     expect(followUps()->open(FollowUpKind::CivilianAssessment, $followUp->PrivateDocumentID)->getKey())
         ->toBe($followUp->getKey());
@@ -119,7 +101,7 @@ test('opening a form\'s follow-up twice keeps the one', function () {
 
 test('a status change needs a note, and is recorded with who and when', function () {
     $admin = staffUser(UserRole::Admin);
-    $followUp = followUpOf(FollowUpKind::CivilianAssessment);
+    $followUp = pestFollowUp(FollowUpKind::CivilianAssessment);
 
     expect(fn () => followUps()->update($followUp, FollowUpStatus::AttemptedContact, '   ', $admin))
         ->toThrow(ValidationException::class);
@@ -139,7 +121,7 @@ test('a status change needs a note, and is recorded with who and when', function
 
 test('a note can be added on its own, at any stage, without moving the form', function () {
     $admin = staffUser(UserRole::Admin);
-    $followUp = followUpOf(FollowUpKind::CivilianAssessment);
+    $followUp = pestFollowUp(FollowUpKind::CivilianAssessment);
 
     // In Needs follow-up: no status given, and the current one given, are both a note.
     followUps()->update($followUp, null, 'Tried the number, no answer yet.', $admin);
@@ -184,7 +166,7 @@ test('which moves each kind of form may make', function (FollowUpKind $kind, Fol
 
 test('a move the rules refuse changes nothing', function () {
     $admin = staffUser(UserRole::Admin);
-    $followUp = followUpOf(FollowUpKind::ResourceRequest);
+    $followUp = pestFollowUp(FollowUpKind::ResourceRequest);
     followUps()->update($followUp, FollowUpStatus::Reached, 'Sent the shelter list.', $admin);
 
     expect(fn () => followUps()->update($followUp, FollowUpStatus::Declined, 'Changed their mind.', $admin))
@@ -211,7 +193,7 @@ test('admins work every kind, secretaries resource requests only, police nothing
     ];
 
     foreach (FollowUpKind::cases() as $kind) {
-        $followUp = followUpOf($kind);
+        $followUp = pestFollowUp($kind);
 
         foreach ($people as $who => $user) {
             $may = in_array($kind, $workable[$who], true);
@@ -227,7 +209,7 @@ test('admins work every kind, secretaries resource requests only, police nothing
 
 test('the history can\'t be changed or removed', function () {
     $admin = staffUser(UserRole::Admin);
-    $entry = followUps()->update(followUpOf(FollowUpKind::CivilianAssessment), null, 'First note.', $admin);
+    $entry = followUps()->update(pestFollowUp(FollowUpKind::CivilianAssessment), null, 'First note.', $admin);
 
     expect(fn () => $entry->update(['Note' => 'Rewritten.']))->toThrow(LogicException::class)
         ->and(fn () => $entry->delete())->toThrow(LogicException::class);

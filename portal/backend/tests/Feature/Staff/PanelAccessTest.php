@@ -17,6 +17,7 @@ use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use App\Filament\Resources\AssessmentEdits\AssessmentEditResource;
+use App\Filament\Resources\FollowUps\FollowUpResource;
 use App\Filament\Resources\StaffAccounts\StaffAccountResource;
 use App\Filament\StaffLanding;
 
@@ -58,6 +59,7 @@ function allStaffComponents(): array
         'police.home' => Police::class,
         'police.new-assessment' => NewAssessment::class,
         'police.my-assessments' => LawEnforcementAssessmentResource::class,
+        'follow-ups' => FollowUpResource::class,
     ];
 }
 
@@ -68,6 +70,9 @@ dataset('role matrix', [
             'content.cluster', 'content.events', 'content.newsletters', 'content.categories',
             'submissions.cluster', 'submissions.service-feedback', 'submissions.resource-requests',
             'form-options.services', 'form-options.resource-types', 'form-options.counties',
+            // Resource requests only; the queue never shows a secretary an
+            // assessment (FollowUp::visibleTo()).
+            'follow-ups',
         ],
     ],
     // Admin gets everything on the content side plus the all-submissions
@@ -88,6 +93,8 @@ dataset('role matrix', [
             'civilian-assessments',
             // Creates secretaries, and nothing else (section 5).
             'accounts',
+            // Follow-up on every assessment and resource request.
+            'follow-ups',
         ],
     ],
     // Reviews its own agency's law-enforcement submissions in Assessment

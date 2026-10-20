@@ -286,6 +286,28 @@ function cleanupCivilianAssessments(): void
         ->delete();
 }
 
+// A follow-up of the given kind on a fresh test form, opened the way a
+// submission opens it (the resource request goes through the website's own
+// endpoint, which opens it itself). Cleared by the usual cleanups.
+function pestFollowUp(App\Enums\FollowUpKind $kind): App\Models\FollowUp
+{
+    $formId = match ($kind) {
+        App\Enums\FollowUpKind::LawEnforcementAssessment => pestOfficerAssessment(
+            pestAgencyMember(App\Enums\UserRole::LawEnforcement, pestAgency('Follow-up PD')),
+            'FollowUp',
+        )->DocumentID,
+        App\Enums\FollowUpKind::CivilianAssessment => pestCivilianAssessment()->DocumentID,
+        App\Enums\FollowUpKind::ResourceRequest => test()->postJson('/api/public/resource-requests', [
+            'FirstName' => publicFormsRunToken(),
+            'LastName' => 'Requester',
+            'EmailAddress' => publicFormsEmail(),
+            'SafePhoneNumber' => '(423)555-0177',
+        ])->json('FormID'),
+    };
+
+    return app(App\Services\FollowUps::class)->open($kind, $formId);
+}
+
 // Follow-ups on test forms and their history (App\Models\FollowUp), cleared
 // before the forms they point at. Query builder: entries are append-only.
 function cleanupFollowUps(string $column, iterable $formIds): void
