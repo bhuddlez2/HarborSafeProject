@@ -5,6 +5,7 @@ use App\Http\Controllers\AssessmentPdfController;
 use App\Http\Controllers\CivilianAssessmentPdfController;
 use App\Http\Controllers\ContentFileController;
 use App\Http\Controllers\FeedbackScanController;
+use App\Http\Controllers\SubmissionPdfController;
 use App\Http\Middleware\EnsureStaffPanelAccess;
 
 /*
@@ -33,6 +34,12 @@ Route::middleware([
 
     Route::get('/civilian-assessments/{id}/pdf', CivilianAssessmentPdfController::class)
         ->name('staff.civilian-assessments.pdf');
+
+    Route::get('/submissions/service-feedback/{id}/pdf', [SubmissionPdfController::class, 'serviceFeedback'])
+        ->name('staff.service-feedback.pdf');
+
+    Route::get('/submissions/resource-requests/{id}/pdf', [SubmissionPdfController::class, 'resourceRequest'])
+        ->name('staff.resource-requests.pdf');
 
     // Scans of paper feedback forms: admins and secretaries only, never
     // cached - see FeedbackScanController for why not /files/{file}.

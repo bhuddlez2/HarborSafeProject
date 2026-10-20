@@ -10,9 +10,11 @@ use App\Filament\Forms\RequirementMarkers;
 use App\Http\Requests\Public\ServiceFeedbackStoreRequest;
 use App\Models\Service;
 use App\Models\ServiceFeedback;
+use App\Support\RecordPdf;
 use App\Support\Timezones;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -22,9 +24,8 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -150,53 +151,15 @@ class ServiceFeedbackResource extends Resource
             ->columns(2);
     }
 
+    // The same record design as the assessment viewers, and the same partial
+    // the PDF download renders (App\Support\RecordPdf).
     public static function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make()
-                    ->schema([
-                        TextEntry::make('service.Name')
-                            ->label('Service')
-                            ->placeholder('Not recorded'),
-
-                        TextEntry::make('Rating')
-                            ->label('Rating')
-                            ->formatStateUsing(fn (?int $state): string => $state === null
-                                ? 'Not recorded'
-                                : $state.' out of 5'),
-
-                        TextEntry::make('SubmissionDate')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a')
-                            ->timezone(Timezones::DISPLAY),
-
-                        TextEntry::make('Source')
-                            ->label('Source')
-                            ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
-                            ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_STAFF ? 'info' : 'gray'),
-
-                        TextEntry::make('EnteredBy')
-                            ->label('Entered by')
-                            ->state(fn (ServiceFeedback $record): ?string => $record->enteredByName())
-                            ->placeholder('Unknown')
-                            ->visible(fn (ServiceFeedback $record): bool => $record->isStaffEntry()),
-
-                        TextEntry::make('ScanFileID')
-                            ->label('Scan')
-                            ->state('Open the scan')
-                            ->url(fn (ServiceFeedback $record): string => route('staff.feedback-scans.show', ['file' => $record->ScanFileID]))
-                            ->openUrlInNewTab()
-                            ->color('primary')
-                            ->visible(fn (ServiceFeedback $record): bool => filled($record->ScanFileID)),
-
-                        TextEntry::make('Comment')
-                            ->label('Comment')
-                            ->placeholder('No comment left')
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(3),
+                ViewEntry::make('record')
+                    ->view(RecordPdf::SERVICE_FEEDBACK)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -274,7 +237,13 @@ class ServiceFeedbackResource extends Resource
                         ->where('Comment', '!=', '')),
             ])
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->extraModalFooterActions(fn (ServiceFeedback $record): array => [
+                        Action::make('download_pdf')
+                            ->label('Download PDF')
+                            ->url(route('staff.service-feedback.pdf', $record->getKey()))
+                            ->openUrlInNewTab(),
+                    ]),
                 DeleteAction::make()
                     ->modalHeading('Delete this feedback?')
                     ->modalDescription('This is a submission from a member of the public. Deleting it cannot be undone. Any attached scan is deleted with it.'),

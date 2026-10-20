@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LAP Assessment</title>
+<title>{{ $title }}</title>
 <style>
     * {
         box-sizing: border-box;
@@ -106,6 +106,35 @@
     .hs-ar-submitter { margin-bottom: 1.25rem; }
     .hs-ar-submitter .hs-ar-fields { grid-template-columns: repeat(3, 1fr); }
 
+    /* Submission records (service feedback, resource requests) */
+    .hs-ar-card { margin-bottom: 1rem; }
+    .hs-ar-fields--3 { grid-template-columns: repeat(3, 1fr); }
+    .hs-ar-pill {
+        display: inline-block;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 999px;
+    }
+    .hs-ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hs-ar-chip {
+        font-size: 13px;
+        font-weight: 600;
+        color: #5c0f8b;
+        background-color: #ede3f5;
+        padding: 4px 10px;
+        border-radius: 999px;
+    }
+    .hs-ar-text {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #1b1726;
+        white-space: pre-line;
+        overflow-wrap: break-word;
+    }
+    .hs-ar-text--empty { color: #6b7280; font-style: italic; }
+    .hs-ar-note { font-size: 11px; color: #6b7280; margin-top: 10px; }
+
     /* Risk indicators */
     .hs-ar-risk {
         border: 2px solid #c9c1d6;
@@ -177,6 +206,6 @@
 </style>
 </head>
 <body>
-@include('filament.infolists.components.assessment-record')
+@include($partial)
 </body>
 </html>

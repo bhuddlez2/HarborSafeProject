@@ -8,17 +8,18 @@ use App\Filament\Clusters\Submissions\SubmissionsCluster;
 use App\Models\County;
 use App\Models\Resource as ResourceType;
 use App\Models\ResourceRequestForm;
+use App\Support\RecordPdf;
 use App\Support\Timezones;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -82,56 +83,15 @@ class ResourceRequestResource extends Resource
         return $count > 0 ? (string) $count : null;
     }
 
+    // The same record design as the assessment viewers, and the same partial
+    // the PDF download renders (App\Support\RecordPdf).
     public static function infolist(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Who asked')
-                    ->schema([
-                        TextEntry::make('FirstName')->label('First name'),
-
-                        TextEntry::make('LastName')
-                            ->label('Last name')
-                            ->placeholder('Not given'),
-
-                        TextEntry::make('SubmissionDate')
-                            ->label('Submitted')
-                            ->dateTime('M j, Y g:i a')
-                            ->timezone(Timezones::DISPLAY),
-                    ])
-                    ->columns(3),
-
-                Section::make('How to reach them')
-                    ->description('This number is the one they told us is safe to call. Other numbers may not be.')
-                    ->schema([
-                        TextEntry::make('EmailAddress')
-                            ->label('Email')
-                            ->placeholder('Not given')
-                            ->copyable(),
-
-                        TextEntry::make('SafePhoneNumber')
-                            ->label('Safe phone number')
-                            ->placeholder('Not given')
-                            ->copyable(),
-
-                        TextEntry::make('county.Name')
-                            ->label('County')
-                            ->placeholder('Not given'),
-                    ])
-                    ->columns(3),
-
-                Section::make('What they asked for')
-                    ->schema([
-                        TextEntry::make('resourceTypes.Name')
-                            ->label('Resources of interest')
-                            ->badge()
-                            ->placeholder('None selected'),
-
-                        TextEntry::make('Message')
-                            ->label('Message')
-                            ->placeholder('No message left')
-                            ->columnSpanFull(),
-                    ]),
+                ViewEntry::make('record')
+                    ->view(RecordPdf::RESOURCE_REQUEST)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -199,7 +159,13 @@ class ResourceRequestResource extends Resource
                         )),
             ])
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->extraModalFooterActions(fn (ResourceRequestForm $record): array => [
+                        Action::make('download_pdf')
+                            ->label('Download PDF')
+                            ->url(route('staff.resource-requests.pdf', $record->getKey()))
+                            ->openUrlInNewTab(),
+                    ]),
                 DeleteAction::make()
                     ->modalHeading('Delete this request?')
                     ->modalDescription('Someone asked for help with this form. Deleting it cannot be undone.'),

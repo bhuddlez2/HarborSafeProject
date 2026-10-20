@@ -1,0 +1,167 @@
+<?php
+
+use App\Enums\UserRole;
+use App\Models\FeedbackScan;
+use App\Models\ResourceRequestForm;
+use App\Models\ServiceFeedback;
+use App\Support\RecordPdf;
+
+/*
+The View pop-ups and PDF downloads on the Submissions screens (service
+feedback, resource requests). Both render one partial each
+(App\Support\RecordPdf), so these check the partials themselves, then who may
+download.
+
+As in AssessmentPdfAccessTest, only refusals are asserted for the downloads:
+a successful one launches a real headless Chromium.
+*/
+
+afterEach(function () {
+    cleanupPublicFormData();
+    cleanupStaffData();
+});
+
+function onlineFeedback(?string $comment = 'Kind and patient staff.'): ServiceFeedback
+{
+    $feedback = (new ServiceFeedback)->forceFill([
+        'ServiceID' => publicFormsMakeService(),
+        'Rating' => 2,
+        'Comment' => $comment,
+        'SubmissionDate' => '2026-09-15 18:30:00',
+        'Source' => ServiceFeedback::SOURCE_ONLINE,
+    ]);
+    $feedback->save();
+
+    return $feedback->fresh('service');
+}
+
+function resourceRequest(array $attributes = []): ResourceRequestForm
+{
+    $request = (new ResourceRequestForm)->forceFill([
+        'FirstName' => publicFormsRunToken(),
+        'LastName' => 'Requester',
+        'EmailAddress' => publicFormsEmail(),
+        'SafePhoneNumber' => '423-555-0177',
+        'CountyID' => publicFormsMakeCounty(),
+        'Message' => "First line\nSecond line",
+        'SubmissionDate' => '2026-09-15 18:30:00',
+        ...$attributes,
+    ]);
+    $request->save();
+    $request->resourceTypes()->attach(publicFormsMakeResource('Pest Shelter'));
+
+    return $request->fresh(['county', 'resourceTypes']);
+}
+
+function renderRecord(string $partial, $record, bool $isPdf = false): string
+{
+    return view($partial, ['getRecord' => fn () => $record, 'isPdf' => $isPdf])->render();
+}
+
+test('an online feedback record shows its rating, service and comment in Eastern time', function () {
+    $html = renderRecord(RecordPdf::SERVICE_FEEDBACK, onlineFeedback());
+
+    expect($html)
+        ->toContain('Service Feedback')
+        ->toContain('Pest Test Service')
+        ->toContain('2 out of 5')
+        ->toContain('Submitted online')
+        ->toContain('Kind and patient staff.')
+        // 18:30 UTC is 2:30 pm Eastern in September (EDT).
+        ->toContain('Sep 15, 2026 at 2:30 pm')
+        ->not->toContain('Entered by');
+});
+
+test('feedback from the public is escaped, never rendered as markup', function () {
+    $html = renderRecord(RecordPdf::SERVICE_FEEDBACK, onlineFeedback('<script>alert(1)</script>'));
+
+    expect($html)
+        ->not->toContain('<script>alert(1)</script>')
+        ->toContain('&lt;script&gt;');
+});
+
+test('a missing comment says so', function () {
+    expect(renderRecord(RecordPdf::SERVICE_FEEDBACK, onlineFeedback(null)))->toContain('No comment left.');
+});
+
+test('a staff entry names who entered it and links its scan, but the PDF only mentions it', function () {
+    $scan = FeedbackScan::store('%PDF-1.4 test scan', staffRunToken().'-scan.pdf', 'application/pdf');
+    $entry = ServiceFeedback::recordStaffEntry([
+        'ServiceID' => publicFormsMakeService(),
+        'Rating' => 5,
+        'SubmissionDate' => '2026-09-15 14:30',
+        'ScanFileID' => $scan->getKey(),
+    ], staffUser(UserRole::Secretary))->fresh('service');
+
+    $scanUrl = route('staff.feedback-scans.show', ['file' => $scan->getKey()]);
+
+    expect(renderRecord(RecordPdf::SERVICE_FEEDBACK, $entry))
+        ->toContain('Entered by staff')
+        ->toContain($entry->enteredByName())
+        ->toContain($scanUrl);
+
+    expect(renderRecord(RecordPdf::SERVICE_FEEDBACK, $entry, isPdf: true))
+        ->not->toContain($scanUrl)
+        ->toContain('Attached (open it in the panel)');
+});
+
+test('a resource request shows contact details, county, resources and message', function () {
+    $request = resourceRequest();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request))
+        ->toContain('Resource Request')
+        ->toContain(publicFormsRunToken().' Requester')
+        ->toContain($request->EmailAddress)
+        ->toContain('423-555-0177')
+        ->toContain('Pest Test County County')
+        ->toContain('Pest Shelter')
+        ->toContain("First line\nSecond line");
+});
+
+test('a resource request with nothing optional filled in still renders', function () {
+    $request = resourceRequest([
+        'LastName' => null,
+        'SafePhoneNumber' => null,
+        'CountyID' => null,
+        'Message' => null,
+    ]);
+    $request->resourceTypes()->detach();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request->fresh(['county', 'resourceTypes'])))
+        ->toContain('No county given')
+        ->toContain('None selected.')
+        ->toContain('No message left.');
+});
+
+/*
+The routes sit outside the panel, so the resources' canAccess() does not guard
+them; SubmissionPdfController repeats it. Admins and secretaries only.
+*/
+test('police roles cannot download a submission PDF', function (UserRole $role, string $kind) {
+    $record = $kind === 'feedback' ? onlineFeedback() : resourceRequest();
+    $route = $kind === 'feedback' ? 'staff.service-feedback.pdf' : 'staff.resource-requests.pdf';
+
+    $this->actingAs(staffUser($role))
+        ->get(route($route, $record->getKey()))
+        ->assertForbidden();
+})->with([
+    'police_admin' => [UserRole::PoliceAdmin],
+    'law_enforcement' => [UserRole::LawEnforcement],
+])->with([
+    'service feedback' => ['feedback'],
+    'resource request' => ['request'],
+]);
+
+test('an anonymous visitor is sent to sign in for a submission PDF', function (string $kind) {
+    $record = $kind === 'feedback' ? onlineFeedback() : resourceRequest();
+    $route = $kind === 'feedback' ? 'staff.service-feedback.pdf' : 'staff.resource-requests.pdf';
+
+    $this->get(route($route, $record->getKey()))
+        ->assertRedirect(filament()->getPanel('staff')->getLoginUrl());
+})->with(['feedback', 'request']);
+
+test('an unknown record is a 404 for an admin', function () {
+    $this->actingAs(staffUser(UserRole::Admin))
+        ->get(route('staff.resource-requests.pdf', '00000000-0000-0000-0000-000000000000'))
+        ->assertNotFound();
+});

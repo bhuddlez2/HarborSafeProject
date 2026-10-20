@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\PrivateAssessment;
-use App\Support\AssessmentPdf;
+use App\Support\RecordPdf;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -23,6 +23,6 @@ class CivilianAssessmentPdfController extends Controller
             ->where('DocumentID', $id)
             ->firstOrFail();
 
-        return AssessmentPdf::download($record, 'civilian-assessment');
+        return RecordPdf::download(RecordPdf::ASSESSMENT, $record, 'LAP Assessment', 'civilian-assessment');
     }
 }

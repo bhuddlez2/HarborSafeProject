@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LawEnforcementAssessment;
-use App\Support\AssessmentPdf;
+use App\Support\RecordPdf;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -24,6 +24,6 @@ class AssessmentPdfController extends Controller
             ->where('DocumentID', $id)
             ->firstOrFail();
 
-        return AssessmentPdf::download($record, 'assessment');
+        return RecordPdf::download(RecordPdf::ASSESSMENT, $record, 'LAP Assessment', 'assessment');
     }
 }
