@@ -11,6 +11,7 @@ use App\Http\Requests\Public\ServiceFeedbackStoreRequest;
 use App\Models\Service;
 use App\Models\ServiceFeedback;
 use App\Support\Timezones;
+use App\Filament\Tables\AssessmentFilters;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -26,6 +27,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -248,7 +250,14 @@ class ServiceFeedbackResource extends Resource
                     ->searchable(),
             ])
             ->defaultSort('SubmissionDate', 'desc')
+            // Date submitted and service are what a grant report is cut by
+            // (the Export button on ListServiceFeedback exports whatever the
+            // filters leave). Wider than the default menu so the two dates
+            // sit side by side.
+            ->filtersFormWidth(Width::Medium)
             ->filters([
+                AssessmentFilters::dateRange('date_submitted', 'SubmissionDate', 'Submitted'),
+
                 SelectFilter::make('Source')
                     ->label('Source')
                     ->options([
