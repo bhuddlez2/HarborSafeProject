@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NewSubmission;
 use App\Http\Requests\Public\CivilianAssessmentStoreRequest;
 use App\Models\AssessmentAnswers;
 use App\Models\PrivateAssessment;
 use App\Models\SubmitterInfo;
+use App\Services\SubmissionAlerts;
 use Illuminate\Support\Facades\DB;
 
 class PublicCivilianAssessmentController extends Controller
@@ -22,7 +24,7 @@ class PublicCivilianAssessmentController extends Controller
     bare confirmation: no ids and none of what was submitted, so nothing about
     the record can be read back through this endpoint.
     */
-    public function store(CivilianAssessmentStoreRequest $request)
+    public function store(CivilianAssessmentStoreRequest $request, SubmissionAlerts $alerts)
     {
         $input = $request->validated();
         $identified = $request->submitterIdentified();
@@ -62,6 +64,10 @@ class PublicCivilianAssessmentController extends Controller
         });
 
         DB::disconnect('PortalPublic');
+
+        // Written through Portal, not the INSERT-only PortalPublic user, which
+        // can't read users to find who to alert.
+        $alerts->raise(NewSubmission::CivilianAssessment);
 
         return response()->json(['message' => 'Assessment received'], 201);
     }

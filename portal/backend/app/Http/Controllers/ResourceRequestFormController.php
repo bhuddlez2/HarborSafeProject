@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NewSubmission;
 use App\Http\Requests\Public\ResourceRequestStoreRequest;
 use App\Models\ResourceRequestForm;
+use App\Services\SubmissionAlerts;
 use Illuminate\Support\Facades\DB;
 
 class ResourceRequestFormController extends Controller
 {
     // POST /api/public/resource-requests
-    public function store(ResourceRequestStoreRequest $request)
+    public function store(ResourceRequestStoreRequest $request, SubmissionAlerts $alerts)
     {
         $validated = $request->validated();
         $resourceTypeIds = $validated['ResourceTypeIDs'] ?? [];
@@ -36,6 +38,8 @@ class ResourceRequestFormController extends Controller
         });
 
         DB::disconnect('FeedbackPublic');
+
+        $alerts->raise(NewSubmission::ResourceRequest);
 
         return response()->json([
             'message' => 'Request received',

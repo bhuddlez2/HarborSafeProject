@@ -10,6 +10,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -67,6 +68,14 @@ class User extends Authenticatable implements FilamentUser
     // Name, badge number and agency as the officer screens display them.
     // Badge and agency are null for accounts with no law_enforcement_agents
     // row (every non-officer account, and officers not yet provisioned).
+    // The staff panel's bell (App\Enums\NewSubmission). Overrides Notifiable's
+    // relation so alerts are stored on Portal through StaffNotification, not
+    // on the default connection Laravel's own model would use.
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(StaffNotification::class, 'notifiable')->latest();
+    }
+
     public function officerIdentity(): array
     {
         $agent = $this->lawEnforcementAgent()->with('agency')->first();

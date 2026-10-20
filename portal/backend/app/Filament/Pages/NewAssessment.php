@@ -7,6 +7,8 @@ use App\Filament\Assessments\RelationshipFields;
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
+use App\Enums\NewSubmission;
+use App\Services\SubmissionAlerts;
 use App\Support\PhoneNumber;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -354,6 +356,10 @@ class NewAssessment extends Page
 
             return;
         }
+
+        // Harbor Safe's admins hear about every officer assessment in their
+        // bell; the officer and their police admin are not alerted.
+        app(SubmissionAlerts::class)->raise(NewSubmission::LawEnforcementAssessment);
 
         Notification::make()
             ->title('Assessment submitted')

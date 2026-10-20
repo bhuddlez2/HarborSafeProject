@@ -54,6 +54,16 @@ erDiagram
         string Reason "required, max 255"
         timestamp EditedAt
     }
+    notifications {
+        uuid id PK
+        string type
+        string notifiable_type
+        bigint notifiable_id
+        text data "Filament format"
+        timestamp read_at "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
     assessment_access_log {
         uuid AccessID PK
         uuid LawEnforcementDocumentID FK "exactly one of the two"
@@ -129,6 +139,7 @@ erDiagram
     law_enforcement_assessment ||--o{ assessment_access_log : "LawEnforcementDocumentID"
     _private_assessment ||--o{ assessment_access_log : "PrivateDocumentID"
     users ||--o{ assessment_access_log : "AccessedBy"
+    users ||--o{ notifications : "notifiable (morph)"
     assessment_edits ||--o{ assessment_change_log : "EditID"
     assessment_edits ||--o{ assessment_answer_change_log : "EditID"
     law_enforcement_assessment ||--o{ assessment_change_log : "DocumentID"
@@ -148,6 +159,7 @@ Framework/Sanctum tables also present but not shown above (no app-specific struc
 | `law_enforcement_agents` | Badge/agency data, only for `role = law_enforcement` accounts | `user_id` (PK, FK → `users.id`) | 1:1 profile extension — secretary/admin accounts simply have no row here, rather than null columns on `users`. |
 | `law_enforcement_assessment` | LE-submitted offender/victim record | `DocumentID` (PK, uuid), `submitted_by` (FK → `users.id`, not nullable) | `OffenderVictimRelationship` is a code from `App\Enums\OffenderRelationship` plus `OffenderVictimRelationshipOther` for `other` (see `_private_assessment`). `submitted_by` is the ownership column — this is what `LawEnforcementAssessmentPolicy` and the staff panel's My Assessments resource match against to enforce "law enforcement sees only their own submissions". It is also the path to the agency: a police admin sees an assessment when `submitted_by`'s `law_enforcement_agents.agency_id` is the police admin's own (`LawEnforcementAssessment::visibleTo()`). No agency is stored on the row itself, so assessments follow the officer's *current* agency. `VictimSafePhoneNumber` is **required** (NOT NULL, varchar(20)) since 2026-10-08, so the organisation can follow up with every victim: every form and the API require it, and the migration filled pre-existing local/test rows with the placeholder `8658675309` (it refuses to run elsewhere while any row lacks a number). Since 2026-10-19 it must be a full 10-digit number with its area code and is stored as `(xxx)xxx-xxxx` (`App\Support\PhoneNumber`; migration `2026_10_19_130000` reformatted existing valid numbers). |
 | `assessment_edits` | One row per save of a law-enforcement assessment: who, when, why | `EditID` (PK, uuid), `DocumentID` (FK), `ChangedBy` (FK → `users.id`), `Reason` | Added 2026-10-07. Groups the field-level rows below, so one save reads as one edit. `Reason` is required by the edit form. Written only by `App\Services\AssessmentEditor`; append-only. |
+| `notifications` | The staff panel's bell: one row per alert per recipient | `id` (PK, uuid), `notifiable_type` + `notifiable_id` (morph to `users`, no FK) | Added 2026-10-20 (team plan task 17). Laravel's standard table, on Portal; read and written through `App\Models\StaffNotification`. `data` is a Filament notification (`format = filament`); `read_at` is set when the bell's panel has been open ~5 s. Read rows drop out of the bell after 12 hours and are deleted by `php artisan model:prune` (scheduled daily). Who gets what: `App\Enums\NewSubmission`. |
 | `assessment_access_log` | Who viewed or downloaded which assessment, and when | `AccessID` (PK, uuid), `LawEnforcementDocumentID` (FK, nullable), `PrivateDocumentID` (FK, nullable), `AccessedBy` (FK → `users.id`) | Added 2026-10-19. One table for both kinds of assessment; a CHECK constraint makes each row point at exactly one. `Action` is `view` or `download` (`App\Enums\AssessmentAccess`). Written only by `AssessmentAccessLog::record()`; append-only. Logged today: every PDF download (both kinds) and every civilian View pop-up; law-enforcement views are team plan task 9. FKs restrict deletion, so an assessment can't lose its trail. |
 | `assessment_change_log` | Field-level audit of edits to `law_enforcement_assessment` | `ChangeLogID` (PK), `EditID` (FK), `DocumentID` (FK), `ChangedBy` (FK → `users.id`) | One row per changed column. Values are stored raw (column name, sex code, `Y-m-d` date); `App\Support\AssessmentFields` turns them into readable labels at display time. `EditID` is nullable only so its migration could not fail on existing rows — the editor always sets it. Append-only. |
 | `assessment_answer_change_log` | Field-level audit of edits to `_assessment_answers` | `LogID` (PK), `EditID` (FK), `AssessmentDocID` (FK), `ChangedBy` (FK → `users.id`) | As above, for the 11 risk answers (boolean old/new). Append-only. |

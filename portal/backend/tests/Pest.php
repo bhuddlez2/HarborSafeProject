@@ -243,6 +243,13 @@ function cleanupStaffData(): void
     $portal->table('law_enforcement_assessment')->whereIn('submitted_by', $userIds)->delete();
     $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $answerIds)->delete();
 
+    // Bell alerts addressed to test users (no foreign key, so nothing else
+    // would clear them).
+    $portal->table('notifications')
+        ->where('notifiable_type', App\Models\User::class)
+        ->whereIn('notifiable_id', $userIds)
+        ->delete();
+
     // law_enforcement_agents rows cascade with their user.
     $portal->table('users')->where('email', 'like', $token . '%')->delete();
     $portal->table('agencies')->where('name', 'like', $token . '%')->delete();

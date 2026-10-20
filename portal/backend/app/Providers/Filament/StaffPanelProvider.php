@@ -2,7 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\NewSubmission;
 use App\Enums\UserRole;
+use App\Livewire\StaffNotifications;
+use Filament\Enums\DatabaseNotificationsPosition;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\PoliceAdminNavigation;
@@ -73,6 +76,25 @@ class StaffPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_NAV_END,
                 fn (): string => view('filament.partials.officer-identity')->render(),
+            )
+            // The bell: alerts about new submissions (App\Enums\NewSubmission),
+            // in the sidebar footer just above the user menu, for secretaries
+            // and admins only. Never pop-ups. No polling: a poll is a request,
+            // and would keep an unattended session alive past its 15 idle
+            // minutes, so the count refreshes on each page and action instead.
+            ->databaseNotifications(
+                condition: fn (): bool => NewSubmission::reaches(Filament::auth()->user()),
+                livewireComponent: StaffNotifications::class,
+                isLazy: false,
+                position: DatabaseNotificationsPosition::Sidebar,
+            )
+            ->databaseNotificationsPolling(null)
+            // Marks the bell's alerts read after its panel has been open ~5 s.
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => NewSubmission::reaches(Filament::auth()->user())
+                    ? view('filament.partials.staff-notifications')->render()
+                    : '',
             )
             // Reloads an idle screen once the session has expired, so it
             // shows the sign-in page instead of whatever was left open.
