@@ -239,7 +239,7 @@ class NewAssessment extends Page
                 View::make('filament.pages.new-assessment.review')
                     ->viewData(fn (): array => [
                         'data' => $this->data,
-                        'total' => count(self::QUESTIONS),
+                        'questions' => self::QUESTIONS,
                         'submitError' => $this->submitError,
                     ]),
 
