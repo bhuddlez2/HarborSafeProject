@@ -276,3 +276,82 @@ test('a police admin has no record type filter, and the Who options are only peo
         ->not->toContain($f->officerB->getKey())
         ->not->toContain($f->policeAdminB->getKey());
 });
+
+/*
+The search box: it searches only the Who column (the opener's name, partial,
+case-insensitive), and only within the rows visibleTo() already allows.
+*/
+
+// The fixture's officers share the name "Pest law_enforcement", so each
+// search test gives the people it searches for a name of their own. The
+// random part keeps real rows in the shared local database from matching.
+function accessLogRename(App\Models\User $user, string $lastName): string
+{
+    $user->forceFill(['last_name' => $lastName.Illuminate\Support\Str::random(6)])->save();
+
+    return $user->refresh()->last_name;
+}
+
+test('searching part of a name, in any case, shows only that person\'s rows', function () {
+    $f = accessLogAgencyFixture();
+    $name = accessLogRename($f->officerA, 'Smithfield');
+    $this->actingAs($f->admin);
+
+    $others = [$f->adminDownload, $f->policeAdminView, $f->otherAgencyView, $f->civilianView, $f->requestView];
+
+    foreach ([strtolower(substr($name, 2)), strtoupper(substr($name, 0, -2))] as $search) {
+        Livewire::test(ListAccessLog::class)
+            ->searchTable($search)
+            ->assertCanSeeTableRecords([$f->officerView])
+            ->assertCanNotSeeTableRecords($others)
+            ->assertCountTableRecords(1);
+    }
+});
+
+test('a police admin searching for another agency\'s officer gets no rows', function () {
+    $f = accessLogAgencyFixture();
+    $nameA = accessLogRename($f->officerA, 'Marlowe');
+    $nameB = accessLogRename($f->officerB, 'Okonkwo');
+    $this->actingAs($f->policeAdminA);
+
+    Livewire::test(ListAccessLog::class)
+        ->searchTable($nameB)
+        ->assertCanNotSeeTableRecords([$f->otherAgencyView])
+        ->assertCountTableRecords(0);
+
+    // The search itself works for this police admin.
+    Livewire::test(ListAccessLog::class)
+        ->searchTable($nameA)
+        ->assertCanSeeTableRecords([$f->officerView])
+        ->assertCountTableRecords(1);
+});
+
+test('an admin searching still finds rows of all three record types', function () {
+    $f = accessLogAgencyFixture();
+    $name = accessLogRename($f->admin, 'Ashworth');
+    $this->actingAs($f->admin);
+
+    Livewire::test(ListAccessLog::class)
+        ->searchTable(strtolower($name))
+        ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView, $f->requestView])
+        ->assertCanNotSeeTableRecords([$f->officerView, $f->policeAdminView, $f->otherAgencyView])
+        ->assertCountTableRecords(3);
+});
+
+test('only the Who column is searched, never record ids', function () {
+    $f = accessLogFixture();
+    $this->actingAs($f->admin);
+
+    $list = Livewire::test(ListAccessLog::class);
+
+    $searchable = collect($list->instance()->getTable()->getColumns())
+        ->filter(fn ($column): bool => $column->isSearchable())
+        ->keys()
+        ->values()
+        ->all();
+
+    expect($searchable)->toBe(['user.name']);
+
+    $list->searchTable(substr($f->request->FormID, 0, 8))
+        ->assertCanNotSeeTableRecords([$f->requestView, $f->adminDownload, $f->civilianView]);
+});

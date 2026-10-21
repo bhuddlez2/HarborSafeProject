@@ -43,6 +43,9 @@ It names a record only by its submitted time and the start of its id, never
 by anything in it: no victim, offender or requester names, no phone numbers.
 The forms are loaded with just those two columns for that reason.
 
+The search box searches only the Who column (the opener's name: partial,
+case-insensitive), and only narrows the scoped rows above.
+
 Authorizes itself (canAccess below, by users.role and the police admin's
 agency), so it is in
 resources.exclude in config/filament-shield.php.
@@ -146,9 +149,13 @@ class AccessLogResource extends Resource
                     ->timezone(Timezones::DISPLAY)
                     ->sortable(),
 
+                // The only searchable column: the opener's name, never
+                // anything from the forms or their ids.
                 TextColumn::make('user.name')
                     ->label('Who')
-                    ->placeholder('Unknown'),
+                    ->placeholder('Unknown')
+                    ->searchable()
+                    ->forceSearchCaseInsensitive(),
 
                 TableAlignment::symbol(TextColumn::make('Action')
                     ->badge()

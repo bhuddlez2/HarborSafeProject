@@ -868,9 +868,15 @@ schema change. These are what that left implicit or undecided:
   it and the new one gains it. If assessments should stay with the agency they were
   taken under, the assessment needs its own `agency_id`, captured at submission.
 - **Police admins are stored in `law_enforcement_agents`.** That row is the only link
-  between a police admin and an agency, but `Schema_Reference.md` describes the table as
-  `law_enforcement`-only. Either bless this and update the reference, or give the link a
+  between a police admin and an agency. `Schema_Reference.md` now says so (it used to
+  describe the table as `law_enforcement`-only). Either keep this, or give the link a
   home of its own (an `agency_id` on `users`, or an agency-admins table).
+- **Assessments don't store the badge.** Officers can change their own `badge_number`
+  on the Account page (`EditProfile`), and police admins can change it on Officers.
+  The assessment View pop-up and its PDF show only the officer's name, so a badge
+  change affects only the places that read the *current* badge: the sidebar identity
+  and the wizard's officer step. If records ever need the badge as it was at
+  submission time, that is a schema decision: snapshot it on the assessment.
 - **`badge_number` is required and not unique.** It is `NOT NULL`, so every police admin
   must carry a badge number to have an agency at all. There is no unique index on it,
   alone or per agency, and the officer form does not check for duplicates. Decide
@@ -953,7 +959,10 @@ Columns: when (Eastern), who, Viewed / Downloaded PDF, record type, and the reco
 only by its submitted time and the first 8 characters of its id. **No personal details
 are shown** — the forms are loaded with just those two columns. Filters: date (Eastern
 days), who (only people in the viewer's rows), action, and record type (admins only).
-Opening the screen is not itself logged. `AccessLogScreenTest`.
+A search box searches **only** the Who column, the name of the person who opened the record
+(partial match, any case). It only narrows the viewer's own scoped rows, and never searches
+record ids or anything in the forms. Opening the screen is not itself logged.
+`AccessLogScreenTest`.
 
 ### Assessment table filters
 
