@@ -140,7 +140,10 @@ final class AssessmentEditForm
             ->modalHeading('Edit assessment')
             // The pop-up shows the whole record, so opening it is a view.
             ->afterFormFilled(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
-            ->modalWidth(Width::FourExtraLarge)
+            // A panel from the side rather than a centred pop-up: full-height
+            // and scrollable one-handed on a phone (team plan task 10).
+            ->slideOver()
+            ->modalWidth(Width::ThreeExtraLarge)
             ->modalSubmitActionLabel('Save edit')
             // The answers live on _assessment_answers, not this record,
             // and the reason always starts empty.

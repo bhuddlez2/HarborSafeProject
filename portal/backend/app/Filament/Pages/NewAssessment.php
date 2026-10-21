@@ -70,9 +70,11 @@ class NewAssessment extends Page
     private const NAME_PATTERN = "/^[a-zA-Z\s'-]+$/";
 
     // Tailwind classes lifted from the original buttons.
-    private const PRIMARY_BUTTON = 'bg-[#5C0F8B] text-white px-8 py-4 rounded-lg text-lg hover:bg-[#4C0B74] focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition';
+    // Narrower side padding on phones so Back and Continue fit side by side
+    // at 375 px (team plan task 10).
+    private const PRIMARY_BUTTON = 'bg-[#5C0F8B] text-white px-5 md:px-8 py-4 rounded-lg text-lg hover:bg-[#4C0B74] focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition';
 
-    private const SECONDARY_BUTTON = 'border-2 border-[#5C0F8B] text-[#5C0F8B] px-8 py-4 rounded-lg text-lg hover:bg-[#5C0F8B] hover:text-white focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition';
+    private const SECONDARY_BUTTON = 'border-2 border-[#5C0F8B] text-[#5C0F8B] px-5 md:px-8 py-4 rounded-lg text-lg hover:bg-[#5C0F8B] hover:text-white focus:outline-none focus:ring-4 focus:ring-[#5C0F8B]/40 transition';
 
     protected string $view = 'filament.pages.new-assessment';
 
@@ -145,14 +147,14 @@ class NewAssessment extends Page
                     ->hiddenHeader()
                     ->contained(false)
                     ->alpineSubmitHandler('$wire.create()')
-                    ->extraAttributes(['class' => 'hs-lap-wizard bg-white rounded-2xl shadow-lg w-full px-8 md:px-12'])
+                    ->extraAttributes(['class' => 'hs-lap-wizard bg-white rounded-2xl shadow-lg w-full px-5 md:px-12'])
                     // The questions phase had its own card padding and no
                     // Back/Continue row; everything else shared one layout.
                     ->extraAlpineAttributes([
                         // $refs isn't populated yet when Alpine first evaluates
                         // the root's own bindings, hence the guard.
                         'x-bind:class' => '($refs.stepsData ? getStepIndex(step) : 0) === '.self::QUESTIONS_STEP_INDEX
-                            ." ? 'hs-lap-questions pt-10 pb-36 md:pb-14' : 'py-10 md:py-14'",
+                            ." ? 'hs-lap-questions pt-8 pb-36 md:pt-10 md:pb-14' : 'py-8 md:py-14'",
                     ])
                     ->previousAction(fn (Action $action): Action => $action
                         ->label('Back')
@@ -264,7 +266,7 @@ class NewAssessment extends Page
                 View::make('filament.pages.new-assessment.review')
                     ->viewData(fn (): array => [
                         'data' => $this->data,
-                        'total' => count(self::QUESTIONS),
+                        'questions' => self::QUESTIONS,
                         'submitError' => $this->submitError,
                     ]),
 

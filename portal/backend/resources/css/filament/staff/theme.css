@@ -960,6 +960,20 @@
 }
 
 /*
+ * In a stacked card every field starts at the left, symbol columns too:
+ * centring suits a table column but looks stray in a card of left-aligned
+ * label/value pairs. Below Filament's sm breakpoint (40rem), where tables
+ * built with ->stackedOnMobile() become cards (team plan task 10).
+ */
+@media (max-width: 39.99rem) {
+    .fi-ta-table-stacked-on-mobile > tbody .fi-ta-cell.fi-align-center,
+    .fi-ta-table-stacked-on-mobile > tbody .fi-ta-cell .fi-align-center {
+        text-align: start;
+        justify-content: flex-start;
+    }
+}
+
+/*
  * Symbol columns (App\Filament\Tables\TableAlignment::symbol()): centred
  * under the heading's WORDS. Filament centres the label and its sort arrow
  * together, which nudges the label left of the icons below it. Here the sort

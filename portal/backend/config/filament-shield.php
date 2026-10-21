@@ -214,7 +214,8 @@ return [
             // Authorizes itself through LawEnforcementAssessment::visibleTo();
             // a generated policy would bypass that scope.
             AssessmentEditResource::class,
-            // Admins only, by users.role in its own canAccess(); read-only.
+            // Admins, and police admins with an agency (LogsCluster::canOpenLogs());
+            // rows scoped by AssessmentAccessLog::visibleTo(). Read-only.
             AccessLogResource::class,
         ],
     ],

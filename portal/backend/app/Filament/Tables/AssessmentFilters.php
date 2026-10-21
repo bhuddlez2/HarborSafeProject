@@ -181,7 +181,8 @@ final class AssessmentFilters
 
     // Case-insensitive (the columns use a _ci collation) partial match, with
     // the user's % and _ escaped so they match literally. Blank is off.
-    private static function textContains(string $name, string $column, string $label, ?string $relationship = null): Filter
+    // Public for ChangeLogFilters' Assessment ID filter.
+    public static function textContains(string $name, string $column, string $label, ?string $relationship = null): Filter
     {
         return Filter::make($name)
             ->schema([TextInput::make('value')->label($label)->maxLength(50)])
@@ -192,7 +193,11 @@ final class AssessmentFilters
                     return;
                 }
 
-                $match = fn (Builder $query): Builder => $query->where($column, 'like', '%'.self::escapeLike($value).'%');
+                // Lower-cased because MariaDB's native uuid columns (the
+                // Assessment ID filter) compare case-sensitively and hold
+                // lower-case hex; the name columns are _ci, so it changes
+                // nothing for them.
+                $match = fn (Builder $query): Builder => $query->where($column, 'like', '%'.self::escapeLike(mb_strtolower($value)).'%');
 
                 $relationship === null ? $match($query) : $query->whereHas($relationship, $match);
             })

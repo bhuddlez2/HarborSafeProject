@@ -88,6 +88,22 @@ test('changing the number clears the confirmation', function () {
         ->assertSet('data.SafePhoneConfirmed', false);
 });
 
+test('the review screen shows every detail and every answer', function () {
+    // Team plan task 23. Question 11 appears only on the review screen (the
+    // questions step shows one question at a time, starting at 1).
+    $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
+
+    Livewire::test(NewAssessment::class)
+        ->fillForm(completedWizardData(['OffenderDOB' => '1985-12-25']))
+        ->assertSee('Review & Submit')
+        ->assertSee(['Safe Check', 'Female', 'Jan 1, 1990', '423-555-0150'])
+        ->assertSee(['Test Offender', 'Male', 'Dec 25, 1985', 'Spouse'])
+        ->assertSee(NewAssessment::QUESTIONS[11])
+        // completedWizardData() answers Yes to question 1 only.
+        ->assertSee('1 of 11 yes')
+        ->assertDontSee('NOT ANSWERED');
+});
+
 test('the confirmation names the number being confirmed', function () {
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
 
