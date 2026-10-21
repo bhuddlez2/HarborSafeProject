@@ -103,7 +103,9 @@ dataset('role matrix', [
     ],
     // Reviews its own agency's law-enforcement submissions in Assessment
     // review (rule 5), provisions officers, edits nothing. Not My Assessments,
-    // which is officers only. No content access at all.
+    // which is officers only. No content access at all. staffUser() gives no
+    // agency, so neither Officers nor the Access log is here; with an agency
+    // the Access log opens (see the test below).
     'police_admin' => [
         UserRole::PoliceAdmin,
         [
@@ -142,6 +144,16 @@ test('each role can reach exactly its row of the access matrix', function (UserR
             );
     }
 })->with('role matrix');
+
+// The Access log needs an agency for a police admin, like Officers: it shows
+// only that agency's rows (AssessmentAccessLog::visibleTo()).
+test('a police admin reaches the Access log only with an agency', function () {
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Access agency')));
+    expect(AccessLogResource::canAccess())->toBeTrue();
+
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null));
+    expect(AccessLogResource::canAccess())->toBeFalse();
+});
 
 test('an inactive account is refused everything, whatever its role', function (UserRole $role) {
     $this->actingAs(staffUser($role, isActive: false));

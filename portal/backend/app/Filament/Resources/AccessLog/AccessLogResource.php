@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AccessLog;
 
 use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
+use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\AccessLog\Pages\ListAccessLog;
 use App\Filament\Tables\AssessmentFilters;
 use App\Filament\Tables\TableAlignment;
@@ -23,8 +24,16 @@ use UnitEnum;
 
 /*
 The access log: every view and PDF download recorded in assessment_access_log
-(App\Models\AssessmentAccessLog) - who opened which form, how and when. Admins
-only, so the team can check that view logging works.
+(App\Models\AssessmentAccessLog) - who opened which form, how and when, so the
+team can check that view logging works.
+
+Two audiences, decided by AssessmentAccessLog::visibleTo() (getEloquentQuery
+below), which is built on LawEnforcementAssessment::visibleTo():
+  - admins: every row, of every kind;
+  - police admins with an agency: only rows about their own agency's
+    officers' assessments, whoever opened them - never a civilian assessment
+    or resource request, never another agency's (section 5, rule 5). A police
+    admin with no agency is refused, like Officers.
 
 Read-only: the log is append-only, so there is no create, edit, delete, view
 pop-up or bulk action. Opening this screen is not itself logged - it shows
@@ -34,7 +43,8 @@ It names a record only by its submitted time and the start of its id, never
 by anything in it: no victim, offender or requester names, no phone numbers.
 The forms are loaded with just those two columns for that reason.
 
-Authorizes itself (canAccess below, by users.role), so it is in
+Authorizes itself (canAccess below, by users.role and the police admin's
+agency), so it is in
 resources.exclude in config/filament-shield.php.
 */
 class AccessLogResource extends Resource
@@ -51,8 +61,8 @@ class AccessLogResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedEye;
 
-    // After Change log (3). Admin only, so it never appears in the police
-    // admin's group (App\Filament\PoliceAdminNavigation).
+    // After Change log (3). A police admin finds it in their single "Police
+    // Admin" group instead - see getNavigationGroup() below.
     protected static string | UnitEnum | null $navigationGroup = 'Assessments';
 
     protected static ?int $navigationSort = 4;
@@ -65,7 +75,33 @@ class AccessLogResource extends Resource
         'ResourceRequestFormID' => 'Resource request',
     ];
 
+    // Grouping and order only - see App\Filament\PoliceAdminNavigation.
+    public static function getNavigationGroup(): string | UnitEnum | null
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::GROUP : parent::getNavigationGroup();
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::ACCESS_LOG : parent::getNavigationSort();
+    }
+
+    // Active admins, and active police admins with an agency.
     public static function canAccess(): bool
+    {
+        $user = Filament::auth()->user();
+
+        return (bool) $user?->hasActiveRole(UserRole::Admin)
+            || $user?->managedAgencyId() !== null;
+    }
+
+    // The only thing scoping the rows. Never return an unscoped query here.
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
+    }
+
+    private static function isAdmin(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin);
     }
@@ -143,9 +179,9 @@ class AccessLogResource extends Resource
 
                 SelectFilter::make('AccessedBy')
                     ->label('Who')
-                    // Only people who appear in the log.
+                    // Only people who appear in rows this user may see.
                     ->relationship('user', 'name', fn (Builder $query): Builder => $query
-                        ->whereIn('id', AssessmentAccessLog::query()->select('AccessedBy')))
+                        ->whereIn('id', static::getEloquentQuery()->select('AccessedBy')))
                     ->searchable(),
 
                 SelectFilter::make('Action')
@@ -153,8 +189,12 @@ class AccessLogResource extends Resource
                         ->mapWithKeys(fn (AssessmentAccess $action): array => [$action->value => $action->label()])
                         ->all()),
 
+                // Admins only: a police admin's rows are all officer
+                // assessments. A tampered value could only narrow rows that
+                // are already scoped.
                 SelectFilter::make('record_type')
                     ->label('Record type')
+                    ->visible(fn (): bool => self::isAdmin())
                     ->options(self::KINDS)
                     ->query(fn (Builder $query, array $data): Builder => array_key_exists($data['value'] ?? '', self::KINDS)
                         ? $query->whereNotNull($data['value'])

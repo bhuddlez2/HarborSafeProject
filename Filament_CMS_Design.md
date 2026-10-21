@@ -322,6 +322,8 @@ Resource requests      —       —          view       view
 Civilian assessments   —       —          —          view
 LE assessments         own     own agency —          view all
 LE change logs         own     own agency —          view all
+Access log             —       own agency —          view all
+  (who opened what)            LE only
 ---------------------------------------------------------
 Manage officers        —       own agency —          NO
   (create/edit/deactivate)
@@ -848,17 +850,11 @@ Two notes for whoever extends this:
 
 Still undecided:
 
-- **View logging.** *Partly built 2026-10-19:* `assessment_access_log` records every PDF
-  download (both kinds of assessment) and every civilian View pop-up. Law-enforcement
-  View pop-ups are not logged yet (team plan task 9), and nothing in the panel shows the
-  log yet (task 22, the Log pop-up). Original note: the officer Home page says "Records are in My Assessments. Each view
-  is logged with your name and a timestamp." — carried over verbatim from the old
-  portal. Nothing logs views: it is neither designed nor built. The change log (§8)
-  records edits only. Either design and build view logging (per record, per user, with a
-  timestamp) before My Assessments ships, or change that copy. **Now live and untrue:**
-  My Assessments exists as a read-only resource and records open without being logged.
-  The same Home card is shown to police admins, whose link now goes to Assessment review
-  while the copy still says "My Assessments".
+- Nothing at present. View logging, once listed here, was built 2026-10-20: every
+  law-enforcement View, Edit and Change log pop-up, the Change log screen's View, every
+  civilian View, every follow-up page and every PDF download writes a row in
+  `assessment_access_log`, readable on the Access log screen (§13). The officer Home's
+  "Each view is logged with your name and a timestamp" is now true.
 
 ### Notes for the database architect
 
@@ -916,6 +912,7 @@ Assessments                                     admin
   Assessment review      /assessment-review     all agencies
   Civilian assessments   /civilian-assessments
   Change log             /assessment-changes
+  Access log             /access-log            all rows
 
 Officer Portal                                  law_enforcement
   Home            /police
@@ -927,14 +924,15 @@ Police Admin                                    police_admin - its ONLY group
   Home               /police                    sort 10
   Assessment review  /assessment-review         20  own agency
   Change log         /assessment-changes        30  own agency
-  Officers           /police/officers           40  own agency's officers; needs an agency
-  Account            (Filament's profile page)  50
+  Access log         /access-log                40  own agency's officer assessments; needs an agency
+  Officers           /police/officers           50  own agency's officers; needs an agency
+  Account            (Filament's profile page)  60
 ```
 
-**A police admin sees one group.** Home, Assessment review, Change log and Account are
+**A police admin sees one group.** Home, Assessment review, Change log, Access log and Account are
 shared with other roles, which keep their own groups above. Each of those items picks its
 group and position by role: `getNavigationGroup()` / `getNavigationSort()` overrides on
-`Police`, `AssessmentReviewResource` and `AssessmentEditResource`, and closures on the
+`Police`, `AssessmentReviewResource`, `AssessmentEditResource` and `AccessLogResource`, and closures on the
 Account `NavigationItem` in `StaffPanelProvider` (`group()` and `sort()` take closures in
 v5). All of them read `App\Filament\PoliceAdminNavigation`, the one place the police
 admin's group name and order are declared; sorts step by 10 so items can slot in.
@@ -943,6 +941,19 @@ Grouping and order only — access is still each item's own `canAccess()`.
 
 Search Records (`/police/search`, a "Coming soon" placeholder) was removed: filtering on
 the assessment tables replaces it.
+
+**Access log** (`/access-log`, `AccessLogResource`, excluded from Shield): who viewed or
+downloaded which form, and when — the rows of `assessment_access_log`. Read-only: a list,
+with no create, edit, delete, view or bulk actions. Admins see every row, of every kind.
+Police admins with an agency see only rows about their own agency's officers'
+assessments, whoever opened them — never a civilian assessment or resource request, never
+another agency's (`AssessmentAccessLog::visibleTo()`, built on
+`LawEnforcementAssessment::visibleTo()`, §5 rule 5); without an agency, no access.
+Columns: when (Eastern), who, Viewed / Downloaded PDF, record type, and the record named
+only by its submitted time and the first 8 characters of its id. **No personal details
+are shown** — the forms are loaded with just those two columns. Filters: date (Eastern
+days), who (only people in the viewer's rows), action, and record type (admins only).
+Opening the screen is not itself logged. `AccessLogScreenTest`.
 
 ### Assessment table filters
 
@@ -1096,6 +1107,3 @@ empty page attached. The `/content` address it held is now the Content cluster's
      closing a tab, and a browser set to restore its last session can bring the cookie
      back, which the 15-minute limit still covers. No password confirmation per page.
      Covered by `SessionTimeoutTest`.
-
-  Related and still unresolved: the officer Home's "Each view is logged with your name
-  and a timestamp" copy, immediately above, which nothing implements.

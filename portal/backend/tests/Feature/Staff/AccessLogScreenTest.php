@@ -12,9 +12,11 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
 /*
-The Access log screen (AccessLogResource, /access-log): every row of
-assessment_access_log, for admins only, read-only, and naming each record by
-its submitted time and id alone - never by anything in it.
+The Access log screen (AccessLogResource, /access-log): rows of
+assessment_access_log, read-only, naming each record by its submitted time and
+id alone - never by anything in it. Admins see every row; a police admin with
+an agency sees only rows about their own agency's officers' assessments,
+whoever opened them (AssessmentAccessLog::visibleTo()).
 */
 
 afterEach(function () {
@@ -96,7 +98,8 @@ test('everyone but an active admin is kept out of the access log', function (Clo
     }
 })->with([
     'secretary' => [fn () => staffUser(UserRole::Secretary)],
-    'police admin' => [fn () => staffUser(UserRole::PoliceAdmin)],
+    // With an agency they get their agency's rows - see below.
+    'police admin with no agency' => [fn () => pestAgencyMember(UserRole::PoliceAdmin, null)],
     'officer' => [fn () => staffUser(UserRole::LawEnforcement)],
     // Stopped at the panel door, before the screen is reached.
     'inactive admin' => [fn () => staffUser(UserRole::Admin, isActive: false)],
@@ -186,4 +189,90 @@ test('the access log can only be read: no create, edit or view pages, no actions
         ->and($table->getToolbarActions())->toBeEmpty()
         ->and($table->getHeaderActions())->toBeEmpty()
         ->and(AccessLogResource::canCreate())->toBeFalse();
+});
+
+/*
+Police admins: their own agency's officer-assessment rows, whoever opened
+them, and nothing else (Filament_CMS_Design.md section 5, rule 5).
+*/
+
+// Assessment A opened by its officer, its police admin and an admin;
+// assessment B by its officer; a civilian assessment and a resource request
+// by the admin.
+function accessLogAgencyFixture(): object
+{
+    $f = accessLogFixture();
+
+    return (object) [
+        ...(array) $f,
+        'policeAdminView' => AssessmentAccessLog::record($f->assessmentA, AssessmentAccess::View, $f->policeAdminA),
+        'otherAgencyView' => AssessmentAccessLog::record($f->assessmentB, AssessmentAccess::View, $f->officerB),
+    ];
+}
+
+test('a police admin sees only their agency\'s officer-assessment rows, whoever opened them', function () {
+    $f = accessLogAgencyFixture();
+    $this->actingAs($f->policeAdminA);
+
+    expect(AccessLogResource::canAccess())->toBeTrue();
+
+    $this->get(AccessLogResource::getUrl('index'))->assertOk();
+
+    $ownAgency = [$f->officerView, $f->adminDownload, $f->policeAdminView];
+    $elsewhere = [$f->otherAgencyView, $f->civilianView, $f->requestView];
+
+    Livewire::test(ListAccessLog::class)
+        ->assertCanSeeTableRecords($ownAgency)
+        ->assertCanNotSeeTableRecords($elsewhere);
+
+    // Agency A exists only in this test, so the scoped rows are exactly these.
+    expect(AccessLogResource::getEloquentQuery()->pluck('AccessID')->sort()->values()->all())
+        ->toBe(collect($ownAgency)->pluck('AccessID')->sort()->values()->all());
+});
+
+test('a police admin of the other agency sees the other half, and nothing without an agency', function () {
+    $f = accessLogAgencyFixture();
+
+    $this->actingAs($f->policeAdminB);
+
+    expect(AccessLogResource::getEloquentQuery()->pluck('AccessID')->all())
+        ->toBe([$f->otherAgencyView->AccessID]);
+
+    $noAgency = pestAgencyMember(UserRole::PoliceAdmin, null);
+    $this->actingAs($noAgency);
+
+    expect(AccessLogResource::canAccess())->toBeFalse()
+        ->and(AccessLogResource::getEloquentQuery()->count())->toBe(0)
+        ->and(AssessmentAccessLog::visibleTo($noAgency)->count())->toBe(0);
+
+    $this->get(AccessLogResource::getUrl('index'))->assertForbidden();
+});
+
+test('an admin still sees every row, of every kind, and has the record type filter', function () {
+    $f = accessLogAgencyFixture();
+    $this->actingAs($f->admin);
+
+    $all = [$f->officerView, $f->adminDownload, $f->policeAdminView, $f->otherAgencyView, $f->civilianView, $f->requestView];
+
+    expect(AccessLogResource::getEloquentQuery()->whereIn('AccessID', collect($all)->pluck('AccessID'))->count())->toBe(6);
+
+    Livewire::test(ListAccessLog::class)
+        ->assertTableFilterVisible('record_type')
+        ->filterTable('AccessedBy', $f->officerB->getKey())
+        ->assertCanSeeTableRecords([$f->otherAgencyView]);
+});
+
+test('a police admin has no record type filter, and the Who options are only people in their rows', function () {
+    $f = accessLogAgencyFixture();
+    $this->actingAs($f->policeAdminA);
+
+    $list = Livewire::test(ListAccessLog::class)
+        ->assertTableFilterHidden('record_type');
+
+    $who = array_keys(pestFilterSelect($list, 'AccessedBy')->getSearchResults('Pest'));
+
+    expect($who)
+        ->toContain($f->officerA->getKey(), $f->policeAdminA->getKey(), $f->admin->getKey())
+        ->not->toContain($f->officerB->getKey())
+        ->not->toContain($f->policeAdminB->getKey());
 });

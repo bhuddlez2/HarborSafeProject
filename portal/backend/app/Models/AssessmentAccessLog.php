@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\AssessmentAccess;
+use App\Enums\UserRole;
 use App\Models\Concerns\AppendOnly;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use InvalidArgumentException;
 
@@ -63,6 +65,29 @@ class AssessmentAccessLog extends BaseModel
             'Action' => $action,
             'AccessedBy' => $user->getKey(),
         ]);
+    }
+
+    // The rows the Access log shows $user. Admin: every row, of every kind.
+    // Police admin: only rows about a law-enforcement assessment that
+    // LawEnforcementAssessment::visibleTo() lets them see - their own
+    // agency's officers' - whoever opened it; never a civilian assessment or
+    // resource request, and nothing at all without an agency (section 5,
+    // rule 5). Everyone else: nothing. Built on the assessment scope, like
+    // AssessmentEdit::visibleTo(), never a rule of its own.
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        if ($user?->hasActiveRole(UserRole::Admin)) {
+            return $query;
+        }
+
+        if ($user?->hasActiveRole(UserRole::PoliceAdmin)) {
+            return $query->whereIn(
+                'LawEnforcementDocumentID',
+                LawEnforcementAssessment::visibleTo($user)->select('DocumentID'),
+            );
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 
     public function lawEnforcementAssessment()
