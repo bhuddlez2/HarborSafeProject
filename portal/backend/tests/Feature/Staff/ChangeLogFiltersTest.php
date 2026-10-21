@@ -78,14 +78,39 @@ test('each role is offered exactly its filters, agency to admins only', function
     expect(array_keys(Livewire::test(ListAssessmentEdits::class)->instance()->getTable()->getFilters()))->toBe($expected);
 })->with([
     'admin' => ['admin', [
-        'changed_by', 'submitted_by', 'date_changed', 'agency',
+        'changed_by', 'submitted_by', 'assessment_id', 'date_changed', 'agency',
         'victim_first_name', 'victim_last_name', 'offender_first_name', 'offender_last_name',
     ]],
     'police admin' => ['police admin', [
-        'changed_by', 'submitted_by', 'date_changed',
+        'changed_by', 'submitted_by', 'assessment_id', 'date_changed',
         'victim_first_name', 'victim_last_name', 'offender_first_name', 'offender_last_name',
     ]],
 ]);
+
+test('assessment ID returns every edit to that assessment, from the full ID or part of it', function () {
+    $w = pestChangeLogWorld();
+    $this->actingAs($w->policeAdminA);
+
+    // assessmentA has two edits (editA, editCross); assessmentA2 has one.
+    $id = $w->assessmentA->getKey();
+
+    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'assessment_id', $id)
+        ->assertCanSeeTableRecords([$w->editA, $w->editCross])
+        ->assertCountTableRecords(2);
+
+    // The tail of the ID, which no other test record shares.
+    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'assessment_id', strtoupper(substr($id, -12)))
+        ->assertCanSeeTableRecords([$w->editA, $w->editCross])
+        ->assertCountTableRecords(2);
+});
+
+test('a police admin searching another agency\'s assessment ID gets no rows', function () {
+    $w = pestChangeLogWorld();
+    $this->actingAs($w->policeAdminA);
+
+    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'assessment_id', $w->assessmentB->getKey())
+        ->assertCountTableRecords(0);
+});
 
 test('changed by returns that user\'s edits, detail and answer changes alike', function () {
     $w = pestChangeLogWorld();

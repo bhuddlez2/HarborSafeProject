@@ -181,7 +181,8 @@ final class AssessmentFilters
 
     // Case-insensitive (the columns use a _ci collation) partial match, with
     // the user's % and _ escaped so they match literally. Blank is off.
-    private static function textContains(string $name, string $column, string $label, ?string $relationship = null): Filter
+    // Public for ChangeLogFilters' Assessment ID filter.
+    public static function textContains(string $name, string $column, string $label, ?string $relationship = null): Filter
     {
         return Filter::make($name)
             ->schema([TextInput::make('value')->label($label)->maxLength(50)])

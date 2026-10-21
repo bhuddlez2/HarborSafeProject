@@ -19,9 +19,10 @@ The table lists assessment_edits rows - one per save - and both kinds of
 field-level change (assessment_change_log, assessment_answer_change_log) hang
 off an edit, so every filter here covers both.
 
-The filters, in card order: changed by and original submitter; date changed
-(EditedAt) and agency (admins only, by users.role); victim first and last
-name; offender first and last name. Names are matched on the assessment the
+The filters, in card order: changed by, original submitter and assessment ID
+(part of the edited assessment's DocumentID); date changed (EditedAt) and
+agency (admins only, by users.role); victim first and last name; offender
+first and last name. Names are matched on the assessment the
 edit belongs to, as it is now - never on the logged PreviousValue / NewValue,
 which are deliberately not searchable.
 
@@ -37,6 +38,9 @@ final class ChangeLogFilters
         return AssessmentFilters::layout($table, [
             self::changedBy(),
             self::originalSubmitter(),
+            // Part of the ID is enough: the 8 characters in a PDF's file name,
+            // or the Record ID shown in View and the change log header.
+            AssessmentFilters::textContains('assessment_id', 'DocumentID', 'Assessment ID'),
             AssessmentFilters::dateRange('date_changed', 'EditedAt', 'Changed')->columnStart(1),
             self::agency(),
             ...AssessmentFilters::nameFilters('assessment'),
