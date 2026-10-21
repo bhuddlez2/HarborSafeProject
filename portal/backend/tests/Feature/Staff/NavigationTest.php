@@ -57,7 +57,7 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
         [
             '' => ['Follow-ups'],
             'Content management' => ['Content', 'Submissions', 'Form options', 'Accounts'],
-            'Assessments' => ['Assessment review', 'Civilian assessments', 'Change log'],
+            'Assessments' => ['Assessment review', 'Civilian assessments', 'Change log', 'Access log'],
         ],
     ],
     'secretary' => [

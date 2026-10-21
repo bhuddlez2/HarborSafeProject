@@ -13,6 +13,7 @@ use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackR
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Pages\Police;
+use App\Filament\Resources\AccessLog\AccessLogResource;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
@@ -60,6 +61,7 @@ function allStaffComponents(): array
         'police.new-assessment' => NewAssessment::class,
         'police.my-assessments' => LawEnforcementAssessmentResource::class,
         'follow-ups' => FollowUpResource::class,
+        'access-log' => AccessLogResource::class,
     ];
 }
 
@@ -95,6 +97,8 @@ dataset('role matrix', [
             'accounts',
             // Follow-up on every assessment and resource request.
             'follow-ups',
+            // Who viewed or downloaded which form; admins only, read-only.
+            'access-log',
         ],
     ],
     // Reviews its own agency's law-enforcement submissions in Assessment

@@ -9,6 +9,7 @@ use App\Filament\Clusters\FormOptions\Resources\Resources\Pages\ManageResourceTy
 use App\Filament\Clusters\FormOptions\Resources\Services\Pages\ManageServices;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
+use App\Filament\Resources\AccessLog\Pages\ListAccessLog;
 use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
@@ -73,6 +74,7 @@ test('text columns sit left and symbol columns sit centred', function (string $p
     'Accounts' => ListStaffAccounts::class,
     'Assessment review' => ListAssessmentReview::class,
     'Change log' => ListAssessmentEdits::class,
+    'Access log' => ListAccessLog::class,
     'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
     'Officers' => [ListOfficerAccounts::class, UserRole::PoliceAdmin],
 ]);

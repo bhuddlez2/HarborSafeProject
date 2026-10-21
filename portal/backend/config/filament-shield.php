@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use App\Filament\Resources\AccessLog\AccessLogResource;
 use App\Filament\Resources\AssessmentEdits\AssessmentEditResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
@@ -213,6 +214,8 @@ return [
             // Authorizes itself through LawEnforcementAssessment::visibleTo();
             // a generated policy would bypass that scope.
             AssessmentEditResource::class,
+            // Admins only, by users.role in its own canAccess(); read-only.
+            AccessLogResource::class,
         ],
     ],
 

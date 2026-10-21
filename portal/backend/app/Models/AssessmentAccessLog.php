@@ -75,6 +75,13 @@ class AssessmentAccessLog extends BaseModel
         return $this->belongsTo(PrivateAssessment::class, 'PrivateDocumentID');
     }
 
+    // On the Feedback connection, so no foreign key: the form can be gone
+    // (a resource request deleted as spam) while its log rows remain.
+    public function resourceRequestForm()
+    {
+        return $this->belongsTo(ResourceRequestForm::class, 'ResourceRequestFormID');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'AccessedBy');
