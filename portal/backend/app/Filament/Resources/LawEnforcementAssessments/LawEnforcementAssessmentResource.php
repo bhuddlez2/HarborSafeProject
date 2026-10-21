@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\LawEnforcementAssessments;
 
 use App\Enums\UserRole;
+use App\Filament\Assessments\AssessmentViews;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Assessments\RelationshipFields;
 use App\Filament\Forms\RequirementMarkers;
@@ -16,9 +17,7 @@ use App\Services\AssessmentEditor;
 use App\Support\AssessmentFields;
 use App\Support\Timezones;
 use BackedEnum;
-use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -187,16 +186,12 @@ class LawEnforcementAssessmentResource extends Resource
             ->emptyStateDescription('Completed LAP screenings will appear here. Use the home page to start one.')
             ->recordActions([
                 ChangeHistory::action(),
-                ViewAction::make()
-                    ->modalHeading('View Assessment')
-                    ->extraModalFooterActions(fn (LawEnforcementAssessment $record): array => [
-                        Action::make('download_pdf')
-                            ->label('Download PDF')
-                            ->url(route('staff.assessments.pdf', $record->DocumentID))
-                            ->openUrlInNewTab(),
-                    ]),
+                // Shared with Assessment review; logs each open.
+                AssessmentViews::viewAction(),
                 EditAction::make()
                     ->modalHeading('Edit assessment')
+                    // The pop-up shows the whole record, so opening it is a view.
+                    ->afterFormFilled(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
                     ->modalWidth(Width::FourExtraLarge)
                     ->modalSubmitActionLabel('Save edit')
                     // The answers live on _assessment_answers, not this record,

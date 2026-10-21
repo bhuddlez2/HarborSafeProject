@@ -4,14 +4,13 @@ namespace App\Filament\Resources\AssessmentReview;
 
 use App\Enums\UserRole;
 use App\Filament\PoliceAdminNavigation;
+use App\Filament\Assessments\AssessmentViews;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Tables\AssessmentColumns;
 use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
 use BackedEnum;
-use Filament\Actions\Action;
-use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
@@ -122,14 +121,8 @@ class AssessmentReviewResource extends Resource
             // actions anywhere on this resource.
             ->recordActions([
                 ChangeHistory::action(),
-                ViewAction::make()
-                    ->modalHeading('View Assessment')
-                    ->extraModalFooterActions(fn (LawEnforcementAssessment $record): array => [
-                        Action::make('download_pdf')
-                            ->label('Download PDF')
-                            ->url(route('staff.assessments.pdf', $record->DocumentID))
-                            ->openUrlInNewTab(),
-                    ]),
+                // Shared with My Assessments; logs each open.
+                AssessmentViews::viewAction(),
             ])
             ->emptyStateHeading('No assessments submitted yet')
             ->emptyStateDescription('Assessments submitted by officers through the portal appear here.'), reviewScreen: true);

@@ -47,6 +47,11 @@ final class ChangeHistory
                 ? 'Every edit since submission'
                 : 'No edits since submission')
             ->modalHeading('Change log')
+            // Old and new values are the record's contents, so opening this
+            // is a view. mountUsing, not afterFormFilled: this pop-up has no
+            // schema, and Filament only calls afterFormFilled when there is
+            // one. Not in modalContent(), which re-runs on every render.
+            ->mountUsing(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
             ->modalContent(function (LawEnforcementAssessment $record) {
                 $edits = $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all();
 

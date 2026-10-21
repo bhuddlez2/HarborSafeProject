@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AssessmentEdits;
 
 use App\Enums\UserRole;
 use App\Filament\PoliceAdminNavigation;
+use App\Filament\Assessments\AssessmentViews;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Tables\ChangeLogFilters;
@@ -162,7 +163,10 @@ class AssessmentEditResource extends Resource
                 ->with(['editor', 'assessment'])
                 ->withCount(['detailChanges', 'answerChanges']))
             ->recordActions([
-                ViewAction::make(),
+                // Shows the edit's old and new values, so opening it is a view
+                // of the assessment - see App\Filament\Assessments\AssessmentViews.
+                ViewAction::make()
+                    ->afterFormFilled(fn (AssessmentEdit $record) => AssessmentViews::log($record->assessment)),
             ])
             ->emptyStateHeading('No edits yet')
             ->emptyStateDescription('Edits officers make to their submitted assessments appear here.'));
