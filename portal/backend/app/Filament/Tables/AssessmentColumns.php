@@ -22,8 +22,9 @@ In order:
   Relationship · Yes · Status
 
 Officer only on the review screen: on My Assessments every row is the
-signed-in officer's own. The row buttons (Change log, View, and Edit on My
-Assessments only) are each resource's recordActions(), after these.
+signed-in officer's own. The row buttons (Change log, View, and Edit where
+LawEnforcementAssessmentPolicy::update() allows - see AssessmentEditForm) are
+each resource's recordActions(), after these.
 
 Both tables' queries must eager-load assessmentAnswers and submitter and
 ->withCount('edits') (Status reads edits_count).

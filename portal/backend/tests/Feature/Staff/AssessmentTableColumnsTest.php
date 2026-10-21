@@ -47,14 +47,24 @@ test('Assessment review shows the same columns, plus who submitted', function ()
         ->toBe(['Submitted', 'Officer', 'Victim', 'Offender', 'Relationship', 'Yes', 'Status']);
 });
 
-test('the buttons sit on the right, with Edit on My Assessments only', function () {
+test('the buttons sit on the right: Change log, View, Edit', function () {
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Columns PD')));
     expect(recordActionsOf(ListLawEnforcementAssessments::class))->toBe(['changeLog', 'view', 'edit']);
 });
 
-test('Assessment review has no Edit button', function () {
+// The same shared Edit, after View, shown only where the policy allows: a
+// police admin on their agency's rows, never an admin.
+test('Assessment review has the same buttons, Edit last', function () {
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Columns PD')));
-    expect(recordActionsOf(ListAssessmentReview::class))->toBe(['changeLog', 'view']);
+    expect(recordActionsOf(ListAssessmentReview::class))->toBe(['changeLog', 'view', 'edit']);
+});
+
+test('an admin sees no Edit on Assessment review', function () {
+    $w = pestTwoAgencies();
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    Livewire::test(ListAssessmentReview::class)
+        ->assertActionHidden(TestAction::make('edit')->table($w->assessmentA));
 });
 
 test('relationship is its own column, not a line under the offender', function () {

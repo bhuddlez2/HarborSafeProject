@@ -51,8 +51,8 @@ class Police extends Page
     Officers and police admins only - NOT admins.
 
     It opens "Welcome back, {first name}" over a Start New Lethality
-    Assessment card for officers, or View Assessments and Personnel Management
-    cards for police admins. An admin has their own landing page
+    Assessment card (officers, and police admins with an agency), then View
+    Assessments and Personnel Management cards for police admins. An admin has their own landing page
     (see App\Filament\StaffLanding) and reaches assessments through
     App\Filament\Resources\AssessmentReview, which is the view-all list
     section 5 of Filament_CMS_Design.md actually grants them. Granting admins
@@ -78,9 +78,15 @@ class Police extends Page
         return Filament::auth()->user()?->role === UserRole::LawEnforcement;
     }
 
-    // Officers get the Start New Lethality Assessment card and the
-    // past-assessment pointer; police admins get two cards for their own two
-    // jobs instead (team plan task 11).
+    // The Start New Lethality Assessment card: whoever may open the wizard -
+    // officers, and police admins with an agency.
+    public function canStartAssessment(): bool
+    {
+        return NewAssessment::canAccess();
+    }
+
+    // Officers also get the past-assessment pointer; police admins get two
+    // cards for their own two jobs (team plan task 11), under the Start card.
     public function isPoliceAdmin(): bool
     {
         return Filament::auth()->user()?->role === UserRole::PoliceAdmin;

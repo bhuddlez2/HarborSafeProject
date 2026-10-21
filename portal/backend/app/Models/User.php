@@ -65,9 +65,6 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(LawEnforcementAssessment::class, 'submitted_by');
     }
 
-    // Name, badge number and agency as the officer screens display them.
-    // Badge and agency are null for accounts with no law_enforcement_agents
-    // row (every non-officer account, and officers not yet provisioned).
     // The staff panel's bell (App\Enums\NewSubmission). Overrides Notifiable's
     // relation so alerts are stored on Portal through StaffNotification, not
     // on the default connection Laravel's own model would use.
@@ -76,15 +73,38 @@ class User extends Authenticatable implements FilamentUser
         return $this->morphMany(StaffNotification::class, 'notifiable')->latest();
     }
 
+    // Name, badge and agency as the officer screens display them (the
+    // sidebar identity block, the wizard's Submitting officer step). The
+    // badge is displayBadge(). Badge and agency are null for accounts with no
+    // law_enforcement_agents row (secretaries, admins, and officers not yet
+    // provisioned).
     public function officerIdentity(): array
     {
         $agent = $this->lawEnforcementAgent()->with('agency')->first();
 
         return [
             'name' => $this->name,
-            'badge' => $agent?->badge_number,
+            'badge' => $this->displayBadge($agent),
             'agency' => $agent?->agency?->name,
         ];
+    }
+
+    // What a police admin's badge reads as, wherever a badge is shown.
+    public const POLICE_ADMIN_BADGE = 'Police admin';
+
+    // The one rule for the badge any screen shows for a submitter: an
+    // officer's real badge_number, and "Police admin" for a police admin -
+    // their law_enforcement_agents row carries a badge_number only because
+    // the column is NOT NULL, never a real badge. Display only: it never
+    // changes the stored value. $agent saves a query when the caller already
+    // has the row. Reads the raw role string, like agencyId().
+    public function displayBadge(?LawEnforcementAgent $agent = null): ?string
+    {
+        if (UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? '')) === UserRole::PoliceAdmin) {
+            return self::POLICE_ADMIN_BADGE;
+        }
+
+        return ($agent ?? $this->lawEnforcementAgent)?->badge_number;
     }
 
     // The agency this account belongs to, from its law_enforcement_agents row.

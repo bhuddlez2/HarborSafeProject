@@ -22,7 +22,9 @@ Both models refuse any other update (EditedOnlyThroughAssessmentEditor), and
 the log rows are append-only, so the history cannot be skipped or rewritten.
 
 Who may edit is not decided here: callers check
-LawEnforcementAssessmentPolicy::update() first (owning officer only).
+LawEnforcementAssessmentPolicy::update() first (the submitting officer, or an
+active police admin of the submitter's agency). The signed-in editor is
+recorded as ChangedBy on the edit and on every field row.
 */
 final class AssessmentEditor
 {

@@ -3,38 +3,21 @@
 namespace App\Filament\Resources\LawEnforcementAssessments;
 
 use App\Enums\UserRole;
+use App\Filament\Assessments\AssessmentEditForm;
 use App\Filament\Assessments\AssessmentViews;
 use App\Filament\Assessments\ChangeHistory;
-use App\Filament\Assessments\RelationshipFields;
-use App\Filament\Forms\RequirementMarkers;
-use App\Filament\Pages\NewAssessment;
-use App\Support\PhoneNumber;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Filament\Tables\AssessmentColumns;
 use App\Filament\Tables\AssessmentFilters;
 use App\Models\LawEnforcementAssessment;
-use App\Services\AssessmentEditor;
-use App\Support\AssessmentFields;
-use App\Support\Timezones;
 use BackedEnum;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\ToggleButtons;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
-use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 use UnitEnum;
 
 // "My Assessments": list, view and edit of law-enforcement assessments, for
@@ -42,8 +25,9 @@ use UnitEnum;
 // review submissions in AssessmentReviewResource instead (admin all, police
 // admin own agency). Access is canAccess() below plus the
 // LawEnforcementAssessment::visibleTo() query scope, with
-// LawEnforcementAssessmentPolicy authorizing each record. Edit is the
-// submitting officer's only, needs a reason, and goes through
+// LawEnforcementAssessmentPolicy authorizing each record. Edit (shared with
+// Assessment review, App\Filament\Assessments\AssessmentEditForm) is the
+// submitting officer's here, needs a reason, and goes through
 // App\Services\AssessmentEditor, which writes the change log - the models
 // refuse any other update. No create or delete: new assessments come only from
 // the NewAssessment wizard.
@@ -83,95 +67,11 @@ class LawEnforcementAssessmentResource extends Resource
         return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
-    // The edit pop-up. Details and answers are saved by AssessmentEditor, not
-    // by Filament directly - see the EditAction in table().
-    // Styled to match the View pop-up: purple header, light-purple cards
-    // (the hs-edit-* rules in theme.css).
+    // The edit pop-up's fields, shared with Assessment review's Edit - see
+    // App\Filament\Assessments\AssessmentEditForm.
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                View::make('filament.forms.assessment-edit-header')
-                    ->columnSpanFull()
-                    ->viewData(fn (?LawEnforcementAssessment $record): array => [
-                        'record' => $record,
-                        'submitted' => $record?->DateCreated
-                            ? Carbon::parse($record->DateCreated)->setTimezone(Timezones::DISPLAY)->format('M j, Y \a\t g:i a')
-                            : null,
-                    ]),
-
-                Section::make('Victim')
-                    ->extraAttributes(['class' => 'hs-edit-card'])
-                    ->columnSpanFull()
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('VictimFirstName')->label('First name')->required()->maxLength(50),
-                        TextInput::make('VictimLastName')->label('Last name')->required()->maxLength(50),
-                        Select::make('VictimSex')
-                            ->label('Sex')
-                            ->native()
-                            ->options(AssessmentFields::SEX_OPTIONS)
-                            ->required(),
-                        DatePicker::make('VictimDOB')->label('Date of birth')->native(),
-                        TextInput::make('VictimSafePhoneNumber')
-                            ->label('Safe contact number')
-                            ->tel()
-                            ->mask(PhoneNumber::MASK)
-                            ->required()
-                            ->maxLength(20)
-                            ->rule(PhoneNumber::rule())
-                            ->helperText('The number the victim said is safe to call. Other numbers may not be.')
-                            ->columnSpanFull(),
-                    ]),
-
-                Section::make('Offender')
-                    ->extraAttributes(['class' => 'hs-edit-card'])
-                    ->columnSpanFull()
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('OffenderFirstName')->label('First name')->required()->maxLength(50),
-                        TextInput::make('OffenderLastName')->label('Last name')->required()->maxLength(50),
-                        Select::make('OffenderSex')
-                            ->label('Sex')
-                            ->native()
-                            ->options(AssessmentFields::SEX_OPTIONS)
-                            ->required(),
-                        DatePicker::make('OffenderDOB')->label(RequirementMarkers::optionalLabel('Date of birth'))->native(),
-                        // Same dropdown + "Please specify" as the wizard.
-                        ...RelationshipFields::make(),
-                    ]),
-
-                // Numbered rows with Yes / No, like the View pop-up's checklist.
-                Section::make('Risk indicators')
-                    ->extraAttributes(['class' => 'hs-edit-card hs-edit-risk'])
-                    ->columnSpanFull()
-                    ->schema(
-                        collect(NewAssessment::QUESTIONS)
-                            ->map(fn (string $question, int $id): ToggleButtons => ToggleButtons::make("RiskIndicator{$id}")
-                                ->label($id.'. '.$question)
-                                ->boolean('Yes', 'No')
-                                ->colors([1 => 'danger', 0 => 'gray'])
-                                ->icons([1 => null, 0 => null])
-                                ->inline()
-                                ->grouped()
-                                ->inlineLabel())
-                            ->values()
-                            ->all(),
-                    ),
-
-                Section::make('Reason for change')
-                    ->extraAttributes(['class' => 'hs-edit-card hs-edit-reason'])
-                    ->columnSpanFull()
-                    ->schema([
-                        Textarea::make('reason')
-                            ->hiddenLabel()
-                            ->placeholder("e.g. Corrected the spelling of the victim's last name")
-                            ->helperText('Required. Recorded with this edit in the change log, which cannot be altered.')
-                            ->required()
-                            ->maxLength(255)
-                            ->rows(2),
-                    ]),
-            ]);
+        return AssessmentEditForm::schema($schema);
     }
 
     public static function table(Table $table): Table
@@ -188,37 +88,9 @@ class LawEnforcementAssessmentResource extends Resource
                 ChangeHistory::action(),
                 // Shared with Assessment review; logs each open.
                 AssessmentViews::viewAction(),
-                EditAction::make()
-                    ->modalHeading('Edit assessment')
-                    // The pop-up shows the whole record, so opening it is a view.
-                    ->afterFormFilled(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
-                    ->modalWidth(Width::FourExtraLarge)
-                    ->modalSubmitActionLabel('Save edit')
-                    // The answers live on _assessment_answers, not this record,
-                    // and the reason always starts empty.
-                    ->mutateRecordDataUsing(function (array $data, LawEnforcementAssessment $record): array {
-                        foreach (AssessmentEditor::answerFields() as $field) {
-                            $data[$field] = (bool) $record->assessmentAnswers?->{$field};
-                        }
-
-                        return [...$data, 'reason' => null];
-                    })
-                    ->using(function (LawEnforcementAssessment $record, array $data, EditAction $action): LawEnforcementAssessment {
-                        $edit = AssessmentEditor::apply($record, $data, $data, $data['reason'], Filament::auth()->user());
-
-                        if ($edit === null) {
-                            Notification::make()
-                                ->title('No changes to save')
-                                ->body('Nothing in the assessment was different, so no edit was recorded.')
-                                ->info()
-                                ->send();
-
-                            $action->halt();
-                        }
-
-                        return $record;
-                    })
-                    ->successNotificationTitle('Edit saved and recorded in the change history'),
+                // Shared with Assessment review: policy-gated, reason
+                // required, saved through AssessmentEditor, logs each open.
+                AssessmentEditForm::action(),
             ]), reviewScreen: false);
     }
 

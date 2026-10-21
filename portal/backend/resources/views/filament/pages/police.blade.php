@@ -21,7 +21,7 @@
             </span>
         </div>
 
-        @if ($this->isOfficer())
+        @if ($this->canStartAssessment())
             <a
                 href="{{ \App\Filament\Pages\NewAssessment::getUrl() }}"
                 class="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white

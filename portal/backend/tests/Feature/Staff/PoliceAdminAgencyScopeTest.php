@@ -186,11 +186,15 @@ test('officer accounts open only to a police admin with an agency', function () 
     }
 });
 
-test('nobody but the submitting officer may edit an assessment', function () {
+// Section 5 rule 1: the submitting officer, or an active police admin of the
+// submitter's agency. Never another agency's police admin, never an admin.
+test('only the submitting officer and their agency\'s police admin may edit an assessment', function () {
     $w = pestTwoAgencies();
 
     expect(staffUser(UserRole::Admin)->can('update', $w->assessmentA))->toBeFalse()
-        ->and($w->policeAdminA->can('update', $w->assessmentA))->toBeFalse()
+        ->and($w->policeAdminA->can('update', $w->assessmentA))->toBeTrue()
+        ->and($w->policeAdminB->can('update', $w->assessmentA))->toBeFalse()
+        ->and(pestAgencyMember(UserRole::PoliceAdmin, null)->can('update', $w->assessmentA))->toBeFalse()
         ->and(staffUser(UserRole::Secretary)->can('update', $w->assessmentA))->toBeFalse()
         ->and($w->officerB->can('update', $w->assessmentA))->toBeFalse()
         ->and($w->officerA->can('update', $w->assessmentA))->toBeTrue();

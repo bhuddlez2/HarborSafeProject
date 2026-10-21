@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AssessmentReview;
 
 use App\Enums\UserRole;
 use App\Filament\PoliceAdminNavigation;
+use App\Filament\Assessments\AssessmentEditForm;
 use App\Filament\Assessments\AssessmentViews;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
@@ -21,8 +22,8 @@ use UnitEnum;
 
 /*
 Law-enforcement assessment submissions, for admins and police admins: admins
-see all of them, a police admin only those submitted by officers of their own
-agency (section 5 rule 5 of Filament_CMS_Design.md). Both through
+see all of them, a police admin only those submitted by members of their own
+agency - its officers, and the police admin's own (section 5 rule 5 of Filament_CMS_Design.md). Both through
 LawEnforcementAssessment::visibleTo() - see getEloquentQuery() below.
 
 This page exists because section 5 grants admin "LE assessments: view" and
@@ -30,11 +31,14 @@ police_admin "own agency", and until now the only way an admin could see any
 assessment was through the Officer Portal's own screens - which are officer
 tools and no longer shown to admins.
 
-VIEW-ONLY, WITHOUT EXCEPTION. Section 5 rule 1: only the submitting officer may
-ever edit a submitted assessment, and police_admin and admin are view-only. So
-there is no edit action, no delete action, no bulk action, and no create - the
-wizard at App\Filament\Pages\NewAssessment is the only way a row is ever
-written, and it is officers-only.
+View for admins; view and EDIT for police admins. Section 5 rule 1: an
+assessment may be edited by its submitting officer or by an active police
+admin of the submitter's agency; admin is view-only. So the one write action
+here is the shared Edit (App\Filament\Assessments\AssessmentEditForm, the same
+as My Assessments'), shown only where LawEnforcementAssessmentPolicy::update()
+allows - a police admin on their agency's rows, including their own; never an
+admin. No delete, no bulk action, no create - the wizard at
+App\Filament\Pages\NewAssessment is the only way a row is ever written.
 
 Deliberately NOT a replacement for the officer-facing My Assessments page
 (App\Filament\Resources\LawEnforcementAssessments), which is officers only
@@ -117,12 +121,15 @@ class AssessmentReviewResource extends Resource
             // Without this the Yes-answers column would issue a query per row.
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
             ->stackedOnMobile()
-            // View only - see the class comment. No edit, delete or bulk
-            // actions anywhere on this resource.
+            // See the class comment: Edit for police admins only; no delete
+            // or bulk actions anywhere on this resource.
             ->recordActions([
                 ChangeHistory::action(),
                 // Shared with My Assessments; logs each open.
                 AssessmentViews::viewAction(),
+                // Shared with My Assessments; shown only where the policy
+                // allows (a police admin, own agency). Logs each open.
+                AssessmentEditForm::action(),
             ])
             ->emptyStateHeading('No assessments submitted yet')
             ->emptyStateDescription('Assessments submitted by officers through the portal appear here.'), reviewScreen: true);

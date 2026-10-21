@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Assessments\RelationshipFields;
+use App\Filament\PoliceAdminNavigation;
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
@@ -95,10 +96,28 @@ class NewAssessment extends Page
 
     public ?string $submitError = null;
 
-    // Only officers submit assessments; police admins and admins view them.
+    // Officers, and police admins with an agency, submit their own
+    // assessments through this same wizard (section 5 rule 1). Admins,
+    // secretaries and a police admin with no agency never open it.
     public static function canAccess(): bool
     {
-        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::LawEnforcement);
+        $user = Filament::auth()->user();
+
+        return (bool) $user?->hasActiveRole(UserRole::LawEnforcement)
+            || $user?->managedAgencyId() !== null;
+    }
+
+    // A police admin finds this in their single "Police Admin" group;
+    // officers keep the group and position above. Grouping and order only -
+    // see App\Filament\PoliceAdminNavigation.
+    public static function getNavigationGroup(): string | UnitEnum | null
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::GROUP : parent::getNavigationGroup();
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::NEW_ASSESSMENT : parent::getNavigationSort();
     }
 
     public function getHeading(): string | Htmlable
@@ -347,6 +366,8 @@ class NewAssessment extends Page
 
     public function create(): void
     {
+        abort_unless(static::canAccess(), 403);
+
         $data = $this->form->getState();
         $this->submitError = null;
 
@@ -371,7 +392,8 @@ class NewAssessment extends Page
                         'VictimSafePhoneNumber',
                     ])->all(),
                     'AssessmentDocID' => $answers->getKey(),
-                    // Always the signed-in officer, never anything client-supplied.
+                    // Always the signed-in user - the officer, or the police
+                    // admin submitting their own - never anything client-supplied.
                     'submitted_by' => Filament::auth()->id(),
                 ]);
             });

@@ -9,23 +9,32 @@ use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 
 /*
 The officer portal Home (App\Filament\Pages\Police), team plan task 11: police
-admins get View Assessments and Personnel Management cards; the officer's Home
-is unchanged. And the sidebar identity block: name, badge and agency on
+admins get View Assessments and Personnel Management cards, under the Start
+New Lethality Assessment card when they may open the wizard (an agency, team
+plan task 7); the officer's Home is unchanged. And the sidebar identity block: name, badge and agency on
 separate rows, with the badge for officers only.
 */
 
 afterEach(fn () => cleanupStaffData());
 
-test('a police admin\'s Home offers View Assessments and Personnel Management', function () {
+test('a police admin\'s Home offers Start New Lethality Assessment above View Assessments and Personnel Management', function () {
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Home PD')))
         ->get(Police::getUrl())
         ->assertOk()
-        ->assertSee('View Assessments')
+        ->assertSeeInOrder(['Start New Lethality Assessment', 'View Assessments', 'Personnel Management'])
+        ->assertSee(NewAssessment::getUrl(), escape: false)
         ->assertSee(AssessmentReviewResource::getUrl('index'), escape: false)
-        ->assertSee('Personnel Management')
         ->assertSee(OfficerAccountResource::getUrl('index'), escape: false)
-        ->assertDontSee('Start New Lethality Assessment')
+        // The past-assessment pointer stays officer-only.
         ->assertDontSee('Go to My Assessments');
+});
+
+test('a police admin with no agency gets no Start card', function () {
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null))
+        ->get(Police::getUrl())
+        ->assertOk()
+        ->assertDontSee('Start New Lethality Assessment')
+        ->assertDontSee(NewAssessment::getUrl(), escape: false);
 });
 
 test('an officer\'s Home is unchanged', function () {
@@ -52,11 +61,14 @@ test('the sidebar shows an officer\'s name, badge and agency', function () {
 test('the sidebar shows a police admin\'s name and agency but no badge', function () {
     $policeAdmin = pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Home PD'));
     $identity = $policeAdmin->officerIdentity();
+    // Their row has a badge_number (the column is NOT NULL); it's never shown.
+    $stored = $policeAdmin->lawEnforcementAgent->badge_number;
 
-    expect($identity['badge'])->not->toBeNull();
+    expect($stored)->not->toBeNull();
 
     $this->actingAs($policeAdmin)
         ->get(Police::getUrl())
         ->assertSeeInOrder([$identity['name'], $identity['agency']])
-        ->assertDontSee('Badge '.$identity['badge']);
+        ->assertDontSee('Badge '.$stored)
+        ->assertDontSee($stored);
 });

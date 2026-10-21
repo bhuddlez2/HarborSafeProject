@@ -10,10 +10,11 @@ use App\Models\User;
 // plus ownership (submitted_by) and the police admin's agency, not spatie
 // permissions. LawEnforcementAssessmentResource is in resources.exclude in
 // config/filament-shield.php so shield:generate never overwrites this file.
-// New assessments come only from the NewAssessment wizard; the submitting
-// officer may edit their own (update() below), always through
-// App\Services\AssessmentEditor, which records the change log. Nothing else is
-// writable.
+// New assessments come only from the NewAssessment wizard (officers, and police
+// admins with an agency, each submitting their own). The submitting officer,
+// or an active police admin of the submitter's agency, may edit one (update()
+// below, section 5 rule 1), always through App\Services\AssessmentEditor,
+// which records the change log. Admin is view-only. Nothing else is writable.
 class LawEnforcementAssessmentPolicy
 {
     public function viewAny(User $user): bool
@@ -40,11 +41,24 @@ class LawEnforcementAssessmentPolicy
         return false;
     }
 
-    // Officers may edit their own submissions only.
+    // Section 5 rule 1, widened on purpose for police admins of the SAME
+    // agency only: an active officer edits their own submissions; an active
+    // police admin with an agency edits any their agency may see - their
+    // officers' and their own - by asking visibleTo() rather than restating
+    // the agency rule. Admins (view-only) and everyone else: never.
     public function update(User $user, LawEnforcementAssessment $record): bool
     {
-        return $user->hasActiveRole(UserRole::LawEnforcement)
-            && (int) $record->submitted_by === $user->id;
+        if ($user->hasActiveRole(UserRole::LawEnforcement)) {
+            return (int) $record->submitted_by === $user->id;
+        }
+
+        if ($user->managedAgencyId() !== null) {
+            return LawEnforcementAssessment::visibleTo($user)
+                ->whereKey($record->getKey())
+                ->exists();
+        }
+
+        return false;
     }
 
     public function delete(User $user, LawEnforcementAssessment $record): bool

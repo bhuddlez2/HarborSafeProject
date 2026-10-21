@@ -169,19 +169,22 @@ test('the officer edits through the pop-up, and a reason is required', function 
         ->and($edit->answerChanges()->pluck('ChangeField')->all())->toBe(['RiskIndicator5']);
 });
 
-test('nobody but the submitting officer is offered the edit', function () {
+test('the edit is offered to the submitting officer and their agency\'s police admin, never an admin', function () {
     $agency = changeLogAgency('A');
     $officer = changeLogMember(UserRole::LawEnforcement, $agency);
     $assessment = changeLogAssessment($officer);
 
-    // Admin and police admin review it - and have no edit action there.
-    foreach ([staffUser(UserRole::Admin), changeLogMember(UserRole::PoliceAdmin, $agency)] as $reviewer) {
-        $this->actingAs($reviewer);
+    // Admin reviews it - and has no edit there (view-only).
+    $this->actingAs(staffUser(UserRole::Admin));
+    Livewire::test(ListAssessmentReview::class)
+        ->assertCanSeeTableRecords([$assessment])
+        ->assertActionHidden(TestAction::make(EditAction::class)->table($assessment));
 
-        Livewire::test(ListAssessmentReview::class)
-            ->assertCanSeeTableRecords([$assessment])
-            ->assertActionDoesNotExist(TestAction::make(EditAction::class)->table($assessment));
-    }
+    // The submitter's agency's police admin may edit it (section 5 rule 1).
+    $this->actingAs(changeLogMember(UserRole::PoliceAdmin, $agency));
+    Livewire::test(ListAssessmentReview::class)
+        ->assertCanSeeTableRecords([$assessment])
+        ->assertActionVisible(TestAction::make(EditAction::class)->table($assessment));
 
     expect(changeLogMember(UserRole::LawEnforcement, $agency)->can('update', $assessment))->toBeFalse()
         ->and($officer->can('update', $assessment))->toBeTrue();

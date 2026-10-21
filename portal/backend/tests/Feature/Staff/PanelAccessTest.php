@@ -177,13 +177,15 @@ test('an inactive account is refused everything, whatever its role', function (U
 ]);
 
 /*
-Rule 1 of section 5: only the submitting officer may ever edit an assessment,
-so the all-submissions review page offers no way to change one.
+Rule 1 of section 5: an assessment is edited only by its submitting officer or
+an active police admin of the submitter's agency. The review page's only
+write is the shared, policy-gated Edit (hidden for admins - see
+PoliceAdminAssessmentsTest); nothing else can change or remove a submission.
 
 Asserted against the resource's own declaration rather than by scraping the
 rendered page, because that is where the mistake would be made.
 */
-test('the assessment review page offers no way to alter a submission', function () {
+test('the assessment review page offers no way to alter a submission but the policy-gated Edit', function () {
     $table = AssessmentReviewResource::table(
         Filament\Tables\Table::make(new ListAssessmentReviewStub),
     );
@@ -192,16 +194,20 @@ test('the assessment review page offers no way to alter a submission', function 
         ->map(fn ($action) => $action->getName())
         ->all();
 
-    // Both read-only: the change log pop-up and the record view.
-    expect($actionNames)->toBe(['changeLog', 'view'])
+    // The change log pop-up, the record view, and the policy-gated Edit.
+    expect($actionNames)->toBe(['changeLog', 'view', 'edit'])
         ->and($table->getToolbarActions())->toBe([]);
 });
 
-test('the officer assessment wizard stays officers-only', function () {
-    // Explicit, because this is the one place a submission is created and
-    // widening it would let a non-officer write law_enforcement_assessment.
+test('the assessment wizard is for officers and police admins with an agency only', function () {
+    // Explicit, because this is the one place a submission is created.
+    // Police admins submit their own (team plan task 7) - but only with an
+    // agency, which is what puts their submissions in their own scope.
     $this->actingAs(staffUser(UserRole::PoliceAdmin));
     expect(NewAssessment::canAccess())->toBeFalse();
+
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Wizard PD')));
+    expect(NewAssessment::canAccess())->toBeTrue();
 
     $this->actingAs(staffUser(UserRole::Admin));
     expect(NewAssessment::canAccess())->toBeFalse();
