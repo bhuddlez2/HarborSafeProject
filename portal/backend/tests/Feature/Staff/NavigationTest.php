@@ -8,8 +8,8 @@ use Filament\Facades\Filament;
 The sidebar each role is shown, group by group and item by item, in order.
 
 Police admins get one "Police Admin" group (App\Filament\PoliceAdminNavigation)
-built partly from items other roles also see - Home, Assessment review, Change
-log, Access log, Account - so this pins both sides: the police admin's single group, and
+built partly from items other roles also see - Home, Assessment review, Logs,
+Account - so this pins both sides: the police admin's single group, and
 every other role's sidebar exactly as it was before that group existed.
 
 Grouping and order only. Who may open each item is PanelAccessTest's job.
@@ -39,13 +39,13 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
 })->with([
     'police admin' => [
         fn () => pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Nav agency')),
-        ['Police Admin' => ['Home', 'Assessment review', 'Change log', 'Access log', 'Officers', 'Account']],
+        ['Police Admin' => ['Home', 'Assessment review', 'Logs', 'Officers', 'Account']],
     ],
-    // Officers and the Access log need an agency (their canAccess()); the
-    // rest of the group is unaffected.
+    // Officers and Logs need an agency (their canAccess()); the rest of the
+    // group is unaffected.
     'police admin with no agency' => [
         fn () => pestAgencyMember(UserRole::PoliceAdmin, null),
-        ['Police Admin' => ['Home', 'Assessment review', 'Change log', 'Account']],
+        ['Police Admin' => ['Home', 'Assessment review', 'Account']],
     ],
     'law enforcement' => [
         fn () => staffUser(UserRole::LawEnforcement),
@@ -57,7 +57,7 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
         [
             '' => ['Follow-ups'],
             'Content management' => ['Content', 'Submissions', 'Form options', 'Accounts'],
-            'Assessments' => ['Assessment review', 'Civilian assessments', 'Change log', 'Access log'],
+            'Assessments' => ['Assessment review', 'Civilian assessments', 'Logs'],
         ],
     ],
     'secretary' => [
@@ -81,10 +81,9 @@ test('the police admin group leaves gaps between positions', function () {
     expect($sorts)->toBe([
         'Home' => PoliceAdminNavigation::HOME,
         'Assessment review' => PoliceAdminNavigation::ASSESSMENT_REVIEW,
-        'Change log' => PoliceAdminNavigation::CHANGE_LOG,
-        'Access log' => PoliceAdminNavigation::ACCESS_LOG,
+        'Logs' => PoliceAdminNavigation::LOGS,
         'Officers' => PoliceAdminNavigation::OFFICERS,
         'Account' => PoliceAdminNavigation::ACCOUNT,
     ])
-        ->and(array_values($sorts))->toBe([10, 20, 30, 40, 50, 60]);
+        ->and(array_values($sorts))->toBe([10, 20, 30, 40, 50]);
 });

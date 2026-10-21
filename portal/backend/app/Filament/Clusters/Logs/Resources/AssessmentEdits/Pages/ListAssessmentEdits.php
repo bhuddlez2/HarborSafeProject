@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\AssessmentEdits\Pages;
+namespace App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages;
 
 use App\Filament\Concerns\BreadcrumbNamesThePage;
-use App\Filament\Resources\AssessmentEdits\AssessmentEditResource;
+use App\Filament\Clusters\Logs\Resources\AssessmentEdits\AssessmentEditResource;
 use Filament\Resources\Pages\ListRecords;
 
 // No header actions: edits are only ever written by AssessmentEditor.

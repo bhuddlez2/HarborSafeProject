@@ -2,7 +2,7 @@
 
 use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
-use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Models\AssessmentAccessLog;

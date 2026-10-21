@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\AssessmentEdits;
+namespace App\Filament\Clusters\Logs\Resources\AssessmentEdits;
 
-use App\Enums\UserRole;
-use App\Filament\PoliceAdminNavigation;
 use App\Filament\Assessments\AssessmentViews;
 use App\Filament\Assessments\ChangeHistory;
-use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Clusters\Logs\LogsCluster;
+use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Tables\ChangeLogFilters;
 use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentEdit;
@@ -22,12 +21,13 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use UnitEnum;
 
 /*
-The change log: every edit to a law-enforcement assessment, one row per save,
-for admins (all of them) and police admins (their own agency's). Officers read
-the history of their own records inside My Assessments instead.
+The change log, the second tab of Logs (/logs/changes,
+App\Filament\Clusters\Logs): every edit to a law-enforcement assessment, one
+row per save, for admins (all of them) and police admins with an agency (their
+own agency's). Officers read the history of their own records inside My
+Assessments instead.
 
 Read-only and append-only. Rows are written by App\Services\AssessmentEditor
 and the model refuses updates and deletes, so there is no create, edit or
@@ -41,7 +41,10 @@ class AssessmentEditResource extends Resource
 {
     protected static ?string $model = AssessmentEdit::class;
 
-    protected static ?string $slug = 'assessment-changes';
+    // The second tab of Logs: /logs/changes.
+    protected static ?string $cluster = LogsCluster::class;
+
+    protected static ?string $slug = 'changes';
 
     protected static ?string $navigationLabel = 'Change log';
 
@@ -51,29 +54,15 @@ class AssessmentEditResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedClock;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Assessments';
+    // Tab order inside the cluster: Access log, then Change log.
+    protected static ?int $navigationSort = 2;
 
-    protected static ?int $navigationSort = 3;
-
-    // A police admin finds this in their single "Police Admin" group;
-    // everyone else keeps the group and position above. Grouping and order
-    // only - see App\Filament\PoliceAdminNavigation.
-    public static function getNavigationGroup(): string | UnitEnum | null
-    {
-        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::GROUP : parent::getNavigationGroup();
-    }
-
-    public static function getNavigationSort(): ?int
-    {
-        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::CHANGE_LOG : parent::getNavigationSort();
-    }
-
+    // Active admins, and active police admins with an agency - the Logs
+    // cluster's rule, shared by both tabs. A police admin with no agency
+    // would see no rows anyway; they are refused outright, like the Access log.
     public static function canAccess(): bool
     {
-        return (bool) Filament::auth()->user()?->hasActiveRole(
-            UserRole::Admin,
-            UserRole::PoliceAdmin,
-        );
+        return LogsCluster::canOpenLogs();
     }
 
     public static function canViewAny(): bool

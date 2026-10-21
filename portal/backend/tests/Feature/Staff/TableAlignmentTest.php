@@ -9,8 +9,8 @@ use App\Filament\Clusters\FormOptions\Resources\Resources\Pages\ManageResourceTy
 use App\Filament\Clusters\FormOptions\Resources\Services\Pages\ManageServices;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
-use App\Filament\Resources\AccessLog\Pages\ListAccessLog;
-use App\Filament\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Clusters\Logs\Resources\AccessLog\Pages\ListAccessLog;
+use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;

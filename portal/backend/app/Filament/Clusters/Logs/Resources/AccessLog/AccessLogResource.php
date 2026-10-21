@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\AccessLog;
+namespace App\Filament\Clusters\Logs\Resources\AccessLog;
 
 use App\Enums\AssessmentAccess;
-use App\Enums\UserRole;
-use App\Filament\PoliceAdminNavigation;
-use App\Filament\Resources\AccessLog\Pages\ListAccessLog;
-use App\Filament\Tables\AssessmentFilters;
+use App\Filament\Clusters\Logs\LogsCluster;
+use App\Filament\Clusters\Logs\Resources\AccessLog\Pages\ListAccessLog;
 use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentAccessLog;
 use App\Support\Timezones;
@@ -15,15 +13,14 @@ use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use UnitEnum;
 
 /*
-The access log: every view and PDF download recorded in assessment_access_log
+The access log, the first tab of Logs (/logs/access, App\Filament\Clusters\Logs):
+every view and PDF download recorded in assessment_access_log
 (App\Models\AssessmentAccessLog) - who opened which form, how and when, so the
 team can check that view logging works.
 
@@ -43,18 +40,23 @@ It names a record only by its submitted time and the start of its id, never
 by anything in it: no victim, offender or requester names, no phone numbers.
 The forms are loaded with just those two columns for that reason.
 
-The search box searches only the Who column (the opener's name: partial,
-case-insensitive), and only narrows the scoped rows above.
+No table filters, so there is no Filters button or card. Above the table, the
+page's one "Show" dropdown (All / Viewed / Downloaded PDF, ListAccessLog)
+narrows the rows by action. The search box searches only the Who column (the
+opener's name: partial, case-insensitive). Both only narrow the scoped rows
+above.
 
 Authorizes itself (canAccess below, by users.role and the police admin's
-agency), so it is in
-resources.exclude in config/filament-shield.php.
+agency), so it is in resources.exclude in config/filament-shield.php.
 */
 class AccessLogResource extends Resource
 {
     protected static ?string $model = AssessmentAccessLog::class;
 
-    protected static ?string $slug = 'access-log';
+    // The first tab of Logs: /logs/access.
+    protected static ?string $cluster = LogsCluster::class;
+
+    protected static ?string $slug = 'access';
 
     protected static ?string $navigationLabel = 'Access log';
 
@@ -64,11 +66,8 @@ class AccessLogResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedEye;
 
-    // After Change log (3). A police admin finds it in their single "Police
-    // Admin" group instead - see getNavigationGroup() below.
-    protected static string | UnitEnum | null $navigationGroup = 'Assessments';
-
-    protected static ?int $navigationSort = 4;
+    // Tab order inside the cluster: Access log, then Change log.
+    protected static ?int $navigationSort = 1;
 
     // Which pointer is set says what kind of form a row is about; exactly one
     // is (the table's CHECK constraint).
@@ -78,35 +77,18 @@ class AccessLogResource extends Resource
         'ResourceRequestFormID' => 'Resource request',
     ];
 
-    // Grouping and order only - see App\Filament\PoliceAdminNavigation.
-    public static function getNavigationGroup(): string | UnitEnum | null
-    {
-        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::GROUP : parent::getNavigationGroup();
-    }
-
-    public static function getNavigationSort(): ?int
-    {
-        return PoliceAdminNavigation::applies() ? PoliceAdminNavigation::ACCESS_LOG : parent::getNavigationSort();
-    }
-
-    // Active admins, and active police admins with an agency.
+    // Active admins, and active police admins with an agency - the Logs
+    // cluster's rule, shared by both tabs.
     public static function canAccess(): bool
     {
-        $user = Filament::auth()->user();
-
-        return (bool) $user?->hasActiveRole(UserRole::Admin)
-            || $user?->managedAgencyId() !== null;
+        return LogsCluster::canOpenLogs();
     }
 
     // The only thing scoping the rows. Never return an unscoped query here.
+    // The page's Show dropdown (ListAccessLog) only narrows it further.
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
-    }
-
-    private static function isAdmin(): bool
-    {
-        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin);
     }
 
     public static function canViewAny(): bool
@@ -180,33 +162,8 @@ class AccessLogResource extends Resource
                 'privateAssessment:DocumentID,DateCreated',
                 'resourceRequestForm:FormID,SubmissionDate',
             ]))
-            ->filters([
-                // Eastern days, turned into a UTC range.
-                AssessmentFilters::dateRange('accessed_at', 'AccessedAt', 'Opened'),
-
-                SelectFilter::make('AccessedBy')
-                    ->label('Who')
-                    // Only people who appear in rows this user may see.
-                    ->relationship('user', 'name', fn (Builder $query): Builder => $query
-                        ->whereIn('id', static::getEloquentQuery()->select('AccessedBy')))
-                    ->searchable(),
-
-                SelectFilter::make('Action')
-                    ->options(collect(AssessmentAccess::cases())
-                        ->mapWithKeys(fn (AssessmentAccess $action): array => [$action->value => $action->label()])
-                        ->all()),
-
-                // Admins only: a police admin's rows are all officer
-                // assessments. A tampered value could only narrow rows that
-                // are already scoped.
-                SelectFilter::make('record_type')
-                    ->label('Record type')
-                    ->visible(fn (): bool => self::isAdmin())
-                    ->options(self::KINDS)
-                    ->query(fn (Builder $query, array $data): Builder => array_key_exists($data['value'] ?? '', self::KINDS)
-                        ? $query->whereNotNull($data['value'])
-                        : $query),
-            ])
+            // No table filters, so Filament draws no Filters button or card.
+            // The page's one "Show" dropdown (ListAccessLog) replaces them.
             ->emptyStateHeading('Nothing opened yet')
             ->emptyStateDescription('Views and PDF downloads of assessments and resource requests appear here.');
     }

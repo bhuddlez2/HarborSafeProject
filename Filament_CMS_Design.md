@@ -600,8 +600,8 @@ updates and deletes.
   export with history mixed in, or one that looks as though something was left out, is
   exactly what this avoids.
 - Each list shows an **Amended** badge.
-- The **Change log** page (`/assessment-changes`) lists every edit for admins and
-  police admins.
+- The **Change log** tab of Logs (`/logs/changes`, §13) lists every edit for admins
+  and police admins with an agency.
 
 All of these come from `App\Filament\Assessments\ChangeHistory` and one Blade view.
 
@@ -853,7 +853,7 @@ Still undecided:
 - Nothing at present. View logging, once listed here, was built 2026-10-20: every
   law-enforcement View, Edit and Change log pop-up, the Change log screen's View, every
   civilian View, every follow-up page and every PDF download writes a row in
-  `assessment_access_log`, readable on the Access log screen (§13). The officer Home's
+  `assessment_access_log`, readable on Logs → Access log (§13). The officer Home's
   "Each view is logged with your name and a timestamp" is now true.
 
 ### Notes for the database architect
@@ -917,8 +917,9 @@ Content management                              roles
 Assessments                                     admin
   Assessment review      /assessment-review     all agencies
   Civilian assessments   /civilian-assessments
-  Change log             /assessment-changes
-  Access log             /access-log            all rows
+  Logs                   /logs                  tabs across the top; all rows
+    Access log           /logs/access
+    Change log           /logs/changes
 
 Officer Portal                                  law_enforcement
   Home            /police
@@ -929,16 +930,17 @@ Officer Portal                                  law_enforcement
 Police Admin                                    police_admin - its ONLY group
   Home               /police                    sort 10
   Assessment review  /assessment-review         20  own agency
-  Change log         /assessment-changes        30  own agency
-  Access log         /access-log                40  own agency's officer assessments; needs an agency
-  Officers           /police/officers           50  own agency's officers; needs an agency
-  Account            (Filament's profile page)  60
+  Logs               /logs                      30  own agency's officer assessments; needs an agency
+    Access log       /logs/access
+    Change log       /logs/changes
+  Officers           /police/officers           40  own agency's officers; needs an agency
+  Account            (Filament's profile page)  50
 ```
 
-**A police admin sees one group.** Home, Assessment review, Change log, Access log and Account are
+**A police admin sees one group.** Home, Assessment review, Logs and Account are
 shared with other roles, which keep their own groups above. Each of those items picks its
 group and position by role: `getNavigationGroup()` / `getNavigationSort()` overrides on
-`Police`, `AssessmentReviewResource`, `AssessmentEditResource` and `AccessLogResource`, and closures on the
+`Police`, `AssessmentReviewResource` and `LogsCluster`, and closures on the
 Account `NavigationItem` in `StaffPanelProvider` (`group()` and `sort()` take closures in
 v5). All of them read `App\Filament\PoliceAdminNavigation`, the one place the police
 admin's group name and order are declared; sorts step by 10 so items can slot in.
@@ -948,21 +950,47 @@ Grouping and order only — access is still each item's own `canAccess()`.
 Search Records (`/police/search`, a "Coming soon" placeholder) was removed: filtering on
 the assessment tables replaces it.
 
-**Access log** (`/access-log`, `AccessLogResource`, excluded from Shield): who viewed or
-downloaded which form, and when — the rows of `assessment_access_log`. Read-only: a list,
-with no create, edit, delete, view or bulk actions. Admins see every row, of every kind.
-Police admins with an agency see only rows about their own agency's officers'
-assessments, whoever opened them — never a civilian assessment or resource request, never
-another agency's (`AssessmentAccessLog::visibleTo()`, built on
-`LawEnforcementAssessment::visibleTo()`, §5 rule 5); without an agency, no access.
-Columns: when (Eastern), who, Viewed / Downloaded PDF, record type, and the record named
-only by its submitted time and the first 8 characters of its id. **No personal details
-are shown** — the forms are loaded with just those two columns. Filters: date (Eastern
-days), who (only people in the viewer's rows), action, and record type (admins only).
-A search box searches **only** the Who column, the name of the person who opened the record
-(partial match, any case). It only narrows the viewer's own scoped rows, and never searches
-record ids or anything in the forms. Opening the screen is not itself logged.
-`AccessLogScreenTest`.
+**Logs** (`/logs`, `App\Filament\Clusters\Logs\LogsCluster`): one sidebar item whose two
+resources show as **tabs across the top** (`SubNavigationPosition::Top`, the Content
+cluster's pattern), in this order:
+
+1. **Access log** (`/logs/access`, `Clusters/Logs/Resources/AccessLog/AccessLogResource`)
+2. **Change log** (`/logs/changes`, `Clusters/Logs/Resources/AssessmentEdits/AssessmentEditResource`)
+
+Who sees what is the same on both tabs: **admins** see every row; **police admins with an
+agency** see only rows about their own agency's officers' assessments — never a civilian
+assessment or resource request, never another agency's (`AssessmentAccessLog::visibleTo()`
+and `AssessmentEdit::visibleTo()`, both built on `LawEnforcementAssessment::visibleTo()`,
+§5 rule 5). Everyone else, and a police admin with **no** agency, gets no Logs item and a
+403 on every address. The cluster and both tabs share one rule,
+`LogsCluster::canOpenLogs()` (since the move, a police admin with no agency is refused
+the Change log too, where before they were let in to an empty list). `/logs` opens the
+first tab the user can open (`Cluster::mount()`), and the cluster hides itself when both
+refuse (`Cluster::shouldRegisterNavigation()`). Both tabs stay in `resources.exclude` in
+`config/filament-shield.php`. The old addresses redirect, keeping any sub-path and query
+string (`routes/web.php`): `/access-log` → `/logs/access`, `/assessment-changes` →
+`/logs/changes`. `LogsClusterTest`.
+
+**Access log tab:** who viewed or downloaded which form, and when — the rows of
+`assessment_access_log`, both actions. Read-only: a list, with no create, edit, delete,
+view or bulk actions. Columns: when (Eastern), who, Viewed / Downloaded PDF, record type,
+and the record named only by its submitted time and the first 8 characters of its id.
+**No personal details are shown** — the forms are loaded with just those two columns.
+**No table filters**, so there is no Filters button, menu or card. Instead the page has
+one plain **Show** dropdown above the table — All / Viewed / Downloaded PDF, default All,
+applied as soon as it changes. It is a Filament `Select` in the list page's own layout
+(`ListAccessLog::content()`, bound to `ListAccessLog::$show`), not a table filter: a table
+filter can't be drawn without Filament's "Filters" heading and Reset link. It only adds a
+`where` on `Action` to the scoped query, and an unknown value means All. Its options come
+from one place, `ListAccessLog::showOptions()`: All, then one per `AssessmentAccess` case
+labelled by the enum, so a future action (say "Exported") is a new enum case and appears
+there. A search box searches **only** the Who column, the name of the person who opened
+the record (partial match, any case), within the viewer's scoped rows — never record ids
+or anything in the forms. Opening the tab is not itself logged. `AccessLogScreenTest`.
+
+**Change log tab:** unchanged apart from its address — the same columns, the View pop-up
+(which logs a view, like every assessment pop-up) and its `ChangeLogFilters` card; see
+"Change log filters" below.
 
 ### Assessment table filters
 
@@ -1001,7 +1029,7 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
 
 ### Change log filters
 
-The Change log (`/assessment-changes`, `AssessmentEditResource`) gets its filters from
+The Change log (Logs → Change log, `/logs/changes`, `AssessmentEditResource`) gets its filters from
 `App\Filament\Tables\ChangeLogFilters::apply($table)`, built from `AssessmentFilters`'
 public helpers (`layout()`, `dateRange()`, `nameFilters()`, `visibleAssessments()`,
 `showsAgency()`), so the card is the same one: above the table, three columns, deferred

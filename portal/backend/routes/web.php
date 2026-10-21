@@ -60,3 +60,16 @@ on the same page at its new address rather than a 404.
 */
 Route::get('/staff/{path?}', fn (?string $path = null) => redirect('/'.($path ?? '')))
     ->where('path', '.*');
+
+/*
+The Access log and the Change log moved into one Logs page with two tabs
+(App\Filament\Clusters\Logs). Old links - with any sub-path and query string -
+land on the matching tab. Each tab still checks who may open it.
+*/
+foreach (['access-log' => 'logs/access', 'assessment-changes' => 'logs/changes'] as $old => $new) {
+    Route::get("/{$old}/{path?}", function (Illuminate\Http\Request $request, ?string $path = null) use ($new) {
+        $query = $request->getQueryString();
+
+        return redirect('/'.$new.($path === null ? '' : '/'.$path).($query === null ? '' : '?'.$query));
+    })->where('path', '.*');
+}
