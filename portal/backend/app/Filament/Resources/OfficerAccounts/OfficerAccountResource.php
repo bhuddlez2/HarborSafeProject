@@ -207,6 +207,8 @@ class OfficerAccountResource extends Resource
                     ->falseLabel('Inactive'),
             ])
             ->defaultSort('last_name')
+            // Cards instead of a wide table on phones (team plan task 10).
+            ->stackedOnMobile()
             ->recordActions([
                 EditAction::make(),
             ]);

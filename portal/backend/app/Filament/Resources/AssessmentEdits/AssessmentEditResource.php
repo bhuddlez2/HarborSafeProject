@@ -158,6 +158,8 @@ class AssessmentEditResource extends Resource
                     ->color('gray')),
             ])
             ->defaultSort('EditedAt', 'desc')
+            // Cards instead of a wide table on phones (team plan task 10).
+            ->stackedOnMobile()
             ->modifyQueryUsing(fn (Builder $query): Builder => $query
                 ->with(['editor', 'assessment'])
                 ->withCount(['detailChanges', 'answerChanges']))

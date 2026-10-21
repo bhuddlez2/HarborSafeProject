@@ -4,11 +4,12 @@
     itself is that card (see NewAssessment::form()).
 --}}
 <x-filament-panels::page class="hs-officer-page">
-    <main class="min-h-dvh bg-[#F4F2F7] flex items-start md:items-center justify-center p-6">
+    {{-- Tighter padding on phones so the form keeps its width at 375 px (team plan task 10). --}}
+    <main class="min-h-dvh bg-[#F4F2F7] flex items-start md:items-center justify-center p-3 md:p-6">
         <div class="w-full max-w-2xl">
             @if ($submitted)
                 {{-- Submitted phase --}}
-                <div class="bg-white rounded-2xl shadow-lg w-full px-8 py-10 md:px-12 md:py-14">
+                <div class="bg-white rounded-2xl shadow-lg w-full px-5 py-8 md:px-12 md:py-14">
                     <h1 class="text-3xl font-semibold text-gray-900 mb-6">
                         Assessment submitted
                     </h1>

@@ -193,7 +193,10 @@ class LawEnforcementAssessmentResource extends Resource
                     ]),
                 EditAction::make()
                     ->modalHeading('Edit assessment')
-                    ->modalWidth(Width::FourExtraLarge)
+                    // A panel from the side rather than a centred pop-up:
+                    // full-height and scrollable one-handed on a phone.
+                    ->slideOver()
+                    ->modalWidth(Width::ThreeExtraLarge)
                     ->modalSubmitActionLabel('Save edit')
                     // The answers live on _assessment_answers, not this record,
                     // and the reason always starts empty.
