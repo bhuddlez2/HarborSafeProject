@@ -57,6 +57,7 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
         [
             'Content management' => ['Follow-ups', 'Content', 'Submissions', 'Form options', 'Accounts', 'Agencies'],
             'Assessments' => ['Assessment review', 'Civilian assessments', 'Logs'],
+            'Reports' => ['Analytics'],
         ],
     ],
     // Follow-ups is the day's work queue, first under Content management
@@ -66,12 +67,14 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
         [
             'Content management' => ['Follow-ups', 'Content', 'Submissions', 'Form options', 'Accounts'],
             'Assessments' => ['Assessment review', 'Civilian assessments', 'Logs'],
+            'Reports' => ['Analytics'],
         ],
     ],
     'secretary' => [
         fn () => staffUser(UserRole::Secretary),
         [
             'Content management' => ['Follow-ups', 'Content', 'Submissions', 'Form options'],
+            'Reports' => ['Analytics'],
         ],
     ],
 ]);

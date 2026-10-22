@@ -1,6 +1,11 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Filament\Clusters\Analytics\AnalyticsCluster;
+use App\Filament\Clusters\Analytics\Pages\CivilianAssessmentAnalytics;
+use App\Filament\Clusters\Analytics\Pages\FeedbackAnalytics;
+use App\Filament\Clusters\Analytics\Pages\FollowUpAnalytics;
+use App\Filament\Clusters\Analytics\Pages\OfficerAssessmentAnalytics;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\EventCategories\EventCategoryResource;
 use App\Filament\Clusters\Content\Resources\Events\EventResource;
@@ -66,6 +71,11 @@ function allStaffComponents(): array
         'logs.cluster' => LogsCluster::class,
         'logs.access' => AccessLogResource::class,
         'logs.changes' => AssessmentEditResource::class,
+        'analytics.cluster' => AnalyticsCluster::class,
+        'analytics.officer-assessments' => OfficerAssessmentAnalytics::class,
+        'analytics.civilian-assessments' => CivilianAssessmentAnalytics::class,
+        'analytics.feedback' => FeedbackAnalytics::class,
+        'analytics.follow-ups' => FollowUpAnalytics::class,
     ];
 }
 
@@ -79,6 +89,8 @@ dataset('role matrix', [
             // Resource requests only; the queue never shows a secretary an
             // assessment (FollowUp::visibleTo()).
             'follow-ups',
+            // Analytics: the feedback and resource request tab only.
+            'analytics.cluster', 'analytics.feedback',
         ],
     ],
     // Admin gets everything on the content side plus the all-submissions
@@ -102,6 +114,9 @@ dataset('role matrix', [
             // Logs: who viewed or downloaded which form, and every edit to an
             // officer assessment. Every row; read-only.
             'logs.cluster', 'logs.access', 'logs.changes',
+            // Analytics: every tab, every agency together.
+            'analytics.cluster', 'analytics.officer-assessments', 'analytics.civilian-assessments',
+            'analytics.feedback', 'analytics.follow-ups',
         ],
     ],
     // Admin's row plus Agencies (team plan task 15). Still no Officer Portal:
@@ -121,6 +136,8 @@ dataset('role matrix', [
             'agencies',
             'follow-ups',
             'logs.cluster', 'logs.access', 'logs.changes',
+            'analytics.cluster', 'analytics.officer-assessments', 'analytics.civilian-assessments',
+            'analytics.feedback', 'analytics.follow-ups',
         ],
     ],
     // Reviews its own agency's law-enforcement submissions in Assessment

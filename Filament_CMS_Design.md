@@ -331,6 +331,9 @@ Access log             —       own agency —          view all     view all
   (who opened what)            LE only
 Follow-ups             —       —          resource   assessments, assessments,
                                           requests   requests     requests
+Analytics (totals)     —       —          feedback + all 4 tabs   all 4 tabs
+                                          requests
+                                          tab only
 ---------------------------------------------------------------------------
 Manage officers        —       own agency —          NO           any agency
   (create/edit/deactivate)                                        (Accounts)
@@ -966,6 +969,13 @@ Assessments                                     admin
     Access log           /logs/access
     Change log           /logs/changes
 
+Reports                                         admin, super admin, secretary
+  Analytics              /analytics             tabs across the top; totals only
+    Law-enforcement assessments /analytics/officer-assessments   admin, super admin
+    Civilian assessments        /analytics/civilian-assessments  admin, super admin
+    Feedback and resource requests /analytics/feedback-and-requests  + secretary
+    Follow-ups                  /analytics/follow-ups            admin, super admin
+
 Officer Portal                                  law_enforcement
   Home            /police
   New assessment  /police/new-assessment
@@ -996,6 +1006,19 @@ Grouping and order only — access is still each item's own `canAccess()`.
 
 Search Records (`/police/search`, a "Coming soon" placeholder) was removed: filtering on
 the assessment tables replaces it.
+
+**Analytics** (`/analytics`, `App\Filament\Clusters\Analytics\AnalyticsCluster`, team plan
+task 28): Harbor Safe's totals and charts, one item in its own **Reports** group, four
+custom pages as tabs (`Clusters/Analytics/Pages/`). Every agency is counted together, so
+officers and police admins never reach it; a secretary sees only the Feedback and
+resource requests tab and lands on it from `/analytics`. Totals only: the stats services
+(`App\Services\Analytics\*`) count in SQL and never select names, phone numbers,
+comments or dates of birth. One date range (presets or custom days, Eastern) and, on the
+two assessment tabs, a filter by victim sex (required) and offender sex (optional), are
+shared by the tabs through the session (`App\Filament\Analytics\AnalyticsPage`). High
+risk is "yes to Q1–3, or 4 or more yes" (`AssessmentStats::HIGH_RISK_RULE`). The pages
+authorize themselves with `canAccess()`; they are pages, not resources, so Shield's
+resource generation never touches them. `AnalyticsTest`.
 
 **Logs** (`/logs`, `App\Filament\Clusters\Logs\LogsCluster`): one sidebar item whose two
 resources show as **tabs across the top** (`SubNavigationPosition::Top`, the Content
