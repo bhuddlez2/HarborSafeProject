@@ -34,8 +34,8 @@ PHP toolchain installed so you can run the app and see your changes.
 
 > **Read this bit before downloading anything.** XAMPP is the obvious choice on
 > Windows and it is *not sufficient on its own*. XAMPP for Windows ships at most
-> **PHP 8.2.12**, and this project needs **PHP 8.3 or newer** — Laravel 13
-> itself requires it, so there is no way to lower the bar. You install XAMPP for
+> **PHP 8.2.12**, and this project needs **PHP 8.4.1 or newer** — the locked
+> Laravel 13 and Symfony 8 packages require it, so there is no way to lower the bar. You install XAMPP for
 > the database, and PHP separately.
 
 ### XAMPP — for MariaDB only
@@ -53,10 +53,10 @@ project goes in `htdocs`, and you never need a virtual host.
 MySQL must be running whenever you work on the project, and it does not start
 on boot by default.
 
-### PHP 8.3+ — installed separately
+### PHP 8.4+ — installed separately
 
 From [windows.php.net/download](https://windows.php.net/download/), take a
-**Non-Thread-Safe (NTS), x64 Zip** of PHP 8.3 or newer. NTS is the right build
+**Non-Thread-Safe (NTS), x64 Zip** of PHP 8.4 (8.4.1 or newer). NTS is the right build
 for the command line and `php artisan serve`; the thread-safe one is only for
 running PHP inside Apache, which we aren't.
 
@@ -116,7 +116,7 @@ add it. This is the step people get stuck on.
 Check it:
 
 ```bash
-php -v          # must print 8.3 or newer
+php -v          # must print 8.4.1 or newer
 node -v         # v20 or newer
 ```
 
@@ -360,7 +360,7 @@ If classes are mysteriously not applying, check this first.
 |---|---|
 | `php` is not recognised | PATH (step 3), or you didn't open a new terminal |
 | `php -v` prints **8.2.x** | You're getting XAMPP's PHP — remove `C:\xampp\php` from PATH (step 3.5) |
-| `requires php ^8.3` / `your php version (8.2…) does not satisfy` | Same cause as above |
+| `requires php >=8.4.1` / `your php version (8.2…) does not satisfy` | Same cause as above (or a PHP 8.3 install: get 8.4) |
 | `php --ini` says Loaded Configuration File **(none)** | You didn't copy `php.ini-development` to `php.ini` (step 4) |
 | `requires ext-intl` during `composer install` | Step 4 — and check the other seven while you're there |
 | `could not find driver` on any database command | `extension=pdo_mysql` still commented out (step 4) |

@@ -23,7 +23,7 @@ see [Schema_Reference.md](Schema_Reference.md).
 
 | Tool | Version | Notes |
 |---|---|---|
-| PHP | 8.3+ | **Not from XAMPP on Windows** — it ships 8.2 at most, and Laravel 13 needs 8.3. See [PORTAL_SETUP.md](PORTAL_SETUP.md) |
+| PHP | 8.4.1+ | **Not from XAMPP on Windows** — it ships 8.2 at most, and the locked packages need 8.4.1. See [PORTAL_SETUP.md](PORTAL_SETUP.md) |
 | Composer | 2.x | |
 | Node.js | 20+ | Next.js 16 requires it. **Also needed system-wide, not only through nvm**, for the staff panel's PDF downloads. See the note below |
 | MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running.** On Windows, XAMPP is a fine way to get just this |
