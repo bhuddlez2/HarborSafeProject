@@ -25,3 +25,5 @@ Add new items at the bottom and give each one the next number.
 | 10 | Staff panel → landing page for super admins, admins and secretaries (`App\Filament\StaffLanding`) | Build a real landing (home) page for these users. They currently land on the Follow-ups queue after signing in. | Tyler | Open |
 | 11 | Website → home page (`website/frontend`), the "We are here to help you" header section | On narrow screens the header text and the rest of the section sit off to one side, with only the grey and black image filling the other side, so it looks unbalanced. Add another picture to balance it, centre the header, or both. | Trevor | Open |
 | 12 | Website → footer (every page) | Everything in the footer is left-aligned. Right-align some of it so the footer looks evenly spread across the page. | Trevor | Open |
+| 13 | Staff panel → Civilian assessments (`/civilian-assessments`) | Add filters to the civilian assessment list that match the ones on the police assessment tables (My Assessments and Assessment review). | Ashley | Open |
+| 14 | Database (`portal/backend`) | Hash sensitive data before it is saved to the database. | Ashley | Open |
