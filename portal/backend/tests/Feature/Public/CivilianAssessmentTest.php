@@ -198,8 +198,10 @@ test('the 11th submission in a minute is throttled', function () {
     expect(civilianStoredRow(CIVILIAN_TEST_VICTIM.'11'))->toBeNull();
 });
 
-test('the old per-table routes no longer accept anonymous writes', function (string $url) {
-    $this->postJson($url, civilianPayload())->assertUnauthorized();
+// Removed outright in team plan task 29 (see ApiSurfaceTest); this only
+// checks a civilian submission can't reach the tables any other way.
+test('the old per-table routes are gone', function (string $url) {
+    $this->postJson($url, civilianPayload())->assertNotFound();
 
     expect(civilianStoredRow())->toBeNull();
 })->with(['/api/assessments', '/api/private-assessments', '/api/submitter-info']);

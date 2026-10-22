@@ -42,9 +42,9 @@ use UnitEnum;
 // The law-enforcement Lethality Assessment wizard, carried over from the
 // former Next.js portal/frontend/app/police/portal/page.js: same phases,
 // fields, labels, options, copy and styling. Field names and the baseline
-// rules come from AssessmentController / LawEnforcementAssessmentController
-// (the API's validation); the stricter client-side rules the original
-// enforced (app/lib/validation.js) are layered on top.
+// rules came from the old officer API (removed in team plan task 29), with
+// the stricter client-side rules the original enforced layered on top. This
+// wizard is now the only way an officer assessment is created.
 class NewAssessment extends Page
 {
     // Same wording and order as website/frontend/src/app/lib/lethality-questions.js,

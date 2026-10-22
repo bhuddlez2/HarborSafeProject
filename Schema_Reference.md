@@ -220,7 +220,7 @@ Deliberately *not* granted: `SELECT`, `UPDATE` or `DELETE` on anything (a submis
 
 Once created, put the credentials in `DB_USERNAME_PORTAL_PUBLIC`/`DB_PASSWORD_PORTAL_PUBLIC` (database name from `DB_DATABASE_PORTAL`; `assessment_app_db` is what `.env.example` uses). **Required on every server**: the connection only borrows Portal's credentials when `APP_ENV` is `local` or `testing`, and has none otherwise, so a server without the restricted user refuses civilian submissions instead of making them with full access. Like the other restricted users, it has to be created by hand in each environment; migrations can't grant MySQL privileges.
 
-The three civilian tables' old per-table `store` routes (`POST /api/assessments`, `/api/private-assessments`, `/api/submitter-info`), which wrote through the full-access `Portal` connection with no throttle, are now behind `auth:sanctum` like their other actions.
+The three civilian tables' old per-table routes (`/api/assessments`, `/api/private-assessments`, `/api/submitter-info`), which wrote through the full-access `Portal` connection with no throttle, were removed with the rest of the signed-in API (team plan task 29).
 
 ---
 
@@ -442,4 +442,4 @@ Like the `FeedbackPublic` grants, these have to be run by hand against each envi
 ### Requirements captured in the original design notes — not yet implemented (this was a schema-only pass)
 - Password policy: minimum 15 characters, maximum 64, checked against a common-password list — this is application-layer validation, not a schema concern; the `password` column already comfortably fits any hash Laravel produces.
 - Two-factor authentication — the `users` table has Fortify-style columns for this, but Fortify isn't installed and no 2FA logic exists yet. Filament's built-in MFA (the likely route, since sign-in is Filament's) uses its own column names, so these would be renamed, remapped, or dropped when 2FA is built.
-- Authorization rule (admins see everything, police admins only their own agency's officers' submissions, law-enforcement only their own) — enforced in the staff panel for law-enforcement assessments by the `LawEnforcementAssessment::visibleTo()` query scope, which `LawEnforcementAssessmentPolicy` and both assessment screens (My Assessments, Assessment review) go through. The API's `auth:sanctum` routes still have no per-record ownership check.
+- Authorization rule (admins see everything, police admins only their own agency's officers' submissions, law-enforcement only their own) — enforced in the staff panel for law-enforcement assessments by the `LawEnforcementAssessment::visibleTo()` query scope, which `LawEnforcementAssessmentPolicy` and both assessment screens (My Assessments, Assessment review) go through. There is no other way in: the old `auth:sanctum` API routes were removed (team plan task 29).

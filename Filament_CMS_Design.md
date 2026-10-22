@@ -204,9 +204,9 @@ This replaced a placeholder that never authenticated anyone (§10).
 directly, inside one `Portal` transaction with the `_assessment_answers` row. The
 cross-origin session design this section used to describe — a shared `SESSION_DOMAIN`,
 `supports_credentials`, the Next.js wizard sending `credentials: 'include'` — is
-**dropped**: nothing outside the panel needs the staff session any more. The
-`/api/law-enforcement-assessments` routes remain, behind `auth:sanctum`, and their
-`store()` likewise takes `submitted_by` from `$request->user()`, never the body.
+**dropped**: nothing outside the panel needs the staff session any more. The old
+`/api/law-enforcement-assessments` routes were removed in team plan task 29 (2026-10-21),
+with every other signed-in API route: the wizard is the only way in.
 
 **Look and feel.** The panel's theme (`resources/css/filament/staff/theme.css`,
 compiled by Vite) carries over the officer portal's design for every role: `#5C0F8B`
@@ -681,14 +681,13 @@ Officer submissions used to send `submitted_by` from the client as a hardcoded
 `LawEnforcementAssessmentController::store()` never tied it to the caller.
 
 Now the wizard is a Filament page and sets `submitted_by = auth()->id()` server-side
-(Phase 11); the placeholder is gone with `submitLawEnforcementAssessment()`. The API's
-`store()` sits behind `auth:sanctum`, accepts only `law_enforcement` users (403
-otherwise) and takes `submitted_by` from `$request->user()`, ignoring any value in the
-body. Officer name, badge and agency are read from `law_enforcement_agents` / `agencies`
+(Phase 11); the placeholder is gone with `submitLawEnforcementAssessment()`. Officer
+name, badge and agency are read from `law_enforcement_agents` / `agencies`
 (`User::officerIdentity()`).
 
-Still open: `update()` on that controller still accepts `submitted_by` from an
-authenticated caller. Owner-only editing belongs to the policies in Phases 7–8.
+The old API controller, whose `update()` took `submitted_by` from the request, was
+removed with the rest of the signed-in API in team plan task 29 (2026-10-21). Editing is
+the panel's `AssessmentEditForm`, governed by `LawEnforcementAssessmentPolicy`.
 
 ## 11. Implementation phases
 
@@ -840,7 +839,8 @@ Account (Filament's profile page), all in an "Officer Portal" navigation group; 
 wizard as a `Wizard` page writing both assessment rows in one `Portal` transaction with
 `submitted_by = auth()->id()`; the login page restyled. Lock the assessment API down:
 LE/agent/agency routes fully behind `auth:sanctum`, and only `store` public on the three
-civilian tables. The cross-origin session previously planned here is dropped (§4).
+civilian tables (since superseded: every signed-in API route was removed in team plan
+task 29, 2026-10-21). The cross-origin session previously planned here is dropped (§4).
 *Gate:* an officer signs in, opens New assessment, submits, and both rows land linked
 with the correct `submitted_by`; secretaries get 403 on officer pages; the protected API
 routes return 401 unauthenticated.
