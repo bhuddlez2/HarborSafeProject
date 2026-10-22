@@ -273,9 +273,9 @@ class NewAssessment extends Page
                 /*
                 A second check that the safe number really is safe, required
                 by validation in create(), not only by the disabled button.
-                Unticked whenever the number changes. Not stored yet: the
-                column arrives with entered_by (team plan tasks 7 and 20).
-                Draft wording until Harbor Safe approves it.
+                Unticked whenever the number changes. Never stored: it only
+                makes sure the officer knows the number must be safe to call.
+                The civilian assessment uses the same wording.
                 */
                 Checkbox::make('SafePhoneConfirmed')
                     ->label(fn (Get $get): string => 'I have confirmed that '
