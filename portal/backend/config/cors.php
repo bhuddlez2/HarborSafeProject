@@ -25,7 +25,7 @@ browser; the real protection is still the throttles, validation and
 restricted database users behind each route.
 */
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*'],
     'allowed_methods' => ['GET', 'POST'],
     'allowed_origins' => array_values(array_filter([
         env('WEBSITE_URL'),

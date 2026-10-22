@@ -174,7 +174,7 @@ erDiagram
     _private_assessment }o--o| _submitter_info : "SubmissionID (nullable = anonymous)"
 ```
 
-Framework/Sanctum tables also present but not shown above (no app-specific structure worth diagramming): `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`, `password_reset_tokens`, `personal_access_tokens`.
+Framework tables also present but not shown above (no app-specific structure worth diagramming): `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`, `password_reset_tokens`. Sanctum's `personal_access_tokens` was dropped by `2026_10_22_120000_drop_personal_access_tokens_table` when Sanctum was removed.
 
 ### Table detail
 
