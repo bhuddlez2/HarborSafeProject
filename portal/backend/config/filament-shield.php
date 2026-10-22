@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use App\Filament\Clusters\Logs\Resources\AccessLog\AccessLogResource;
 use App\Filament\Clusters\Logs\Resources\AssessmentEdits\AssessmentEditResource;
+use App\Filament\Resources\Agencies\AgencyResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
 use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use App\Filament\Resources\StaffAccounts\StaffAccountResource;
@@ -73,6 +74,11 @@ return [
     |
     */
 
+    // Shield's spatie "super_admin" role, which skips every Gate check -
+    // including the `false` on assessment edits in
+    // LawEnforcementAssessmentPolicy. It is NOT the app's super admin
+    // (UserRole::SuperAdmin, on users.role), which is granted screen by screen
+    // and stays view-only on assessments. Never assign this spatie role.
     'super_admin' => [
         'enabled' => true,
         'name' => 'super_admin',
@@ -217,6 +223,9 @@ return [
             // Admins, and police admins with an agency (LogsCluster::canOpenLogs());
             // rows scoped by AssessmentAccessLog::visibleTo(). Read-only.
             AccessLogResource::class,
+            // Super admin only, by users.role in getAuthorizationResponse();
+            // a generated AgencyPolicy would replace that rule.
+            AgencyResource::class,
         ],
     ],
 

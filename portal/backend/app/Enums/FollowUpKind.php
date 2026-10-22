@@ -8,7 +8,7 @@ assessment and resource requests. Never service feedback, which is data
 collection only.
 
 Who works a kind's follow-ups is who is alerted when one arrives
-(NewSubmission::alertedRoles()): admins for assessments, secretaries and
+(NewSubmission::alertedRoles()): admins and super admins for assessments, secretaries and
 admins for resource requests - so adding the super admin there covers both.
 */
 enum FollowUpKind: string

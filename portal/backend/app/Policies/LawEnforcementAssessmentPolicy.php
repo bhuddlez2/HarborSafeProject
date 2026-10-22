@@ -23,6 +23,7 @@ class LawEnforcementAssessmentPolicy
             UserRole::LawEnforcement,
             UserRole::PoliceAdmin,
             UserRole::Admin,
+            UserRole::SuperAdmin,
         );
     }
 

@@ -30,7 +30,7 @@ police admin must never be offered another agency's officers or the agency
 itself (Filament_CMS_Design.md section 5, rule 5).
 
 The filters, in card order: date submitted (both tables); submitting officer
-and agency (Assessment review only - agency for admins only, by users.role);
+and agency (Assessment review only - agency for admins and super admins only, by users.role);
 victim first and last name; offender first and last name (both tables). Names
 are case-insensitive partial matches with LIKE wildcards taken literally. The
 victim's safe phone number is deliberately not filterable.
@@ -125,11 +125,11 @@ final class AssessmentFilters
         ];
     }
 
-    // Agency filters are for active admins only, by users.role (hasActiveRole)
+    // Agency filters are for active admins and super admins only, by users.role (hasActiveRole)
     // - not the Shield / spatie super_admin role.
     public static function showsAgency(): bool
     {
-        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin);
+        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
     }
 
     public static function visibleAssessments(): Builder
@@ -156,7 +156,7 @@ final class AssessmentFilters
             ->preload();
     }
 
-    // Active admins only, by users.role (hasActiveRole) - not the Shield /
+    // Active admins and super admins only, by users.role (hasActiveRole) - not the Shield /
     // spatie super_admin role. Police admins never see it, and a hidden filter
     // is never applied. Options are the agencies of officers with a visible
     // submission; the same closure also scopes the filter's own whereHas.

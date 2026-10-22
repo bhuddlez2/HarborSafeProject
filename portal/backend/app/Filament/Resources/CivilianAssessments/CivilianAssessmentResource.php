@@ -79,7 +79,7 @@ class CivilianAssessmentResource extends Resource
 
     public static function canAccess(): bool
     {
-        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin);
+        return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
     }
 
     // The same rule as the PDF download (CivilianAssessmentPdfController), so

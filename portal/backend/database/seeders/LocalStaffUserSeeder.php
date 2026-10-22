@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /*
-One staff-panel login per role, plus a second officer, an inactive admin and a
+One staff-panel login per role (super-admin@ included), plus a second officer, an inactive admin and a
 second agency, for local development only. Deliberately not registered in
 DatabaseSeeder.
 
@@ -44,6 +44,7 @@ class LocalStaffUserSeeder extends Seeder
         $password = env('LOCAL_SEED_PASSWORD') ?: 'password';
 
         $users = [
+            ['super-admin@harborsafe.test', 'Local', 'Super Admin', UserRole::SuperAdmin, true],
             ['admin@harborsafe.test', 'Local', 'Admin', UserRole::Admin, true],
             ['secretary@harborsafe.test', 'Local', 'Secretary', UserRole::Secretary, true],
             ['police-admin@harborsafe.test', 'Local', 'Police Admin', UserRole::PoliceAdmin, true],

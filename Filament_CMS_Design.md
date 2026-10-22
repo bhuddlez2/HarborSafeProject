@@ -309,39 +309,54 @@ exactly one of each pair is populated, and `Event::imageUrl()` / `Newsletter::fi
 decide which to serve. So a move back to a disk is a config change plus a backfill, not a
 rewrite.
 
-## 5. Access matrix — four roles
+## 5. Access matrix — five roles
 
 ```
-                       LE      PoliceAdm    Secretary  Admin
-Panel access           yes     yes          yes        yes
-Events / Newsletters   —       —            edit       edit
-Event categories       —       —            edit       edit
-Form options           —       —            edit       edit
+                       LE      PoliceAdm    Secretary  Admin        SuperAdmin
+Panel access           yes     yes          yes        yes          yes
+Events / Newsletters   —       —            edit       edit         edit
+Event categories       —       —            edit       edit         edit
+Form options           —       —            edit       edit         edit
   (services/resources/counties)
-Service feedback       —       —          view,      view,
-  (staff-entered forms)                   add form   add form
-Resource requests      —       —          view       view
-Civilian assessments   —       —          —          view
-LE assessments         own     own agency —          view all
-  submit               own     own (needs —          —
+Service feedback       —       —          view,      view,        view,
+  (staff-entered forms)                   add form   add form     add form
+Resource requests      —       —          view       view         view
+Civilian assessments   —       —          —          view         view
+LE assessments         own     own agency —          view all     view all
+  submit               own     own (needs —          —            —
                                an agency)
-  edit (with reason)   own     own agency —          —  (view-only)
-LE change logs         own     own agency —          view all
-Access log             —       own agency —          view all
+  edit (with reason)   own     own agency —          —  (view-only)  —  (view-only)
+LE change logs         own     own agency —          view all     view all
+Access log             —       own agency —          view all     view all
   (who opened what)            LE only
----------------------------------------------------------
-Manage officers        —       own agency —          NO
-  (create/edit/deactivate)
-Create police admins   —       —          —          NO  (super admin)
-Create secretaries     —       —          —          YES
-Create admins          —       —          —          NO  (super admin)
+Follow-ups             —       —          resource   assessments, assessments,
+                                          requests   requests     requests
+---------------------------------------------------------------------------
+Manage officers        —       own agency —          NO           any agency
+  (create/edit/deactivate)                                        (Accounts)
+Create police admins   —       —          —          NO           YES
+Create secretaries     —       —          —          YES          YES
+Create admins          —       —          —          NO           YES
+Create super admins    —       —          —          NO           YES (never itself;
+                                                                  first one by artisan)
+Agencies (add/rename)  —       —          —          —            YES (never delete)
 ```
 
-Settled 2026-10-06. "Form options" is what admin edits on the feedback and
-resource-request forms: the dropdown choices. The submissions themselves stay view-only,
-since they are statements from the public. Police admins, admins and agencies are created
-by the planned super admin role only (not yet built), never through admin. Every account
-screen takes first and last name as separate fields, 50 characters each.
+Settled 2026-10-06; super admin added 2026-10-21 (team plan task 15). "Form options" is
+what admin edits on the feedback and resource-request forms: the dropdown choices. The
+submissions themselves stay view-only, since they are statements from the public. Police
+admins, admins and agencies are created by super admin only, never through admin; super
+admins by other super admins (never themselves; the first by
+`php artisan staff:create-super-admin`). Every account screen takes first
+and last name as separate fields, 50 characters each.
+
+**Super admin is the one superset of admin, and only of admin.** It is granted screen by
+screen (`UserRole::SuperAdmin` in each `hasActiveRole()` list), never by `Gate::before`
+or Shield's spatie `super_admin` role, which would skip the `false` on assessment edits.
+It has no Officer Portal and is view-only on assessments, like admin. An account's role
+and agency never change after creation: `LawEnforcementAssessment::visibleTo()` follows
+the submitter's *current* agency, so moving a person would hand their old assessments to
+the new agency's police admin. A move is a deactivated account plus a new one.
 
 Five rules that are easy to get wrong and must be enforced explicitly:
 

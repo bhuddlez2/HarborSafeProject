@@ -47,8 +47,11 @@ class FollowUpResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedPhone;
 
-    // The day's work queue: above every group in the sidebar.
-    protected static ?int $navigationSort = -10;
+    // The day's work queue: first under Content management, and the page
+    // admins, secretaries and super admins land on (App\Filament\StaffLanding).
+    protected static string | \UnitEnum | null $navigationGroup = 'Content management';
+
+    protected static ?int $navigationSort = 0;
 
     public static function canAccess(): bool
     {

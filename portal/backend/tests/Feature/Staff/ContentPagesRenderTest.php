@@ -138,17 +138,18 @@ test('an officer is refused every content page', function (string $route) {
 ]);
 
 /*
-The landing behaviour the whole change was about: signing in puts admin and
-secretary on content management, officers on the officer portal, and the two
-are different addresses.
+The landing behaviour the whole change was about: signing in puts Harbor Safe
+staff on the Follow-ups queue (the day's work), officers on the officer
+portal, and the two are different addresses.
 */
 test('opening the panel root sends each role to its own area', function (UserRole $role, string $landing) {
     $this->actingAs(staffUser($role))
         ->get('/')
         ->assertRedirect(route($landing));
 })->with([
-    'secretary to content' => [UserRole::Secretary, 'filament.staff.content'],
-    'admin to content' => [UserRole::Admin, 'filament.staff.content'],
+    'secretary to follow-ups' => [UserRole::Secretary, 'filament.staff.resources.follow-ups.index'],
+    'admin to follow-ups' => [UserRole::Admin, 'filament.staff.resources.follow-ups.index'],
+    'super admin to follow-ups' => [UserRole::SuperAdmin, 'filament.staff.resources.follow-ups.index'],
     'officer to the officer portal' => [UserRole::LawEnforcement, 'filament.staff.pages.police'],
     'police admin to the officer portal' => [UserRole::PoliceAdmin, 'filament.staff.pages.police'],
 ]);

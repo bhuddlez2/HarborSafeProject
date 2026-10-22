@@ -73,14 +73,14 @@ class LawEnforcementAssessment extends BaseModel
     // their queries with it and LawEnforcementAssessmentPolicy::view() asks
     // it, so a list and a single-record check can never disagree.
     //
-    // Admins see every submission; police admins only those whose submitting
+    // Admins and super admins see every submission; police admins only those whose submitting
     // officer is currently in their own agency; officers only their own.
     // Everyone else - no user, inactive, secretary, unknown role, or a police
     // admin with no agency - matches nothing. Never widen the police admin
     // branch to every agency: it was narrowed on purpose.
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user?->hasActiveRole(UserRole::Admin)) {
+        if ($user?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin)) {
             return $query;
         }
 

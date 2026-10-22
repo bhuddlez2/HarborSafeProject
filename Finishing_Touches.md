@@ -1,0 +1,25 @@
+# Finishing Touches
+
+Small fixes and polish left to do before hand-off. Each item names where it is, what needs doing, and who owns it.
+
+**How to use this list**
+
+- **Location**: the screen, page or file where the change goes (for example "Staff panel → Follow-ups" or `website/frontend/src/app/assessment/`).
+- **Item**: what needs to change, in one or two sentences.
+- **Responsible**: the person who will make the change.
+- **Status**: `Open` while the item is waiting, `In progress` once someone starts, `Done` when it is merged. Leave finished items in the list and mark them `Done`, so the list also records what was finished.
+
+Add new items at the bottom and give each one the next number.
+
+| # | Location | Item | Responsible | Status |
+|---|----------|------|-------------|--------|
+| 1 | `portal/backend/app/Services/AssessmentPdf.php`, `portal/backend/app/Support/RecordPdf.php`, `portal/backend/app/Services/ServiceFeedbackExport.php` | Change PDF export so it no longer uses Browsershot, which the shared hosting server does not support. | Beau | Open |
+| 2 | Staff panel → Logs (`/logs`), every admin role that sees it | Merge the Access log and Change log tabs into one tab. Move the Change log's filters into the new tab, keeping their current style: folded behind the Filters button at the top of the page. Keep the Show dropdown and the search bar above the list. | Connor | Open |
+| 3 | Officer Portal → hotline number pop-up shown after an assessment is submitted | Make the pop-up's two small buttons bigger, and check that the pop-up can be scrolled sideways on a phone. | Tyler | Open |
+| 4 | Account page (`EditProfile`) for every role: the Account tab for officers and police admins, and the profile link for super admins, admins and secretaries | Lock the Account page so no one can change their own details, including first name, last name and email address. The only things left editable are the password (every role) and the badge number (officers only). The password field will later become an emailed link, once email is set up. | Connor | Open |
+| 5 | Officer Portal → Home (`/police`), the landing page for officers and police admins | Make the icons smaller so the whole page fits on one screen, and confirm it at iPhone SE size in the browser's dev tools. Make the Start New Lethality Assessment card dark purple. On the police admin page, make the other two cards (View Assessments and Personnel Management) light purple with a purple outline. On the officer page, change the white "looking for a past assessment" box to the same light purple as the police admin's assessment card. | Tyler | Open |
+| 6 | Officer Portal → New assessment (the officer assessment form) | Replace the calendar pop-out on date inputs with something easier to use on a phone. | Tyler | Open |
+| 7 | Officer Portal → New assessment (the officer assessment form) | Remove the "immediate danger, call 911" notice, since the people using this form are the police. Reformat the National Domestic Violence Hotline (NDVH) and 988 entries. | Tyler | Open |
+| 8 | Officer Portal → New assessment (the officer assessment form) | Add a Close button next to the Start New Assessment button, so users can go straight back to their Home page. | Tyler | Open |
+| 9 | Staff panel → every assessment list (My Assessments, Assessment review, Civilian assessments) and every content management table | Make the tables easier to use on a phone: show fewer columns and simplify the layout. | Ashley | Open |
+| 10 | Staff panel → landing page for super admins, admins and secretaries (`App\Filament\StaffLanding`) | Build a real landing (home) page for these users. They currently land on the Follow-ups queue after signing in. | Tyler | Open |

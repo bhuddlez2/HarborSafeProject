@@ -62,7 +62,7 @@ test('an admin creates an active secretary, with name built from its parts', fun
     Livewire::test(CreateStaffAccount::class)
         ->fillForm(newSecretaryForm())
         ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoErrors();
 
     $user = User::where('email', staffRunToken().'-new@pest.test')->firstOrFail();
 
@@ -102,7 +102,7 @@ test('each name part is required and capped at 50 characters', function () {
     Livewire::test(CreateStaffAccount::class)
         ->fillForm(newSecretaryForm(['first_name' => str_repeat('a', 50), 'last_name' => str_repeat('b', 50)]))
         ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoErrors();
 });
 
 test('an admin sees and edits secretaries only, never other roles or itself', function () {
@@ -203,7 +203,7 @@ test('a police admin creates an officer with first and last name', function () {
         ->assertHasFormErrors(['first_name' => 'max'])
         ->fillForm(newSecretaryForm(['badge_number' => 'B-123']))
         ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoErrors();
 
     $officer = User::where('email', staffRunToken().'-new@pest.test')->firstOrFail();
 

@@ -3,8 +3,8 @@
 namespace App\Filament;
 
 use App\Enums\UserRole;
-use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Pages\Police;
+use App\Filament\Resources\FollowUps\FollowUpResource;
 use App\Models\User;
 
 /*
@@ -21,12 +21,10 @@ only sets the sidebar brand link.
 Both entry points consult this map instead: StaffLoginResponse (after a
 successful sign-in) and RedirectStaffHome (someone opening / directly).
 
-The content arm points at the cluster, not at a page. Opening a cluster runs
-Cluster::mount(), which redirects to the first tab the user can actually see -
-Events for both admin and secretary - so there is no separate landing page to
-keep in step with the matrix.
+Harbor Safe staff (super admin, admin, secretary) land on the Follow-ups
+queue, the day's work, which each of them can open (FollowUp::kindsFor()).
 
-Order still matters: the content arm is checked first so admin and secretary
+Order still matters: the Harbor Safe arm is checked first so those three
 resolve together, before the officer arm is considered.
 */
 final class StaffLanding
@@ -38,7 +36,7 @@ final class StaffLanding
         }
 
         return match (true) {
-            $user->hasActiveRole(UserRole::Admin, UserRole::Secretary) => ContentCluster::getUrl(),
+            $user->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin, UserRole::Secretary) => FollowUpResource::getUrl(),
             $user->hasActiveRole(UserRole::LawEnforcement, UserRole::PoliceAdmin) => Police::getUrl(),
             // Inactive, or a role with no landing page of its own. Callers fall
             // back to Filament's default rather than guessing.
