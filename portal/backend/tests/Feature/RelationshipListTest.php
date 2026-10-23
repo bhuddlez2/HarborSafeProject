@@ -58,16 +58,12 @@ test('the server refuses free text, a missing value, and Other without a detail'
     'a detail over 50 characters' => [['OffenderVictimRelationship' => 'other', 'OffenderVictimRelationshipOther' => str_repeat('a', 51)], 'OffenderVictimRelationshipOther'],
 ]);
 
-test('both APIs use those rules', function () {
-    // The civilian endpoint is public; free text is refused there.
+// The civilian endpoint is the only API that takes a relationship; officers
+// submit through the wizard (next test). Free text is refused.
+test('the civilian API uses those rules', function () {
     $this->postJson('/api/public/civilian-assessments', ['OffenderVictimRelationship' => 'Boyfriend'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('OffenderVictimRelationship');
-
-    // The officer endpoint's rules (behind auth) are the same list, now
-    // required - checked at the source rather than through a token.
-    $source = file_get_contents(app_path('Http/Controllers/LawEnforcementAssessmentController.php'));
-    expect(substr_count($source, 'OffenderRelationship::validationRules('))->toBe(2);
 });
 
 test('the wizard offers the list, and asks for detail only for Other', function () {

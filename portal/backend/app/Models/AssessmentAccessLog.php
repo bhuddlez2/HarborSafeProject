@@ -67,7 +67,7 @@ class AssessmentAccessLog extends BaseModel
         ]);
     }
 
-    // The rows the Access log shows $user. Admin: every row, of every kind.
+    // The rows the Access log shows $user. Admin and super admin: every row, of every kind.
     // Police admin: only rows about a law-enforcement assessment that
     // LawEnforcementAssessment::visibleTo() lets them see - their own
     // agency's officers' - whoever opened it; never a civilian assessment or
@@ -76,7 +76,7 @@ class AssessmentAccessLog extends BaseModel
     // AssessmentEdit::visibleTo(), never a rule of its own.
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user?->hasActiveRole(UserRole::Admin)) {
+        if ($user?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin)) {
             return $query;
         }
 

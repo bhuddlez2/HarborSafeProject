@@ -24,7 +24,7 @@ class SubmissionPdfController extends Controller
 {
     public function serviceFeedback(Request $request, string $id, AssessmentPdf $pdf): Response
     {
-        abort_unless($request->user()?->hasActiveRole(UserRole::Admin, UserRole::Secretary), 403);
+        abort_unless($request->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin, UserRole::Secretary), 403);
 
         $record = ServiceFeedback::with('service')->whereKey($id)->firstOrFail();
 

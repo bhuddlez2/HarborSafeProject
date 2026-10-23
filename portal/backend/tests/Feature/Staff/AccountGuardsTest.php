@@ -141,7 +141,7 @@ test('a police admin creates only active officers in its own agency, whatever th
             'is_active' => false,
         ]))
         ->call('create')
-        ->assertHasNoFormErrors();
+        ->assertHasNoErrors();
 
     $officer = User::where('email', staffRunToken().'-officer@pest.test')->firstOrFail();
 

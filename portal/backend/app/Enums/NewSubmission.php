@@ -13,18 +13,18 @@ use Filament\Support\Icons\Heroicon;
 The kinds of submission that raise an alert in the staff panel's bell (team
 plan task 17), and who hears about each - decided here and nowhere else:
 
-- Resource requests and service feedback from the website: secretaries and
-  admins. Feedback that staff typed in themselves (ServiceFeedback::
+- Resource requests and service feedback from the website: secretaries,
+  admins and super admins. Feedback that staff typed in themselves (ServiceFeedback::
   recordStaffEntry()) never alerts: whoever entered it already knows.
-- Lethality assessments, from the website or from an officer: admins only.
+- Lethality assessments, from the website or from an officer: admins and
+  super admins only.
   Secretaries never see assessment PII; officers and police admins are never
   alerted, since they already know about the call.
 
 Alerts carry no names or details - just what arrived and a link to the
 screen where the recipient can open it.
 
-TODO when the super admin role exists (team plan task 15): add it to every
-alertedRoles() list below.
+A new Harbor Safe role goes in every alertedRoles() list below.
 */
 enum NewSubmission
 {
@@ -55,8 +55,8 @@ enum NewSubmission
     public function alertedRoles(): array
     {
         return match ($this) {
-            self::ResourceRequest, self::ServiceFeedback => [UserRole::Secretary, UserRole::Admin],
-            self::CivilianAssessment, self::LawEnforcementAssessment => [UserRole::Admin],
+            self::ResourceRequest, self::ServiceFeedback => [UserRole::Secretary, UserRole::Admin, UserRole::SuperAdmin],
+            self::CivilianAssessment, self::LawEnforcementAssessment => [UserRole::Admin, UserRole::SuperAdmin],
         };
     }
 

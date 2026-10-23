@@ -42,9 +42,9 @@ use UnitEnum;
 // The law-enforcement Lethality Assessment wizard, carried over from the
 // former Next.js portal/frontend/app/police/portal/page.js: same phases,
 // fields, labels, options, copy and styling. Field names and the baseline
-// rules come from AssessmentController / LawEnforcementAssessmentController
-// (the API's validation); the stricter client-side rules the original
-// enforced (app/lib/validation.js) are layered on top.
+// rules came from the old officer API (removed in team plan task 29), with
+// the stricter client-side rules the original enforced layered on top. This
+// wizard is now the only way an officer assessment is created.
 class NewAssessment extends Page
 {
     // Same wording and order as website/frontend/src/app/lib/lethality-questions.js,
@@ -273,9 +273,9 @@ class NewAssessment extends Page
                 /*
                 A second check that the safe number really is safe, required
                 by validation in create(), not only by the disabled button.
-                Unticked whenever the number changes. Not stored yet: the
-                column arrives with entered_by (team plan tasks 7 and 20).
-                Draft wording until Harbor Safe approves it.
+                Unticked whenever the number changes. Never stored: it only
+                makes sure the officer knows the number must be safe to call.
+                The civilian assessment uses the same wording.
                 */
                 Checkbox::make('SafePhoneConfirmed')
                     ->label(fn (Get $get): string => 'I have confirmed that '

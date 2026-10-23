@@ -44,6 +44,7 @@ class FormOptionsCluster extends Cluster
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::Admin,
+            UserRole::SuperAdmin,
             UserRole::Secretary,
         );
     }

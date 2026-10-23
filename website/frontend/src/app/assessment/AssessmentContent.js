@@ -246,8 +246,8 @@ export default function AssessmentContent() {
           <Modal title="Confidentiality Notice" subtitle="Before you begin" dismissible={false} onClose={() => setShowSafetyModal(false)}>
             <div className="px-6 py-5">
               <p className="text-sm text-gray-600 leading-relaxed mb-5">
-                Information you provide in this assessment is kept confidential and used solely to
-                connect you with support services.
+                Information you provide in this assessment is kept confidential. Harbor Safe
+                reviews every assessment and follows up on each one.
               </p>
 
               <div className="space-y-4 mb-5">
@@ -261,8 +261,24 @@ export default function AssessmentContent() {
                   <div>
                     <p className="text-sm font-semibold text-gray-900 mb-0.5">Your information is protected</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      Responses are treated as confidential. We will not share your information
-                      without your consent except as required by law.
+                      Nothing is saved until you press Submit. After that, your answers are seen
+                      only by Harbor Safe, except where the law requires us to report.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-gray-700 stroke-2 fill-none" aria-hidden="true">
+                      {/* phone icon, feathericons.com */}
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Harbor Safe will follow up</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      A Harbor Safe advocate will contact the victim at the safe phone number you
+                      provide, so only give a number that is safe to call.
                     </p>
                   </div>
                 </div>
@@ -562,7 +578,7 @@ export default function AssessmentContent() {
             This screen contains {total} yes/no questions. Ask each question exactly as written.
           </p>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            Nothing is saved or transmitted. Closing the tab clears the results.
+            Nothing is saved until you submit. Closing the tab before then clears your answers.
           </p>
           <button onClick={() => setPhase("questions")} className={PRIMARY}>Begin assessment</button>
         </div>

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OfficerAccounts;
 
 use App\Enums\UserRole;
+use App\Filament\Forms\AccountFormSections;
 use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\OfficerAccounts\Pages\CreateOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\EditOfficerAccount;
@@ -24,7 +25,6 @@ use Filament\Tables\Table;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Validation\Rules\Password;
 use UnitEnum;
 
 // Officer provisioning: a police admin creates, edits and deactivates the
@@ -123,55 +123,40 @@ class OfficerAccountResource extends Resource
             ->whereHas('lawEnforcementAgent', fn (Builder $agent): Builder => $agent->where('agency_id', $agencyId));
     }
 
-    // No role or agency field: both are forced on save by the pages.
-    // badge_number lives on law_enforcement_agents, so the pages read and
-    // write it themselves.
+    // The shared account layout (AccountFormSections). Role always shows
+    // Officer, greyed out and never sent: role and agency are forced on save
+    // by the pages. badge_number lives on law_enforcement_agents, so the
+    // pages read and write it themselves.
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                TextInput::make('first_name')
-                    ->label('First name')
-                    ->required()
-                    ->maxLength(User::NAME_PART_MAX),
-                TextInput::make('last_name')
-                    ->label('Last name')
-                    ->required()
-                    ->maxLength(User::NAME_PART_MAX),
-                TextInput::make('email')
-                    ->email()
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true),
-                TextInput::make('badge_number')
-                    ->required()
-                    ->maxLength(255),
-                Toggle::make('is_active')
-                    ->label('Active')
-                    ->helperText('Inactive officers cannot sign in. Their assessments are kept.')
-                    ->visibleOn('edit'),
-                TextInput::make('password')
-                    ->label(fn (string $operation): string => $operation === 'edit' ? 'New password' : 'Password')
-                    ->helperText(fn (string $operation): ?string => $operation === 'edit' ? 'Leave blank to keep the current password.' : null)
-                    ->password()
-                    ->revealable()
-                    ->autocomplete('new-password')
-                    ->required(fn (string $operation): bool => $operation === 'create')
-                    ->rule(Password::min(15)->max(64)->uncompromised())
-                    ->same('passwordConfirmation')
-                    ->dehydrated(fn ($state): bool => filled($state)),
-                TextInput::make('passwordConfirmation')
-                    ->label('Confirm password')
-                    ->password()
-                    ->revealable()
-                    ->autocomplete('new-password')
-                    // Required on create, where the password is. On edit only once a new
-                    // password is typed, so it must not say "Optional" either - see
-                    // App\Filament\Forms\RequirementMarkers.
-                    ->required(fn (string $operation): bool => $operation === 'create')
-                    ->requiredWith('password')
-                    ->placeholder(null)
-                    ->dehydrated(false),
+                AccountFormSections::details([
+                    AccountFormSections::fixedRole(fn (): UserRole => UserRole::LawEnforcement),
+                    TextInput::make('email')
+                        ->email()
+                        ->required()
+                        ->maxLength(255)
+                        ->unique(ignoreRecord: true),
+                    TextInput::make('first_name')
+                        ->label('First name')
+                        ->required()
+                        ->maxLength(User::NAME_PART_MAX),
+                    TextInput::make('last_name')
+                        ->label('Last name')
+                        ->required()
+                        ->maxLength(User::NAME_PART_MAX),
+                    TextInput::make('badge_number')
+                        ->label('Badge number')
+                        ->required()
+                        ->maxLength(255),
+                    Toggle::make('is_active')
+                        ->label('Active')
+                        ->helperText('Inactive officers cannot sign in. Their assessments are kept.')
+                        ->visibleOn('edit')
+                        ->columnSpanFull(),
+                ]),
+                AccountFormSections::password(),
             ]);
     }
 

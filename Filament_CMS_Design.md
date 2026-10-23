@@ -204,9 +204,9 @@ This replaced a placeholder that never authenticated anyone (§10).
 directly, inside one `Portal` transaction with the `_assessment_answers` row. The
 cross-origin session design this section used to describe — a shared `SESSION_DOMAIN`,
 `supports_credentials`, the Next.js wizard sending `credentials: 'include'` — is
-**dropped**: nothing outside the panel needs the staff session any more. The
-`/api/law-enforcement-assessments` routes remain, behind `auth:sanctum`, and their
-`store()` likewise takes `submitted_by` from `$request->user()`, never the body.
+**dropped**: nothing outside the panel needs the staff session any more. The old
+`/api/law-enforcement-assessments` routes were removed in team plan task 29 (2026-10-21),
+with every other signed-in API route: the wizard is the only way in.
 
 **Look and feel.** The panel's theme (`resources/css/filament/staff/theme.css`,
 compiled by Vite) carries over the officer portal's design for every role: `#5C0F8B`
@@ -309,39 +309,57 @@ exactly one of each pair is populated, and `Event::imageUrl()` / `Newsletter::fi
 decide which to serve. So a move back to a disk is a config change plus a backfill, not a
 rewrite.
 
-## 5. Access matrix — four roles
+## 5. Access matrix — five roles
 
 ```
-                       LE      PoliceAdm    Secretary  Admin
-Panel access           yes     yes          yes        yes
-Events / Newsletters   —       —            edit       edit
-Event categories       —       —            edit       edit
-Form options           —       —            edit       edit
+                       LE      PoliceAdm    Secretary  Admin        SuperAdmin
+Panel access           yes     yes          yes        yes          yes
+Events / Newsletters   —       —            edit       edit         edit
+Event categories       —       —            edit       edit         edit
+Form options           —       —            edit       edit         edit
   (services/resources/counties)
-Service feedback       —       —          view,      view,
-  (staff-entered forms)                   add form   add form
-Resource requests      —       —          view       view
-Civilian assessments   —       —          —          view
-LE assessments         own     own agency —          view all
-  submit               own     own (needs —          —
+Service feedback       —       —          view,      view,        view,
+  (staff-entered forms)                   add form   add form     add form
+Resource requests      —       —          view       view         view
+Civilian assessments   —       —          —          view         view
+LE assessments         own     own agency —          view all     view all
+  submit               own     own (needs —          —            —
                                an agency)
-  edit (with reason)   own     own agency —          —  (view-only)
-LE change logs         own     own agency —          view all
-Access log             —       own agency —          view all
+  edit (with reason)   own     own agency —          —  (view-only)  —  (view-only)
+LE change logs         own     own agency —          view all     view all
+Access log             —       own agency —          view all     view all
   (who opened what)            LE only
----------------------------------------------------------
-Manage officers        —       own agency —          NO
-  (create/edit/deactivate)
-Create police admins   —       —          —          NO  (super admin)
-Create secretaries     —       —          —          YES
-Create admins          —       —          —          NO  (super admin)
+Follow-ups             —       —          resource   assessments, assessments,
+                                          requests   requests     requests
+Analytics (totals)     —       —          feedback + all 4 tabs   all 4 tabs
+                                          requests
+                                          tab only
+---------------------------------------------------------------------------
+Manage officers        —       own agency —          NO           any agency
+  (create/edit/deactivate)                                        (Accounts)
+Create police admins   —       —          —          NO           YES
+Create secretaries     —       —          —          YES          YES
+Create admins          —       —          —          NO           YES
+Create super admins    —       —          —          NO           YES (never itself;
+                                                                  first one by artisan)
+Agencies (add/rename)  —       —          —          —            YES (never delete)
 ```
 
-Settled 2026-10-06. "Form options" is what admin edits on the feedback and
-resource-request forms: the dropdown choices. The submissions themselves stay view-only,
-since they are statements from the public. Police admins, admins and agencies are created
-by the planned super admin role only (not yet built), never through admin. Every account
-screen takes first and last name as separate fields, 50 characters each.
+Settled 2026-10-06; super admin added 2026-10-21 (team plan task 15). "Form options" is
+what admin edits on the feedback and resource-request forms: the dropdown choices. The
+submissions themselves stay view-only, since they are statements from the public. Police
+admins, admins and agencies are created by super admin only, never through admin; super
+admins by other super admins (never themselves; the first by
+`php artisan staff:create-super-admin`). Every account screen takes first
+and last name as separate fields, 50 characters each.
+
+**Super admin is the one superset of admin, and only of admin.** It is granted screen by
+screen (`UserRole::SuperAdmin` in each `hasActiveRole()` list), never by `Gate::before`
+or Shield's spatie `super_admin` role, which would skip the `false` on assessment edits.
+It has no Officer Portal and is view-only on assessments, like admin. An account's role
+and agency never change after creation: `LawEnforcementAssessment::visibleTo()` follows
+the submitter's *current* agency, so moving a person would hand their old assessments to
+the new agency's police admin. A move is a deactivated account plus a new one.
 
 Five rules that are easy to get wrong and must be enforced explicitly:
 
@@ -666,14 +684,13 @@ Officer submissions used to send `submitted_by` from the client as a hardcoded
 `LawEnforcementAssessmentController::store()` never tied it to the caller.
 
 Now the wizard is a Filament page and sets `submitted_by = auth()->id()` server-side
-(Phase 11); the placeholder is gone with `submitLawEnforcementAssessment()`. The API's
-`store()` sits behind `auth:sanctum`, accepts only `law_enforcement` users (403
-otherwise) and takes `submitted_by` from `$request->user()`, ignoring any value in the
-body. Officer name, badge and agency are read from `law_enforcement_agents` / `agencies`
+(Phase 11); the placeholder is gone with `submitLawEnforcementAssessment()`. Officer
+name, badge and agency are read from `law_enforcement_agents` / `agencies`
 (`User::officerIdentity()`).
 
-Still open: `update()` on that controller still accepts `submitted_by` from an
-authenticated caller. Owner-only editing belongs to the policies in Phases 7–8.
+The old API controller, whose `update()` took `submitted_by` from the request, was
+removed with the rest of the signed-in API in team plan task 29 (2026-10-21). Editing is
+the panel's `AssessmentEditForm`, governed by `LawEnforcementAssessmentPolicy`.
 
 ## 11. Implementation phases
 
@@ -825,7 +842,8 @@ Account (Filament's profile page), all in an "Officer Portal" navigation group; 
 wizard as a `Wizard` page writing both assessment rows in one `Portal` transaction with
 `submitted_by = auth()->id()`; the login page restyled. Lock the assessment API down:
 LE/agent/agency routes fully behind `auth:sanctum`, and only `store` public on the three
-civilian tables. The cross-origin session previously planned here is dropped (§4).
+civilian tables (since superseded: every signed-in API route was removed in team plan
+task 29, 2026-10-21). The cross-origin session previously planned here is dropped (§4).
 *Gate:* an officer signs in, opens New assessment, submits, and both rows land linked
 with the correct `submitted_by`; secretaries get 403 on officer pages; the protected API
 routes return 401 unauthenticated.
@@ -951,6 +969,13 @@ Assessments                                     admin
     Access log           /logs/access
     Change log           /logs/changes
 
+Reports                                         admin, super admin, secretary
+  Analytics              /analytics             tabs across the top; totals only
+    Law-enforcement assessments /analytics/officer-assessments   admin, super admin
+    Civilian assessments        /analytics/civilian-assessments  admin, super admin
+    Feedback and resource requests /analytics/feedback-and-requests  + secretary
+    Follow-ups                  /analytics/follow-ups            admin, super admin
+
 Officer Portal                                  law_enforcement
   Home            /police
   New assessment  /police/new-assessment
@@ -981,6 +1006,19 @@ Grouping and order only — access is still each item's own `canAccess()`.
 
 Search Records (`/police/search`, a "Coming soon" placeholder) was removed: filtering on
 the assessment tables replaces it.
+
+**Analytics** (`/analytics`, `App\Filament\Clusters\Analytics\AnalyticsCluster`, team plan
+task 28): Harbor Safe's totals and charts, one item in its own **Reports** group, four
+custom pages as tabs (`Clusters/Analytics/Pages/`). Every agency is counted together, so
+officers and police admins never reach it; a secretary sees only the Feedback and
+resource requests tab and lands on it from `/analytics`. Totals only: the stats services
+(`App\Services\Analytics\*`) count in SQL and never select names, phone numbers,
+comments or dates of birth. One date range (presets or custom days, Eastern) and, on the
+two assessment tabs, a filter by victim sex (required) and offender sex (optional), are
+shared by the tabs through the session (`App\Filament\Analytics\AnalyticsPage`). High
+risk is "yes to Q1–3, or 4 or more yes" (`AssessmentStats::HIGH_RISK_RULE`). The pages
+authorize themselves with `canAccess()`; they are pages, not resources, so Shield's
+resource generation never touches them. `AnalyticsTest`.
 
 **Logs** (`/logs`, `App\Filament\Clusters\Logs\LogsCluster`): one sidebar item whose two
 resources show as **tabs across the top** (`SubNavigationPosition::Top`, the Content

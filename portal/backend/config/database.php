@@ -33,7 +33,7 @@ return [
     'connections' => [
 
         // Default connection. Backs the stock Laravel tables (users, cache,
-        // jobs, sessions, personal_access_tokens) that don't set their own
+        // jobs, sessions) that don't set their own
         // $connection on the model/migration.
         'mariadb' => [
             'driver' => 'mariadb',

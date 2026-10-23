@@ -1,6 +1,11 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Filament\Clusters\Analytics\AnalyticsCluster;
+use App\Filament\Clusters\Analytics\Pages\CivilianAssessmentAnalytics;
+use App\Filament\Clusters\Analytics\Pages\FeedbackAnalytics;
+use App\Filament\Clusters\Analytics\Pages\FollowUpAnalytics;
+use App\Filament\Clusters\Analytics\Pages\OfficerAssessmentAnalytics;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\EventCategories\EventCategoryResource;
 use App\Filament\Clusters\Content\Resources\Events\EventResource;
@@ -15,6 +20,7 @@ use App\Filament\Pages\NewAssessment;
 use App\Filament\Pages\Police;
 use App\Filament\Clusters\Logs\LogsCluster;
 use App\Filament\Clusters\Logs\Resources\AccessLog\AccessLogResource;
+use App\Filament\Resources\Agencies\AgencyResource;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
@@ -55,6 +61,7 @@ function allStaffComponents(): array
         'form-options.resource-types' => ResourceTypeResource::class,
         'form-options.counties' => CountyResource::class,
         'accounts' => StaffAccountResource::class,
+        'agencies' => AgencyResource::class,
         'assessment-review' => AssessmentReviewResource::class,
         'civilian-assessments' => CivilianAssessmentResource::class,
         'police.home' => Police::class,
@@ -64,6 +71,11 @@ function allStaffComponents(): array
         'logs.cluster' => LogsCluster::class,
         'logs.access' => AccessLogResource::class,
         'logs.changes' => AssessmentEditResource::class,
+        'analytics.cluster' => AnalyticsCluster::class,
+        'analytics.officer-assessments' => OfficerAssessmentAnalytics::class,
+        'analytics.civilian-assessments' => CivilianAssessmentAnalytics::class,
+        'analytics.feedback' => FeedbackAnalytics::class,
+        'analytics.follow-ups' => FollowUpAnalytics::class,
     ];
 }
 
@@ -77,6 +89,8 @@ dataset('role matrix', [
             // Resource requests only; the queue never shows a secretary an
             // assessment (FollowUp::visibleTo()).
             'follow-ups',
+            // Analytics: the feedback and resource request tab only.
+            'analytics.cluster', 'analytics.feedback',
         ],
     ],
     // Admin gets everything on the content side plus the all-submissions
@@ -100,6 +114,30 @@ dataset('role matrix', [
             // Logs: who viewed or downloaded which form, and every edit to an
             // officer assessment. Every row; read-only.
             'logs.cluster', 'logs.access', 'logs.changes',
+            // Analytics: every tab, every agency together.
+            'analytics.cluster', 'analytics.officer-assessments', 'analytics.civilian-assessments',
+            'analytics.feedback', 'analytics.follow-ups',
+        ],
+    ],
+    // Admin's row plus Agencies (team plan task 15). Still no Officer Portal:
+    // super admin never submits or edits an assessment, so New assessment and
+    // My Assessments stay closed.
+    'super_admin' => [
+        UserRole::SuperAdmin,
+        [
+            'content.cluster', 'content.events', 'content.newsletters', 'content.categories',
+            'submissions.cluster', 'submissions.service-feedback', 'submissions.resource-requests',
+            'form-options.services', 'form-options.resource-types', 'form-options.counties',
+            'assessment-review',
+            'civilian-assessments',
+            // Admins, secretaries, police admins and officers; never another
+            // super admin (StaffAccountResource::manageableRoles()).
+            'accounts',
+            'agencies',
+            'follow-ups',
+            'logs.cluster', 'logs.access', 'logs.changes',
+            'analytics.cluster', 'analytics.officer-assessments', 'analytics.civilian-assessments',
+            'analytics.feedback', 'analytics.follow-ups',
         ],
     ],
     // Reviews its own agency's law-enforcement submissions in Assessment
@@ -170,6 +208,7 @@ test('an inactive account is refused everything, whatever its role', function (U
     expect(staffUser($role, isActive: false)->canAccessPanel(filament()->getPanel('staff')))
         ->toBeFalse();
 })->with([
+    'super_admin' => [UserRole::SuperAdmin],
     'admin' => [UserRole::Admin],
     'secretary' => [UserRole::Secretary],
     'police_admin' => [UserRole::PoliceAdmin],
@@ -212,6 +251,9 @@ test('the assessment wizard is for officers and police admins with an agency onl
     $this->actingAs(staffUser(UserRole::Admin));
     expect(NewAssessment::canAccess())->toBeFalse();
 
+    $this->actingAs(staffUser(UserRole::SuperAdmin));
+    expect(NewAssessment::canAccess())->toBeFalse();
+
     $this->actingAs(staffUser(UserRole::Secretary));
     expect(NewAssessment::canAccess())->toBeFalse();
 
@@ -222,22 +264,23 @@ test('the assessment wizard is for officers and police admins with an agency onl
 /*
 The routing complaint that started this work: everyone signs in at the same
 screen, and where they land afterwards depends on their role - police to the
-officer portal, admin and secretary to content management, which must not be a
-/police/* address.
+officer portal, Harbor Safe staff (super admin, admin, secretary) to the
+Follow-ups queue, which must not be a /police/* address.
 */
 test('each role lands on its own area after signing in', function () {
-    $contentUrl = ContentCluster::getUrl();
+    $followUpsUrl = FollowUpResource::getUrl();
     $policeUrl = Police::getUrl();
 
-    expect(StaffLanding::urlFor(staffUser(UserRole::Admin)))->toBe($contentUrl)
-        ->and(StaffLanding::urlFor(staffUser(UserRole::Secretary)))->toBe($contentUrl)
+    expect(StaffLanding::urlFor(staffUser(UserRole::SuperAdmin)))->toBe($followUpsUrl)
+        ->and(StaffLanding::urlFor(staffUser(UserRole::Admin)))->toBe($followUpsUrl)
+        ->and(StaffLanding::urlFor(staffUser(UserRole::Secretary)))->toBe($followUpsUrl)
         ->and(StaffLanding::urlFor(staffUser(UserRole::LawEnforcement)))->toBe($policeUrl)
         ->and(StaffLanding::urlFor(staffUser(UserRole::PoliceAdmin)))->toBe($policeUrl);
 
     // The two areas are genuinely separate addresses, not one nested in the
     // other. This is what was wrong before.
-    expect($contentUrl)->toContain('/content')
-        ->and($contentUrl)->not->toContain('/police')
+    expect($followUpsUrl)->toContain('/follow-ups')
+        ->and($followUpsUrl)->not->toContain('/police')
         ->and($policeUrl)->toContain('/police');
 });
 

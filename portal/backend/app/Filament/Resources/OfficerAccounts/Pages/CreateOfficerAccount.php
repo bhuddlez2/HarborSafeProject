@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OfficerAccounts\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Concerns\ConfirmsAccountCreated;
 use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use App\Models\LawEnforcementAgent;
 use App\Models\User;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreateOfficerAccount extends CreateRecord
 {
+    use ConfirmsAccountCreated;
+
     protected static string $resource = OfficerAccountResource::class;
 
     // Both rows in one Portal transaction. Role, is_active and agency are

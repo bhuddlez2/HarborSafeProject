@@ -129,6 +129,9 @@ class StaffPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Content management',
                 'Assessments',
+                // Analytics (App\Filament\Clusters\Analytics), for admins,
+                // super admins and secretaries.
+                'Reports',
                 'Officer Portal',
                 PoliceAdminNavigation::GROUP,
             ])

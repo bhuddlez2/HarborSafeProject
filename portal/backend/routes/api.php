@@ -1,16 +1,8 @@
 <?php
 
-use App\Models\PrivateAssessment;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 //controller connections
-use App\Http\Controllers\PrivateAssessmentController;
-use App\Http\Controllers\AssessmentController;
-use App\Http\Controllers\SubmitterInfoController;
-use App\Http\Controllers\LawEnforcementAssessmentController;
-use App\Http\Controllers\LawEnforcementAgentController;
-use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\CountyController;
@@ -22,30 +14,20 @@ use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\PublicNewsletterController;
 use App\Http\Controllers\PublicCivilianAssessmentController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum'); // "if (!token) return 401"
+/*
+The whole JSON API is the narrow public surface below. Staff work happens in
+the Filament panel, which talks to the database itself, so there are no
+signed-in API routes: the per-table apiResources for assessments, submitter
+info, officer assessments, agents and agencies (and GET /api/user) sat behind
+auth:sanctum with nothing able to issue a token, and were removed in team
+plan task 29. Don't add a staff route here - build the screen in the panel.
+ApiSurfaceTest lists every /api route and fails on anything new.
+*/
 
-// This replaces: app.get('/', (req, res) => { ... })
 Route::get('/', function () {
     return response()->json([
         'message' => 'HarborSafe API is running!'
     ]);
-});
-
-Route::middleware('auth:sanctum')->group(function () {
-    // The civilian tables. The public website no longer writes here: it
-    // submits through POST /api/public/civilian-assessments below, so every
-    // action on these - store included - needs an authenticated user.
-    Route::apiResource('/private-assessments', PrivateAssessmentController::class);
-    Route::apiResource('/assessments', AssessmentController::class);
-    Route::apiResource('/submitter-info', SubmitterInfoController::class);
-
-    // Officers submit through the staff panel's wizard now, not this API;
-    // every action here needs an authenticated user.
-    Route::apiResource('/law-enforcement-assessments', LawEnforcementAssessmentController::class);
-    Route::apiResource('/law-enforcement-agents', LawEnforcementAgentController::class);
-    Route::apiResource('/agencies', AgencyController::class);
 });
 
 // Narrow public API surface for the website - its forms, the civilian

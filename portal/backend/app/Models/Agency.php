@@ -14,4 +14,10 @@ class Agency extends BaseModel
     protected $fillable = [
         'name',
     ];
+
+    // The officers and police admins in this agency.
+    public function agents()
+    {
+        return $this->hasMany(LawEnforcementAgent::class);
+    }
 }

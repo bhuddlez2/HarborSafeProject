@@ -31,7 +31,7 @@ class FeedbackScanController extends Controller
 {
     public function show(Request $request, string $file): Response
     {
-        if (! $request->user()?->hasActiveRole(UserRole::Admin, UserRole::Secretary)) {
+        if (! $request->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin, UserRole::Secretary)) {
             throw new NotFoundHttpException;
         }
 

@@ -20,7 +20,7 @@ top of the page (the Content cluster's pattern):
   2. Change log (/logs/changes) - every edit to an officer assessment
      (AssessmentEditResource, AssessmentEdit::visibleTo())
 
-Admins see every row on both; a police admin with an agency sees only their
+Admins and super admins see every row on both; a police admin with an agency sees only their
 own agency's officer-assessment rows (section 5, rule 5). Each tab gates
 itself with the same rule, so Cluster::shouldRegisterNavigation() hides the
 item when both refuse, and /logs opens the first tab the user can open
@@ -64,13 +64,13 @@ class LogsCluster extends Cluster
         return self::canOpenLogs();
     }
 
-    // Active admins, and active police admins with an agency. Shared by both
+    // Active admins and super admins, and active police admins with an agency. Shared by both
     // tabs, so the three can't disagree.
     public static function canOpenLogs(): bool
     {
         $user = Filament::auth()->user();
 
-        return (bool) $user?->hasActiveRole(UserRole::Admin)
+        return (bool) $user?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin)
             || $user?->managedAgencyId() !== null;
     }
 }

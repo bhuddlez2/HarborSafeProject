@@ -65,6 +65,7 @@ class NewsletterResource extends Resource
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(
             UserRole::Admin,
+            UserRole::SuperAdmin,
             UserRole::Secretary,
         );
     }

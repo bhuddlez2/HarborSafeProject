@@ -71,13 +71,13 @@ class PrivateAssessment extends BaseModel
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
     }
 
-    // Who may see civilian assessments: active admins, all of them; nobody
+    // Who may see civilian assessments: active admins and super admins, all of them; nobody
     // else, any of them (Filament_CMS_Design.md section 5). The Civilian
     // assessments screen and the PDF download both go through this, as the
     // law-enforcement side goes through LawEnforcementAssessment::visibleTo().
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        return $user?->hasActiveRole(UserRole::Admin)
+        return $user?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin)
             ? $query
             : $query->whereRaw('1 = 0');
     }
