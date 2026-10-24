@@ -6,8 +6,9 @@ content API and website cutover), 11 (officer screens and wizard in Filament) an
 
 **The CMS is end to end as of 2026-10-01.** Staff publish an event in the panel and it
 appears on the public website without a deploy, image included. What remains is admin
-user management (§11 phase 8; police admins already provision their own officers), the change-log observer (§8), Shield permissions and policies
-(§11 phase 7).
+user management (§11 phase 8; police admins already provision their own officers) and the
+change-log observer (§8). Phase 7's permissions were settled on 2026-10-24 without Shield:
+it was removed unused, and every screen lists the actions it allows (§4, Authorization).
 
 The content side of the panel is now built and under test: events, newsletters,
 categories, the two public-form submission lists and the three form-option lookups, plus
@@ -50,7 +51,8 @@ Confirmed by running a real `composer require --dry-run` against this project's 
 
 The full dependency tree resolves cleanly against the existing Sanctum 4 / Pest 4 /
 Tinker 3 setup with no conflicts. `bezhansalleh/filament-shield` 4.3.1 supports Filament
-`^4.0|^5.0` on Laravel `^13`, so Shield does not constrain the version choice.
+`^4.0|^5.0` on Laravel `^13`, so Shield does not constrain the version choice. (Shield
+was removed on 2026-10-24, unused; see §3.3.)
 
 One thing not to be alarmed by: `composer audit` reports 34 advisories across 10
 packages. That was verified against the **current** lock file, before Filament. It is
@@ -75,8 +77,8 @@ On Fedora/Debian it is a separate package (`php-intl`). On Windows it is a `php.
 line — the DLL ships in PHP's `ext/` directory, commented out as `;extension=intl`.
 
 **Related, and worse on Windows: XAMPP cannot run this project at all.** XAMPP for
-Windows ships PHP 8.2.12 at most, and `laravel/framework` v13 requires `^8.3` (as do
-`spatie/laravel-permission` 8.3.0 and Pest 4), so there is no version to lower to. PHP
+Windows ships PHP 8.2.12 at most, and `laravel/framework` v13 requires `^8.3` (as does
+Pest 4), so there is no version to lower to. PHP
 has to be installed separately from XAMPP, which is then useful only for MariaDB. A
 standalone Windows PHP also ships **no `php.ini` at all** and has every optional
 extension off, so `intl` is one of eight lines to uncomment rather than one — the others
@@ -128,57 +130,22 @@ it, because a blob that squeezes in can still fail to read back out.
 assumes it, and `PORTAL_SETUP.md` lists it — but nothing in this feature depends on it
 any more.
 
-### 3.3 spatie/laravel-permission will silently target the wrong database
+### 3.3 spatie/laravel-permission's default connection — no longer applies (removed)
 
-**This is the single most likely thing to go wrong in the whole install.**
+Filament Shield and spatie/laravel-permission were installed in Phase 3 and **removed on
+2026-10-24 without ever being used**: no role or permission was ever created or assigned,
+and every screen already decided access on `users.role`. Migration
+`2026_10_24_120000_drop_permission_tables` dropped their five empty tables (`roles`,
+`permissions` and the three pivots); the migration that created them stays, rewritten to
+no longer read the deleted `config/permission.php` so a fresh database still migrates.
 
-spatie/laravel-permission has no documented setting for choosing a database connection.
-Its published migration and its `Role`/`Permission` models use the application's
-**default** connection.
-
-In this project the default connection is `mariadb`, and per `CLAUDE.md` that connection
-is effectively unreachable — every real table, `users` included, lives on `Portal`. If
-you publish spatie's migration and run it without intervening, the permission tables
-either fail to create or get created somewhere nothing else can see them, and every
-permission check queries a database that isn't there.
-
-Before running spatie's migration:
-
-- Edit the published migration to target `Portal` explicitly (`protected $connection =
-  'Portal';` and `Schema::connection('Portal')->...`), matching how every other
-  migration in `database/migrations/` already does it.
-- Extend spatie's `Role` and `Permission` models with local subclasses that declare
-  `protected $connection = 'Portal';`, and point `config/permission.php` at your
-  subclasses.
-- Run it with `--database=Portal` like everything else (§6.4).
-
-**Do not run `shield:setup` in this project.** It publishes spatie's migration and then
-immediately calls a bare `migrate` — default connection, before you can edit anything —
-and with `--fresh` it also runs `DROP TABLE` statements through the default connection.
-Publish by hand instead:
-
-```
-php artisan vendor:publish --tag=filament-shield-config
-php artisan vendor:publish --tag=permission-config
-php artisan vendor:publish --tag=permission-migrations
-```
-
-Then edit the migration and models as above, migrate, and only *then* run
-`php artisan shield:install staff`. `shield:install` registers the plugin on the panel
-but also quietly runs `shield:generate --resource=RoleResource`, which writes a
-`super_admin` role and its permissions — so the tables must already exist on `Portal`.
-
-As implemented: Shield 4.3.1 resolved spatie/laravel-permission **8.3.0**, which still has
-no connection setting. The subclasses are `App\Models\Role` and `App\Models\Permission`
-(extending spatie's models, not `BaseModel`, so they declare `$connection` manually like
-`User`), and `User` uses `HasRoles`. spatie's cache (`store => 'default'`) needs no
-change — `CACHE_STORE=database` with `DB_CACHE_CONNECTION=Portal` already puts it on
-Portal. When probing in tinker, query through `App\Models\Role`, not
-`Spatie\Permission\Models\Role`.
-
-Verify before moving on: `php artisan migrate:status --database=Portal` lists the
-permission tables, and a `php artisan tinker` role lookup returns without a connection
-error.
+The trap this section used to describe was real while they were installed: spatie has no
+connection setting, so its migration and models used the unreachable default `mariadb`
+connection, and `shield:setup` ran a bare `migrate` (and, with `--fresh`, `DROP TABLE`)
+through it. It was worked around with a Portal-pinned migration and local `Role` /
+`Permission` subclasses. All of that is gone. If permissions are ever wanted again,
+re-read this history first — but see §4: access is changed by developers in code on
+purpose, never from a screen.
 
 ## 4. Settled decisions
 
@@ -215,15 +182,39 @@ no dark mode. The session lifetime is 15 idle minutes for every role
 (`SESSION_LIFETIME`) and ends when the browser quits (`SESSION_EXPIRE_ON_CLOSE`); the
 officer home tells officers their session logs out after that long. See §12.
 
-**Authorization: Filament Shield + spatie/laravel-permission.**
+**Authorization: `users.role`, in code, and nothing else.** *(Settled 2026-10-24; this
+replaced the original plan of Filament Shield + spatie/laravel-permission, which were
+installed but never used, and then removed — §3.3.)* One source of truth, the
+`users.role` column (`App\Enums\UserRole`), decides everything, in two layers:
 
-**Role storage: both systems, deliberately.** `users.role` stays as the coarse identity
-— it is what `canAccessPanel()` and navigation switch on. spatie handles fine-grained
-per-resource permissions on top. Be honest that this means two things describe access
-and they can drift; keep `role` authoritative for "which dashboard is this person" and
-spatie authoritative for "may they perform this action on this resource."
+1. **Who may open a screen**: each screen's `canAccess()`, on `users.role` (plus the police
+   admin's agency where it matters). Pinned role by role in `PanelAccessTest` (§5).
+2. **What they may do there**: each screen lists its actions and refuses the rest. This
+   is separate because Filament asks a screen before every built-in button (Create,
+   View, Edit, Delete, bulk delete, restore, replicate, reorder) through one method,
+   `getAuthorizationResponse()`, and when the model has no policy it answers *allowed*.
+   Before this was settled, read-only screens such as Civilian assessments were
+   read-only only because no Edit or Delete button had been added. Now every screen
+   answers explicitly — `App\Filament\Concerns\AllowsOnlyListedActions`
+   (`allowedActions()`, plus an optional per-row `allowsRecord()`), or the same rule
+   written out by hand (Accounts, Officers, Agencies), or the assessment policy below —
+   and the panel runs in Filament's **strict mode** (`->strictAuthorization()`), so a new
+   screen without rules throws instead of allowing. Overriding `canDelete()` and friends
+   alone is not enough; the buttons skip them. `ActionAccessTest` lists every screen's
+   actions and fails on anything extra, anything missing, or an unlisted screen. Custom
+   actions (`Action::make(...)`) are outside this, and check permission themselves.
 
-**Exception: law-enforcement assessments are not governed by spatie.** Access to
+Why not Shield: its permissions can say "may view assessments" but not "only this
+agency's" or "only their own", which are the rules that protect victim information, so
+those would have stayed hand-written anyway; it would have added a second description of
+roles that could drift from `users.role`; it came with traps (`shield:setup` migrating
+the unreachable connection, `shield:generate` overwriting hand-written policies, a
+spatie `super_admin` role that skips every check); and its Roles screen would let
+whoever runs the system widen access from inside the panel. This project will be handed
+over and maintained by others, so **access changes are a developer's code change,
+reviewed and tested, never a screen**.
+
+**Law-enforcement assessments: a hand-written policy.** Access to
 `LawEnforcementAssessment` is enforced by the hand-written
 `App\Policies\LawEnforcementAssessmentPolicy`, registered with `Gate::policy()` in
 `AppServiceProvider`. It decides on `users.role` (through `User::hasActiveRole()`) plus
@@ -247,17 +238,9 @@ review** (`AssessmentReviewResource`) is admin (all agencies, view-only) and pol
 (own agency, view and edit), and its Officer filter only offers officers whose submissions
 the user can see.
 
-`LawEnforcementAssessmentResource` is therefore listed in `resources.exclude` in
-`config/filament-shield.php`, which keeps it out of both `shield:generate` and the role
-editor. Do not remove it and do not generate a policy for this model: Shield would
-overwrite the file with one that checks `View:LawEnforcementAssessment`-style
-permissions and drops the ownership and agency rules. `OfficerAccountResource` is in the
-same list, because it authorizes itself rather than through a `UserPolicy` (§11, Phase 8).
-
-**Leave `super_admin.define_via_gate` at `false`.** Set to `true`, Shield registers a
-`Gate::before` that answers `true` for anyone holding the `super_admin` role before any
-policy runs, so that role would bypass this policy entirely — including the `update()`
-rule and the `false` on delete (§5 rule 1).
+**Never add a `Gate::before`** that answers yes for some role: it runs before every
+policy, so that role would bypass this one entirely — including the `update()` rule and
+the `false` on delete (§5 rule 1). Super admin is granted screen by screen instead (§5).
 
 **New role: `police_admin`.** `App\Enums\UserRole` goes from three cases to four. The
 column is already a string, so this is an enum change, not a migration.
@@ -354,8 +337,8 @@ admins by other super admins (never themselves; the first by
 and last name as separate fields, 50 characters each.
 
 **Super admin is the one superset of admin, and only of admin.** It is granted screen by
-screen (`UserRole::SuperAdmin` in each `hasActiveRole()` list), never by `Gate::before`
-or Shield's spatie `super_admin` role, which would skip the `false` on assessment edits.
+screen (`UserRole::SuperAdmin` in each `hasActiveRole()` list), never by a `Gate::before`,
+which would skip the `false` on assessment edits.
 It has no Officer Portal and is view-only on assessments, like admin. An account's role
 and agency never change after creation: `LawEnforcementAssessment::visibleTo()` follows
 the submitter's *current* agency, so moving a person would hand their old assessments to
@@ -706,11 +689,7 @@ uploads are database rows now (§3.2, §4).
 *Gate:* a panel provider appears in `portal/backend/bootstrap/providers.php`, which
 currently lists only `AppServiceProvider`.
 
-**3 — Shield + spatie.** *(Done.)* Install, publish config, and **point the migration and
-models at `Portal`** — re-read §3.3 before running anything, especially the
-`shield:setup` warning.
-*Gate:* `php artisan migrate:status --database=Portal` lists the permission tables, and a
-tinker role lookup returns without a connection error.
+**3 — Shield + spatie.** *(Done, then undone: both removed unused on 2026-10-24 — §3.3, §4.)*
 
 **4 — Add `police_admin`** to `App\Enums\UserRole`. *(Done.)*
 *Gate:* all four cases resolve and cast correctly on `User`.
@@ -723,7 +702,7 @@ vars, grants from §6.5.
 *Gate:* `php artisan migrate:status --database=Portal`.
 
 **7 — Auth and access.** Filament login, `User implements FilamentUser` with
-`canAccessPanel()`, Shield permissions encoding the §5 matrix, Shield super-admin plus a
+`canAccessPanel()`, the §5 matrix enforced on every screen, a super admin, plus a
 seeder creating one user per role for local development.
 *(Partly done: `canAccessPanel()` — `is_active` plus a valid role — and the local-only
 `LocalStaffUserSeeder` exist, with two placeholder pages (`/content`,
@@ -734,8 +713,9 @@ officer two assessments. The law-enforcement assessment row of the matrix is enf
 (§4), agency-scoped for police admins through `User::agencyId()` (§5 rule 5). The seeder
 has since gained a second agency, "Second Test PD", with its own police admin
 (`police-admin2@`) and officer (`officer3@`), and gives both police admins a
-`law_enforcement_agents` row. Shield permissions for everything else and the super-admin
-are still to do.)*
+`law_enforcement_agents` row. Super admin was added in team plan task 15, and on 2026-10-24
+every screen was given an explicit list of allowed actions in place of Shield permissions
+(§4).)*
 *Gate:* each of the four roles sees exactly its matrix row; admin is refused when
 creating an officer; `police_admin` has no edit action on assessments.
 
@@ -783,7 +763,7 @@ creating an officer; `police_admin` has no edit action on assessments.
   agency's `law_enforcement` accounts (§5 rule 5). It authorizes itself on the resource
   (`getAuthorizationResponse()` and the `can*()` methods) rather than through a
   `UserPolicy`, because the future admin "Users" screen needs different rules for the
-  same model, and is in `resources.exclude` in `config/filament-shield.php`. Create and
+  same model. Create and
   edit write `users` and `law_enforcement_agents` in one `Portal` transaction, with role
   and agency forced server-side; passwords are 15–64 characters and checked against
   breached passwords (`Password::uncompromised()`). First and last name are separate
@@ -1017,8 +997,7 @@ comments or dates of birth. One date range (presets or custom days, Eastern) and
 two assessment tabs, a filter by victim sex (required) and offender sex (optional), are
 shared by the tabs through the session (`App\Filament\Analytics\AnalyticsPage`). High
 risk is "yes to Q1–3, or 4 or more yes" (`AssessmentStats::HIGH_RISK_RULE`). The pages
-authorize themselves with `canAccess()`; they are pages, not resources, so Shield's
-resource generation never touches them. `AnalyticsTest`.
+authorize themselves with `canAccess()`. `AnalyticsTest`.
 
 **Logs** (`/logs`, `App\Filament\Clusters\Logs\LogsCluster`): one sidebar item whose two
 resources show as **tabs across the top** (`SubNavigationPosition::Top`, the Content
@@ -1036,8 +1015,7 @@ and `AssessmentEdit::visibleTo()`, both built on `LawEnforcementAssessment::visi
 `LogsCluster::canOpenLogs()` (since the move, a police admin with no agency is refused
 the Change log too, where before they were let in to an empty list). `/logs` opens the
 first tab the user can open (`Cluster::mount()`), and the cluster hides itself when both
-refuse (`Cluster::shouldRegisterNavigation()`). Both tabs stay in `resources.exclude` in
-`config/filament-shield.php`. The old addresses redirect, keeping any sub-path and query
+refuse (`Cluster::shouldRegisterNavigation()`). The old addresses redirect, keeping any sub-path and query
 string (`routes/web.php`): `/access-log` → `/logs/access`, `/assessment-changes` →
 `/logs/changes`. `LogsClusterTest`.
 
@@ -1084,7 +1062,7 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
   | Offender first name, offender last name | yes | admin, police admin |
 
   Agency is shown to active admins only, decided by `users.role` through
-  `User::hasActiveRole(UserRole::Admin)` — not by the Shield/spatie `super_admin` role. A
+  `User::hasActiveRole(UserRole::Admin)`. A
   hidden filter is neither rendered nor applied, so forcing its state does nothing. The
   four name filters are typed text: a case-insensitive partial match, with `%` and `_` in
   the input matched literally; blank turns a filter off, and each active filter shows a
@@ -1122,7 +1100,7 @@ so every filter covers detail and answer changes alike.
 - **Date** is the save's own `EditedAt` (the table's "When" column), not the child rows'
   `TimeStamp`, which is written in the same transaction.
 - **Agency** follows the same rule as Assessment review: active admins only by
-  `users.role` (`hasActiveRole(UserRole::Admin)`), never Shield's `super_admin`; hidden
+  `users.role` (`hasActiveRole(UserRole::Admin)`); hidden
   from police admins, and a hidden filter is never applied.
 - **Names** match the edited assessment's current name columns — case-insensitive,
   partial, `%` and `_` literal. **The logged `PreviousValue` / `NewValue` are deliberately

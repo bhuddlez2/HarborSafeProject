@@ -50,6 +50,12 @@ class StaffPanelProvider extends PanelProvider
             // user's own name, email and password - never role or is_active.
             // Ours swaps its Name field for first and last name.
             ->profile(EditProfile::class, isSimple: false)
+            // A screen with no rule for an action is an error, not a yes:
+            // without this, Filament allows any action on a model with no
+            // policy. Every screen lists what it allows
+            // (App\Filament\Concerns\AllowsOnlyListedActions, or a policy);
+            // ActionAccessTest pins each one.
+            ->strictAuthorization()
             // Look and feel carried over from the former Next.js officer
             // portal (PortalSidebar/PortalHeader): #5C0F8B primary, Nunito
             // body text, Montserrat headings, a dark full-height sidebar. The

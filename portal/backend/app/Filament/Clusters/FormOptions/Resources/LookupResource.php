@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\FormOptions\Resources;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\FormOptions\FormOptionsCluster;
 use App\Support\Timezones;
@@ -41,6 +42,8 @@ next request with no deploy. That is the point of the page.
 */
 abstract class LookupResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $cluster = FormOptionsCluster::class;
 
     protected static ?string $recordTitleAttribute = 'Name';
@@ -59,6 +62,12 @@ abstract class LookupResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Add, rename, and delete an option nothing uses - one at a time, never in bulk. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete'];
     }
 
     public static function form(Schema $schema): Schema

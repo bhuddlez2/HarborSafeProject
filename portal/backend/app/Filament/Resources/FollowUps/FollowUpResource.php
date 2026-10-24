@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\FollowUps;
 
 use App\Enums\FollowUpKind;
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Filament\FollowUps\FollowUpLog;
 use App\Filament\Resources\FollowUps\Pages\ListFollowUps;
 use App\Filament\Resources\FollowUps\Pages\ViewFollowUp;
@@ -37,6 +38,8 @@ filtering are by type, date and status.
 */
 class FollowUpResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = FollowUp::class;
 
     protected static ?string $slug = 'follow-ups';
@@ -58,29 +61,18 @@ class FollowUpResource extends Resource
         return FollowUp::kindsFor(Filament::auth()->user()) !== [];
     }
 
-    public static function canViewAny(): bool
+    // Open a follow-up page, nothing else. Updates go through the page's own
+    // Update follow-up action and App\Services\FollowUps, never an Edit button;
+    // follow-ups open and close with their forms, never by hand.
+    protected static function allowedActions(): array
     {
-        return static::canAccess();
+        return ['view'];
     }
 
-    public static function canView(Model $record): bool
+    // Only a follow-up of a kind this user works (FollowUpKind::workedBy()).
+    protected static function allowsRecord(string $action, Model $record): bool
     {
         return $record instanceof FollowUp && $record->isWorkableBy(Filament::auth()->user());
-    }
-
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        return false;
     }
 
     // Scopes the queue and the record lookup behind the follow-up page, so a

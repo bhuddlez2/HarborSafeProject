@@ -7,7 +7,8 @@ use App\Models\LawEnforcementAssessment;
 use App\Models\User;
 
 // Access here is the users.role column plus ownership (submitted_by) and the
-// police admin's agency. Every method is written out.
+// police admin's agency. Every method is written out, so nothing falls back
+// to "allowed" (the panel runs in strict mode; ActionAccessTest).
 // New assessments come only from the NewAssessment wizard (officers, and police
 // admins with an agency, each submitting their own). The submitting officer,
 // or an active police admin of the submitter's agency, may edit one (update()

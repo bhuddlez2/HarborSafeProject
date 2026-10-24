@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Submissions\Resources\ResourceRequests;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
@@ -52,6 +53,8 @@ many-to-many and is rendered as a list rather than one value.
 */
 class ResourceRequestResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = ResourceRequestForm::class;
 
     protected static ?string $cluster = SubmissionsCluster::class;
@@ -75,6 +78,12 @@ class ResourceRequestResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Never edited: a request is a statement from the public. Delete is for spam. Staff-started requests come from a follow-up page, never a Create button here.
+    protected static function allowedActions(): array
+    {
+        return ['view', 'delete', 'deleteAny'];
     }
 
     public static function getNavigationBadge(): ?string

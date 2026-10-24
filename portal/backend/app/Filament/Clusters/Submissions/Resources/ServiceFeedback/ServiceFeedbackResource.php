@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Submissions\Resources\ServiceFeedback;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
@@ -66,6 +67,8 @@ read submissions back out; the panel is the opposite case and needs SELECT.
 */
 class ServiceFeedbackResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = ServiceFeedback::class;
 
     protected static ?string $cluster = SubmissionsCluster::class;
@@ -91,6 +94,12 @@ class ServiceFeedbackResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Never edited: feedback is a statement from the public. Create is staff typing in a form themselves; delete removes spam or a mistyped entry.
+    protected static function allowedActions(): array
+    {
+        return ['view', 'create', 'delete', 'deleteAny'];
     }
 
     // A count on the tab, so volume is visible without opening the page.

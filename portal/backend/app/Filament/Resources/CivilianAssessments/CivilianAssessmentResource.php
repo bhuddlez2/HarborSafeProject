@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CivilianAssessments;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\AssessmentAccess;
 use App\Enums\OffenderRelationship;
 use App\Enums\UserRole;
@@ -60,6 +61,8 @@ TWO THINGS ABOUT THIS DATA THAT ARE NOT OBVIOUS:
 */
 class CivilianAssessmentResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = PrivateAssessment::class;
 
     protected static ?string $slug = 'civilian-assessments';
@@ -80,6 +83,12 @@ class CivilianAssessmentResource extends Resource
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
+    }
+
+    // View only: a danger assessment is a safety record, never edited or deleted.
+    protected static function allowedActions(): array
+    {
+        return ['view'];
     }
 
     // The same rule as the PDF download (CivilianAssessmentPdfController), so

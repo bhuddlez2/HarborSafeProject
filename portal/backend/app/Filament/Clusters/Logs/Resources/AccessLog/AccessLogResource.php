@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\Logs\Resources\AccessLog;
 use App\Enums\AssessmentAccess;
 use App\Filament\Clusters\Logs\LogsCluster;
 use App\Filament\Clusters\Logs\Resources\AccessLog\Pages\ListAccessLog;
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentAccessLog;
 use App\Support\Timezones;
@@ -15,7 +16,6 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /*
@@ -46,11 +46,13 @@ narrows the rows by action. The search box searches only the Who column (the
 opener's name: partial, case-insensitive). Both only narrow the scoped rows
 above.
 
-Authorizes itself (canAccess below, by users.role and the police admin's
-agency).
+Authorizes itself: canAccess below, by users.role and the police admin's
+agency, and no action beyond the list (allowedActions()).
 */
 class AccessLogResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = AssessmentAccessLog::class;
 
     // The first tab of Logs: /logs/access.
@@ -91,34 +93,10 @@ class AccessLogResource extends Resource
         return parent::getEloquentQuery()->visibleTo(Filament::auth()->user());
     }
 
-    public static function canViewAny(): bool
+    // The list and nothing else: no view pop-up, and the log is append-only.
+    protected static function allowedActions(): array
     {
-        return static::canAccess();
-    }
-
-    public static function canView(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return false;
+        return [];
     }
 
     public static function table(Table $table): Table

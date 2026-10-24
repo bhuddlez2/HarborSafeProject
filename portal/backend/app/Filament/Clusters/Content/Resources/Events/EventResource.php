@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Content\Resources\Events;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
@@ -57,6 +58,8 @@ carelessly:
 */
 class EventResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = Event::class;
 
     protected static ?string $cluster = ContentCluster::class;
@@ -76,6 +79,12 @@ class EventResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Add, edit and delete events, one or several at a time. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete', 'deleteAny'];
     }
 
     public static function form(Schema $schema): Schema

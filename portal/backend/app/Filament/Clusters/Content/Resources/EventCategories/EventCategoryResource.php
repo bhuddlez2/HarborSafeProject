@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Content\Resources\EventCategories;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\EventCategories\Pages\ManageEventCategories;
@@ -32,6 +33,8 @@ the selection was the problem.
 */
 class EventCategoryResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = EventCategory::class;
 
     protected static ?string $cluster = ContentCluster::class;
@@ -55,6 +58,12 @@ class EventCategoryResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Add, rename, and delete a category no event uses. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete'];
     }
 
     public static function form(Schema $schema): Schema

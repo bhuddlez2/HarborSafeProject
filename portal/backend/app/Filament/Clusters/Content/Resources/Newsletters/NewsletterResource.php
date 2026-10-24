@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Content\Resources\Newsletters;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\Newsletters\Pages\ManageNewsletters;
@@ -49,6 +50,8 @@ empty is a supported state rather than a data problem.
 */
 class NewsletterResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = Newsletter::class;
 
     protected static ?string $cluster = ContentCluster::class;
@@ -68,6 +71,12 @@ class NewsletterResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Add, edit and delete issues, one or several at a time. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete', 'deleteAny'];
     }
 
     public static function form(Schema $schema): Schema

@@ -6,6 +6,7 @@ use App\Filament\Assessments\AssessmentViews;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Clusters\Logs\LogsCluster;
 use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Filament\Tables\ChangeLogFilters;
 use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentEdit;
@@ -39,6 +40,8 @@ the assessments themselves - never a separate one.
 */
 class AssessmentEditResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = AssessmentEdit::class;
 
     // The second tab of Logs: /logs/changes.
@@ -65,35 +68,16 @@ class AssessmentEditResource extends Resource
         return LogsCluster::canOpenLogs();
     }
 
-    public static function canViewAny(): bool
+    // The list and its View pop-up. Rows are append-only.
+    protected static function allowedActions(): array
     {
-        return static::canAccess();
+        return ['view'];
     }
 
-    public static function canView(Model $record): bool
+    // Only an edit to an assessment the user may see.
+    protected static function allowsRecord(string $action, Model $record): bool
     {
-        return static::canAccess()
-            && static::getEloquentQuery()->whereKey($record->getKey())->exists();
-    }
-
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return false;
+        return static::getEloquentQuery()->whereKey($record->getKey())->exists();
     }
 
     // Edits to assessments the user may see, and nothing else. Also scopes
