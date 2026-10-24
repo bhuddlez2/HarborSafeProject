@@ -1018,6 +1018,16 @@
 }
 
 /*
+ * Pop-up headings often carry a record's name ("Edit <event title>"), which
+ * staff can type as one long unbroken word up to the field's limit. Let it
+ * break instead of running off the pop-up, in every modal and slide-over.
+ */
+.fi-modal-heading,
+.fi-modal-description {
+    overflow-wrap: anywhere;
+}
+
+/*
  * In a stacked card every field starts at the left, symbol columns too:
  * centring suits a table column but looks stray in a card of left-aligned
  * label/value pairs. Below Filament's sm breakpoint (40rem), where tables
