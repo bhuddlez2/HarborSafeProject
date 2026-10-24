@@ -282,6 +282,7 @@ class EventResource extends Resource
                                         'hasImage'            => filled($get('image_file_id')),
                                         'imageUrl'            => $imageUrl,
                                         'imageAlt'            => $get('image_alt'),
+                                        'recurrence'          => $get('recurrence'),
                                         'isPublished'         => (bool) $get('is_published'),
                                         'isCancelled'         => (bool) $get('is_cancelled'),
                                     ])->render());

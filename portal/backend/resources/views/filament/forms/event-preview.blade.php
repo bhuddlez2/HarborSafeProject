@@ -91,6 +91,18 @@
         </div>
         @endif
 
+        {{-- Recurrence ("Annually in September"): free text, shown as typed,
+             under the date with a repeat icon - where the website's event
+             card puts it (EventsContent.js). --}}
+        @if(filled($recurrence ?? null))
+        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; color: #6b7280; font-size: 14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#5C0F8B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;">
+                <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+            </svg>
+            <span>{{ $recurrence }}</span>
+        </div>
+        @endif
+
         {{-- Location — shown for both physical and virtual events --}}
         @if($locationIsVirtual || filled($locationName) || filled($locationAddress))
         <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; color: #374151; font-size: 14px;">
