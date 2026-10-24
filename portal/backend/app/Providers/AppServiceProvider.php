@@ -32,8 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Registered explicitly rather than left to discovery, so Shield
-        // always finds a policy already in place for this model.
+        // Registered explicitly rather than left to discovery, so nothing
+        // depends on the policy's file name or folder.
         Gate::policy(LawEnforcementAssessment::class, LawEnforcementAssessmentPolicy::class);
 
         // "Optional" ghost text on every optional text input, text area and

@@ -125,8 +125,7 @@ final class AssessmentFilters
         ];
     }
 
-    // Agency filters are for active admins and super admins only, by users.role (hasActiveRole)
-    // - not the Shield / spatie super_admin role.
+    // Agency filters are for active admins and super admins only, by users.role (hasActiveRole).
     public static function showsAgency(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
@@ -156,8 +155,8 @@ final class AssessmentFilters
             ->preload();
     }
 
-    // Active admins and super admins only, by users.role (hasActiveRole) - not the Shield /
-    // spatie super_admin role. Police admins never see it, and a hidden filter
+    // Active admins and super admins only, by users.role (hasActiveRole).
+    // Police admins never see it, and a hidden filter
     // is never applied. Options are the agencies of officers with a visible
     // submission; the same closure also scopes the filter's own whereHas.
     private static function agency(): SelectFilter

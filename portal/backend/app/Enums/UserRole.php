@@ -12,9 +12,9 @@ included, so ownership can pass on when one leaves. It is still view-only on
 assessments - it never submits, edits or deletes one - and has no Officer
 Portal. The first one comes from `php artisan staff:create-super-admin`.
 
-It is NOT Shield's spatie "super_admin" role, which shares the name: that one
-skips every Gate check, including the `false` on assessment edits in
-LawEnforcementAssessmentPolicy. Never assign it to anyone.
+Granted screen by screen (UserRole::SuperAdmin in each hasActiveRole() list),
+never by a Gate::before that answers yes to everything: that would skip the
+`false` on assessment edits in LawEnforcementAssessmentPolicy.
 */
 enum UserRole: string
 {

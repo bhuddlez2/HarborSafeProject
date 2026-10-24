@@ -30,9 +30,8 @@ is scoped by one (LawEnforcementAssessment::visibleTo()). Renaming is safe -
 everything stores the id. To stop an agency's people signing in, deactivate
 their accounts.
 
-Authorization lives here, like the account screens, and the resource is in
-resources.exclude in config/filament-shield.php so shield:generate never gives
-it a permission-based policy.
+Authorization lives here, like the account screens: getAuthorizationResponse()
+below allows only what it lists.
 */
 class AgencyResource extends Resource
 {

@@ -47,7 +47,7 @@ opener's name: partial, case-insensitive). Both only narrow the scoped rows
 above.
 
 Authorizes itself (canAccess below, by users.role and the police admin's
-agency), so it is in resources.exclude in config/filament-shield.php.
+agency).
 */
 class AccessLogResource extends Resource
 {
