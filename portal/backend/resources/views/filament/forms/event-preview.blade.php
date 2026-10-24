@@ -27,7 +27,8 @@
         above it, so the corners always look right.
     --}}
     @if($imageUrl)
-    <img src="{{ $imageUrl }}" alt="{{ $title }}"
+    {{-- The Image description field, as the website uses it (PublicEventResource: alt ?? ""). --}}
+    <img src="{{ $imageUrl }}" alt="{{ $imageAlt ?? '' }}"
          style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px 12px 0 0; display: block;">
     @elseif($hasImage)
     <div style="height: 160px; background: #ede3f5; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: #5C0F8B; margin-bottom: 0;">
