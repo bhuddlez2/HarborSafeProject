@@ -11,7 +11,11 @@
     on Tailwind compilation. The purple brand colour (#5C0F8B) matches the
     rest of the panel.
 --}}
-<div style="font-family: 'Nunito', sans-serif; max-width: 680px; margin: 0 auto;">
+{{-- overflow-wrap: anywhere (inherited by every line) breaks a long unbroken
+     word - a venue name typed to its 150-character limit, say - instead of
+     letting it run off the card. "anywhere" rather than "break-word" so the
+     flex rows (date, location) can shrink to fit too. --}}
+<div style="font-family: 'Nunito', sans-serif; max-width: 680px; margin: 0 auto; overflow-wrap: anywhere;">
 
     {{--
         Image section — three possible states:

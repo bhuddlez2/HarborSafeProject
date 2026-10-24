@@ -1,4 +1,6 @@
-<div style="font-family: 'Nunito', sans-serif; max-width: 680px; margin: 0 auto;">
+{{-- overflow-wrap: anywhere breaks a long unbroken word in the title or
+     summary instead of letting it run off the card (see event-preview). --}}
+<div style="font-family: 'Nunito', sans-serif; max-width: 680px; margin: 0 auto; overflow-wrap: anywhere;">
 
     {{-- Card --}}
     <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 28px; background: #fff;">
