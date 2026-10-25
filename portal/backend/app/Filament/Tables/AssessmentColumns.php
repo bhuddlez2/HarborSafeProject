@@ -6,6 +6,7 @@ use App\Enums\OffenderRelationship;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Pages\NewAssessment;
 use App\Models\LawEnforcementAssessment;
+use App\Support\HighRisk;
 use App\Support\Timezones;
 use Filament\Tables\Columns\TextColumn;
 
@@ -68,15 +69,16 @@ final class AssessmentColumns
                 ->formatStateUsing(fn (?string $state, $record): ?string => OffenderRelationship::display($state, $record->OffenderVictimRelationshipOther))
                 ->placeholder('-'),
 
-            // The screening result the eleven answers add up to. Counted in
-            // PHP rather than SQL so the column list stays readable; the
-            // relation is eager-loaded by each table's query.
+            // The screening result the eleven answers add up to: red when
+            // high risk (HighRisk, the rule Analytics counts), amber for any
+            // other yes. Counted in PHP rather than SQL so the column list
+            // stays readable; the relation is eager-loaded by each table's query.
             TableAlignment::symbol(TextColumn::make('risk_count')
                 ->label('Yes')
                 ->badge()
                 ->state(fn (LawEnforcementAssessment $record): string => self::yesCount($record).' of 11')
                 ->color(fn (LawEnforcementAssessment $record): string => match (true) {
-                    self::yesCount($record) >= 4 => 'danger',
+                    HighRisk::of($record->assessmentAnswers) => 'danger',
                     self::yesCount($record) >= 1 => 'warning',
                     default => 'gray',
                 })),

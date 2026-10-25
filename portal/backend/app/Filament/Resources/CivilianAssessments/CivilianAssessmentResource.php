@@ -10,6 +10,7 @@ use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Models\AssessmentAccessLog;
 use App\Models\PrivateAssessment;
+use App\Support\HighRisk;
 use App\Support\Timezones;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
@@ -148,7 +149,7 @@ class CivilianAssessmentResource extends Resource
                     ->badge()
                     ->state(fn (PrivateAssessment $record): string => self::yesCount($record).' of 11')
                     ->color(fn (PrivateAssessment $record): string => match (true) {
-                        self::yesCount($record) >= 4 => 'danger',
+                        HighRisk::of($record->assessmentAnswers) => 'danger',
                         self::yesCount($record) >= 1 => 'warning',
                         default => 'gray',
                     })),
@@ -160,17 +161,12 @@ class CivilianAssessmentResource extends Resource
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('assessmentAnswers'))
             ->filters([
                 Filter::make('high_risk')
-                    ->label('Four or more yes answers')
+                    ->label('High risk ('.HighRisk::RULE.')')
                     // Counted in SQL here rather than in PHP, because a filter
                     // has to narrow the query itself, not the loaded page.
                     ->query(fn (Builder $query): Builder => $query->whereHas(
                         'assessmentAnswers',
-                        fn (Builder $inner): Builder => $inner->whereRaw(
-                            '('.implode(' + ', array_map(
-                                fn (int $id): string => "COALESCE(RiskIndicator{$id}, 0)",
-                                array_keys(NewAssessment::QUESTIONS),
-                            )).') >= 4',
-                        ),
+                        fn (Builder $inner): Builder => $inner->whereRaw(HighRisk::sql()),
                     )),
 
                 Filter::make('named')

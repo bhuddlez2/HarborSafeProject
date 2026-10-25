@@ -2,8 +2,10 @@
 
 use App\Enums\UserRole;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
+use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Models\PrivateAssessment;
 use App\Models\SubmitterInfo;
+use Livewire\Livewire;
 
 /*
 The admin view of assessments submitted through the public civilian flow.
@@ -177,22 +179,44 @@ test('an anonymous visitor is sent to sign in for a civilian PDF', function () {
         ->assertRedirect(filament()->getPanel('staff')->getLoginUrl());
 });
 
-test('the high-risk filter narrows to four or more yes answers', function () {
-    // Counted in SQL, so this is worth asserting rather than assuming.
-    pestCivilianAssessment(yesIndicators: [1]);
-    pestCivilianAssessment(yesIndicators: [1, 2, 3, 4, 5]);
+/*
+The high-risk filter (counted in SQL) and the red Yes badge (counted in PHP)
+both follow App\Support\HighRisk: a yes to any of Q1-3, or 4 or more yes.
+*/
+function pestCivilianRiskMix(): object
+{
+    return (object) [
+        'q1Only' => pestCivilianAssessment(yesIndicators: [1]),
+        'fourYes' => pestCivilianAssessment(yesIndicators: [4, 5, 6, 7]),
+        'threeYes' => pestCivilianAssessment(yesIndicators: [4, 5, 6]),
+        'noYes' => pestCivilianAssessment(yesIndicators: []),
+    ];
+}
 
-    $highRisk = PrivateAssessment::query()
-        ->whereHas('assessmentAnswers', fn ($q) => $q->whereRaw(
-            '('.implode(' + ', array_map(
-                fn (int $id): string => "COALESCE(RiskIndicator{$id}, 0)",
-                range(1, 11),
-            )).') >= 4',
-        ))
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->count();
+test('the high-risk filter follows the high-risk rule', function () {
+    $mix = pestCivilianRiskMix();
 
-    expect($highRisk)->toBe(1);
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    Livewire::test(ListCivilianAssessments::class)
+        ->filterTable('high_risk')
+        ->assertCanSeeTableRecords([$mix->q1Only, $mix->fourYes])
+        ->assertCanNotSeeTableRecords([$mix->threeYes, $mix->noYes]);
+});
+
+test('the Yes badge is red when high risk, amber for any other yes', function () {
+    $mix = pestCivilianRiskMix();
+
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    $column = Livewire::test(ListCivilianAssessments::class)
+        ->instance()->getTable()->getColumn('risk_count');
+    $color = fn (PrivateAssessment $record) => $column->record($record->load('assessmentAnswers'))->getColor(null);
+
+    expect($color($mix->q1Only))->toBe('danger')
+        ->and($color($mix->fourYes))->toBe('danger')
+        ->and($color($mix->threeYes))->toBe('warning')
+        ->and($color($mix->noYes))->toBe('gray');
 });
 
 // Filament's Table::make() needs a Livewire component for context; the table

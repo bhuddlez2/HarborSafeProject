@@ -29,6 +29,9 @@
 
     $yesCount = collect(array_keys($questions))->filter(fn (int $id): bool => $answer($id) === true)->count();
 
+    // Red when high risk (App\Support\HighRisk, the rule Analytics counts).
+    $highRisk = \App\Support\HighRisk::fromAnswers(collect(array_keys($questions))->mapWithKeys(fn (int $id): array => [$id => $answer($id) === true])->all());
+
     $sections = [
         'Victim' => [
             'step' => $victimStep,
@@ -94,7 +97,7 @@
         <section class="overflow-hidden rounded-xl border-2 border-[#C9C1D6]">
             <div class="flex items-center justify-between gap-3 bg-[#EDE3F5] px-4 py-3">
                 <h2 class="text-xs font-bold uppercase tracking-widest text-[#5C0F8B]">Answers</h2>
-                <span class="rounded-full px-3 py-0.5 text-sm font-bold {{ $yesCount >= 4 ? 'bg-red-50 text-red-700' : ($yesCount >= 1 ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-600') }}">
+                <span class="rounded-full px-3 py-0.5 text-sm font-bold {{ $highRisk ? 'bg-red-50 text-red-700' : ($yesCount >= 1 ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-600') }}">
                     {{ $yesCount }} of {{ count($questions) }} yes
                 </span>
             </div>

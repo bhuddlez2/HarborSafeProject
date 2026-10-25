@@ -6,6 +6,7 @@ use App\Enums\OffenderRelationship;
 use App\Models\Agency;
 use App\Support\Analytics\Chart;
 use App\Support\Analytics\DateRange;
+use App\Support\HighRisk;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -20,16 +21,14 @@ connection (the page is for Harbor Safe staff, who may open every record
 anyway). Every query narrows to the date range on DateCreated and, when the
 page's filter is set, to the victim's sex and optionally the offender's.
 
-High risk is decided here, once (HIGH_RISK_RULE): a yes to any of Q1-3
-(weapon, threat to kill, choking), or 4 or more yes in all. Agreed with AS on
-2026-10-21; Harbor Safe to confirm. The assessment tables' red badge still
-uses 4+ only (AssessmentColumns).
+High risk is App\Support\HighRisk's rule (a yes to any of Q1-3, or 4 or more
+yes in all), the same one the assessment tables' red badge uses.
 */
 final class AssessmentStats
 {
     public const QUESTION_COUNT = 11;
 
-    public const HIGH_RISK_RULE = 'Yes to Q1–3, or 4 or more yes';
+    public const HIGH_RISK_RULE = HighRisk::RULE;
 
     // Stored codes (NewAssessment::sexSelect(), CivilianAssessmentStoreRequest::SEXES).
     public const SEXES = ['F' => 'Female', 'M' => 'Male', 'O' => 'Other'];
@@ -80,7 +79,7 @@ final class AssessmentStats
     // HIGH_RISK_RULE as SQL on the answers alias `x`.
     public static function highRiskSql(): string
     {
-        return '(x.RiskIndicator1 = 1 OR x.RiskIndicator2 = 1 OR x.RiskIndicator3 = 1 OR '.self::yesSql().' >= 4)';
+        return HighRisk::sql('x');
     }
 
     private function base(string $table, DateRange $range, ?string $victimSex, ?string $offenderSex): Builder

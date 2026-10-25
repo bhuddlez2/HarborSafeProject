@@ -23,14 +23,17 @@
         ? \Carbon\Carbon::parse($val)->format('M j, Y')
         : '—';
 
+    // Red when high risk (App\Support\HighRisk, the rule Analytics counts).
+    $highRisk = \App\Support\HighRisk::of($answers);
+
     $scoreColor = match (true) {
-        $yesCount >= 4 => '#b91c1c',
+        $highRisk      => '#b91c1c',
         $yesCount >= 1 => '#b45309',
         default        => '#6b7280',
     };
 
     $scoreBg = match (true) {
-        $yesCount >= 4 => '#fef2f2',
+        $highRisk      => '#fef2f2',
         $yesCount >= 1 => '#fffbeb',
         default        => '#f9fafb',
     };

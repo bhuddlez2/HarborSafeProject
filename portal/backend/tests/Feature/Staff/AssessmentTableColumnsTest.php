@@ -106,3 +106,31 @@ test('the Change log button is purple on an edited record and gray on an unedite
     'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
     'Assessment review' => [ListAssessmentReview::class, UserRole::PoliceAdmin],
 ]);
+
+// The Yes badge follows App\Support\HighRisk, the rule Analytics counts: red
+// for a yes to any of Q1-3 or 4 or more yes, amber for any other yes.
+test('the Yes badge is red when high risk, amber for any other yes', function () {
+    $officer = pestAgencyMember(UserRole::LawEnforcement, pestAgency('Columns PD'));
+
+    $withYes = function (array $yes, string $victim) use ($officer) {
+        $record = pestOfficerAssessment($officer, $victim);
+        // The answers model refuses update() outside AssessmentEditor.
+        Illuminate\Support\Facades\DB::connection('Portal')->table('_assessment_answers')
+            ->where('AssessmentDocID', $record->AssessmentDocID)
+            ->update(collect(range(1, 11))
+                ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => in_array($id, $yes, true)])
+                ->all());
+
+        return $record->fresh('assessmentAnswers');
+    };
+
+    $this->actingAs($officer);
+    $column = Livewire::test(ListLawEnforcementAssessments::class)
+        ->instance()->getTable()->getColumn('risk_count');
+    $color = fn ($record) => $column->record($record)->getColor(null);
+
+    expect($color($withYes([2], 'Q2Only')))->toBe('danger')
+        ->and($color($withYes([4, 5, 6, 7], 'FourYes')))->toBe('danger')
+        ->and($color($withYes([4, 5, 6], 'ThreeYes')))->toBe('warning')
+        ->and($color($withYes([], 'NoYes')))->toBe('gray');
+});
