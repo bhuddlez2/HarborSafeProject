@@ -1191,4 +1191,11 @@ empty page attached. The `/content` address it held is now the Content cluster's
      through `localStorage`. Caveats: quitting the *browser* ends the session, not
      closing a tab, and a browser set to restore its last session can bring the cookie
      back, which the 15-minute limit still covers. No password confirmation per page.
-     Covered by `SessionTimeoutTest`.
+     **Added 2026-10-24:** a warning two minutes before the deadline (half the lifetime
+     if that is shorter) — Filament's own pop-up, closed only by its buttons: **Stay
+     signed in** posts once to `POST /session/keep-alive` (`KeepSessionAliveController`,
+     a 204 that restarts the clock; an already-expired session gets the sign-in
+     redirect and the page reloads), **Sign out now** submits Filament's logout. Only
+     that button extends the session, never a timer, so an unattended screen still
+     signs out. Officers mid-assessment no longer lose a form to a logout they didn't
+     see coming. Covered by `SessionTimeoutTest`.

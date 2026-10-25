@@ -5,6 +5,7 @@ use App\Http\Controllers\AssessmentPdfController;
 use App\Http\Controllers\CivilianAssessmentPdfController;
 use App\Http\Controllers\ContentFileController;
 use App\Http\Controllers\FeedbackScanController;
+use App\Http\Controllers\KeepSessionAliveController;
 use App\Http\Controllers\ResourceRequestPdfController;
 use App\Http\Controllers\SubmissionPdfController;
 use App\Http\Middleware\EnsureStaffPanelAccess;
@@ -51,6 +52,11 @@ Route::middleware([
     // cached - see FeedbackScanController for why not /files/{file}.
     Route::get('/feedback-scans/{file}', [FeedbackScanController::class, 'show'])
         ->name('staff.feedback-scans.show');
+
+    // "Stay signed in" on the idle-logout warning: restarts the session's
+    // idle clock. Called only by that button, never on a timer.
+    Route::post('/session/keep-alive', KeepSessionAliveController::class)
+        ->name('staff.session.keep-alive');
 });
 
 /*
