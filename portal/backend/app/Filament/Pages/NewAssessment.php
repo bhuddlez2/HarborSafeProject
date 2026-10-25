@@ -32,6 +32,7 @@ use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
+use Filament\Support\Exceptions\Halt;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -64,8 +65,15 @@ class NewAssessment extends Page
     ];
 
     // Wizard step order; the questions step's index is what the view and the
-    // theme key off (see resources/css/filament/staff/theme.css).
+    // theme key off (see resources/css/filament/staff/theme.css). The review's
+    // Edit and Change buttons jump to the victim, offender and questions steps.
+    private const VICTIM_STEP_INDEX = 1;
+
+    private const OFFENDER_STEP_INDEX = 2;
+
     private const QUESTIONS_STEP_INDEX = 4;
+
+    private const REVIEW_STEP_INDEX = 5;
 
     private const NAME_PATTERN = "/^[a-zA-Z\s'-]+$/";
 
@@ -93,6 +101,11 @@ class NewAssessment extends Page
     public ?array $data = [];
 
     public int $questionIndex = 0;
+
+    // Set once the last question is answered. From then on every step's
+    // Continue, and every answer, goes straight back to Review & Submit, so a
+    // fix made from the review doesn't mean walking through the whole form.
+    public bool $reviewReached = false;
 
     public bool $submitted = false;
 
@@ -137,10 +150,10 @@ class NewAssessment extends Page
         return $schema
             ->components([
                 Wizard::make([
-                    $this->officerStep(),
-                    $this->victimStep(),
-                    $this->offenderStep(),
-                    $this->introStep(),
+                    $this->backToReview($this->officerStep()),
+                    $this->backToReview($this->victimStep()),
+                    $this->backToReview($this->offenderStep()),
+                    $this->backToReview($this->introStep()),
                     $this->questionsStep(),
                     $this->reviewStep(),
                 ])
@@ -163,14 +176,47 @@ class NewAssessment extends Page
                         ->label('Continue')
                         ->extraAttributes([
                             'class' => self::PRIMARY_BUTTON,
-                            // The intro phase's button read "Begin assessment".
-                            'x-text' => "(\$refs.stepsData ? getStepIndex(step) : 0) === 3 ? 'Begin assessment' : 'Continue'",
+                            // The intro phase's button read "Begin assessment";
+                            // once the review has been reached, every step's
+                            // button goes back to it (backToReview()).
+                            'x-text' => "\$wire.reviewReached ? 'Return to review' : ((\$refs.stepsData ? getStepIndex(step) : 0) === 3 ? 'Begin assessment' : 'Continue')",
                         ]))
                     ->submitAction(new HtmlString(view('filament.pages.new-assessment.submit-button', [
                         'class' => self::PRIMARY_BUTTON,
                     ])->render())),
             ])
             ->statePath('data');
+    }
+
+    /*
+    Once the review has been reached, a step's Continue (or Enter) goes straight
+    back to Review & Submit instead of on to the next step. The step is checked
+    first, exactly as Continue checks it - this runs after its validation - and
+    then, instead of letting the wizard move one step on, it sends the browser
+    the wizard's own "next step" event pointing at the review and stops
+    (Halt), so the usual one-step move never happens.
+    */
+    protected function backToReview(Step $step): Step
+    {
+        return $step->afterValidation(function (Step $component): void {
+            if (! $this->reviewReached) {
+                return;
+            }
+
+            $steps = array_values(array_filter(
+                $component->getContainer()->getComponents(),
+                fn ($child): bool => $child instanceof Step,
+            ));
+
+            $this->dispatch(
+                'next-wizard-step',
+                key: $component->getContainer()->getParentComponent()->getKey(),
+                step: $steps[self::REVIEW_STEP_INDEX]->getKey(),
+                currentStep: $component->getKey(),
+            );
+
+            throw new Halt;
+        });
     }
 
     protected function officerStep(): Step
@@ -268,6 +314,10 @@ class NewAssessment extends Page
                         'data' => $this->data,
                         'questions' => self::QUESTIONS,
                         'submitError' => $this->submitError,
+                        // Where the Edit and Change buttons go.
+                        'victimStep' => self::VICTIM_STEP_INDEX,
+                        'offenderStep' => self::OFFENDER_STEP_INDEX,
+                        'questionsStep' => self::QUESTIONS_STEP_INDEX,
                     ]),
 
                 /*
@@ -344,19 +394,31 @@ class NewAssessment extends Page
     }
 
     // Records the current question's answer and moves on. Returns true once
-    // the last question is answered, so the view can advance the wizard.
+    // the last question is answered - or any question once the review has been
+    // reached, since that answer was changed from it - so the view advances the
+    // wizard to Review & Submit.
     public function answerQuestion(bool $answer): bool
     {
         $ids = array_keys(self::QUESTIONS);
         $this->data['RiskIndicator'.$ids[$this->questionIndex]] = $answer;
 
-        if ($this->questionIndex < count($ids) - 1) {
+        if (! $this->reviewReached && $this->questionIndex < count($ids) - 1) {
             $this->questionIndex++;
 
             return false;
         }
 
+        $this->reviewReached = true;
+
         return true;
+    }
+
+    // A Change button on the review: show that one question again.
+    public function editAnswer(int $index): void
+    {
+        if ($index >= 0 && $index < count(self::QUESTIONS)) {
+            $this->questionIndex = $index;
+        }
     }
 
     public function previousQuestion(): void
@@ -424,6 +486,7 @@ class NewAssessment extends Page
     {
         $this->form->fill();
         $this->questionIndex = 0;
+        $this->reviewReached = false;
         $this->submitError = null;
         $this->submitted = false;
     }
