@@ -7,6 +7,15 @@ One page, several phases: who the report is for (and, for someone else, whether 
 anonymous), the submitter's details when they aren't anonymous, the victim, the offender,
 the 11 yes/no questions, then review and submit.
 
+The review shows everything entered and every answer, with an Edit button on each
+section and a Change button on each answer. Once the review has been reached, each
+step's button returns straight to it ("Return to review") instead of walking on through
+the rest. Submit stays disabled until the safe-phone box is ticked ("I confirm {number}
+is a safe phone number to contact") - the same check as the officer wizard
+(NewAssessment::reviewStep()), in Harbor Safe's own wording. The box is unticked
+whenever the number changes and is never sent: it only makes sure the person knows the
+number must be safe to call.
+
 Everything entered stays in this component's state until Submit, which sends it all in
 one request (lib/assessment.js). Nothing is written to the URL, cookies or browser
 storage, autofill is turned off on every field so a shared device doesn't remember
@@ -93,6 +102,38 @@ function SexSelect({ id, value, onChange }) {
   );
 }
 
+// "1990-04-12" as "Apr 12, 1990". Built from the parts, so the time zone can't move it
+// to the day before.
+function formatDate(value) {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+const EDIT_BUTTON =
+  "text-sm font-semibold text-[#5C0F8B] underline underline-offset-2 rounded px-1 " +
+  "hover:text-[#4C0B74] focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40";
+
+// One block of the review: a heading, an Edit button, and label/value pairs.
+function ReviewSection({ title, editLabel, onEdit, fields }) {
+  return (
+    <section className="rounded-xl bg-[#F5F0FB] p-4 md:p-5">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#5C0F8B]">{title}</h2>
+        <button type="button" onClick={onEdit} aria-label={editLabel} className={EDIT_BUTTON}>Edit</button>
+      </div>
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+        {fields.map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[#9068B8]">{label}</dt>
+            <dd className="font-semibold text-gray-900 break-words">{value || "—"}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 const RELATIONSHIP_LOAD_ERROR = "We couldn't load this list. Please try again.";
 
 // The backend's message for the same rule (App\Support\PhoneNumber::MESSAGE).
@@ -142,6 +183,11 @@ export default function AssessmentContent() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
+  // Once the review has been reached, every step's button goes back to it.
+  const [reviewReached, setReviewReached] = useState(false);
+  // The review's "this number is safe" box. Page-only: never sent.
+  const [safePhoneConfirmed, setSafePhoneConfirmed] = useState(false);
+
   const loadRelationshipOptions = () => {
     setRelationshipOptionsError(null);
     fetchRelationshipOptions()
@@ -169,15 +215,27 @@ export default function AssessmentContent() {
   const current = lethalityQuestions[index];
   const identified = forWhom === "other" && anonymous === false;
 
-  // Records the answer and moves on, to review after the last question.
+  // Records the answer and moves on: to the next question, or to the review after the
+  // last one - or straight back to it when the answer was changed from there.
   const handleAnswer = (value) => {
     setAnswers({ ...answers, [current.id]: value });
 
-    if (index < total - 1) {
+    if (index < total - 1 && !reviewReached) {
       setIndex(index + 1);
     } else {
+      setReviewReached(true);
       setPhase("complete");
     }
+  };
+
+  // A step's forward button: the next step, or back to the review once it's been seen.
+  const goOn = (nextPhase) => setPhase(reviewReached ? "complete" : nextPhase);
+  const continueLabel = reviewReached ? "Return to review" : "Continue";
+
+  // The safe number changed, so it has to be confirmed again.
+  const changeVictimPhone = (value) => {
+    setVictimPhone(formatPhoneInput(value));
+    setSafePhoneConfirmed(false);
   };
 
   const handleBack = () => {
@@ -196,9 +254,14 @@ export default function AssessmentContent() {
     setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderSex("");
     setOffenderRelationship(""); setOffenderRelationshipOther("");
     setSubmitError(null);
+    setReviewReached(false);
+    setSafePhoneConfirmed(false);
   };
 
   const handleSubmit = async () => {
+    // The button is disabled until then; this stops anything that bypasses it.
+    if (!safePhoneConfirmed) return;
+
     setSubmitting(true);
     setSubmitError(null);
 
@@ -356,10 +419,16 @@ export default function AssessmentContent() {
             </div>
           )}
 
-          {/* Continue: straight away for "self"; for "other" once anonymity is answered */}
+          {/* Continue: straight away for "self"; for "other" once anonymity is answered.
+              From the review, a switch to a named report still collects the name first. */}
           {(forWhom === "self" || (forWhom === "other" && anonymous !== null)) && (
-            <button onClick={() => setPhase(identified ? "info" : "victim")} className={PRIMARY}>
-              Continue
+            <button
+              onClick={() => (identified && (!reviewReached || !firstName.trim() || !lastName.trim())
+                ? setPhase("info")
+                : goOn("victim"))}
+              className={PRIMARY}
+            >
+              {identified && reviewReached && (!firstName.trim() || !lastName.trim()) ? "Continue" : continueLabel}
             </button>
           )}
         </div>
@@ -406,11 +475,11 @@ export default function AssessmentContent() {
           <div className="flex gap-4">
             <button onClick={() => setPhase("prescreen")} className={SECONDARY}>Back</button>
             <button
-              onClick={() => setPhase("victim")}
+              onClick={() => goOn("victim")}
               disabled={!firstName.trim() || !lastName.trim() || !!emailError || !!phoneError}
               className={PRIMARY}
             >
-              Continue
+              {continueLabel}
             </button>
           </div>
         </div>
@@ -456,7 +525,7 @@ export default function AssessmentContent() {
           <div className="mb-10">
             <Label htmlFor="victim-phone" required>Safe Phone Number</Label>
             {/* Required so Harbor Safe can follow up after the assessment. */}
-            <input id="victim-phone" type="tel" value={victimPhone} onChange={(e) => setVictimPhone(formatPhoneInput(e.target.value))}
+            <input id="victim-phone" type="tel" value={victimPhone} onChange={(e) => changeVictimPhone(e.target.value)}
               maxLength={PHONE_INPUT_MAX_LENGTH} autoComplete="off" aria-required="true"
               aria-invalid={!!victimPhoneError} aria-describedby={victimPhoneError ? "victim-phone-error" : undefined} className={INPUT} />
             <FieldError id="victim-phone-error">{victimPhoneError}</FieldError>
@@ -465,12 +534,12 @@ export default function AssessmentContent() {
           <div className="flex gap-4">
             <button onClick={() => setPhase(identified ? "info" : "prescreen")} className={SECONDARY}>Back</button>
             <button
-              onClick={() => setPhase("offender")}
+              onClick={() => goOn("offender")}
               disabled={!victimFirstName.trim() || !victimLastName.trim() || !victimDob || !!victimDobError || !victimSex
                 || !victimPhone.trim() || !!victimPhoneError}
               className={PRIMARY}
             >
-              Continue
+              {continueLabel}
             </button>
           </div>
         </div>
@@ -555,12 +624,12 @@ export default function AssessmentContent() {
           <div className="flex gap-4">
             <button onClick={() => setPhase("victim")} className={SECONDARY}>Back</button>
             <button
-              onClick={() => setPhase("intro")}
+              onClick={() => goOn("intro")}
               disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !!offenderDobError
                 || !offenderRelationship || (offenderRelationship === "other" && !offenderRelationshipOther.trim())}
               className={PRIMARY}
             >
-              Continue
+              {continueLabel}
             </button>
           </div>
         </div>
@@ -586,39 +655,127 @@ export default function AssessmentContent() {
     );
   }
 
-  // Review and submit
+  // Review and submit: everything entered, every answer, and the safe-phone check.
+  // Answers are shown plainly, with no risk colouring or score: the person reading
+  // this may be the victim.
   if (phase === "complete") {
+    const sexLabel = (code) => SEX_OPTIONS.find((option) => option.value === code)?.label;
+    const relationshipLabel = offenderRelationship === "other"
+      ? `Other: ${offenderRelationshipOther.trim()}`
+      : relationshipOptions?.find((option) => option.value === offenderRelationship)?.label ?? offenderRelationship;
+    const forSelf = forWhom === "self";
+
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-6`}>Review &amp; Submit</h1>
+          <h1 className={`${HEADING} mb-2`}>Review &amp; Submit</h1>
+          <p className="text-gray-600 mb-6">
+            Check every detail and answer below. Use Edit or Change to fix anything before you submit.
+          </p>
 
-          <div className="divide-y divide-gray-100 mb-10">
-            <div className="py-4">
-              <p className="text-sm font-medium text-gray-500 mb-1">Victim</p>
-              <p className="text-gray-900">{victimFirstName} {victimLastName}</p>
-            </div>
-            <div className="py-4">
-              <p className="text-sm font-medium text-gray-500 mb-1">Offender</p>
-              <p className="text-gray-900">{offenderFirstName} {offenderLastName}</p>
-            </div>
+          <div className="flex flex-col gap-4">
+            <ReviewSection
+              title="This report"
+              editLabel="Edit who this report is for"
+              onEdit={() => setPhase("prescreen")}
+              fields={[
+                ["Report for", forSelf ? "Myself" : "Someone else"],
+                ...(forSelf ? [] : [["Anonymous", anonymous ? "Yes" : "No"]]),
+              ]}
+            />
+
             {identified && (
-              <div className="py-4">
-                <p className="text-sm font-medium text-gray-500 mb-1">Reported By</p>
-                <p className="text-gray-900">{firstName} {lastName}</p>
-              </div>
+              <ReviewSection
+                title="Your information"
+                editLabel="Edit your information"
+                onEdit={() => setPhase("info")}
+                fields={[
+                  ["Name", `${firstName.trim()} ${lastName.trim()}`],
+                  ["Email", email.trim()],
+                  ["Phone number", phone.trim()],
+                ]}
+              />
             )}
-            <div className="py-4">
-              <p className="text-sm font-medium text-gray-500 mb-1">Questions Answered</p>
-              <p className="text-gray-900">{total} of {total}</p>
-            </div>
+
+            <ReviewSection
+              title={forSelf ? "You (the victim)" : "Victim"}
+              editLabel="Edit the victim's details"
+              onEdit={() => setPhase("victim")}
+              fields={[
+                ["Name", `${victimFirstName.trim()} ${victimLastName.trim()}`],
+                ["Sex", sexLabel(victimSex)],
+                ["Date of birth", formatDate(victimDob)],
+                ["Safe phone number", victimPhone],
+              ]}
+            />
+
+            <ReviewSection
+              title="Offender"
+              editLabel="Edit the offender's details"
+              onEdit={() => setPhase("offender")}
+              fields={[
+                ["Name", `${offenderFirstName.trim()} ${offenderLastName.trim()}`],
+                ["Sex", sexLabel(offenderSex)],
+                ["Date of birth", formatDate(offenderDob) ?? "Not given"],
+                ["Relationship to victim", relationshipLabel],
+              ]}
+            />
+
+            <section className="overflow-hidden rounded-xl border-2 border-[#C9C1D6]">
+              <h2 className="bg-[#EDE3F5] px-4 py-3 text-xs font-bold uppercase tracking-widest text-[#5C0F8B]">Answers</h2>
+              <ol className="divide-y divide-[#EDE3F5]">
+                {lethalityQuestions.map((question, i) => {
+                  const value = answers[question.id];
+                  return (
+                    <li key={question.id} className="flex flex-wrap items-start gap-3 px-4 py-3">
+                      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500">
+                        {question.id}
+                      </span>
+                      <span className="flex-1 min-w-48 text-sm leading-relaxed text-gray-700">{question.text}</span>
+                      <span className="flex items-center gap-2 shrink-0 ml-auto">
+                        <span className={`rounded-md px-2 py-0.5 text-xs font-bold tracking-wide ${
+                          value === true ? "bg-[#F5F0FB] text-[#5C0F8B]" : "bg-gray-100 text-gray-600"
+                        }`}>
+                          {value === undefined ? "NOT ANSWERED" : value ? "YES" : "NO"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => { setIndex(i); setPhase("questions"); }}
+                          aria-label={`Change answer to question ${question.id}`}
+                          className={EDIT_BUTTON}
+                        >
+                          Change
+                        </button>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
           </div>
 
-          {submitError && <p role="alert" className="text-red-700 text-sm mb-4">{submitError}</p>}
+          {/* The same check as the officer wizard, in this page's own wording. Never sent. */}
+          <label htmlFor="safe-phone-confirmed" className="flex items-start gap-3 mt-8 cursor-pointer">
+            <input
+              id="safe-phone-confirmed"
+              type="checkbox"
+              checked={safePhoneConfirmed}
+              onChange={(e) => setSafePhoneConfirmed(e.target.checked)}
+              className="mt-1 h-5 w-5 shrink-0 accent-[#5C0F8B]"
+            />
+            <span className="text-gray-800 leading-relaxed">
+              I confirm <strong>{victimPhone}</strong> is a safe phone number to contact
+            </span>
+          </label>
+          {!safePhoneConfirmed && (
+            <p className="text-sm text-gray-500 mt-2 ml-8">Tick the box to submit.</p>
+          )}
 
-          <div className="flex gap-4">
+          {submitError && <p role="alert" className="text-red-700 text-sm mt-6">{submitError}</p>}
+
+          <div className="flex flex-wrap gap-4 mt-8">
             <button onClick={() => { setIndex(total - 1); setPhase("questions"); }} className={SECONDARY}>Back</button>
-            <button onClick={handleSubmit} disabled={submitting} className={PRIMARY}>
+            <button onClick={handleSubmit} disabled={submitting || !safePhoneConfirmed} className={PRIMARY}>
               {submitting ? "Submitting..." : "Submit assessment"}
             </button>
           </div>

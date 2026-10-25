@@ -275,7 +275,7 @@ class NewAssessment extends Page
                 by validation in create(), not only by the disabled button.
                 Unticked whenever the number changes. Never stored: it only
                 makes sure the officer knows the number must be safe to call.
-                The civilian assessment uses the same wording.
+                The civilian assessment makes the same check in its own wording.
                 */
                 Checkbox::make('SafePhoneConfirmed')
                     ->label(fn (Get $get): string => 'I have confirmed that '

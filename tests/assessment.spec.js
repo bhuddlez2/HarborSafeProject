@@ -85,6 +85,11 @@ async function answerAll(page, pattern = (n) => n % 2 === 0) {
   await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
 }
 
+// The review's safe-phone box: Submit stays disabled until it is ticked.
+async function confirmSafePhone(page) {
+  await page.getByLabel(/is a safe phone number to contact/).check();
+}
+
 test('Get Support links to the assessment on this site', async ({ page }) => {
   await page.goto('/get-support/');
   const link = page.getByRole('link', { name: 'Take the assessment' });
@@ -102,6 +107,7 @@ test('a submission for yourself sends one request with every answer and no conta
   await fillOffender(page);
   await answerAll(page);
 
+  await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
   await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
 
@@ -134,6 +140,7 @@ test('an anonymous report for someone else sends no contact details', async ({ p
   await fillVictim(page);
   await fillOffender(page);
   await answerAll(page);
+  await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
   await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
 
@@ -162,6 +169,7 @@ test('a named report for someone else includes the submitter', async ({ page }) 
   await fillOffender(page);
   await answerAll(page);
   await expect(page.getByText('Sam Friend')).toBeVisible();
+  await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
   await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
 
@@ -189,6 +197,7 @@ test('fields are not remembered by the browser, and the details are cleared afte
   await fillVictim(page);
   await fillOffender(page);
   await answerAll(page);
+  await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
   await page.getByRole('button', { name: 'Start new assessment' }).click();
 
@@ -208,6 +217,7 @@ test('a throttled submission says so and keeps the answers for another try', asy
   await fillOffender(page);
   await answerAll(page);
 
+  await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
   // filter: Next.js renders its own (empty) role="alert" route announcer too
   await expect(page.getByRole('alert').filter({ hasText: /wait a minute/i })).toBeVisible();
@@ -272,4 +282,112 @@ test('the safe phone number formats as it is typed and needs all 10 digits', asy
   await expect(phone).toHaveValue('(423)555-0100');
   await expect(page.getByText('Enter a 10-digit phone number, starting with the area code.')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled();
+});
+
+/*
+The review before Submit (team plan task 31): every detail and answer, Edit and Change
+buttons that come straight back to the review, and the safe-phone box - the officer
+wizard's check, which is never sent.
+*/
+
+async function reachReview(page) {
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+  await page.getByRole('button', { name: 'Myself' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fillVictim(page);
+  await fillOffender(page);
+  await answerAll(page);
+}
+
+test('the review shows every detail and every answer', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await reachReview(page);
+
+  for (const text of ['Myself', 'Jane Doe', 'Female', 'Apr 12, 1990', '(423)555-0100', 'John Roe', 'Male', 'Not given', 'Spouse']) {
+    await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
+  }
+
+  const answers = page.getByRole('listitem');
+  await expect(answers).toHaveCount(11);
+  await expect(answers.nth(0)).toContainText('NO');
+  await expect(answers.nth(1)).toContainText('YES');
+  await expect(page.getByRole('button', { name: /^Change answer to question/ })).toHaveCount(11);
+});
+
+test('Submit stays disabled until the safe number is confirmed, and the box is never sent', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await reachReview(page);
+
+  const box = page.getByLabel('I confirm (423)555-0100 is a safe phone number to contact');
+  const submit = page.getByRole('button', { name: 'Submit assessment' });
+  await expect(box).not.toBeChecked();
+  await expect(submit).toBeDisabled();
+
+  await box.check();
+  await expect(submit).toBeEnabled();
+  await submit.click();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
+
+  expect(Object.keys(api.submissions[0]).filter((k) => /confirm|safephoneconfirmed/i.test(k))).toEqual([]);
+});
+
+test('editing the victim returns to the review, and a new number has to be confirmed again', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await reachReview(page);
+  await confirmSafePhone(page);
+
+  await page.getByRole('button', { name: "Edit the victim's details" }).click();
+  await page.getByLabel('Safe Phone Number').fill('(865) 555-0199');
+  await page.getByRole('button', { name: 'Return to review' }).click();
+
+  // Straight back: not through the offender step or the questions again.
+  await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
+  await expect(page.getByLabel(/\(865\)555-0199 is a safe phone number/)).not.toBeChecked();
+  await expect(page.getByRole('button', { name: 'Submit assessment' })).toBeDisabled();
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
+  expect(api.submissions[0].VictimSafePhoneNumber).toBe('(865)555-0199');
+});
+
+test('changing one answer from the review comes straight back to it', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await reachReview(page);
+
+  await page.getByRole('button', { name: 'Change answer to question 1', exact: true }).click();
+  await expect(page.getByText('Question 1 of 11')).toBeVisible();
+  await page.getByRole('button', { name: 'Yes', exact: true }).first().click();
+
+  await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
+  await expect(page.getByRole('listitem').nth(0)).toContainText('YES');
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
+  expect(api.submissions[0]).toMatchObject({ RiskIndicator1: true, RiskIndicator2: true, RiskIndicator3: false });
+});
+
+test('switching to a named report from the review asks for the name first', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await reachReview(page);
+
+  await page.getByRole('button', { name: 'Edit who this report is for' }).click();
+  await page.getByRole('button', { name: 'Someone else' }).click();
+  await page.getByRole('button', { name: 'No', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Your information' })).toBeVisible();
+  await page.getByLabel('First Name').fill('Sam');
+  await page.getByLabel('Last Name').fill('Friend');
+  await page.getByRole('button', { name: 'Return to review' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
+  await expect(page.getByText('Sam Friend')).toBeVisible();
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
+  expect(api.submissions[0]).toMatchObject({ ForWhom: 'other', Anonymous: false, SubmitterFirstName: 'Sam' });
 });
