@@ -144,8 +144,8 @@ test('the view marks an anonymous submission and shows no submitter card', funct
 /*
 The PDF route is outside the panel, so canAccess() does not guard it - the
 controller looks the record up through PrivateAssessment::visibleTo(), so to
-anyone but an admin it does not exist (404). Only refusals are asserted, as in
-AssessmentPdfAccessTest: a real download launches headless Chromium.
+anyone but an admin it does not exist (404). Only refusals are asserted here;
+a real download is printed in AssessmentPdfAccessTest and PdfRenderingTest.
 */
 test('only an active admin may download a civilian assessment', function (UserRole $role, bool $isActive) {
     $record = pestCivilianAssessment();

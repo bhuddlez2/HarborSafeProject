@@ -25,7 +25,7 @@ see [Schema_Reference.md](Schema_Reference.md).
 |---|---|---|
 | PHP | 8.4.1+ | **Not from XAMPP on Windows** — it ships 8.2 at most, and the locked packages need 8.4.1. See [PORTAL_SETUP.md](PORTAL_SETUP.md) |
 | Composer | 2.x | |
-| Node.js | 20+ | Next.js 16 requires it. **Also needed system-wide, not only through nvm**, for the staff panel's PDF downloads. See the note below |
+| Node.js | 20+ | Next.js 16 and the staff panel's stylesheet build need it. Build time only: the running backend never calls Node (PDFs are pure PHP) |
 | MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running.** On Windows, XAMPP is a fine way to get just this |
 
 ### PHP's `intl` extension
@@ -208,12 +208,9 @@ npm run build            # re-run after changing theme.css or the panel's Blade 
 Without this build the panel fails to load its stylesheet. Use `npm run dev`
 instead while editing styles, so changes recompile live.
 
-The same `npm install` downloads the Chrome that Browsershot drives for the
-Download PDF buttons (through puppeteer). Browsershot runs `node` from the web
-server's environment, which doesn't load nvm, so **Node must be installed
-system-wide**. On Linux, a Node that exists only inside nvm makes Download PDF
-fail with `node: command not found` (exit code 127). On Fedora, install it with
-`sudo dnf install nodejs npm`. On Windows, use the nodejs.org installer.
+The Download PDF buttons need nothing from npm. They print in pure PHP through
+dompdf (a Composer package), because the production host is shared hosting
+that can't run Node or Chrome.
 
 Start it:
 

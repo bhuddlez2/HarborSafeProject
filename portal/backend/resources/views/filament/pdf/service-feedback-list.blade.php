@@ -1,21 +1,31 @@
+@php
+    use App\Services\ServiceFeedbackExport as Export;
+
+    // Printed by dompdf (App\Support\HtmlPdf): CSS 2.1, DejaVu Sans, nothing
+    // loaded from outside this file. Every table shares these fixed widths,
+    // and ServiceFeedbackExport::headings() draws the same columns at the top
+    // of each later page, so the stack of small tables reads as one.
+    $commentWidth = 792 - 2 * Export::PDF_MARGIN - array_sum(array_filter($widths));
+    // A cell's CSS width leaves out its 6pt padding either side.
+    $cell = collect($widths)->map(fn (?int $width): int|float => ($width ?? $commentWidth) - 12)->all();
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Service feedback</title>
 <style>
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+    /* The top margin leaves room for the headings drawn on later pages. */
+    @page {
+        margin: {{ Export::PDF_MARGIN + Export::PDF_HEADING_HEIGHT }}pt {{ Export::PDF_MARGIN }}pt {{ Export::PDF_MARGIN_BOTTOM }}pt {{ Export::PDF_MARGIN }}pt;
     }
 
+    /* dompdf puts the page margins on the root element, so no "* { margin: 0 }". */
+    body, div { margin: 0; padding: 0; }
+
     body {
-        font-family: 'Segoe UI', Arial, sans-serif;
-        font-size: 11px;
+        font-family: 'DejaVu Sans', sans-serif;
+        font-size: 8pt;
         color: #1b1726;
         background: #fff;
     }
@@ -23,52 +33,52 @@
     .hs-fl-header {
         background-color: #5c0f8b;
         color: #fff;
-        border-radius: 10px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1rem;
+        border-radius: 7.5pt;
+        padding: 10pt 12pt;
+        margin-bottom: 10pt;
     }
     .hs-fl-eyebrow {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.1em;
+        font-size: 7.5pt;
+        font-weight: bold;
+        letter-spacing: 1pt;
         text-transform: uppercase;
-        opacity: 0.7;
-        margin-bottom: 4px;
+        color: #cfb7e2;
+        margin-bottom: 3pt;
     }
     .hs-fl-title {
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 14pt;
+        font-weight: bold;
     }
 
+    /* Not table-layout: fixed - dompdf then splits the columns equally and
+       ignores the widths. */
     table {
         width: 100%;
         border-collapse: collapse;
     }
-    /* Column headings repeat at the top of every printed page. */
-    thead { display: table-header-group; }
-    tr { page-break-inside: avoid; }
     th {
+        height: {{ Export::PDF_HEADING_HEIGHT - 10 }}pt;
         background: #f3f0f7;
         color: #3b2a4d;
-        font-size: 10px;
-        font-weight: 700;
+        font-size: 7.5pt;
+        font-weight: bold;
         text-align: left;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        padding: 6px 8px;
-        border-bottom: 2px solid #d8cfe3;
+        padding: 5pt 6pt;
+        border-bottom: 1.5pt solid #d8cfe3;
     }
     td {
-        padding: 6px 8px;
-        border-bottom: 1px solid #e5e7eb;
+        padding: 5pt 6pt;
+        border-bottom: 0.75pt solid #e5e7eb;
         vertical-align: top;
+        word-wrap: break-word;
     }
     td.hs-fl-nowrap { white-space: nowrap; }
     td.hs-fl-centre, th.hs-fl-centre { text-align: center; }
-    td.hs-fl-comment {
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
+    td.hs-fl-comment { white-space: pre-wrap; }
+    /* One form's long comment printed over several rows (pdfRows()). */
+    tr.hs-fl-continues td { border-bottom: none; padding-bottom: 0; }
+    tr.hs-fl-continued td { padding-top: 0; }
 </style>
 </head>
 <body>
@@ -77,25 +87,28 @@
         <div class="hs-fl-title">Service feedback</div>
     </div>
 
-    {{-- Only what each form holds: no filters, export date or names (ServiceFeedbackExport). --}}
+    {{-- Only what each form holds: no filters, export date or names (ServiceFeedbackExport).
+         dompdf ignores <col>, so each table's first row carries the widths. --}}
     <table>
-        <thead>
-            <tr>
-                @foreach ($columns as $index => $column)
-                    <th @class(['hs-fl-centre' => $index === 2])>{{ $column }}</th>
-                @endforeach
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($rows as [$submitted, $service, $rating, $comment])
-                <tr>
-                    <td class="hs-fl-nowrap">{{ $submitted?->format('Y-m-d') }}</td>
-                    <td>{{ $service }}</td>
-                    <td class="hs-fl-centre">{{ $rating }}</td>
-                    <td class="hs-fl-comment">{{ $comment }}</td>
+        <tr>
+            @foreach ($columns as $index => $column)
+                <th @class(['hs-fl-centre' => $index === 2]) style="width: {{ $cell[$index] }}pt">{{ $column }}</th>
+            @endforeach
+        </tr>
+    </table>
+
+    {{-- ServiceFeedbackExport::ROWS_PER_TABLE rows a table: see its comment on memory. --}}
+    @foreach ($tables as $rows)
+        <table>
+            @foreach ($rows as [$submitted, $service, $rating, $comment, $continued, $continues])
+                <tr @class(['hs-fl-continued' => $continued, 'hs-fl-continues' => $continues])>
+                    <td class="hs-fl-nowrap" @if ($loop->first) style="width: {{ $cell[0] }}pt" @endif>{{ $submitted?->format('Y-m-d') }}</td>
+                    <td @if ($loop->first) style="width: {{ $cell[1] }}pt" @endif>{{ $service }}</td>
+                    <td class="hs-fl-centre" @if ($loop->first) style="width: {{ $cell[2] }}pt" @endif>{{ $rating }}</td>
+                    <td class="hs-fl-comment" @if ($loop->first) style="width: {{ $cell[3] }}pt" @endif>{{ $comment }}</td>
                 </tr>
             @endforeach
-        </tbody>
-    </table>
+        </table>
+    @endforeach
 </body>
 </html>

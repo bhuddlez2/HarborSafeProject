@@ -5,17 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ $title }}</title>
 <style>
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
+    /*
+    Printed by dompdf (App\Support\HtmlPdf), which is CSS 2.1: no flexbox,
+    grid or gap. The partial's markup is the View pop-up's, so the layout is
+    redone here with CSS tables, floats and plain blocks. Fonts are dompdf's
+    bundled DejaVu, which has every accented letter; nothing is loaded from
+    outside this file.
+    */
+    /* dompdf puts the page margins on the root element, so no "* { margin: 0 }". */
+    @page { margin: 15mm; }
+
+    body, div, dl, dt, dd, p { margin: 0; padding: 0; }
 
     body {
-        font-family: 'Segoe UI', Arial, sans-serif;
-        font-size: 14px;
+        font-family: 'DejaVu Sans', sans-serif;
+        font-size: 10pt;
         color: #1b1726;
         background: #fff;
     }
@@ -24,185 +28,200 @@
     .hs-ar-header {
         background-color: #5c0f8b;
         color: #fff;
-        border-radius: 12px;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 1.25rem;
+        border-radius: 9pt;
+        padding: 12pt 15pt;
+        margin-bottom: 12pt;
     }
     .hs-ar-header-eyebrow {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.1em;
+        font-size: 7.5pt;
+        font-weight: bold;
+        letter-spacing: 1pt;
         text-transform: uppercase;
-        opacity: 0.7;
-        margin-bottom: 4px;
+        color: #cfb7e2;
+        margin-bottom: 3pt;
     }
     .hs-ar-header-title {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 8px;
+        font-size: 14pt;
+        font-weight: bold;
+        margin-bottom: 5pt;
     }
-    .hs-ar-header-meta {
-        font-size: 13px;
-        opacity: 0.85;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-    }
-    .hs-ar-header-sep { opacity: 0.5; }
+    .hs-ar-header-meta { font-size: 9pt; color: #eadcf5; }
+    .hs-ar-header-sep { color: #a77fc6; padding: 0 3pt; }
     .hs-ar-header-id {
-        font-size: 11px;
-        opacity: 0.6;
-        margin-top: 6px;
-        font-family: 'Courier New', monospace;
+        font-family: 'DejaVu Sans Mono', monospace;
+        font-size: 7.5pt;
+        color: #c3a6da;
+        margin-top: 5pt;
     }
 
-    /* Victim / Offender */
-    .hs-ar-parties {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1.25rem;
-    }
+    /* Cards */
     .hs-ar-party {
         background-color: #f5f0fb;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
+        border-radius: 9pt;
+        padding: 10pt 12pt;
     }
     .hs-ar-party-label {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        font-size: 7.5pt;
+        font-weight: bold;
+        letter-spacing: 0.8pt;
         text-transform: uppercase;
         color: #5c0f8b;
-        margin-bottom: 12px;
+        margin-bottom: 8pt;
     }
-    .hs-ar-fields {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px 12px;
+
+    /* Victim and offender side by side: a two-cell table, so both cards are
+       the same height. */
+    /* border-spacing makes the gap between the cards. It also puts 8pt
+       outside each, which the negative left margin and the width take back:
+       dompdf ignores a table's negative right margin, so the width is the
+       A4 text width (595pt less 2 x 15mm = 510pt) plus 2 x 8pt. */
+    .hs-ar-parties {
+        display: table;
+        width: 526pt;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 8pt 0;
+        margin: 0 0 12pt -8pt;
+        page-break-inside: avoid;
     }
+    .hs-ar-parties > .hs-ar-party {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+    }
+
+    /* Field grid: two to a row (three on the submitter and submission cards).
+       Inline blocks rather than floats, which dompdf mislays inside the table
+       cells above. dompdf adds side padding to the width whatever box-sizing
+       says, so the gap between columns is on the label and value instead. */
     .hs-ar-field {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+        display: inline-block;
+        vertical-align: top;
+        width: 49%;
+        padding-bottom: 7pt;
     }
+    .hs-ar-fields--3 .hs-ar-field,
+    .hs-ar-submitter .hs-ar-field { width: 32.5%; }
     .hs-ar-field dt {
-        font-size: 10px;
-        font-weight: 700;
+        font-size: 6.5pt;
+        font-weight: bold;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.4pt;
         color: #9068b8;
+        margin-bottom: 1.5pt;
+        padding-right: 8pt;
     }
     .hs-ar-field dd {
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 9.5pt;
+        font-weight: bold;
         color: #1b1726;
-        overflow-wrap: break-word;
-        word-break: break-word;
+        word-wrap: break-word;
+        padding-right: 8pt;
     }
 
-    /* Civilian "Submitted by" card */
-    .hs-ar-submitter { margin-bottom: 1.25rem; }
-    .hs-ar-submitter .hs-ar-fields { grid-template-columns: repeat(3, 1fr); }
+    /* Civilian "Submitted by" card, and the submission records' cards */
+    .hs-ar-submitter,
+    .hs-ar-card { margin-bottom: 10pt; }
 
-    /* Submission records (service feedback, resource requests) */
-    .hs-ar-card { margin-bottom: 1rem; }
-    .hs-ar-fields--3 { grid-template-columns: repeat(3, 1fr); }
     .hs-ar-pill {
-        display: inline-block;
-        font-size: 13px;
-        font-weight: 700;
-        padding: 2px 10px;
-        border-radius: 999px;
+        font-size: 9pt;
+        font-weight: bold;
+        padding: 1pt 7pt;
+        border-radius: 8pt;
     }
-    .hs-ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hs-ar-chips { line-height: 22pt; }
     .hs-ar-chip {
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 9pt;
+        font-weight: bold;
         color: #5c0f8b;
         background-color: #ede3f5;
-        padding: 4px 10px;
-        border-radius: 999px;
+        padding: 3pt 8pt;
+        margin-right: 4pt;
+        border-radius: 8pt;
+        white-space: nowrap;
     }
     .hs-ar-text {
-        font-size: 13px;
-        line-height: 1.6;
+        font-size: 9.5pt;
+        line-height: 1.55;
         color: #1b1726;
         white-space: pre-line;
-        overflow-wrap: break-word;
+        word-wrap: break-word;
     }
     .hs-ar-text--empty { color: #6b7280; font-style: italic; }
-    .hs-ar-note { font-size: 11px; color: #6b7280; margin-top: 10px; }
+    .hs-ar-note { font-size: 7.5pt; color: #6b7280; margin-top: 4pt; }
 
-    /* Risk indicators */
+    /* Risk indicators: each question a plain block with room either side,
+       the number and YES/NO placed in that room as pills. Absolute, not
+       floats or flex: YES/NO comes after the question in the markup, and
+       dompdf has no flexbox. */
     .hs-ar-risk {
-        border: 2px solid #c9c1d6;
-        border-radius: 12px;
-        overflow: hidden;
+        border: 1.5pt solid #c9c1d6;
+        border-radius: 9pt;
     }
     .hs-ar-risk-header {
         background-color: #ede3f5;
-        padding: 10px 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        border-radius: 7.5pt 7.5pt 0 0;
+        padding: 8pt 12pt;
     }
     .hs-ar-risk-title {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        font-size: 7.5pt;
+        font-weight: bold;
+        letter-spacing: 0.8pt;
         text-transform: uppercase;
         color: #5c0f8b;
     }
     .hs-ar-risk-score {
-        font-size: 13px;
-        font-weight: 700;
-        padding: 4px 10px;
-        border-radius: 999px;
+        float: right;
+        font-size: 9pt;
+        font-weight: bold;
+        padding: 1pt 7pt;
+        border-radius: 8pt;
     }
     .hs-ar-indicator {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 7px 16px;
-        border-bottom: 1px solid #ede3f5;
+        position: relative;
+        padding: 6pt 56pt 6pt 38pt;
+        border-bottom: 0.75pt solid #ede3f5;
+        page-break-inside: avoid;
     }
-    .hs-ar-indicator:last-child { border-bottom: none; }
+    .hs-ar-indicator:last-child { border-bottom: none; border-radius: 0 0 7.5pt 7.5pt; }
     .hs-ar-indicator--yes { background-color: #fff5f5; }
     .hs-ar-indicator-num {
-        flex-shrink: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 22px;
-        height: 22px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-        margin-top: 2px;
+        position: absolute;
+        left: 12pt;
+        top: 5pt;
+        width: 16pt;
+        /* Sized by padding: dompdf drops text to the bottom of a tall
+           line-height in a positioned box. */
+        line-height: 1;
+        padding: 4.25pt 0;
+        border-radius: 8pt;
+        text-align: center;
+        font-size: 7.5pt;
+        font-weight: bold;
         background-color: #e5e7eb;
         color: #6b7280;
     }
     .hs-ar-indicator-num--yes { background-color: #fee2e2; color: #b91c1c; }
     .hs-ar-indicator-text {
-        flex: 1;
-        font-size: 13px;
+        display: block;
+        font-size: 9.5pt;
+        line-height: 14pt;
         color: #374151;
-        line-height: 1.5;
     }
     .hs-ar-indicator-badge {
-        flex-shrink: 0;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        padding: 3px 8px;
-        border-radius: 6px;
+        position: absolute;
+        right: 12pt;
+        top: 6.5pt;
+        padding: 2.75pt 6pt;
+        line-height: 1;
+        border-radius: 4pt;
+        font-size: 7.5pt;
+        font-weight: bold;
+        letter-spacing: 0.4pt;
         background-color: #f3f4f6;
         color: #6b7280;
     }
     .hs-ar-indicator-badge--yes { background-color: #fee2e2; color: #b91c1c; }
-
 </style>
 </head>
 <body>
