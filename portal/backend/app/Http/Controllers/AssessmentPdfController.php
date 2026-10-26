@@ -26,7 +26,7 @@ class AssessmentPdfController extends Controller
             ->where('DocumentID', $id)
             ->firstOrFail();
 
-        // Rendered by App\Services\AssessmentPdf (Browsershot), shared with
+        // Rendered by App\Services\AssessmentPdf (dompdf, pure PHP), shared with
         // the civilian download.
         $bytes = $pdf->render($record);
 

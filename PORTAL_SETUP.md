@@ -78,17 +78,10 @@ The installer adds itself to your PATH.
 From [nodejs.org](https://nodejs.org/) if you don't already have it. You
 probably do.
 
-**It must be installed system-wide, not only through nvm.** The staff panel's
-Download PDF buttons print through Browsershot, which runs `node` from the web
-server's environment, and that environment doesn't load nvm. If Node exists only
-inside nvm, the terminal finds it and the PDF download doesn't. Download PDF then
-fails with `node: command not found` (exit code 127).
-
-- **Windows:** the nodejs.org installer puts Node on the system PATH.
-- **Fedora:** `sudo dnf install nodejs npm`.
-
-Check from a fresh terminal, outside any nvm shell: `which node` (Linux) or
-`where node` (Windows) should print a system path, not one under `.nvm`.
+Node is a **build-time** tool here: it compiles the panel's stylesheet
+(`npm run build`) and builds the website. Nothing in the running backend uses
+it. The Download PDF buttons print in pure PHP (dompdf), with no Node, Chrome
+or other program to install, so they work on shared hosting too. nvm is fine.
 
 ---
 
@@ -242,9 +235,8 @@ npm install
 npm run build
 ```
 
-`npm install` here also downloads the Chrome that Browsershot drives for the
-Download PDF buttons (through puppeteer). Re-run it if PDFs fail with a missing
-Chrome error.
+(PDFs need nothing from npm: they're printed in PHP by dompdf, a Composer
+package.)
 
 Create the storage symlink. Uploads do not need it — event images and
 newsletter PDFs go in the database — but Laravel's own tooling assumes it
@@ -369,7 +361,7 @@ If classes are mysteriously not applying, check this first.
 | `Unknown database` | Run `php artisan db:create` |
 | Login rejects every password | You skipped `LocalStaffUserSeeder` |
 | Panel loads but looks unstyled | You skipped `npm run build` |
-| Download PDF fails with `node: command not found` (exit code 127) | Node is installed only through nvm, which the web server doesn't load. Install it system-wide (section 2, Node.js) |
+| Download PDF fails with "Permission denied" on `storage/framework/dompdf` | The web server can't write to `storage/`. dompdf keeps its font files there. Fix the folder's permissions the same way as for the rest of `storage/` |
 | Your new Tailwind classes do nothing | Section 8, the `@source` trap |
 | An upload fails with an unhelpful error | `upload_max_filesize` / `post_max_size` too low (step 4). PHP discards the file before Laravel runs, so you never see the panel's own "too large" message |
 | `npm run dev` on a frontend dies on `globals.css` with "the module factory is not available" | Nothing to do with your browser cache, despite what it says. Stop the dev server, delete that frontend's `.next` directory, and start again. It happens when an old postcss from the repo root's `node_modules` shadows the frontend's own — both `next.config.mjs` files pin `turbopack.root` to prevent it, so if you hit this, check that pin is still there |

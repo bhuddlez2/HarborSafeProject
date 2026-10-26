@@ -19,8 +19,8 @@ forms the filters leave - every page of them - one form per row, and only
 what each form holds: the day submitted (Eastern), service, rating, comment.
 No filters, export date, source or staff names. Exports are not logged.
 
-ServiceFeedbackExport::printPdf() is overridden here: a real render launches
-headless Chromium (see AssessmentPdfAccessTest).
+ServiceFeedbackExport::printPdf() is overridden here to read the HTML it is
+handed; the real PDF (pure PHP, dompdf) is printed in PdfRenderingTest.
 */
 
 beforeEach(function () {

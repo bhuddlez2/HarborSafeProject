@@ -11,10 +11,10 @@ the controller has to apply LawEnforcementAssessment::visibleTo() itself. It
 first arrived letting any police admin download any agency's records, which
 section 5 rule 5 of Filament_CMS_Design.md forbids. These pin that shut.
 
-Only refusals are asserted. A successful download launches a real headless
-Chromium through Browsershot, which is too slow and too machine-dependent for
-this suite; the allowed cases are the same visibleTo() rows that
-AssessmentFiltersTest and AssessmentChangeLogTest already cover.
+PDFs are printed in pure PHP (dompdf, App\Support\HtmlPdf) - no Node or
+Chromium - so the allowed downloads are real here too: the submitting officer,
+their agency's police admin and an admin each get the file. Everyone else gets
+a 404, exactly as in the panel.
 */
 
 afterEach(fn () => cleanupStaffData());
@@ -51,6 +51,19 @@ test('a secretary cannot download an assessment', function () {
         ->get(route('staff.assessments.pdf', $world->assessmentA->DocumentID))
         ->assertNotFound();
 });
+
+test('the submitting officer, their police admin and an admin get the PDF', function (string $who) {
+    $world = pestTwoAgencies();
+    $user = $who === 'admin' ? staffUser(UserRole::Admin) : $world->{$who};
+
+    $response = $this->actingAs($user)
+        ->get(route('staff.assessments.pdf', $world->assessmentA->DocumentID))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf')
+        ->assertDownload('assessment-'.substr($world->assessmentA->DocumentID, 0, 8).'.pdf');
+
+    expect($response->getContent())->toStartWith('%PDF-');
+})->with(['officerA', 'policeAdminA', 'admin']);
 
 test('an anonymous visitor is sent to sign in', function () {
     $world = pestTwoAgencies();

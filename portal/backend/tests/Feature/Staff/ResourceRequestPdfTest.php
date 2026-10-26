@@ -20,7 +20,8 @@ the plain form, nothing from its follow-up - with every download recorded in
 assessment_access_log, as is opening its follow-up page (both show the
 requester's safe phone number).
 
-App\Services\AssessmentPdf is faked: a real render launches Chromium.
+App\Services\AssessmentPdf is faked, to see which record it was handed;
+real printing is pinned in PdfRenderingTest.
 */
 
 beforeEach(function () {

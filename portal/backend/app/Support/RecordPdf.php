@@ -12,7 +12,9 @@ use InvalidArgumentException;
 Which Blade partial shows each kind of record - the same one in its View
 pop-up and in its PDF - and the printable page for it: the partial wrapped in
 filament/pdf/record.blade.php, which carries the partial's styles inline,
-since Chromium never sees the panel's theme.
+since the PDF renderer (dompdf, App\Support\HtmlPdf) never sees the panel's
+theme. dompdf has no flexbox or grid, so that page re-lays the partial's
+markup with CSS 2.1; a partial's markup change needs a look at its PDF too.
 
 Printing is App\Services\AssessmentPdf's job (swappable in tests). Neither does
 any access checking or logging: each controller fetches the record through
