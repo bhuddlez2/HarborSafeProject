@@ -59,15 +59,17 @@ test('a confirmed assessment is saved', function () {
 });
 
 test('the submitted screen lists every hotline as text and as a working link', function () {
-    // Team plan task 12: 911, Harbor Safe call and text, the national DV
-    // hotline and 988, each shown and tappable.
+    // Team plan task 12: Harbor Safe call and text, the national DV hotline
+    // and 988, each shown and tappable. No "call 911" line (item 7): the
+    // people on this screen are the police.
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
 
     Livewire::test(NewAssessment::class)
         ->fillForm(completedWizardData(['SafePhoneConfirmed' => true]))
         ->call('create')
         ->assertSee('Assessment submitted')
-        ->assertSeeHtml('href="tel:911"')
+        ->assertDontSeeHtml('href="tel:911"')
+        ->assertDontSee('call 911')
         ->assertSee('(423) 476-3886')
         ->assertSeeHtml('href="tel:423-476-3886"')
         ->assertSee('(423) 715-9614')
