@@ -169,20 +169,21 @@ test('name is always rebuilt from first and last name, whatever is written to it
     expect($secretary->refresh()->name)->toBe('Jordan Rivera');
 });
 
-test('the account page edits first and last name', function () {
+// Shown, but read-only: whoever manages the account changes the name
+// (AccountGuardsTest covers the lock for every role).
+test('the account page shows first and last name read-only', function () {
     $secretary = staffUser(UserRole::Secretary);
     $this->actingAs($secretary);
 
     Livewire::test(EditProfile::class)
         ->assertSchemaStateSet(['first_name' => 'Pest', 'last_name' => UserRole::Secretary->value])
-        ->fillForm(['first_name' => 'Casey', 'last_name' => str_repeat('m', 51)])
-        ->call('save')
-        ->assertHasFormErrors(['last_name' => 'max'])
+        ->assertFormFieldDisabled('first_name')
+        ->assertFormFieldDisabled('last_name')
         ->fillForm(['first_name' => 'Casey', 'last_name' => 'Morgan'])
         ->call('save')
         ->assertHasNoFormErrors();
 
-    expect($secretary->refresh()->name)->toBe('Casey Morgan')
+    expect($secretary->refresh()->name)->toBe('Pest '.UserRole::Secretary->value)
         ->and($secretary->role)->toBe(UserRole::Secretary);
 });
 

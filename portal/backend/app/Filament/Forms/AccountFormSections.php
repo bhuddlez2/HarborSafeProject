@@ -42,6 +42,13 @@ final class AccountFormSections
             ->dehydrated(false);
     }
 
+    // The one rule for a new password set in the panel: here (Accounts and
+    // Officers, create and edit) and on the Account page (EditProfile).
+    public static function passwordRule(): Password
+    {
+        return Password::min(15)->max(64)->uncompromised();
+    }
+
     public static function password(): Section
     {
         return Section::make('Password')
@@ -53,7 +60,7 @@ final class AccountFormSections
                     ->revealable()
                     ->autocomplete('new-password')
                     ->required(fn (string $operation): bool => $operation === 'create')
-                    ->rule(Password::min(15)->max(64)->uncompromised())
+                    ->rule(self::passwordRule())
                     ->same('passwordConfirmation')
                     ->dehydrated(fn ($state): bool => filled($state)),
                 TextInput::make('passwordConfirmation')

@@ -783,8 +783,8 @@ that was never built. A matrix line with no resource behind it fails silently.
   manages which roles is `StaffAccountResource::manageableRoles()`; the role is forced on
   save, nothing is deleted, and nobody edits their own account here.
 
-First and last name (50 characters each) are separate fields on both account screens and
-on the Account (profile) page. They are the source of truth; `users.name` is kept, rebuilt
+First and last name (50 characters each) are separate fields on both account screens, and
+are shown read-only on the Account (profile) page (§13). They are the source of truth; `users.name` is kept, rebuilt
 as "First Last" on every save, because tables search and sort on it.
 
 **Still to build: the super admin role**, which creates police admins, admins and
@@ -972,6 +972,17 @@ Police Admin                                    police_admin - its ONLY group
   Officers           /police/officers           50  own agency's officers; needs an agency
   Account            (Filament's profile page)  60
 ```
+
+**The Account page changes only the password and the badge.** `EditProfile` (Filament's
+profile page) lets every role change their own password, under the same rule as account
+creation (`AccountFormSections::passwordRule()`: 15–64 characters, not in a known breach),
+and active officers their own badge number. First name, last name and email are shown
+greyed out and never saved; the save is a whitelist (password, plus the officer's own
+`law_enforcement_agents.badge_number`), so a tampered request changes nothing else. Name
+and email are changed by whoever manages the account: an officer's by their agency's
+police admin (Officers) or a super admin; a secretary's by an admin or super admin; a
+police admin's or admin's by a super admin (Accounts); a super admin's by another super
+admin. A lone super admin therefore can't change their own name or email in the panel.
 
 **A police admin sees one group.** Home, New assessment, Assessment review, Logs and
 Account are shared with other roles, which keep their own groups above. Each of those
