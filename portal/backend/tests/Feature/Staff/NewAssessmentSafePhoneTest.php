@@ -78,6 +78,17 @@ test('the submitted screen lists every hotline as text and as a working link', f
         ->assertSeeHtml('href="tel:988"');
 });
 
+test('the submitted screen has a Back to Home button', function () {
+    // Team plan item 8: beside Start new assessment, straight to the Home page.
+    $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
+
+    Livewire::test(NewAssessment::class)
+        ->fillForm(completedWizardData(['SafePhoneConfirmed' => true]))
+        ->call('create')
+        ->assertSeeInOrder(['Start new assessment', 'Back to Home'])
+        ->assertSeeHtml('href="'.e(App\Filament\Pages\Police::getUrl()).'"');
+});
+
 test('changing the number clears the confirmation', function () {
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
 
