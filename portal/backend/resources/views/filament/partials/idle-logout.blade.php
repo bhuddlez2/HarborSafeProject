@@ -20,6 +20,10 @@ The time of the last request is shared between tabs through localStorage (a
 timestamp only, nothing from the page), so working in one tab, or choosing
 Stay signed in there, closes the warning in the others.
 
+An unfinished assessment is kept through the logout: the reload waits for it
+to save itself to the tab (App\Support\AssessmentDraft), and the warning says
+so whenever one is saved.
+
 Rendered for signed-in users only (StaffPanelProvider, SCRIPTS_AFTER).
 SessionTimeoutTest pins it.
 --}}
@@ -46,6 +50,14 @@ SessionTimeoutTest pins it.
         because there has been no activity for a while. Anything you haven't
         saved will be lost.
     </p>
+
+    {{-- Only for those who fill in the wizard (AssessmentDraft); nobody else has one. --}}
+    @if (\App\Filament\Pages\NewAssessment::canAccess())
+        <p class="hidden mt-3 text-sm text-gray-600" data-hs-idle-draft>
+            Your unfinished assessment is kept in this browser tab. Sign back in
+            here to resume it.
+        </p>
+    @endif
 
     <p class="hidden text-sm text-danger-600" data-hs-idle-error role="alert">
         We couldn't reach the server. Check your connection and try again.
@@ -103,6 +115,10 @@ SessionTimeoutTest pins it.
 
             warning = shown;
             showError(false);
+
+            let hasDraft = false;
+            try { hasDraft = sessionStorage.getItem(@js(\App\Support\AssessmentDraft::STORAGE_KEY)) !== null; } catch (e) {}
+            el('[data-hs-idle-draft]')?.classList.toggle('hidden', ! (shown && hasDraft));
             window.dispatchEvent(new CustomEvent(shown ? 'open-modal' : 'close-modal', { detail: { id: modalId } }));
         };
 
@@ -116,11 +132,35 @@ SessionTimeoutTest pins it.
             }
         };
 
+        {{-- Kept as a Blade comment: this partial is on a secretary's pages too,
+             which must never mention assessments (FollowUpNewRequestTest). --}}
+        // Before reloading, give the officer wizard a moment to save its
+        // unfinished form to the tab (its draft script), at most 3 seconds.
+        let reloading = false;
+
+        const reload = () => {
+            if (reloading) {
+                return;
+            }
+
+            reloading = true;
+
+            const pending = [];
+            window.dispatchEvent(new CustomEvent('hs-before-idle-reload', {
+                detail: { waitUntil: (promise) => pending.push(promise) },
+            }));
+
+            Promise.race([
+                Promise.allSettled(pending),
+                new Promise((resolve) => setTimeout(resolve, 3000)),
+            ]).then(() => window.location.reload());
+        };
+
         const check = () => {
             const idleMs = Date.now() - lastRequest();
 
             if (idleMs >= deadlineMs) {
-                window.location.reload();
+                reload();
 
                 return;
             }
@@ -158,7 +198,7 @@ SessionTimeoutTest pins it.
                     touch();
                     check();
                 } else {
-                    window.location.reload();
+                    reload();
                 }
             } catch (e) {
                 showError(true);

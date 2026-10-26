@@ -109,6 +109,14 @@ class StaffPanelProvider extends PanelProvider
                     ? view('filament.partials.idle-logout', ['minutes' => config('session.lifetime')])->render()
                     : '',
             )
+            // An unfinished assessment kept in the tab (AssessmentDraft):
+            // wiped on Sign out, dropped if it is someone else's or too old.
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => Filament::auth()->check()
+                    ? view('filament.partials.assessment-draft-guard')->render()
+                    : '',
+            )
             ->navigationItems([
                 // The original officer sidebar's last link. Scoped to the two
                 // officer-portal roles so the group does not appear for an

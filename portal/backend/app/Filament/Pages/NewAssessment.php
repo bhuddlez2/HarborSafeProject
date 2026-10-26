@@ -12,6 +12,7 @@ use App\Enums\FollowUpKind;
 use App\Enums\NewSubmission;
 use App\Services\FollowUps;
 use App\Services\SubmissionAlerts;
+use App\Support\AssessmentDraft;
 use App\Support\PhoneNumber;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -428,6 +429,45 @@ class NewAssessment extends Page
         }
     }
 
+    /*
+    Resume: puts a form saved in this browser tab back into the wizard (see
+    App\Support\AssessmentDraft) and returns the step to reopen on, or null
+    when there is nothing to restore. Only the wizard's own fields come back;
+    the safe-phone confirmation is asked for again, and Submit validates
+    everything as usual, so a tampered draft can't skip a rule.
+    */
+    public function restoreDraft(mixed $draft): ?int
+    {
+        abort_unless(static::canAccess(), 403);
+
+        if ($this->submitted || ! is_array($draft)) {
+            return null;
+        }
+
+        $data = AssessmentDraft::cleanData($draft['data'] ?? null);
+
+        if ($data === []) {
+            return null;
+        }
+
+        $this->form->fill($data);
+        $this->submitError = null;
+
+        $step = max(0, min(self::REVIEW_STEP_INDEX, (int) ($draft['step'] ?? 0)));
+        $allAnswered = AssessmentDraft::allAnswered($data);
+
+        // The review only once every question has an answer.
+        if ($step === self::REVIEW_STEP_INDEX && ! $allAnswered) {
+            $step = self::QUESTIONS_STEP_INDEX;
+        }
+
+        $this->reviewReached = $allAnswered
+            && ((bool) ($draft['reviewReached'] ?? false) || $step === self::REVIEW_STEP_INDEX);
+        $this->questionIndex = max(0, min(count(self::QUESTIONS) - 1, (int) ($draft['questionIndex'] ?? 0)));
+
+        return $step;
+    }
+
     public function create(): void
     {
         abort_unless(static::canAccess(), 403);
@@ -473,6 +513,9 @@ class NewAssessment extends Page
         // officer or their police admin.
         $followUp = app(FollowUps::class)->open(FollowUpKind::LawEnforcementAssessment, $assessment->DocumentID);
         app(SubmissionAlerts::class)->raise(NewSubmission::LawEnforcementAssessment, $followUp);
+
+        // The form saved in this tab (AssessmentDraft) has done its job.
+        $this->dispatch('hs-assessment-draft-clear');
 
         Notification::make()
             ->title('Assessment submitted')
