@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use App\Models\User;
@@ -10,16 +10,16 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 /*
-App\Filament\Tables\ChangeLogFilters: the Change log's filter card, built from
+App\Filament\Tables\ChangeLogFilters: the Logs page's filter card, built from
 AssessmentFilters' helpers so it behaves like the assessment tables' - deferred
-until Apply, resettable, kept in the session. The table lists assessment_edits
-rows, so each filter covers detail and answer changes alike. Options and
-results only ever come from AssessmentEdit::visibleTo(), so a police admin is
+until Apply, resettable, kept in the session. These tests use edits only;
+LogsPageTest covers the same filters on views and downloads mixed in. Options
+and results only ever come from LogEntry::visibleTo(), so a police admin is
 never offered or shown another agency's officers, edits or agency
 (Filament_CMS_Design.md section 5, rule 5).
 
 Tests that assert on unfiltered or counted rows act as police admin A, whose
-scope is only this file's agency; an admin's view also holds whatever edits
+scope is only this file's agency; an admin's view also holds whatever rows
 the local database already has.
 */
 
@@ -52,7 +52,7 @@ function pestEditedOn(AssessmentEdit $edit, string $date): AssessmentEdit
 //   editCross - officer A2 on officer A's record, an answer change, June
 //   editB     - officer B on their own record, a detail change, June
 // Real edits are always by the submitting officer (the policy allows no one
-// else); editCross exists only so Changed by and Original submitter can be
+// else); editCross exists only so Who and Original submitter can be
 // told apart. AssessmentEditor itself does not check the policy.
 function pestChangeLogWorld(): object
 {
@@ -75,14 +75,14 @@ test('each role is offered exactly its filters, agency to admins only', function
     $w = pestChangeLogWorld();
     $this->actingAs($role === 'admin' ? staffUser(UserRole::Admin) : $w->policeAdminA);
 
-    expect(array_keys(Livewire::test(ListAssessmentEdits::class)->instance()->getTable()->getFilters()))->toBe($expected);
+    expect(array_keys(Livewire::test(ListLogs::class)->instance()->getTable()->getFilters()))->toBe($expected);
 })->with([
     'admin' => ['admin', [
-        'changed_by', 'submitted_by', 'assessment_id', 'date_changed', 'agency',
+        'who', 'submitted_by', 'assessment_id', 'date', 'agency',
         'victim_first_name', 'victim_last_name', 'offender_first_name', 'offender_last_name',
     ]],
     'police admin' => ['police admin', [
-        'changed_by', 'submitted_by', 'assessment_id', 'date_changed',
+        'who', 'submitted_by', 'assessment_id', 'date',
         'victim_first_name', 'victim_last_name', 'offender_first_name', 'offender_last_name',
     ]],
 ]);
@@ -94,12 +94,12 @@ test('assessment ID returns every edit to that assessment, from the full ID or p
     // assessmentA has two edits (editA, editCross); assessmentA2 has one.
     $id = $w->assessmentA->getKey();
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'assessment_id', $id)
+    pestApplyFilter(Livewire::test(ListLogs::class), 'assessment_id', $id)
         ->assertCanSeeTableRecords([$w->editA, $w->editCross])
         ->assertCountTableRecords(2);
 
     // The tail of the ID, which no other test record shares.
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'assessment_id', strtoupper(substr($id, -12)))
+    pestApplyFilter(Livewire::test(ListLogs::class), 'assessment_id', strtoupper(substr($id, -12)))
         ->assertCanSeeTableRecords([$w->editA, $w->editCross])
         ->assertCountTableRecords(2);
 });
@@ -108,19 +108,19 @@ test('a police admin searching another agency\'s assessment ID gets no rows', fu
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'assessment_id', $w->assessmentB->getKey())
+    pestApplyFilter(Livewire::test(ListLogs::class), 'assessment_id', $w->assessmentB->getKey())
         ->assertCountTableRecords(0);
 });
 
-test('changed by returns that user\'s edits, detail and answer changes alike', function () {
+test('who returns that user\'s edits, detail and answer changes alike', function () {
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'changed_by', $w->officerA2->getKey())
+    pestApplyFilter(Livewire::test(ListLogs::class), 'who', $w->officerA2->getKey())
         ->assertCanSeeTableRecords([$w->editA2, $w->editCross])
         ->assertCountTableRecords(2);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'changed_by', $w->officerA->getKey())
+    pestApplyFilter(Livewire::test(ListLogs::class), 'who', $w->officerA->getKey())
         ->assertCanSeeTableRecords([$w->editA])
         ->assertCountTableRecords(1);
 });
@@ -129,22 +129,22 @@ test('original submitter matches the assessment\'s submitter, not the editor', f
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'submitted_by', $w->officerA->getKey())
+    pestApplyFilter(Livewire::test(ListLogs::class), 'submitted_by', $w->officerA->getKey())
         ->assertCanSeeTableRecords([$w->editA, $w->editCross])
         ->assertCountTableRecords(2);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'submitted_by', $w->officerA2->getKey())
+    pestApplyFilter(Livewire::test(ListLogs::class), 'submitted_by', $w->officerA2->getKey())
         ->assertCanSeeTableRecords([$w->editA2])
         ->assertCountTableRecords(1);
 });
 
-test('the date changed range returns only edits inside it, with chips', function () {
+test('the date range returns only rows inside it, with chips', function () {
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    $list = Livewire::test(ListAssessmentEdits::class)
-        ->set('tableDeferredFilters.date_changed.from', '2026-03-01')
-        ->set('tableDeferredFilters.date_changed.until', '2026-03-31')
+    $list = Livewire::test(ListLogs::class)
+        ->set('tableDeferredFilters.date.from', '2026-03-01')
+        ->set('tableDeferredFilters.date.until', '2026-03-31')
         ->call('applyTableFilters')
         ->assertCanSeeTableRecords([$w->editA2])
         ->assertCountTableRecords(1);
@@ -153,16 +153,16 @@ test('the date changed range returns only edits inside it, with chips', function
         ->map(fn ($indicator): string => (string) $indicator->getLabel())
         ->all();
 
-    expect($labels)->toContain('Changed from 2026-03-01', 'Changed until 2026-03-31');
+    expect($labels)->toContain('Date from 2026-03-01', 'Date until 2026-03-31');
 });
 
 test('an admin is offered every agency\'s people and agencies, and the agency filter narrows', function () {
     $w = pestChangeLogWorld();
     $this->actingAs(staffUser(UserRole::Admin));
 
-    $list = Livewire::test(ListAssessmentEdits::class)->assertTableFilterVisible('agency');
+    $list = Livewire::test(ListLogs::class)->assertTableFilterVisible('agency');
 
-    foreach (['changed_by', 'submitted_by'] as $filter) {
+    foreach (['who', 'submitted_by'] as $filter) {
         expect(array_keys(pestFilterSelect($list, $filter)->getSearchResults('Pest')))
             ->toContain($w->officerA->getKey(), $w->officerB->getKey());
     }
@@ -175,7 +175,7 @@ test('an admin is offered every agency\'s people and agencies, and the agency fi
         ->assertCanNotSeeTableRecords([$w->editB])
         ->assertCountTableRecords(3);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'agency', $w->officerB->agencyId())
+    pestApplyFilter(Livewire::test(ListLogs::class), 'agency', $w->officerB->agencyId())
         ->assertCanSeeTableRecords([$w->editB])
         ->assertCountTableRecords(1);
 });
@@ -184,10 +184,10 @@ test('a police admin is offered only their own agency\'s people in both dropdown
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    $list = Livewire::test(ListAssessmentEdits::class);
+    $list = Livewire::test(ListLogs::class);
 
     // Every test user shares the first name staffUser() gives it, so compare by key.
-    foreach (['changed_by', 'submitted_by'] as $filter) {
+    foreach (['who', 'submitted_by'] as $filter) {
         $field = pestFilterSelect($list, $filter);
 
         foreach ([array_keys($field->getOptions()), array_keys($field->getSearchResults('Pest'))] as $options) {
@@ -204,17 +204,17 @@ test('a police admin forcing another agency\'s people gets no rows', function (s
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    Livewire::test(ListAssessmentEdits::class)
+    Livewire::test(ListLogs::class)
         ->set("tableFilters.{$filter}.value", $w->officerB->getKey())
         ->assertCanNotSeeTableRecords([$w->editB])
         ->assertCountTableRecords(0);
-})->with(['changed_by', 'submitted_by']);
+})->with(['who', 'submitted_by']);
 
 test('a police admin has no agency filter, and forcing one cannot widen the scope', function () {
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    Livewire::test(ListAssessmentEdits::class)
+    Livewire::test(ListLogs::class)
         ->assertTableFilterHidden('agency')
         ->set('tableFilters.agency.value', $w->officerB->agencyId())
         ->assertCanSeeTableRecords($w->visibleToA)
@@ -226,9 +226,9 @@ test('filters do nothing until Apply', function () {
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    Livewire::test(ListAssessmentEdits::class)
-        ->set('tableDeferredFilters.date_changed.from', '2026-06-01')
-        ->set('tableDeferredFilters.changed_by.value', $w->officerA2->getKey())
+    Livewire::test(ListLogs::class)
+        ->set('tableDeferredFilters.date.from', '2026-06-01')
+        ->set('tableDeferredFilters.who.value', $w->officerA2->getKey())
         ->assertCanSeeTableRecords($w->visibleToA)
         ->call('applyTableFilters')
         ->assertCanSeeTableRecords([$w->editCross])
@@ -239,12 +239,12 @@ test('reset clears applied filters', function () {
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    Livewire::test(ListAssessmentEdits::class)
-        ->set('tableDeferredFilters.date_changed.from', '2026-06-01')
+    Livewire::test(ListLogs::class)
+        ->set('tableDeferredFilters.date.from', '2026-06-01')
         ->call('applyTableFilters')
         ->assertCanNotSeeTableRecords([$w->editA])
         ->resetTableFilters()
-        ->assertSet('tableFilters.date_changed.from', null)
+        ->assertSet('tableFilters.date.from', null)
         ->assertCanSeeTableRecords($w->visibleToA);
 });
 
@@ -252,12 +252,12 @@ test('applied filters survive leaving the page and coming back', function () {
     $w = pestChangeLogWorld();
     $this->actingAs($w->policeAdminA);
 
-    Livewire::test(ListAssessmentEdits::class)
-        ->set('tableDeferredFilters.date_changed.from', '2026-06-01')
+    Livewire::test(ListLogs::class)
+        ->set('tableDeferredFilters.date.from', '2026-06-01')
         ->call('applyTableFilters');
 
-    Livewire::test(ListAssessmentEdits::class)
-        ->assertSet('tableFilters.date_changed.from', '2026-06-01')
+    Livewire::test(ListLogs::class)
+        ->assertSet('tableFilters.date.from', '2026-06-01')
         ->assertCanSeeTableRecords([$w->editCross])
         ->assertCanNotSeeTableRecords([$w->editA, $w->editA2]);
 });
@@ -307,7 +307,7 @@ test('each name filter matches the assessment partially and case-insensitively',
     $w = pestNamedEdits();
     $this->actingAs($w->policeAdminA);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), $filter, $term)
+    pestApplyFilter(Livewire::test(ListLogs::class), $filter, $term)
         ->assertCanSeeTableRecords([$w->alpha])
         ->assertCountTableRecords(1);
 })->with([
@@ -321,11 +321,11 @@ test('% and _ in a name filter match literally', function (string $filter) {
     $w = pestNamedEdits();
     $this->actingAs($w->policeAdminA);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), $filter, 'n%L')
+    pestApplyFilter(Livewire::test(ListLogs::class), $filter, 'n%L')
         ->assertCanSeeTableRecords([$w->annPercent])
         ->assertCountTableRecords(1);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), $filter, 'c_N')
+    pestApplyFilter(Livewire::test(ListLogs::class), $filter, 'c_N')
         ->assertCanSeeTableRecords([$w->mcUnderscore])
         ->assertCountTableRecords(1);
 })->with('change log name filters');
@@ -334,10 +334,10 @@ test('name filters match the assessment as it is now, never a logged value', fun
     $w = pestNamedEdits();
     $this->actingAs($w->policeAdminA);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), $filter, 'quorv')
+    pestApplyFilter(Livewire::test(ListLogs::class), $filter, 'quorv')
         ->assertCountTableRecords(0);
 
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), $filter, 'PLAINF')
+    pestApplyFilter(Livewire::test(ListLogs::class), $filter, 'PLAINF')
         ->assertCanSeeTableRecords([$w->renamed])
         ->assertCountTableRecords(1);
 })->with('change log name filters');
@@ -347,19 +347,19 @@ test('a police admin filtering on a name from another agency gets no rows', func
     $otherAgencysVictim = $w->assessmentB->VictimFirstName;
 
     $this->actingAs($w->policeAdminA);
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'victim_first_name', $otherAgencysVictim)
+    pestApplyFilter(Livewire::test(ListLogs::class), 'victim_first_name', $otherAgencysVictim)
         ->assertCountTableRecords(0);
 
     // Not vacuous: the same filter finds the edit for an admin.
     $this->actingAs(staffUser(UserRole::Admin));
-    pestApplyFilter(Livewire::test(ListAssessmentEdits::class), 'victim_first_name', $otherAgencysVictim)
+    pestApplyFilter(Livewire::test(ListLogs::class), 'victim_first_name', $otherAgencysVictim)
         ->assertCanSeeTableRecords([$w->editB]);
 });
 
-test('the change log\'s filter card is folded away until opened too', function () {
+test('the Logs filter card is folded away until opened too', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
-    $table = Livewire::test(ListAssessmentEdits::class)->instance()->getTable();
+    $table = Livewire::test(ListLogs::class)->instance()->getTable();
 
     expect($table->getFiltersLayout())->toBe(Filament\Tables\Enums\FiltersLayout::AboveContentCollapsible)
         ->and($table->hasDeferredFilters())->toBeTrue()

@@ -23,7 +23,7 @@ after it.
 
 Applied to every table in the panel, including the police-side ones
 (Assessment review and My Assessments through AssessmentColumns, Officers,
-Change log). TableAlignmentTest checks each one column by column.
+Logs). TableAlignmentTest checks each one column by column.
 */
 final class TableAlignment
 {

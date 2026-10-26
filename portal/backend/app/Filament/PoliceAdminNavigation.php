@@ -30,7 +30,7 @@ final class PoliceAdminNavigation
 
     public const ASSESSMENT_REVIEW = 30;
 
-    // The Logs cluster (Access log and Change log tabs).
+    // Logs: views, downloads and edits in one list (LogResource).
     public const LOGS = 40;
 
     public const OFFICERS = 50;

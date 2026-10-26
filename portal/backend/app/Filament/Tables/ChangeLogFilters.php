@@ -2,100 +2,100 @@
 
 namespace App\Filament\Tables;
 
-use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAgent;
+use App\Models\LogEntry;
 use Filament\Facades\Filament;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /*
-The filters on the Change log (AssessmentEditResource). Built from
-AssessmentFilters' helpers, so the card looks and behaves like the assessment
-tables': above the table, deferred until Apply, Reset beside it, kept in the
+The filters on the Logs page (LogResource), behind its Filters button. Built
+from AssessmentFilters' helpers, so the card looks and behaves like the
+assessment tables': deferred until Apply, Reset beside it, kept in the
 session.
 
-The table lists assessment_edits rows - one per save - and both kinds of
-field-level change (assessment_change_log, assessment_answer_change_log) hang
-off an edit, so every filter here covers both.
+The table mixes views, PDF downloads and edits (App\Models\LogEntry). Two
+filters apply to every row:
+  - Who: the person who viewed, downloaded or edited;
+  - Date: the row's own time (OccurredAt).
+The rest look at the officer assessment a row is about, so setting any of
+them leaves only officer-assessment rows (civilian and resource request rows
+have no officer assessment to match):
+  - Original submitter, Assessment ID (part of its DocumentID - the 8
+    characters in a PDF's file name work), Agency (admins and super admins
+    only, by users.role), victim and offender first and last name.
+Names are matched on the assessment as it is now - never on an edit's logged
+PreviousValue / NewValue, which are deliberately not searchable.
 
-The filters, in card order: changed by, original submitter and assessment ID
-(part of the edited assessment's DocumentID); date changed (EditedAt) and
-agency (admins only, by users.role); victim first and last name; offender
-first and last name. Names are matched on the assessment the
-edit belongs to, as it is now - never on the logged PreviousValue / NewValue,
-which are deliberately not searchable.
-
-Filters only narrow the resource's own AssessmentEdit::visibleTo() query, and
-every dropdown's options are scoped the same way, because a dropdown can leak
-what the table hides: a police admin is never offered another agency's
-officers or the agency itself (Filament_CMS_Design.md section 5, rule 5).
+Filters only narrow the page's own LogEntry::visibleTo() rows, and every
+dropdown's options come from the same scoped rows, because a dropdown can leak
+what the table hides: a police admin is never offered another agency's people
+or the agency itself (Filament_CMS_Design.md section 5, rule 5).
 */
 final class ChangeLogFilters
 {
     public static function apply(Table $table): Table
     {
         return AssessmentFilters::layout($table, [
-            self::changedBy(),
+            self::who(),
             self::originalSubmitter(),
-            // Part of the ID is enough: the 8 characters in a PDF's file name,
-            // or the Record ID shown in View and the change log header.
-            AssessmentFilters::textContains('assessment_id', 'DocumentID', 'Assessment ID'),
-            AssessmentFilters::dateRange('date_changed', 'EditedAt', 'Changed')->columnStart(1),
+            AssessmentFilters::textContains('assessment_id', 'DocumentID', 'Assessment ID', 'lawEnforcementAssessment'),
+            AssessmentFilters::dateRange('date', 'OccurredAt', 'Date')->columnStart(1),
             self::agency(),
-            ...AssessmentFilters::nameFilters('assessment'),
+            ...AssessmentFilters::nameFilters('lawEnforcementAssessment'),
         ]);
     }
 
-    // Only users who made an edit the user can see.
-    private static function changedBy(): SelectFilter
+    // Only people who appear in a row the user can see.
+    private static function who(): SelectFilter
     {
-        return SelectFilter::make('changed_by')
-            ->label('Changed by')
+        return SelectFilter::make('who')
+            ->label('Who')
             ->relationship(
-                'editor',
+                'user',
                 'name',
                 fn (Builder $query): Builder => $query->whereIn(
                     $query->qualifyColumn('id'),
-                    self::visibleEdits()->select('ChangedBy'),
+                    self::visibleRows()->select('UserID'),
                 ),
             )
             ->searchable()
             ->preload();
     }
 
-    // The officer who submitted the edited assessment. Only submitters of
-    // visible assessments that have at least one visible edit.
+    // The officer who submitted the assessment a row is about. Only
+    // submitters of visible assessments that appear in a visible row.
     private static function originalSubmitter(): SelectFilter
     {
         return SelectFilter::make('submitted_by')
             ->label('Original submitter')
             ->relationship(
-                'assessment.submitter',
+                'lawEnforcementAssessment.submitter',
                 'name',
                 fn (Builder $query): Builder => $query->whereIn(
                     $query->qualifyColumn('id'),
-                    self::editedSubmitters(),
+                    self::loggedSubmitters(),
                 ),
             )
             ->searchable()
             ->preload();
     }
 
-    // Admins only (AssessmentFilters::showsAgency()); hidden from police
-    // admins, and a hidden filter is never applied. The agency is the
-    // submitting officer's - the same link visibleTo() scopes by.
+    // Admins and super admins only (AssessmentFilters::showsAgency()); hidden
+    // from police admins, and a hidden filter is never applied. The agency is
+    // the submitting officer's - the same link visibleTo() scopes by.
     private static function agency(): SelectFilter
     {
         return SelectFilter::make('agency')
             ->label('Agency')
             ->relationship(
-                'assessment.submitter.lawEnforcementAgent.agency',
+                'lawEnforcementAssessment.submitter.lawEnforcementAgent.agency',
                 'name',
                 fn (Builder $query): Builder => $query->whereIn(
                     $query->qualifyColumn('id'),
                     LawEnforcementAgent::query()
-                        ->whereIn('user_id', self::editedSubmitters())
+                        ->whereIn('user_id', self::loggedSubmitters())
                         ->select('agency_id'),
                 ),
             )
@@ -104,15 +104,18 @@ final class ChangeLogFilters
             ->visible(fn (): bool => AssessmentFilters::showsAgency());
     }
 
-    private static function editedSubmitters(): Builder
+    private static function loggedSubmitters(): Builder
     {
         return AssessmentFilters::visibleAssessments()
-            ->whereIn('DocumentID', self::visibleEdits()->select('DocumentID'))
+            ->whereIn(
+                'DocumentID',
+                self::visibleRows()->whereNotNull('LawEnforcementDocumentID')->select('LawEnforcementDocumentID'),
+            )
             ->select('submitted_by');
     }
 
-    private static function visibleEdits(): Builder
+    private static function visibleRows(): Builder
     {
-        return AssessmentEdit::query()->visibleTo(Filament::auth()->user());
+        return LogEntry::visibleTo(Filament::auth()->user());
     }
 }

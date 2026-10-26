@@ -68,14 +68,15 @@ Route::get('/staff/{path?}', fn (?string $path = null) => redirect('/'.($path ??
     ->where('path', '.*');
 
 /*
-The Access log and the Change log moved into one Logs page with two tabs
-(App\Filament\Clusters\Logs). Old links - with any sub-path and query string -
-land on the matching tab. Each tab still checks who may open it.
+The Access log and the Change log are one list now, the Logs page
+(App\Filament\Resources\Logs\LogResource, /logs). Old links - the two tabs
+it once had and the addresses before them, with any sub-path - land on /logs,
+keeping the query string. The page still checks who may open it.
 */
-foreach (['access-log' => 'logs/access', 'assessment-changes' => 'logs/changes'] as $old => $new) {
-    Route::get("/{$old}/{path?}", function (Illuminate\Http\Request $request, ?string $path = null) use ($new) {
+foreach (['logs/access', 'logs/changes', 'access-log', 'assessment-changes'] as $old) {
+    Route::get("/{$old}/{path?}", function (Illuminate\Http\Request $request) {
         $query = $request->getQueryString();
 
-        return redirect('/'.$new.($path === null ? '' : '/'.$path).($query === null ? '' : '?'.$query));
+        return redirect('/logs'.($query === null ? '' : '?'.$query));
     })->where('path', '.*');
 }
