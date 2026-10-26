@@ -7,8 +7,6 @@ use App\Filament\Clusters\Content\Resources\Newsletters\NewsletterResource;
 use App\Filament\Clusters\FormOptions\Resources\Counties\CountyResource;
 use App\Filament\Clusters\FormOptions\Resources\Resources\ResourceTypeResource;
 use App\Filament\Clusters\FormOptions\Resources\Services\ServiceResource;
-use App\Filament\Clusters\Logs\Resources\AccessLog\AccessLogResource;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\AssessmentEditResource;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\ResourceRequestResource;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackResource;
 use App\Filament\Resources\Agencies\AgencyResource;
@@ -16,6 +14,7 @@ use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\Resources\FollowUps\FollowUpResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
+use App\Filament\Resources\Logs\LogResource;
 use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use App\Filament\Resources\StaffAccounts\StaffAccountResource;
 use App\Models\Event;
@@ -66,9 +65,8 @@ function screenActions(): array
         CivilianAssessmentResource::class => ['viewAny', 'view'],
         // Updates go through the follow-up page's own action, never Edit.
         FollowUpResource::class => ['viewAny', 'view'],
-        // Append-only logs.
-        AccessLogResource::class => ['viewAny'],
-        AssessmentEditResource::class => ['viewAny', 'view'],
+        // Append-only logs. View on edit rows only (LogResource::allowsRecord).
+        LogResource::class => ['viewAny', 'view'],
         // Accounts and agencies are deactivated or kept, never deleted.
         StaffAccountResource::class => ['viewAny', 'create', 'view', 'update'],
         OfficerAccountResource::class => ['viewAny', 'create', 'view', 'update'],

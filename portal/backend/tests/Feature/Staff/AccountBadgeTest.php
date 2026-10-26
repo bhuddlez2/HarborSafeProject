@@ -139,6 +139,7 @@ test('police admins, admins and secretaries have no badge field, and a forced va
     };
     $this->actingAs($user);
     $rows = agentRows($w);
+    $firstName = $user->first_name;
 
     Livewire::test(EditProfile::class)
         ->assertFormFieldHidden('badge_number')
@@ -148,7 +149,7 @@ test('police admins, admins and secretaries have no badge field, and a forced va
 
     expect(agentRows($w))->toBe($rows)
         ->and(LawEnforcementAgent::where('badge_number', 'FORCED-1')->exists())->toBeFalse()
-        ->and($user->refresh()->first_name)->toBe('Forced');
+        ->and($user->refresh()->first_name)->toBe($firstName);
 })->with(['police admin', 'admin', 'secretary']);
 
 test('an officer with no law_enforcement_agents row has no badge field', function () {

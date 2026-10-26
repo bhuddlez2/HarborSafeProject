@@ -3,26 +3,34 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Enums\UserRole;
+use App\Filament\Forms\AccountFormSections;
 use App\Models\LawEnforcementAgent;
 use App\Models\User;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use SensitiveParameter;
 
-// Filament's Account page, with the single Name field replaced by first and
-// last name - the two columns every account screen edits (see User::booted(),
-// which rebuilds `name` from them). Email, password and the rest are
-// inherited, and the page edits only the signed-in user's own details, never
-// role or is_active.
+// Filament's Account page, locked down for every role. Only two things can be
+// changed here:
 //
-// Officers also change their own badge number here. It lives on
-// law_enforcement_agents, so this page reads and writes it itself, the way
-// the Officers screen (EditOfficerAccount) does. The agency is never editable.
+//   - your own password (every role), under the same rule as account
+//     creation (AccountFormSections::passwordRule());
+//   - your own badge number (active officers only). It lives on
+//     law_enforcement_agents, so this page reads and writes it itself, the
+//     way the Officers screen (EditOfficerAccount) does.
+//
+// First name, last name and email are shown greyed out and never saved: the
+// person who manages the account changes them (Officers or Accounts). The save
+// is built from that whitelist, so a tampered request carrying a name, email,
+// role, agency_id, user_id or is_active changes nothing.
 class EditProfile extends BaseEditProfile
 {
     // law_enforcement_agents.badge_number is a varchar(255).
@@ -43,20 +51,49 @@ class EditProfile extends BaseEditProfile
             ]);
     }
 
+    // Read-only, with no validation rules, so a tampered value can neither
+    // be saved nor trip a rule.
     protected function getNameFormComponent(): Component
     {
         return Grid::make(2)
             ->schema([
-                TextInput::make('first_name')
-                    ->label('First name')
-                    ->required()
-                    ->maxLength(User::NAME_PART_MAX)
-                    ->autofocus(),
-                TextInput::make('last_name')
-                    ->label('Last name')
-                    ->required()
-                    ->maxLength(User::NAME_PART_MAX),
+                $this->readOnly(TextInput::make('first_name')->label('First name')),
+                $this->readOnly(TextInput::make('last_name')->label('Last name')),
             ]);
+    }
+
+    protected function getEmailFormComponent(): Component
+    {
+        return $this->readOnly(
+            TextInput::make('email')->label(__('filament-panels::auth/pages/edit-profile.form.email.label')),
+        );
+    }
+
+    // Filament's field, with the account-creation rule in place of
+    // Password::default().
+    protected function getPasswordFormComponent(): Component
+    {
+        return TextInput::make('password')
+            ->label(__('filament-panels::auth/pages/edit-profile.form.password.label'))
+            ->validationAttribute(__('filament-panels::auth/pages/edit-profile.form.password.validation_attribute'))
+            ->password()
+            ->revealable(filament()->arePasswordsRevealable())
+            ->rule(AccountFormSections::passwordRule())
+            ->showAllValidationMessages()
+            ->autocomplete('new-password')
+            ->dehydrated(fn (#[SensitiveParameter] $state): bool => filled($state))
+            ->dehydrateStateUsing(fn (#[SensitiveParameter] $state): string => Hash::make($state))
+            ->live(debounce: 500)
+            ->same('passwordConfirmation');
+    }
+
+    // Asked for a new password only. Filament also asks when the email
+    // differs from the stored one, which can now happen only in a tampered
+    // request.
+    protected function getCurrentPasswordFormComponent(): Component
+    {
+        return parent::getCurrentPasswordFormComponent()
+            ->visible(fn (Get $get): bool => filled($get('password')));
     }
 
     // Officers only. Hidden for everyone else, which also keeps it out of
@@ -74,25 +111,32 @@ class EditProfile extends BaseEditProfile
             ->visible(fn (): bool => $this->canEditBadge());
     }
 
+    // Only what the page shows.
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $fill = Arr::only($data, ['first_name', 'last_name', 'email']);
+
         if ($this->canEditBadge()) {
-            $data['badge_number'] = $this->ownAgentRow()?->badge_number;
+            $fill['badge_number'] = $this->ownAgentRow()?->badge_number;
         }
 
-        return $data;
+        return $fill;
     }
 
-    // The profile and the badge in one Portal transaction. Filament's own
-    // transaction would open on the default connection, and only when the
-    // panel enables them, so it is not relied on here.
-    protected function handleRecordUpdate(Model $record, array $data): Model
+    // The whitelist: the password when one was typed, and an officer's own
+    // badge, in one Portal transaction. Filament's own transaction would open
+    // on the default connection, and only when the panel enables them, so it
+    // is not relied on here. Filament's handleRecordUpdate() is not called: it
+    // writes everything in $data.
+    protected function handleRecordUpdate(Model $record, #[SensitiveParameter] array $data): Model
     {
-        // Never part of the users update.
-        $badge = Arr::pull($data, 'badge_number');
+        $password = $data['password'] ?? null;
+        $badge = $data['badge_number'] ?? null;
 
-        return DB::connection('Portal')->transaction(function () use ($record, $data, $badge): Model {
-            $record = parent::handleRecordUpdate($record, $data);
+        return DB::connection('Portal')->transaction(function () use ($record, $password, $badge): Model {
+            if (filled($password)) {
+                $record->update(['password' => $password]);
+            }
 
             if ($this->canEditBadge() && filled($badge)) {
                 // Only the badge, only on the signed-in user's own row.
@@ -105,6 +149,11 @@ class EditProfile extends BaseEditProfile
 
             return $record;
         });
+    }
+
+    private function readOnly(TextInput $field): TextInput
+    {
+        return $field->disabled()->dehydrated(false);
     }
 
     // Active officers with a law_enforcement_agents row. Police admins have

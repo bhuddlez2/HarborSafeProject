@@ -43,6 +43,15 @@ final class AccountFormSections
             ->dehydrated(false);
     }
 
+    // The rule for a new password set in the panel: here (Accounts and
+    // Officers, create and edit) and on the Account page (EditProfile). It is
+    // the app-wide Password::defaults() set in AppServiceProvider (15-64
+    // characters, not found in a breach), so the rule lives in one place.
+    public static function passwordRule(): Password
+    {
+        return Password::default();
+    }
+
     public static function password(): Section
     {
         return Section::make('Password')
@@ -55,7 +64,7 @@ final class AccountFormSections
                     ->autocomplete('new-password')
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->maxLength(User::PASSWORD_MAX)
-                    ->rule(Password::default())
+                    ->rule(self::passwordRule())
                     ->same('passwordConfirmation')
                     ->dehydrated(fn ($state): bool => filled($state)),
                 TextInput::make('passwordConfirmation')

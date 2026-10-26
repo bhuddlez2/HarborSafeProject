@@ -17,7 +17,7 @@ that log through log() below:
   - View, on My Assessments and Assessment review (viewAction(), shared)
   - Edit, on My Assessments (LawEnforcementAssessmentResource)
   - the per-row Change log (ChangeHistory::action())
-  - the Change log screen's View (AssessmentEditResource)
+  - an edit row's View on the Logs page (LogResource)
 
 Each calls log() from a hook Filament runs once, when the pop-up mounts:
 after the record is found through the table's scoped query

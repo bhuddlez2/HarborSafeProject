@@ -5,6 +5,7 @@ namespace App\Filament\Assessments;
 use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
+use App\Models\LogEntry;
 use App\Support\Timezones;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\ViewEntry;
@@ -15,7 +16,8 @@ use Illuminate\Support\Carbon;
 /*
 The change history of a law-enforcement assessment, shared by every screen
 that shows one: a "Change log" button beside View on My Assessments and
-Assessment review, and the Change log page (one edit at a time). One Blade
+Assessment review, and an edit row's View on the Logs page (one edit at a
+time). One Blade
 view renders all of them, so an edit reads the same wherever it is opened.
 
 Deliberately NOT part of the View pop-up: View shows the record as it is now,
@@ -64,19 +66,22 @@ final class ChangeHistory
             ->modalCancelActionLabel('Close');
     }
 
-    // A single edit, for the Change log page's View pop-up.
+    // A single edit, for the View pop-up of an edit row on the Logs page
+    // (App\Filament\Resources\Logs\LogResource).
     public static function entry(): ViewEntry
     {
         return ViewEntry::make('change_history')
             ->hiddenLabel()
             ->view(self::VIEW)
             ->columnSpanFull()
-            ->state(fn (AssessmentEdit $record): array => [
-                'header' => self::header($record->assessment, null),
-                'edits' => self::entries([
-                    $record->loadMissing(['editor', 'detailChanges', 'answerChanges']),
-                ]),
-            ]);
+            ->state(function (LogEntry $record): array {
+                $edit = $record->edit->loadMissing(['assessment', 'editor', 'detailChanges', 'answerChanges']);
+
+                return [
+                    'header' => self::header($edit->assessment, null),
+                    'edits' => self::entries([$edit]),
+                ];
+            });
     }
 
     // "Amended" on any record that has been edited since submission. Needs
@@ -92,8 +97,8 @@ final class ChangeHistory
     }
 
     /**
-     * Which record the history belongs to. $editCount is null on the Change
-     * log page, which shows one edit rather than the whole history.
+     * Which record the history belongs to. $editCount is null on the Logs
+     * page, which shows one edit rather than the whole history.
      *
      * @return array{victim: string, offender: string, submitted: string, edits: ?int}
      */

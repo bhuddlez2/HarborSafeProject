@@ -61,7 +61,7 @@ final class AssessmentFilters
     }
 
     /*
-    The helpers below are shared with ChangeLogFilters, so the change log's
+    The helpers below are shared with ChangeLogFilters, so the Logs page's
     card behaves and reads like the assessment tables' rather than copying them.
     */
 
@@ -69,7 +69,7 @@ final class AssessmentFilters
     // until opened (so the top of the page stays uncluttered), three columns,
     // deferred until Apply, Reset beside it, kept in the session. Applied
     // filters still show as chips above the table while the card is closed.
-    // Shared by Assessment review, My Assessments and the Change log.
+    // Shared by Assessment review, My Assessments and Logs.
     public static function layout(Table $table, array $filters): Table
     {
         return $table

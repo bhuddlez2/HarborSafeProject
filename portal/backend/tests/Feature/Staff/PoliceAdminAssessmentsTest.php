@@ -2,11 +2,11 @@
 
 use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Pages\Police;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Models\AssessmentAccessLog;
 use App\Models\AssessmentEdit;
 use App\Models\FollowUp;
@@ -245,10 +245,11 @@ test('a police admin edits their officer\'s assessment and their own, recorded a
         ->and($edit->detailChanges()->pluck('ChangedBy')->unique()->values()->all())->toBe([$w->policeAdminA->getKey()])
         ->and($record->refresh()->VictimLastName)->toBe('Amended');
 
-    // Listed under their name on Logs -> Change log.
-    Livewire::test(ListAssessmentEdits::class)
+    // Listed under their name on Logs, as Edited.
+    Livewire::test(ListLogs::class)
         ->assertCanSeeTableRecords([$edit])
-        ->assertTableColumnStateSet('editor.name', $w->policeAdminA->name, $edit);
+        ->assertTableColumnStateSet('user.name', $w->policeAdminA->name, $edit)
+        ->assertTableColumnFormattedStateSet('Action', 'Edited', $edit);
 })->with(['officer\'s', 'own']);
 
 test('if the view can\'t be logged, a police admin\'s Edit pop-up doesn\'t open', function () {

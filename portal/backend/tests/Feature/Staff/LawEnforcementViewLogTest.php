@@ -2,9 +2,9 @@
 
 use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Models\AssessmentAccessLog;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
@@ -121,14 +121,14 @@ test('an officer opening the Change log pop-up on their own assessment is logged
     expectOneView($w->assessmentA, $w->officerA);
 });
 
-// Officers can't reach the Change log screen (admins and police admins only).
-test('opening View on the Change log screen is logged once against the assessment', function (string $who) {
+// Officers can't reach Logs (admins and police admins only).
+test('opening an edit row\'s View on Logs is logged once against the assessment', function (string $who) {
     $w = pestTwoAgencies();
     $edit = leEdit($w->assessmentA, $w->officerA);
     $user = $who === 'admin' ? staffUser(UserRole::Admin) : $w->policeAdminA;
     $this->actingAs($user);
 
-    Livewire::test(ListAssessmentEdits::class)
+    Livewire::test(ListLogs::class)
         ->mountAction(TestAction::make('view')->table($edit))
         ->assertActionMounted(TestAction::make('view')->table($edit))
         ->assertMountedActionModalSee('Spelling');
@@ -196,7 +196,7 @@ test('opening a record outside the user\'s scope writes nothing', function () {
             ->assertActionNotMounted(TestAction::make($action)->table($w->assessmentB));
     }
 
-    Livewire::test(ListAssessmentEdits::class)
+    Livewire::test(ListLogs::class)
         ->mountAction(TestAction::make('view')->table($editB))
         ->assertActionNotMounted(TestAction::make('view')->table($editB));
 
@@ -242,7 +242,7 @@ test('re-rendering inside an open pop-up adds no rows', function () {
 
     $this->actingAs($w->policeAdminA);
 
-    Livewire::test(ListAssessmentEdits::class)
+    Livewire::test(ListLogs::class)
         ->mountAction(TestAction::make('view')->table($edit))
         ->call('$refresh')
         ->call('$refresh')
@@ -263,7 +263,7 @@ test('if the view can\'t be logged, the pop-up doesn\'t open', function (string 
     $edit = leEdit($w->assessmentA, $w->officerA);
 
     $this->actingAs($who === 'officer' ? $w->officerA : $w->policeAdminA);
-    $record = $page === ListAssessmentEdits::class ? $edit : $w->assessmentA;
+    $record = $page === ListLogs::class ? $edit : $w->assessmentA;
     $list = Livewire::test($page);
 
     whileLogWritesFail(fn () => $list->mountAction(TestAction::make($action)->table($record)));
@@ -273,7 +273,7 @@ test('if the view can\'t be logged, the pop-up doesn\'t open', function (string 
     'View' => [ListLawEnforcementAssessments::class, 'view', 'officer'],
     'Edit' => [ListLawEnforcementAssessments::class, EditAction::class, 'officer'],
     'Change log pop-up' => [ListLawEnforcementAssessments::class, 'changeLog', 'officer'],
-    'Change log screen View' => [ListAssessmentEdits::class, 'view', 'police admin'],
+    'Logs edit row View' => [ListLogs::class, 'view', 'police admin'],
 ]);
 
 // --- PDF downloads ---------------------------------------------------------------
