@@ -32,6 +32,13 @@ class User extends Authenticatable implements FilamentUser
 
     public const NAME_PART_MAX = 50;
 
+    // The longest password anyone may set or type at sign-in. Every password
+    // box (account forms, Account page, sign-in, staff:create-super-admin)
+    // uses it, so a password that could be set can always be typed back in.
+    public const PASSWORD_MAX = 64;
+
+    public const EMAIL_MAX = 255;
+
     /*
     first_name and last_name are the source of truth for a person's name;
     every screen that creates or edits an account (Accounts, Officers, the

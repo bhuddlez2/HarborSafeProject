@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CivilianAssessments\Pages;
 
+use App\Filament\Concerns\CapsTableSearch;
 use App\Filament\Concerns\BreadcrumbNamesThePage;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use Filament\Resources\Pages\ListRecords;
@@ -13,6 +14,7 @@ to law_enforcement_assessment instead. See the resource's class comment.
 */
 class ListCivilianAssessments extends ListRecords
 {
+    use CapsTableSearch;
     use BreadcrumbNamesThePage;
 
     protected static string $resource = CivilianAssessmentResource::class;

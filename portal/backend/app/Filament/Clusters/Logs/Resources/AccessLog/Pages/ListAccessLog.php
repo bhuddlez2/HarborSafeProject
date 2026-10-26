@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Logs\Resources\AccessLog\Pages;
 
+use App\Filament\Concerns\CapsTableSearch;
 use App\Enums\AssessmentAccess;
 use App\Filament\Clusters\Logs\Resources\AccessLog\AccessLogResource;
 use App\Filament\Concerns\BreadcrumbNamesThePage;
@@ -27,6 +28,7 @@ the visibleTo() scope - so it can never show a row the scope hides.
 */
 class ListAccessLog extends ListRecords
 {
+    use CapsTableSearch;
     use BreadcrumbNamesThePage;
 
     protected static string $resource = AccessLogResource::class;

@@ -4,11 +4,13 @@ namespace App\Providers;
 
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\LawEnforcementAssessment;
+use App\Models\User;
 use App\Policies\LawEnforcementAssessmentPolicy;
 use BladeUI\Icons\Factory as IconFactory;
 use Filament\Support\View\Components\ModalComponent;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,5 +47,13 @@ class AppServiceProvider extends ServiceProvider
         // event or edit. Every action modal and <x-filament::modal> falls back
         // to this unless it says otherwise.
         ModalComponent::closedByClickingAway(false);
+
+        // The one password rule. Filament's Account page asks for
+        // Password::default() itself, and the account forms and
+        // staff:create-super-admin use it too, so no password anywhere can be
+        // shorter, longer or weaker than this.
+        Password::defaults(fn (): Password => Password::min(15)
+            ->max(User::PASSWORD_MAX)
+            ->uncompromised());
     }
 }

@@ -35,9 +35,11 @@ class EditProfile extends BaseEditProfile
                 $this->getNameFormComponent(),
                 $this->getBadgeNumberFormComponent(),
                 $this->getEmailFormComponent(),
-                $this->getPasswordFormComponent(),
-                $this->getPasswordConfirmationFormComponent(),
-                $this->getCurrentPasswordFormComponent(),
+                // Filament's own password boxes have no upper limit; without
+                // these a password could be set that sign-in won't accept.
+                $this->getPasswordFormComponent()->maxLength(User::PASSWORD_MAX),
+                $this->getPasswordConfirmationFormComponent()->maxLength(User::PASSWORD_MAX),
+                $this->getCurrentPasswordFormComponent()->maxLength(User::PASSWORD_MAX),
             ]);
     }
 

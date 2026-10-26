@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms;
 
+use App\Models\User;
 use Closure;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -53,7 +54,8 @@ final class AccountFormSections
                     ->revealable()
                     ->autocomplete('new-password')
                     ->required(fn (string $operation): bool => $operation === 'create')
-                    ->rule(Password::min(15)->max(64)->uncompromised())
+                    ->maxLength(User::PASSWORD_MAX)
+                    ->rule(Password::default())
                     ->same('passwordConfirmation')
                     ->dehydrated(fn ($state): bool => filled($state)),
                 TextInput::make('passwordConfirmation')
@@ -66,6 +68,7 @@ final class AccountFormSections
                     // App\Filament\Forms\RequirementMarkers.
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->requiredWith('password')
+                    ->maxLength(User::PASSWORD_MAX)
                     ->placeholder(null)
                     ->dehydrated(false),
             ])
