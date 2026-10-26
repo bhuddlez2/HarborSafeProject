@@ -233,6 +233,32 @@ test('an empty description is stored as null, not an empty array', function () {
     expect(Event::where('title', $title)->firstOrFail()->description)->toBeNull();
 });
 
+test('an event description is capped at 500 characters', function () {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    $title = staffRunToken().' Long description';
+
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
+            'title' => $title,
+            'starts_at' => '2027-06-01 12:00',
+            'description' => str_repeat('a', 501),
+        ])
+        ->assertHasActionErrors(['description' => 'max']);
+
+    expect(Event::where('title', $title)->exists())->toBeFalse();
+
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
+            'title' => $title,
+            'starts_at' => '2027-06-01 12:00',
+            'description' => str_repeat('a', 500),
+        ])
+        ->assertHasNoActionErrors();
+
+    expect(Event::where('title', $title)->firstOrFail()->description)->toBe([str_repeat('a', 500)]);
+});
+
 test('a secretary can upload a newsletter and its size is recorded', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 

@@ -107,6 +107,9 @@ class EventResource extends Resource
 
                             Textarea::make('description')
                                 ->rows(6)
+                                // Counts the whole box, blank lines between
+                                // paragraphs included.
+                                ->maxLength(500)
                                 ->columnSpanFull()
                                 ->helperText('Leave a blank line between paragraphs. Each paragraph is rendered separately on the website.')
                                 // The column is a json array of paragraphs; the
