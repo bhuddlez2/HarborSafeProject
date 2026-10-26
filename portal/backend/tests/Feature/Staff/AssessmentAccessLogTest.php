@@ -25,9 +25,8 @@ row - who, which record, when - because each puts the victim's safe phone
 number in front of someone. Law-enforcement *views* are Connor's (team plan
 task 9) and aren't logged yet.
 
-App\Services\AssessmentPdf is swapped for a fake here: a real render launches
-headless Chromium, too slow and machine-dependent for this suite (see
-AssessmentPdfAccessTest).
+App\Services\AssessmentPdf is swapped for a fake here, so a test can count
+renders or make one fail; real printing is pinned in PdfRenderingTest.
 */
 
 beforeEach(function () {

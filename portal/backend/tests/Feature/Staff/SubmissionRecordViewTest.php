@@ -12,8 +12,8 @@ feedback, resource requests). Both render one partial each
 (App\Support\RecordPdf), so these check the partials themselves, then who may
 download.
 
-As in AssessmentPdfAccessTest, only refusals are asserted for the downloads:
-a successful one launches a real headless Chromium.
+Only refusals are asserted for the downloads here; every kind of record is
+printed for real in PdfRenderingTest.
 */
 
 afterEach(function () {

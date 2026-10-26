@@ -28,7 +28,8 @@ The other half of the picture lives elsewhere: the officer's own download
 (AssessmentAccessLogTest), the My Assessments and Civilian View buttons, and
 the civilian follow-up page's link.
 
-AssessmentPdf is faked: a real render launches headless Chromium.
+AssessmentPdf is faked, so a render can be made to fail; real printing is
+pinned in PdfRenderingTest.
 */
 
 beforeEach(function () {
