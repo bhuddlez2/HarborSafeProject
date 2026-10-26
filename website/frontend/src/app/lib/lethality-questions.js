@@ -1,3 +1,5 @@
+// Same wording and order as NewAssessment::QUESTIONS (the officer wizard).
+// portal/backend/tests/Unit/LethalityQuestionsTest.php fails if the two differ.
 export const lethalityQuestions = [
   { id: 1,  text: "Have they ever used a weapon against you or threatened you with a weapon?" },
   { id: 2,  text: "Have they threatened to kill you or your children?" },
