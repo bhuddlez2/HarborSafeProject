@@ -174,7 +174,7 @@ erDiagram
     _private_assessment }o--o| _submitter_info : "SubmissionID (nullable = anonymous)"
 ```
 
-Framework tables also present but not shown above (no app-specific structure worth diagramming): `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`, `password_reset_tokens`. Sanctum's `personal_access_tokens` was dropped by `2026_10_22_120000_drop_personal_access_tokens_table` when Sanctum was removed.
+Framework tables also present but not shown above (no app-specific structure worth diagramming): `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`, `password_reset_tokens`. Sanctum's `personal_access_tokens` was dropped by `2026_10_22_120000_drop_personal_access_tokens_table` when Sanctum was removed. The five spatie/laravel-permission tables (`permissions`, `roles`, `model_has_permissions`, `model_has_roles`, `role_has_permissions`), never used, were dropped by `2026_10_24_120000_drop_permission_tables` when Filament Shield was removed; access is decided in code by `users.role`.
 
 ### Table detail
 

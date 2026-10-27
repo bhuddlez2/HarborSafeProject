@@ -1003,7 +1003,9 @@ resource requests tab and lands on it from `/analytics`. Totals only: the stats 
 comments or dates of birth. One date range (presets or custom days, Eastern) and, on the
 two assessment tabs, a filter by victim sex (required) and offender sex (optional), are
 shared by the tabs through the session (`App\Filament\Analytics\AnalyticsPage`). High
-risk is "yes to Q1–3, or 4 or more yes" (`AssessmentStats::HIGH_RISK_RULE`). The pages
+risk is "yes to Q1–3, or 4 or more yes" (`App\Support\HighRisk`, approved by Harbor Safe
+2026-10-25), the same rule behind the assessment tables' red Yes badge, the record view
+and its PDF, and the Civilian assessments high-risk filter. The pages
 authorize themselves with `canAccess()`. `AnalyticsTest`.
 
 **Logs** (`/logs`, `App\Filament\Resources\Logs\LogResource`, list page `ListLogs`): one
@@ -1227,3 +1229,12 @@ empty page attached. The `/content` address it held is now the Content cluster's
      that button extends the session, never a timer, so an unattended screen still
      signs out. Officers mid-assessment no longer lose a form to a logout they didn't
      see coming. Covered by `SessionTimeoutTest`.
+     **Added 2026-10-25:** an unfinished officer assessment survives the logout itself,
+     in the browser tab only (settled with Harbor Safe 2026-10-24: never a drafts
+     table, and a police admin can't finish an officer's form). The wizard saves to
+     the tab's `sessionStorage`, AES-GCM-encrypted in the browser under the person's
+     own key (`App\Support\AssessmentDraft`), and the idle logout waits for that save
+     before reloading. Signing back in, New assessment offers **Resume** or **Discard
+     it**; Submit, Discard and Sign out wipe it, and it is dropped after 2 hours or when
+     someone else signs in to the tab. Officers and police admins alike. Needs https.
+     Covered by `AssessmentDraftTest`.
