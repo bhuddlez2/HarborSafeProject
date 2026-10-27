@@ -38,7 +38,7 @@ class FollowUpAnalytics extends AnalyticsPage
         $statuses = FollowUpStatus::cases();
 
         $tiles = [
-            ['label' => 'Still open', 'value' => number_format($stats['open']), 'sub' => 'Needs follow-up or Attempted contact'],
+            ['label' => 'Still open', 'value' => number_format($stats['open']), 'sub' => FollowUpStatus::NeedsFollowUp->label().' or '.FollowUpStatus::AttemptedContact->label()],
             ['label' => 'Reached', 'value' => Chart::share($stats['reached'], $stats['total']), 'sub' => 'of '.number_format($stats['total']).' '.str('form')->plural($stats['total'])],
             ['label' => 'Typical time to first contact', 'value' => FollowUpStats::formatMinutes($stats['medianMinutes']) ?? '—', 'sub' => 'median, from submission to the first status change'],
             ['label' => 'Reminders needed', 'value' => number_format($stats['remindedOnce']).' · '.number_format($stats['remindedTwice']), 'sub' => 'still waiting at 24 h · at 48 h'],

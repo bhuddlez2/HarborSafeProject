@@ -25,9 +25,10 @@ roadmap Phase Z). The rules, as agreed with AS (2026-10-20):
   follow-up. Service feedback never does.
 - Changing the status needs a note. A note can also be added on its own, at
   any stage including a final one, and leaves the status where it is.
-- Nothing returns to Needs follow-up. Final statuses (Reached, Could not reach,
-  Declined) are locked for resource requests; an assessment may move between
-  them. FollowUpStatus::canMoveTo() holds the rule.
+- Nothing returns to Needs Follow-Up. Could Not Reach, Declined and Closed are
+  final for every kind: a final form can't change status. Reached may move on
+  only to Closed (Finishing Touches item 25). FollowUpStatus::canMoveTo()
+  holds the rule.
 - Only the people who work a kind may update it: admins for assessments,
   secretaries and admins for resource requests (FollowUpKind::workedBy()).
 - Every update is an append-only entry - who, when, note, and the status
@@ -37,13 +38,13 @@ class FollowUps
 {
     public const NOTE_MAX = 2000;
 
-    // Hours after submission at which a form still in Needs follow-up sends a
+    // Hours after submission at which a form still in Needs Follow-Up sends a
     // bell reminder - once each, then never again (AS, 2026-10-20).
     public const REMINDER_HOURS = [24, 48];
 
     /*
     Sends the "still needs follow-up" reminders that are due (hourly, from
-    `php artisan follow-ups:remind`). Only forms still in Needs follow-up:
+    `php artisan follow-ups:remind`). Only forms still in Needs Follow-Up:
     opening a form doesn't count, only a status change. If both moments have
     passed at once (the scheduler was down), one reminder goes out, saying 48
     hours. A reminder only counts as sent once it has been written, so a
@@ -98,7 +99,7 @@ class FollowUps
 
     The request is saved as staff-entered (ResourceRequestForm::
     recordStaffEntry(), the website's own rules) and opens its own follow-up
-    in Needs follow-up, so the 24 h / 48 h reminders apply. No new-submission
+    in Needs Follow-Up, so the 24 h / 48 h reminders apply. No new-submission
     alert: whoever started it already knows.
 
     @throws AuthorizationException when $by may not do this
@@ -228,7 +229,7 @@ class FollowUps
             $current = FollowUp::query()->lockForUpdate()->findOrFail($followUp->getKey());
             $changes = $status !== null && $status !== $current->Status;
 
-            if ($changes && ! $current->Status->canMoveTo($status, $current->Kind)) {
+            if ($changes && ! $current->Status->canMoveTo($status)) {
                 throw ValidationException::withMessages([
                     'status' => "A {$current->Kind->label()} can't move from {$current->Status->label()} to {$status->label()}.",
                 ]);

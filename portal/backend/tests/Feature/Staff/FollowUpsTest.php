@@ -132,12 +132,12 @@ test('a note can be added on its own, at any stage, without moving the form', fu
     expect($followUp->refresh()->Status)->toBe(FollowUpStatus::NeedsFollowUp);
 
     // In a final status too.
-    followUps()->update($followUp, FollowUpStatus::Reached, 'Spoke with her; referred to shelter.', $admin);
+    followUps()->update($followUp, FollowUpStatus::Closed, 'Spoke with her; referred to shelter.', $admin);
     followUps()->update($followUp, null, 'Checked in a week later.', $admin);
 
     $entries = $followUp->refresh()->entries;
 
-    expect($followUp->Status)->toBe(FollowUpStatus::Reached)
+    expect($followUp->Status)->toBe(FollowUpStatus::Closed)
         ->and($entries)->toHaveCount(4)
         ->and($entries->pluck('Note')->all())->toBe([
             'Tried the number, no answer yet.',
@@ -148,34 +148,58 @@ test('a note can be added on its own, at any stage, without moving the form', fu
         ->and($entries->map(fn (FollowUpEntry $e): bool => $e->changedStatus())->all())->toBe([false, false, true, false]);
 });
 
-test('which moves each kind of form may make', function (FollowUpKind $kind, FollowUpStatus $from, FollowUpStatus $to, bool $allowed) {
-    expect($from->canMoveTo($to, $kind))->toBe($allowed);
+test('where a form may move from each status, the same for every kind of form', function (FollowUpStatus $from, array $to) {
+    expect($from->next())->toBe($to);
+
+    $admin = staffUser(UserRole::Admin);
+
+    foreach (FollowUpKind::cases() as $kind) {
+        $followUp = pestFollowUp($kind);
+
+        foreach (FollowUpStatus::cases() as $status) {
+            if ($status === $from) {
+                continue;
+            }
+
+            $followUp->forceFill(['Status' => $from])->save();
+            $attempt = fn () => followUps()->update($followUp->refresh(), $status, 'Trying a move.', $admin);
+
+            if (in_array($status, $to, true)) {
+                $attempt();
+                expect($followUp->refresh()->Status)->toBe($status);
+            } else {
+                expect($attempt)->toThrow(ValidationException::class);
+            }
+        }
+    }
 })->with([
-    // From Needs follow-up: anywhere but back to itself.
-    'needs -> attempted' => [FollowUpKind::ResourceRequest, FollowUpStatus::NeedsFollowUp, FollowUpStatus::AttemptedContact, true],
-    'needs -> reached' => [FollowUpKind::ResourceRequest, FollowUpStatus::NeedsFollowUp, FollowUpStatus::Reached, true],
-    'needs -> declined' => [FollowUpKind::LawEnforcementAssessment, FollowUpStatus::NeedsFollowUp, FollowUpStatus::Declined, true],
-    // From Attempted contact: on to a final status only.
-    'attempted -> could not reach' => [FollowUpKind::CivilianAssessment, FollowUpStatus::AttemptedContact, FollowUpStatus::CouldNotReach, true],
-    'attempted -> needs' => [FollowUpKind::CivilianAssessment, FollowUpStatus::AttemptedContact, FollowUpStatus::NeedsFollowUp, false],
-    // Final: an assessment may move between finals, a resource request may not.
-    'assessment reached -> declined' => [FollowUpKind::CivilianAssessment, FollowUpStatus::Reached, FollowUpStatus::Declined, true],
-    'officer assessment could not reach -> reached' => [FollowUpKind::LawEnforcementAssessment, FollowUpStatus::CouldNotReach, FollowUpStatus::Reached, true],
-    'assessment reached -> attempted' => [FollowUpKind::CivilianAssessment, FollowUpStatus::Reached, FollowUpStatus::AttemptedContact, false],
-    'assessment reached -> needs' => [FollowUpKind::LawEnforcementAssessment, FollowUpStatus::Reached, FollowUpStatus::NeedsFollowUp, false],
-    'request reached -> declined' => [FollowUpKind::ResourceRequest, FollowUpStatus::Reached, FollowUpStatus::Declined, false],
-    'request declined -> attempted' => [FollowUpKind::ResourceRequest, FollowUpStatus::Declined, FollowUpStatus::AttemptedContact, false],
+    // Anywhere but back to itself, Closed included.
+    'Needs Follow-Up' => [FollowUpStatus::NeedsFollowUp, [FollowUpStatus::AttemptedContact, FollowUpStatus::Reached, FollowUpStatus::CouldNotReach, FollowUpStatus::Declined, FollowUpStatus::Closed]],
+    'Attempted Contact' => [FollowUpStatus::AttemptedContact, [FollowUpStatus::Reached, FollowUpStatus::CouldNotReach, FollowUpStatus::Declined, FollowUpStatus::Closed]],
+    // Not final, but on to Closed only.
+    'Reached' => [FollowUpStatus::Reached, [FollowUpStatus::Closed]],
+    // Final: no status change at all.
+    'Could Not Reach' => [FollowUpStatus::CouldNotReach, []],
+    'Declined' => [FollowUpStatus::Declined, []],
+    'Closed' => [FollowUpStatus::Closed, []],
 ]);
+
+test('Could Not Reach, Declined and Closed are the final statuses, every status in title case', function () {
+    expect(array_values(array_filter(FollowUpStatus::cases(), fn (FollowUpStatus $s): bool => $s->isFinal())))
+        ->toBe([FollowUpStatus::CouldNotReach, FollowUpStatus::Declined, FollowUpStatus::Closed])
+        ->and(array_map(fn (FollowUpStatus $s): string => $s->label(), FollowUpStatus::cases()))
+        ->toBe(['Needs Follow-Up', 'Attempted Contact', 'Reached', 'Could Not Reach', 'Declined', 'Closed']);
+});
 
 test('a move the rules refuse changes nothing', function () {
     $admin = staffUser(UserRole::Admin);
     $followUp = pestFollowUp(FollowUpKind::ResourceRequest);
-    followUps()->update($followUp, FollowUpStatus::Reached, 'Sent the shelter list.', $admin);
+    followUps()->update($followUp, FollowUpStatus::Declined, 'Changed their mind.', $admin);
 
-    expect(fn () => followUps()->update($followUp, FollowUpStatus::Declined, 'Changed their mind.', $admin))
+    expect(fn () => followUps()->update($followUp, FollowUpStatus::Reached, 'Called back after all.', $admin))
         ->toThrow(ValidationException::class);
 
-    expect($followUp->refresh()->Status)->toBe(FollowUpStatus::Reached)
+    expect($followUp->refresh()->Status)->toBe(FollowUpStatus::Declined)
         ->and($followUp->entries)->toHaveCount(1);
 });
 

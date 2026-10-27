@@ -51,13 +51,6 @@ enum FollowUpKind: string
         return $this->submission()->alertedRoles();
     }
 
-    // Assessments can be moved between the final statuses; a resource request
-    // is locked once final, and a new request is started instead.
-    public function finalsAreMovable(): bool
-    {
-        return $this !== self::ResourceRequest;
-    }
-
     public function isAssessment(): bool
     {
         return $this !== self::ResourceRequest;

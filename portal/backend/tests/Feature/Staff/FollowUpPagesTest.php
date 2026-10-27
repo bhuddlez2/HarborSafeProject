@@ -66,7 +66,7 @@ test('officers and police admins can\'t reach the queue or any follow-up page', 
     'police admin' => fn () => pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Queue PD 2')),
 ]);
 
-test('each status has its own tab, Needs follow-up first', function () {
+test('each status has its own tab, Needs Follow-Up first and Closed last', function () {
     $admin = staffUser(UserRole::Admin);
     $waiting = pestFollowUp(FollowUpKind::CivilianAssessment);
     $reached = pestFollowUp(FollowUpKind::LawEnforcementAssessment);
@@ -80,7 +80,7 @@ test('each status has its own tab, Needs follow-up first', function () {
         ->assertCanNotSeeTableRecords([$reached]);
 
     expect(array_values(array_map(fn ($tab) => $tab->getLabel(), $list->instance()->getTabs())))
-        ->toBe(['Needs follow-up', 'Attempted contact', 'Reached', 'Could not reach', 'Declined']);
+        ->toBe(['Needs Follow-Up', 'Attempted Contact', 'Reached', 'Could Not Reach', 'Declined', 'Closed']);
 
     $list->set('activeTab', FollowUpStatus::Reached->value)
         ->assertCanSeeTableRecords([$reached])
@@ -106,7 +106,7 @@ test('the follow-up page shows the whole form and its history, and opening it is
         ->assertSee(STAFF_TEST_PREFIX.'Victim Doe')
         ->assertSee('(423)555-0100')
         ->assertSee('Have they ever used a weapon against you', false)
-        ->assertSee('Needs follow-up → Attempted contact')
+        ->assertSee('Needs Follow-Up → Attempted Contact')
         ->assertSee('Left a voicemail.')
         // The plain form as a PDF, through its own logged download route.
         ->assertSee(route('staff.civilian-assessments.pdf', $followUp->PrivateDocumentID), false);
@@ -156,19 +156,79 @@ test('Update moves the form with a note, or adds a note on its own', function ()
 
 test('Update only offers the moves this form may make', function () {
     $admin = staffUser(UserRole::Admin);
-    $request = pestFollowUp(FollowUpKind::ResourceRequest);
-    $assessment = pestFollowUp(FollowUpKind::CivilianAssessment);
-    app(FollowUps::class)->update($request, FollowUpStatus::Reached, 'Sent the list.', $admin);
-    app(FollowUps::class)->update($assessment, FollowUpStatus::Reached, 'Spoke with her.', $admin);
+    $waiting = pestFollowUp(FollowUpKind::ResourceRequest);
+    $reached = pestFollowUp(FollowUpKind::CivilianAssessment);
+    $declined = pestFollowUp(FollowUpKind::LawEnforcementAssessment);
+    app(FollowUps::class)->update($reached, FollowUpStatus::Reached, 'Spoke with her.', $admin);
+    app(FollowUps::class)->update($declined, FollowUpStatus::Declined, 'Turned down help.', $admin);
 
     $this->actingAs($admin);
-    $options = fn ($followUp): array => array_keys(
-        Livewire::test(ViewFollowUp::class, ['record' => $followUp->getKey()])->instance()->updateStatusOptions(),
-    );
+    $options = fn ($followUp): array => Livewire::test(ViewFollowUp::class, ['record' => $followUp->getKey()])
+        ->instance()->updateStatusOptions();
 
-    // A final resource request: notes only. A final assessment: the other finals.
-    expect($options($request))->toBe(['keep'])
-        ->and($options($assessment))->toBe(['keep', 'could_not_reach', 'declined']);
+    expect($options($waiting))->toBe([
+        'keep' => 'Keep Current Status (Needs Follow-Up)',
+        'attempted_contact' => 'Attempted Contact',
+        'reached' => 'Reached',
+        'could_not_reach' => 'Could Not Reach',
+        'declined' => 'Declined',
+        'closed' => 'Closed',
+    ])
+        // Reached: on to Closed only. A final form: a note on its own.
+        ->and(array_keys($options($reached)))->toBe(['keep', 'closed'])
+        ->and($options($declined))->toBe(['keep' => 'Keep Current Status (Declined)']);
+});
+
+test('on a final form the Status dropdown is greyed out, and a note still saves', function () {
+    $admin = staffUser(UserRole::Admin);
+    $open = pestFollowUp(FollowUpKind::ResourceRequest);
+    $closed = pestFollowUp(FollowUpKind::ResourceRequest);
+    app(FollowUps::class)->update($closed, FollowUpStatus::Closed, 'Duplicate request.', $admin);
+
+    $this->actingAs($admin);
+
+    Livewire::test(ViewFollowUp::class, ['record' => $open->getKey()])
+        ->mountAction('update')
+        ->assertFormFieldEnabled('status');
+
+    $page = Livewire::test(ViewFollowUp::class, ['record' => $closed->getKey()])
+        ->mountAction('update')
+        ->assertFormFieldDisabled('status');
+
+    // A tampered status is refused, and nothing is saved.
+    $page->fillForm(['status' => FollowUpStatus::Reached->value, 'note' => 'Tampered.'])
+        ->callMountedAction()
+        ->assertHasFormErrors(['status']);
+
+    expect($closed->refresh()->Status)->toBe(FollowUpStatus::Closed)
+        ->and($closed->entries)->toHaveCount(1);
+
+    // Left as it is, the update is a note on its own.
+    Livewire::test(ViewFollowUp::class, ['record' => $closed->getKey()])
+        ->callAction('update', data: ['note' => 'Called to check in.'])
+        ->assertHasNoActionErrors();
+
+    expect($closed->refresh()->Status)->toBe(FollowUpStatus::Closed)
+        ->and($closed->entries->last()->Note)->toBe('Called to check in.')
+        ->and($closed->entries->last()->changedStatus())->toBeFalse();
+});
+
+test('a Reached form can be closed, and shows in the Closed tab', function () {
+    $admin = staffUser(UserRole::Admin);
+    $followUp = pestFollowUp(FollowUpKind::ResourceRequest);
+    app(FollowUps::class)->update($followUp, FollowUpStatus::Reached, 'Sent the list.', $admin);
+
+    $this->actingAs($admin);
+
+    Livewire::test(ViewFollowUp::class, ['record' => $followUp->getKey()])
+        ->callAction('update', data: ['status' => FollowUpStatus::Closed->value, 'note' => 'Nothing more to do.'])
+        ->assertHasNoActionErrors();
+
+    expect($followUp->refresh()->Status)->toBe(FollowUpStatus::Closed);
+
+    followUpQueue()
+        ->set('activeTab', FollowUpStatus::Closed->value)
+        ->assertCanSeeTableRecords([$followUp]);
 });
 
 test('the queue\'s Log shows the history from submission to now', function () {
@@ -184,9 +244,9 @@ test('the queue\'s Log shows the history from submission to now', function () {
         ->mountAction(TestAction::make('log')->table($followUp))
         ->assertMountedActionModalSee([
             'Submitted',
-            'Note (Needs follow-up)',
+            'Note (Needs Follow-Up)',
             'Called, no answer.',
-            'Needs follow-up → Reached',
+            'Needs Follow-Up → Reached',
             'Sent the shelter list.',
             $admin->name,
         ]);
@@ -218,7 +278,7 @@ test('Update Follow-Up shows the current status and how long the form has been i
     Livewire::test(ViewFollowUp::class, ['record' => $followUp->getKey()])
         ->assertActionExists('update', fn (Action $action): bool => $action->getLabel() === 'Update Follow-Up'
             && $action->getModalHeading() === 'Update Follow-Up'
-            && $action->getModalDescription() === 'Current Status: Attempted contact · Current Days in Status: 1 Day')
+            && $action->getModalDescription() === 'Current Status: Attempted Contact · Current Days in Status: 1 Day')
         ->mountAction('update')
         // No helper text: the asterisk says it's required, the box gives the limit.
         ->assertFormFieldExists('note', fn (Textarea $field): bool => $field->isRequired()
