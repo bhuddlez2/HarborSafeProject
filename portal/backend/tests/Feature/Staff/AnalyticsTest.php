@@ -269,7 +269,7 @@ test('a secretary gets only the feedback tab', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 
     $this->get(AnalyticsCluster::getUrl())->assertRedirect(FeedbackAnalytics::getUrl());
-    $this->get(FeedbackAnalytics::getUrl())->assertOk()->assertDontSee('Law-enforcement assessments');
+    $this->get(FeedbackAnalytics::getUrl())->assertOk()->assertDontSee('Law-Enforcement Assessments');
     $this->get(OfficerAssessmentAnalytics::getUrl())->assertForbidden();
     $this->get(CivilianAssessmentAnalytics::getUrl())->assertForbidden();
     $this->get(FollowUpAnalytics::getUrl())->assertForbidden();

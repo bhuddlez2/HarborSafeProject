@@ -84,7 +84,7 @@ class NewAssessment extends Page
 
     protected static ?string $slug = 'police/new-assessment';
 
-    protected static ?string $title = 'New assessment';
+    protected static ?string $title = 'New Assessment';
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedDocumentPlus;
 

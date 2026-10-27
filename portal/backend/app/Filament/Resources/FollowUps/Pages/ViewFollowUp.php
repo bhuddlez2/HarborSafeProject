@@ -86,7 +86,7 @@ class ViewFollowUp extends Page
 
     public function getBreadcrumbs(): array
     {
-        return [FollowUpResource::getUrl() => 'Follow-ups', 'Follow-up'];
+        return [FollowUpResource::getUrl() => FollowUpResource::getNavigationLabel(), 'Follow-Up'];
     }
 
     protected function getHeaderActions(): array

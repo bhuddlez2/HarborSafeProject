@@ -65,9 +65,9 @@ class CivilianAssessmentResource extends Resource
 
     protected static ?string $slug = 'civilian-assessments';
 
-    protected static ?string $title = 'Civilian assessments';
+    protected static ?string $title = 'Civilian Assessments';
 
-    protected static ?string $navigationLabel = 'Civilian assessments';
+    protected static ?string $navigationLabel = 'Civilian Assessments';
 
     protected static ?string $modelLabel = 'civilian assessment';
 

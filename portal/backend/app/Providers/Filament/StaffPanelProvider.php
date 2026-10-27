@@ -140,7 +140,7 @@ class StaffPanelProvider extends PanelProvider
             // first appearance, which depends on discovery order and so moves
             // when a file is added.
             ->navigationGroups([
-                'Content management',
+                'Content Management',
                 'Assessments',
                 // Analytics (App\Filament\Clusters\Analytics), for admins,
                 // super admins and secretaries.

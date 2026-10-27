@@ -77,9 +77,9 @@ class ServiceFeedbackResource extends Resource
 
     protected static ?string $slug = 'service-feedback';
 
-    protected static ?string $title = 'Service feedback';
+    protected static ?string $title = 'Service Feedback';
 
-    protected static ?string $navigationLabel = 'Service feedback';
+    protected static ?string $navigationLabel = 'Service Feedback';
 
     protected static ?string $modelLabel = 'service feedback';
 

@@ -64,9 +64,9 @@ class ResourceRequestResource extends Resource
 
     protected static ?string $slug = 'resource-requests';
 
-    protected static ?string $title = 'Resource requests';
+    protected static ?string $title = 'Resource Requests';
 
-    protected static ?string $navigationLabel = 'Resource requests';
+    protected static ?string $navigationLabel = 'Resource Requests';
 
     protected static ?string $modelLabel = 'resource request';
 

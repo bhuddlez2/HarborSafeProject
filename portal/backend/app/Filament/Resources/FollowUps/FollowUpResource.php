@@ -45,7 +45,7 @@ class FollowUpResource extends Resource
 
     protected static ?string $slug = 'follow-ups';
 
-    protected static ?string $navigationLabel = 'Follow-ups';
+    protected static ?string $navigationLabel = 'Follow-Ups';
 
     protected static ?string $modelLabel = 'follow-up';
 
@@ -53,7 +53,7 @@ class FollowUpResource extends Resource
 
     // The day's work queue: first under Content management, and the page
     // admins, secretaries and super admins land on (App\Filament\StaffLanding).
-    protected static string | \UnitEnum | null $navigationGroup = 'Content management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Content Management';
 
     protected static ?int $navigationSort = 0;
 

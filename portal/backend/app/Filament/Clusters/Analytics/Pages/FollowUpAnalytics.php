@@ -18,7 +18,7 @@ class FollowUpAnalytics extends AnalyticsPage
 {
     protected static ?string $slug = 'follow-ups';
 
-    protected static ?string $title = 'Follow-ups';
+    protected static ?string $title = 'Follow-Ups';
 
     protected static ?int $navigationSort = 4;
 

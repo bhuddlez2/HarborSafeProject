@@ -8,8 +8,8 @@ use Filament\Facades\Filament;
 The sidebar each role is shown, group by group and item by item, in order.
 
 Police admins get one "Police Admin" group (App\Filament\PoliceAdminNavigation)
-built partly from items other roles also see - Home, New assessment,
-Assessment review, Logs, Account - so this pins both sides: the police admin's single group, and
+built partly from items other roles also see - Home, New Assessment,
+Assessment Review, Logs, Account - so this pins both sides: the police admin's single group, and
 every other role's sidebar exactly as it was before that group existed.
 
 Grouping and order only. Who may open each item is PanelAccessTest's job.
@@ -39,41 +39,41 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
 })->with([
     'police admin' => [
         fn () => pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Nav agency')),
-        ['Police Admin' => ['Home', 'New assessment', 'Assessment review', 'Logs', 'Officers', 'Account']],
+        ['Police Admin' => ['Home', 'New Assessment', 'Assessment Review', 'Logs', 'Officers', 'Account']],
     ],
-    // New assessment, Officers and Logs need an agency (their canAccess());
+    // New Assessment, Officers and Logs need an agency (their canAccess());
     // the rest of the group is unaffected.
     'police admin with no agency' => [
         fn () => pestAgencyMember(UserRole::PoliceAdmin, null),
-        ['Police Admin' => ['Home', 'Assessment review', 'Account']],
+        ['Police Admin' => ['Home', 'Assessment Review', 'Account']],
     ],
     'law enforcement' => [
         fn () => staffUser(UserRole::LawEnforcement),
-        ['Officer Portal' => ['Home', 'New assessment', 'My Assessments', 'Account']],
+        ['Officer Portal' => ['Home', 'New Assessment', 'My Assessments', 'Account']],
     ],
     // Admin's sidebar plus Agencies after Accounts.
     'super admin' => [
         fn () => staffUser(UserRole::SuperAdmin),
         [
-            'Content management' => ['Follow-ups', 'Content', 'Submissions', 'Form options', 'Accounts', 'Agencies'],
-            'Assessments' => ['Assessment review', 'Civilian assessments', 'Logs'],
+            'Content Management' => ['Follow-Ups', 'Content', 'Submissions', 'Form Options', 'Accounts', 'Agencies'],
+            'Assessments' => ['Assessment Review', 'Civilian Assessments', 'Logs'],
             'Reports' => ['Analytics'],
         ],
     ],
-    // Follow-ups is the day's work queue, first under Content management
+    // Follow-Ups is the day's work queue, first under Content Management
     // and the page these roles land on.
     'admin' => [
         fn () => staffUser(UserRole::Admin),
         [
-            'Content management' => ['Follow-ups', 'Content', 'Submissions', 'Form options', 'Accounts'],
-            'Assessments' => ['Assessment review', 'Civilian assessments', 'Logs'],
+            'Content Management' => ['Follow-Ups', 'Content', 'Submissions', 'Form Options', 'Accounts'],
+            'Assessments' => ['Assessment Review', 'Civilian Assessments', 'Logs'],
             'Reports' => ['Analytics'],
         ],
     ],
     'secretary' => [
         fn () => staffUser(UserRole::Secretary),
         [
-            'Content management' => ['Follow-ups', 'Content', 'Submissions', 'Form options'],
+            'Content Management' => ['Follow-Ups', 'Content', 'Submissions', 'Form Options'],
             'Reports' => ['Analytics'],
         ],
     ],
@@ -90,11 +90,40 @@ test('the police admin group leaves gaps between positions', function () {
 
     expect($sorts)->toBe([
         'Home' => PoliceAdminNavigation::HOME,
-        'New assessment' => PoliceAdminNavigation::NEW_ASSESSMENT,
-        'Assessment review' => PoliceAdminNavigation::ASSESSMENT_REVIEW,
+        'New Assessment' => PoliceAdminNavigation::NEW_ASSESSMENT,
+        'Assessment Review' => PoliceAdminNavigation::ASSESSMENT_REVIEW,
         'Logs' => PoliceAdminNavigation::LOGS,
         'Officers' => PoliceAdminNavigation::OFFICERS,
         'Account' => PoliceAdminNavigation::ACCOUNT,
     ])
         ->and(array_values($sorts))->toBe([10, 20, 30, 40, 50, 60]);
+});
+
+// Finishing Touches item 27: every sidebar group, sidebar item and cluster tab
+// in title case. Each word (hyphenated parts too, "Follow-Ups") starts with a
+// capital, except short joining words such as "and".
+test('every sidebar label and cluster tab is in title case', function () {
+    Filament::setCurrentPanel('staff');
+    $panel = Filament::getCurrentPanel();
+
+    $labels = collect($panel->getNavigationGroups())
+        ->map(fn ($group): string => is_string($group) ? $group : (string) $group->getLabel());
+
+    foreach ([...$panel->getResources(), ...$panel->getPages(), ...$panel->getClusters()] as $component) {
+        $labels->push((string) $component::getNavigationLabel());
+    }
+
+    foreach ($panel->getClusters() as $cluster) {
+        foreach ($cluster::getClusteredComponents() as $component) {
+            $labels->push((string) $component::getNavigationLabel());
+        }
+    }
+
+    $notTitleCase = $labels->unique()->reject(fn (string $label): bool => collect(preg_split('/[\s-]+/', $label))
+        ->every(fn (string $word): bool => in_array($word, ['a', 'an', 'and', 'for', 'of', 'or', 'the', 'to'], true)
+            || ctype_upper($word[0])))
+        ->values()
+        ->all();
+
+    expect($notTitleCase)->toBe([]);
 });

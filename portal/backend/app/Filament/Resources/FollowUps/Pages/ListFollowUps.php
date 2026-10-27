@@ -19,6 +19,13 @@ class ListFollowUps extends ListRecords
 
     protected static string $resource = FollowUpResource::class;
 
+    // The sidebar's words. Filament's default, from the model label, would
+    // read "Follow-ups".
+    public function getTitle(): string
+    {
+        return FollowUpResource::getNavigationLabel();
+    }
+
     public function getTabs(): array
     {
         return collect(FollowUpStatus::cases())

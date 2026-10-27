@@ -148,7 +148,7 @@ test('a police admin with no agency can\'t open New assessment, and it isn\'t of
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null));
 
     expect(NewAssessment::canAccess())->toBeFalse()
-        ->and(pa7SidebarItems())->not->toContain('New assessment');
+        ->and(pa7SidebarItems())->not->toContain('New Assessment');
 
     $this->get(NewAssessment::getUrl())->assertForbidden();
 

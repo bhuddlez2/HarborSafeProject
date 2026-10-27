@@ -53,9 +53,9 @@ class AssessmentReviewResource extends Resource
 
     protected static ?string $slug = 'assessment-review';
 
-    protected static ?string $title = 'Assessment review';
+    protected static ?string $title = 'Assessment Review';
 
-    protected static ?string $navigationLabel = 'Assessment review';
+    protected static ?string $navigationLabel = 'Assessment Review';
 
     protected static ?string $modelLabel = 'assessment';
 
