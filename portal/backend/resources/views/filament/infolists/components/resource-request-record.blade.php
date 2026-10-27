@@ -9,6 +9,13 @@
     // export (App\Support\RecordPdf, isPdf).
     $isPdf     = $isPdf ?? false;
     $isStaff   = ! $isPdf && $record->isStaffEntry();
+
+    // On screen the email opens the computer's own email app with the address
+    // in To and nothing else: no subject, since subject lines show in inbox
+    // previews someone else may see. Plain text in the PDF, and for anything
+    // that isn't a valid address (checked when submitted; this is a backstop).
+    $email     = $record->EmailAddress;
+    $emailLink = ! $isPdf && filled($email) && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 @endphp
 
 <div class="hs-assessment-record">
@@ -38,7 +45,13 @@
             </div>
             <div class="hs-ar-field">
                 <dt>Email</dt>
-                <dd>{{ $record->EmailAddress ?: '—' }}</dd>
+                <dd>
+                    @if ($emailLink)
+                        <a href="mailto:{{ $email }}" class="hs-ar-link">{{ $email }}</a>
+                    @else
+                        {{ $email ?: '—' }}
+                    @endif
+                </dd>
             </div>
             <div class="hs-ar-field">
                 <dt>Safe phone</dt>

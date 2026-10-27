@@ -138,6 +138,42 @@ test('a resource request with nothing optional filled in still renders', functio
 });
 
 /*
+The email opens the computer's own email app (Finishing Touches #22), with the
+address in To and nothing else: no subject, since subject lines show in inbox
+previews someone else may see. The same partial is the View pop-up and the
+follow-up page, so this covers both.
+*/
+test('on screen, the email opens an email to that address and nothing more', function () {
+    $request = resourceRequest();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request))
+        ->toContain('href="mailto:'.$request->EmailAddress.'"')
+        ->not->toContain('subject=')
+        ->not->toContain('?body=');
+});
+
+test('the PDF keeps the email as plain text', function () {
+    $request = resourceRequest();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request, isPdf: true))
+        ->toContain($request->EmailAddress)
+        ->not->toContain('mailto:');
+});
+
+test('no link without an email, or for one that is not a valid address', function (?string $email, string $shown) {
+    $request = resourceRequest(['EmailAddress' => $email]);
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request))
+        ->toContain($shown)
+        ->not->toContain('mailto:');
+})->with([
+    'phone only' => [null, '—'],
+    'not an address' => ['not an address', 'not an address'],
+    // Would add a second recipient if it were ever linked.
+    'extra recipient smuggled in' => ['pest@example.com?cc=other@example.com', 'pest@example.com?cc=other@example.com'],
+]);
+
+/*
 The routes sit outside the panel, so the resources' canAccess() does not guard
 them. Admins and secretaries only: SubmissionPdfController checks the role
 (403); ResourceRequestPdfController looks the request up through

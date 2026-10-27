@@ -430,6 +430,23 @@
     word-break: word-break;
 }
 
+/* A link inside a record, such as a resource request's email address. */
+.hs-ar-link {
+    color: #5c0f8b;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.hs-ar-link:hover {
+    color: #4c0b74;
+}
+
+.hs-ar-link:focus-visible {
+    outline: 2px solid #5c0f8b;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 /* Submission records (service feedback, resource requests): full-width cards. */
 .hs-ar-card {
     margin-bottom: 1rem;
