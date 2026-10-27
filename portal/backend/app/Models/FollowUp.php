@@ -5,8 +5,11 @@ namespace App\Models;
 use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
 use App\Filament\Resources\FollowUps\FollowUpResource;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 // Harbor Safe's follow-up on one form, as it stands now (follow_ups). The
 // history is in entries(). Opened and updated only through
@@ -106,6 +109,36 @@ class FollowUp extends BaseModel
     public function entries()
     {
         return $this->hasMany(FollowUpEntry::class, 'FollowUpID')->orderBy('EnteredAt')->orderBy('EntryID');
+    }
+
+    /*
+    When the form entered its current status: the last entry that changed
+    the status, or the submission if none ever has. Not LastUpdatedAt, which
+    a note on its own moves too.
+    */
+    public function statusSince(): CarbonInterface
+    {
+        $changedAt = FollowUpEntry::query()
+            ->where('FollowUpID', $this->getKey())
+            ->whereNotNull('FromStatus')
+            ->max('EnteredAt');
+
+        return $changedAt !== null ? Carbon::parse($changedAt, 'UTC') : $this->SubmittedAt;
+    }
+
+    // How long the form has been in its current status, as the Update pop-up
+    // shows it: whole days, or whole hours under a day ("3 Days", "5 Hours").
+    public function timeInStatus(?CarbonInterface $now = null): string
+    {
+        $hours = (int) floor($this->statusSince()->diffInHours($now ?? now(), absolute: true));
+
+        if ($hours < 24) {
+            return $hours.' '.Str::plural('Hour', $hours);
+        }
+
+        $days = intdiv($hours, 24);
+
+        return $days.' '.Str::plural('Day', $days);
     }
 
     public function lastUpdatedBy()

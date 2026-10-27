@@ -109,10 +109,10 @@ class ViewFollowUp extends Page
     private function updateAction(): Action
     {
         return Action::make('update')
-            ->label('Update follow-up')
+            ->label('Update Follow-Up')
             ->icon(Heroicon::OutlinedPencilSquare)
-            ->modalHeading('Update follow-up')
-            ->modalDescription(fn (): string => 'Now: '.$this->followUp()->Status->label().'. Every update is kept with your name and the time.')
+            ->modalHeading('Update Follow-Up')
+            ->modalDescription(fn (): string => $this->currentStatusLine())
             ->schema([
                 Select::make('status')
                     ->label('Status')
@@ -122,7 +122,8 @@ class ViewFollowUp extends Page
                     ->required(),
                 Textarea::make('note')
                     ->label('Note')
-                    ->helperText('Required for every update. New notes are added to the history; earlier ones are never changed.')
+                    // Required, so the asterisk says so; the box gives the limit.
+                    ->placeholder(number_format(FollowUps::NOTE_MAX).' Character Limit')
                     ->rows(4)
                     ->maxLength(FollowUps::NOTE_MAX)
                     ->required(),
@@ -287,6 +288,14 @@ class ViewFollowUp extends Page
             ])
             ->values()
             ->all();
+    }
+
+    // The line under the Update pop-up's heading.
+    public function currentStatusLine(): string
+    {
+        $followUp = $this->followUp();
+
+        return "Current Status: {$followUp->Status->label()} · Current Days in Status: {$followUp->timeInStatus()}";
     }
 
     // "No change" keeps the status and adds a note; the rest are the moves

@@ -9,7 +9,9 @@ use App\Filament\Resources\FollowUps\Pages\ListFollowUps;
 use App\Filament\Resources\FollowUps\Pages\ViewFollowUp;
 use App\Models\AssessmentAccessLog;
 use App\Services\FollowUps;
+use Filament\Actions\Action;
 use Filament\Actions\Testing\TestAction;
+use Filament\Forms\Components\Textarea;
 use Livewire\Livewire;
 
 /*
@@ -188,4 +190,38 @@ test('the queue\'s Log shows the history from submission to now', function () {
             'Sent the shelter list.',
             $admin->name,
         ]);
+});
+
+test('Update Follow-Up shows the current status and how long the form has been in it', function () {
+    $admin = staffUser(UserRole::Admin);
+    $followUp = pestFollowUp(FollowUpKind::CivilianAssessment);
+    $this->actingAs($admin);
+
+    // Never moved: counted from submission, in hours under a day.
+    $this->travel(5)->hours();
+    expect($followUp->refresh()->timeInStatus())->toBe('5 Hours');
+
+    $this->travel(1)->hours();
+    $this->travel(3)->days();
+    expect($followUp->timeInStatus())->toBe('3 Days');
+
+    // A status change restarts the count...
+    app(FollowUps::class)->update($followUp, FollowUpStatus::AttemptedContact, 'Left a voicemail.', $admin);
+    expect($followUp->refresh()->timeInStatus())->toBe('0 Hours');
+
+    // ...and a note on its own doesn't, though it moves Last updated.
+    $this->travel(1)->hours();
+    app(FollowUps::class)->update($followUp, null, 'Texted the safe number too.', $admin);
+    $this->travel(1)->days();
+    expect($followUp->refresh()->timeInStatus())->toBe('1 Day');
+
+    Livewire::test(ViewFollowUp::class, ['record' => $followUp->getKey()])
+        ->assertActionExists('update', fn (Action $action): bool => $action->getLabel() === 'Update Follow-Up'
+            && $action->getModalHeading() === 'Update Follow-Up'
+            && $action->getModalDescription() === 'Current Status: Attempted contact · Current Days in Status: 1 Day')
+        ->mountAction('update')
+        // No helper text: the asterisk says it's required, the box gives the limit.
+        ->assertFormFieldExists('note', fn (Textarea $field): bool => $field->isRequired()
+            && $field->getChildSchema($field::BELOW_CONTENT_SCHEMA_KEY) === null
+            && $field->getPlaceholder() === '2,000 Character Limit');
 });
