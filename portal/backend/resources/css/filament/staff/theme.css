@@ -963,6 +963,30 @@
     text-transform: uppercase;
 }
 
+/*
+ * Next / Previous page buttons, shown under every table when it is too narrow
+ * for the numbered pages: the column headers' light purple and purple text,
+ * so they don't pass for a plain white box at the far end of the bar.
+ */
+.fi-pagination .fi-pagination-next-btn,
+.fi-pagination .fi-pagination-previous-btn {
+    background-color: #ede3f5;
+    color: #5c0f8b;
+    font-weight: 700;
+    --tw-ring-color: #c9a8e0;
+}
+
+.fi-pagination .fi-pagination-next-btn:hover,
+.fi-pagination .fi-pagination-previous-btn:hover {
+    background-color: #e0cdef;
+}
+
+.fi-pagination .fi-pagination-next-btn:focus-visible,
+.fi-pagination .fi-pagination-previous-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgb(92 15 139 / 0.3);
+    outline: none;
+}
+
 .fi-ta-row {
     border-bottom-color: #ddd7e6;
 }
@@ -1093,6 +1117,50 @@
         margin-top: 0.25rem;
         padding-top: 0.75rem;
         border-top: 1px solid #ece7f2;
+    }
+}
+
+/*
+ * Between a phone and a full-width monitor (40rem-80rem: a monitor turned on
+ * its side, a small laptop, a tablet) the assessment tables are still tables
+ * but too narrow for Change log, View and Edit side by side, so the last
+ * buttons ran off the edge. There they stack in one compact column, icon
+ * at the left so the icons line up down the column, label centred beside it.
+ * Above 80rem they sit in a row as before.
+ */
+/*
+ * Below 50rem even stacked buttons don't fit beside one-line cells, so dates
+ * and names may wrap there too (Filament keeps table cells on one line). Not
+ * above it, where everything fits and wrapping would split "10:30 am".
+ */
+@media (min-width: 40rem) and (max-width: 49.99rem) {
+    .fi-ta-row.hs-assessment-card > .fi-ta-cell {
+        white-space: normal;
+    }
+}
+
+@media (min-width: 40rem) and (max-width: 79.99rem) {
+    .fi-ta-row.hs-assessment-card .fi-ta-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.375rem;
+    }
+
+    .fi-ta-row.hs-assessment-card .fi-ta-actions .fi-link {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    /* Centred in the space beside the icon. Not balanced against the icon,
+       which would widen every button enough to overflow at 1080px. */
+    .fi-ta-row.hs-assessment-card .fi-ta-actions .fi-link .fi-link-label {
+        flex: 1;
+        text-align: center;
     }
 }
 
