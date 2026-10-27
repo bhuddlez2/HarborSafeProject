@@ -37,6 +37,9 @@ class User extends Authenticatable implements FilamentUser
     // uses it, so a password that could be set can always be typed back in.
     public const PASSWORD_MAX = 64;
 
+    // The shortest new password (Password::defaults() in AppServiceProvider).
+    public const PASSWORD_MIN = 15;
+
     public const EMAIL_MAX = 255;
 
     /*

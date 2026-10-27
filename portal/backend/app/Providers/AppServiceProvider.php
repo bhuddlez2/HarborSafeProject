@@ -6,6 +6,7 @@ use App\Filament\Forms\RequirementMarkers;
 use App\Models\LawEnforcementAssessment;
 use App\Models\User;
 use App\Policies\LawEnforcementAssessmentPolicy;
+use App\Rules\KeyboardCharactersOnly;
 use BladeUI\Icons\Factory as IconFactory;
 use Filament\Support\View\Components\ModalComponent;
 use Illuminate\Support\Facades\Gate;
@@ -51,9 +52,14 @@ class AppServiceProvider extends ServiceProvider
         // The one password rule. Filament's Account page asks for
         // Password::default() itself, and the account forms and
         // staff:create-super-admin use it too, so no password anywhere can be
-        // shorter, longer or weaker than this.
-        Password::defaults(fn (): Password => Password::min(15)
+        // shorter, longer or weaker than this. AccountFormSections::PASSWORD_HINT
+        // says it in words under every password box; change both together.
+        Password::defaults(fn (): Password => Password::min(User::PASSWORD_MIN)
             ->max(User::PASSWORD_MAX)
+            ->mixedCase()
+            ->numbers()
+            ->symbols()
+            ->rules([new KeyboardCharactersOnly])
             ->uncompromised());
     }
 }

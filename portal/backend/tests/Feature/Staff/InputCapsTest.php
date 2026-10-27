@@ -27,7 +27,7 @@ sign-in, so the sign-in cap can never lock anyone out.
 // The breach check calls api.pwnedpasswords.com; never in tests. BREACHED is
 // reported as found, every other password as safe. The first matching fake
 // wins, so the specific one goes first.
-const BREACHED_PASSWORD = 'correct horse battery staple';
+const BREACHED_PASSWORD = 'Correct-horse-battery-staple-1';
 
 beforeEach(function () {
     $hash = strtoupper(sha1(BREACHED_PASSWORD));

@@ -765,7 +765,7 @@ creating an officer; `police_admin` has no edit action on assessments.
   `UserPolicy`, because the future admin "Users" screen needs different rules for the
   same model. Create and
   edit write `users` and `law_enforcement_agents` in one `Portal` transaction, with role
-  and agency forced server-side; passwords are 15–64 characters and checked against
+  and agency forced server-side; passwords are 15–64 characters, with a capital, a lowercase letter, a number and a symbol, and checked against
   breached passwords (`Password::uncompromised()`). First and last name are separate
   fields, as on Accounts below.
 
@@ -971,7 +971,7 @@ Police Admin                                    police_admin - its ONLY group
 
 **The Account page changes only the password and the badge.** `EditProfile` (Filament's
 profile page) lets every role change their own password, under the same rule as account
-creation (`AccountFormSections::passwordRule()`: 15–64 characters, not in a known breach),
+creation (`AccountFormSections::passwordRule()`: 15–64 characters, a capital, a lowercase letter, a number and a symbol, not in a known breach),
 and active officers their own badge number. First name, last name and email are shown
 greyed out and never saved; the save is a whitelist (password, plus the officer's own
 `law_enforcement_agents.badge_number`), so a tampered request changes nothing else. Name

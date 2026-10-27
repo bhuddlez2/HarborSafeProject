@@ -25,7 +25,7 @@ afterEach(fn () => cleanupStaffData());
 // The password rule checks Have I Been Pwned; never call it from a test.
 beforeEach(fn () => Http::fake(['api.pwnedpasswords.com/*' => Http::response('')]));
 
-const ACCOUNT_FORM_PASSWORD = 'a-long-enough-test-passphrase';
+const ACCOUNT_FORM_PASSWORD = 'A-long-enough-test-passphrase-7';
 
 function accountFormData(array $overrides = []): array
 {

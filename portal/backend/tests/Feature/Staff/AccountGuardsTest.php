@@ -1,11 +1,13 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Filament\Forms\AccountFormSections;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use App\Filament\Resources\OfficerAccounts\Pages\CreateOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\EditOfficerAccount;
+use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\EditStaffAccount;
 use App\Filament\Resources\StaffAccounts\StaffAccountResource;
 use App\Models\LawEnforcementAgent;
@@ -33,10 +35,10 @@ accounts against every panel component in PanelAccessTest.
 
 afterEach(fn () => cleanupStaffData());
 
-const ACCOUNT_GUARD_PASSWORD = 'a-long-enough-test-passphrase';
+const ACCOUNT_GUARD_PASSWORD = 'A-long-enough-test-passphrase-7';
 
 // Treated as breached by the fake below; long enough for every other rule.
-const BREACHED_TEST_PASSWORD = 'a-breached-test-passphrase';
+const BREACHED_TEST_PASSWORD = 'A-breached-test-passphrase-9';
 
 // The password rule checks Have I Been Pwned; never call it from a test. The
 // fake lists BREACHED_TEST_PASSWORD's hash as seen in a breach, and nothing else.
@@ -178,15 +180,61 @@ test('a new password on the Account page follows the account-creation rule', fun
 
     expect(Hash::check('password', $user->fresh()->password))->toBeTrue();
 })->with([
-    '14 characters' => [str_repeat('k', 14)],
-    '65 characters' => [str_repeat('k', 65)],
+    // Each one breaks exactly one part of the rule.
+    '14 characters' => ['Fourteen-ch4rs'],
+    '65 characters' => ['A-1'.str_repeat('k', 62)],
+    'no capital letter' => ['no-capital-letter-7'],
+    'no lowercase letter' => ['NO-LOWERCASE-LETTER-7'],
+    'no number' => ['No-Number-Anywhere-Here'],
+    'no symbol' => ['NoSymbolAnywhereHere7'],
     'breached' => [BREACHED_TEST_PASSWORD],
+    // Off the keyboard: bcrypt would ignore the end of this one (40 é = 80
+    // bytes), and a null character used to be a server error.
+    'accented letters' => ['A-1'.str_repeat('é', 40)],
+    'an emoji' => ['A-long-enough-pass-7 🔒'],
+    'a null character' => ["A-long-enough-pass-7\0"],
+    'a tab' => ["A-long-enough-pass-7\t"],
 ]);
+
+test('every keyboard symbol and a space are allowed in a password', function () {
+    $user = staffUser(UserRole::Secretary);
+    $this->actingAs($user);
+    // All 32 symbols on a US keyboard, plus a space, a capital, a lowercase
+    // letter and a number - quotes, semicolons and angle brackets included,
+    // since a password is only ever hashed.
+    $password = 'Aa1 !"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~';
+
+    Livewire::test(EditProfile::class)
+        ->fillForm([
+            'password' => $password,
+            'passwordConfirmation' => $password,
+            'currentPassword' => 'password',
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(Hash::check($password, $user->fresh()->password))->toBeTrue();
+});
+
+test('every new-password box says what the rule is', function () {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    Livewire::test(EditProfile::class)->assertSee(AccountFormSections::PASSWORD_HINT);
+
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    Livewire::test(CreateStaffAccount::class)->assertSee(AccountFormSections::PASSWORD_HINT);
+
+    Livewire::test(EditStaffAccount::class, ['record' => staffUser(UserRole::Secretary)->getKey()])
+        ->assertSee('Leave blank to keep the current password. '.AccountFormSections::PASSWORD_HINT);
+
+    expect(AccountFormSections::PASSWORD_HINT)->toContain('15 to 64 characters', 'capital letter', 'lowercase letter', 'number', 'symbol', 'breaches');
+});
 
 test('a 15-character password is accepted on the Account page', function () {
     $user = staffUser(UserRole::Secretary);
     $this->actingAs($user);
-    $password = 'fifteen-chars-5';
+    $password = 'Fifteen-chars-5';
 
     Livewire::test(EditProfile::class)
         ->fillForm([

@@ -79,6 +79,7 @@ class EditProfile extends BaseEditProfile
             ->password()
             ->revealable(filament()->arePasswordsRevealable())
             ->rule(AccountFormSections::passwordRule())
+            ->helperText(AccountFormSections::PASSWORD_HINT)
             ->showAllValidationMessages()
             ->autocomplete('new-password')
             ->dehydrated(fn (#[SensitiveParameter] $state): bool => filled($state))
