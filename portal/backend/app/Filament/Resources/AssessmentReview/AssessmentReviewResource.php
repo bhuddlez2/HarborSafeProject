@@ -124,7 +124,8 @@ class AssessmentReviewResource extends Resource
             // See the class comment: Edit for police admins only; no delete
             // or bulk actions anywhere on this resource.
             ->recordActions([
-                ChangeHistory::action(),
+                // Views, downloads and edits together (team plan task 22).
+                ChangeHistory::action(withAccess: true),
                 // Shared with My Assessments; logs each open.
                 AssessmentViews::viewAction(),
                 // Shared with My Assessments; shown only where the policy

@@ -136,7 +136,7 @@ test('the civilian table calls the same column "Yes" too', function () {
         ->not->toContain('Yes answers');
 });
 
-test('the Change log button is purple on an edited record and gray on an unedited one', function (string $page, UserRole $viewerRole) {
+test('the history button is purple on an edited record and gray on an unedited one', function (string $page, UserRole $viewerRole, bool $untouchedOpens) {
     $agency = pestAgency('Columns PD');
     $officer = pestAgencyMember(UserRole::LawEnforcement, $agency);
     $edited = pestOfficerAssessment($officer, 'Edited');
@@ -147,14 +147,20 @@ test('the Change log button is purple on an edited record and gray on an unedite
     // The officer sees them on My Assessments, their police admin on review.
     $this->actingAs($viewerRole === UserRole::LawEnforcement ? $officer : pestAgencyMember($viewerRole, $agency));
 
-    Livewire::test($page)
+    $list = Livewire::test($page)
         ->assertActionEnabled(TestAction::make('changeLog')->table($edited))
         ->assertActionHasColor(TestAction::make('changeLog')->table($edited), 'primary')
-        ->assertActionDisabled(TestAction::make('changeLog')->table($untouched))
         ->assertActionHasColor(TestAction::make('changeLog')->table($untouched), 'gray');
+
+    // My Assessments' Change log is edits only, so it has nothing to show on an
+    // unedited record. Assessment review's Log also lists views (task 22), so
+    // it always opens.
+    $untouchedOpens
+        ? $list->assertActionEnabled(TestAction::make('changeLog')->table($untouched))
+        : $list->assertActionDisabled(TestAction::make('changeLog')->table($untouched));
 })->with([
-    'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
-    'Assessment review' => [ListAssessmentReview::class, UserRole::PoliceAdmin],
+    'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement, false],
+    'Assessment review' => [ListAssessmentReview::class, UserRole::PoliceAdmin, true],
 ]);
 
 // The Yes badge follows App\Support\HighRisk, the rule Analytics counts: red

@@ -645,6 +645,64 @@
     font-weight: 600;
 }
 
+/* The Log's views, downloads and submission: one compact line each (task 22). */
+.hs-cl-event {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #ede3f5;
+    border-radius: var(--radius-xl);
+    background-color: #fff;
+}
+
+.hs-cl-event-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    color: #5c0f8b;
+    background-color: #f5f0fb;
+}
+
+.hs-cl-event-icon svg {
+    width: 0.9375rem;
+    height: 0.9375rem;
+}
+
+.hs-cl-event-text {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.875rem;
+    color: #374151;
+    overflow-wrap: anywhere;
+}
+
+.hs-cl-event-label {
+    font-weight: 700;
+    color: #1b1726;
+}
+
+.hs-cl-event--download .hs-cl-event-icon {
+    color: #b45309;
+    background-color: #fffbeb;
+}
+
+.hs-cl-event--submitted {
+    background-color: #f5f0fb;
+    border-color: transparent;
+}
+
+.hs-cl-event--submitted .hs-cl-event-icon {
+    color: #fff;
+    background-color: #5c0f8b;
+}
+
 /*
  * Officer Edit pop-up (LawEnforcementAssessmentResource::form), styled like
  * the View pop-up: light-purple cards with purple uppercase titles, white
@@ -998,6 +1056,16 @@
 /* Mobile stacked record cards */
 .fi-ta-record {
     border-bottom-color: #ddd7e6;
+}
+
+/*
+ * Pop-up headings often carry a record's name ("Edit <event title>"), which
+ * staff can type as one long unbroken word up to the field's limit. Let it
+ * break instead of running off the pop-up, in every modal and slide-over.
+ */
+.fi-modal-heading,
+.fi-modal-description {
+    overflow-wrap: anywhere;
 }
 
 /*

@@ -11,7 +11,9 @@ use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 The officer portal Home (App\Filament\Pages\Police), team plan task 11: police
 admins get View Assessments and Personnel Management cards, under the Start
 New Lethality Assessment card when they may open the wizard (an agency, team
-plan task 7); the officer's Home is unchanged. And the sidebar identity block: name, badge and agency on
+plan task 7). Officers get a View Assessments card of their own, pointing at
+My Assessments; every card under Start shares one light purple design (team
+plan item 5). And the sidebar identity block: name, badge and agency on
 separate rows, with the badge for officers only.
 */
 
@@ -25,8 +27,8 @@ test('a police admin\'s Home offers Start New Lethality Assessment above View As
         ->assertSee(NewAssessment::getUrl(), escape: false)
         ->assertSee(AssessmentReviewResource::getUrl('index'), escape: false)
         ->assertSee(OfficerAccountResource::getUrl('index'), escape: false)
-        // The past-assessment pointer stays officer-only.
-        ->assertDontSee('Go to My Assessments');
+        // My Assessments stays officer-only; police admins review in Assessment review.
+        ->assertDontSee(LawEnforcementAssessmentResource::getUrl('index'), escape: false);
 });
 
 test('a police admin with no agency gets no Start card', function () {
@@ -37,13 +39,12 @@ test('a police admin with no agency gets no Start card', function () {
         ->assertDontSee(NewAssessment::getUrl(), escape: false);
 });
 
-test('an officer\'s Home is unchanged', function () {
+test('an officer\'s Home offers Start New Lethality Assessment above View Assessments', function () {
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Home PD')))
         ->get(Police::getUrl())
         ->assertOk()
-        ->assertSee('Start New Lethality Assessment')
+        ->assertSeeInOrder(['Start New Lethality Assessment', 'View Assessments'])
         ->assertSee(NewAssessment::getUrl(), escape: false)
-        ->assertSee('Go to My Assessments')
         ->assertSee(LawEnforcementAssessmentResource::getUrl('index'), escape: false)
         ->assertSee('Each view is logged with your name and a timestamp.')
         ->assertDontSee('Personnel Management');

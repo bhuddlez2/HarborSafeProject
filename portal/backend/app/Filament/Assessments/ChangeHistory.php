@@ -2,11 +2,13 @@
 
 namespace App\Filament\Assessments;
 
+use App\Models\AssessmentAccessLog;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use App\Models\LogEntry;
 use App\Support\Timezones;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Carbon;
@@ -24,40 +26,72 @@ not a document with its history interleaved, or one that looks like something
 was left out.
 
 Nothing here decides who may see a record - callers' queries are already
-scoped through LawEnforcementAssessment::visibleTo().
+scoped through LawEnforcementAssessment::visibleTo(). Who may see the VIEWS of
+a record is AssessmentAccessLog::visibleTo() (admins all, police admins their
+agency's, officers none), applied below - never a rule of its own.
 */
 final class ChangeHistory
 {
     public const VIEW = 'filament.infolists.change-history';
 
-    // The "Change log" row button: every edit since submission, newest first,
-    // in its own pop-up. Purple on an edited record, so edited ones stand out
-    // in the list; light gray and disabled on one never edited (the gray is
-    // theme.css's .fi-disabled rule - the theme would otherwise paint it
-    // purple like every row button). Needs ->withCount('edits') on the table
-    // query; place it before ViewAction.
-    public static function action(): Action
+    /*
+    The row button, before ViewAction. Needs ->withCount('edits') on the table
+    query.
+
+    Without $withAccess (My Assessments): "Change log" - every edit since
+    submission, newest first. Officers may not see who opened a record
+    (AssessmentAccessLog::visibleTo()), so their log stays edits only. Purple
+    on an edited record; light gray and disabled on one never edited (the
+    gray is theme.css's .fi-disabled rule).
+
+    With $withAccess (Assessment review, team plan task 22): "Log" - every
+    view, PDF download and edit since submission, interleaved newest first,
+    with the submission itself at the bottom. Always openable, since every
+    record has a history once anyone has opened it; still purple when edited.
+    The Change log page stays edits only (entry() below).
+    */
+    public static function action(bool $withAccess = false): Action
     {
         return Action::make('changeLog')
-            ->label('Change log')
+            ->label($withAccess ? 'Log' : 'Change log')
             ->icon(Heroicon::OutlinedClock)
             ->color(fn (LawEnforcementAssessment $record): string => $record->edits_count ? 'primary' : 'gray')
-            ->disabled(fn (LawEnforcementAssessment $record): bool => ! $record->edits_count)
-            ->tooltip(fn (LawEnforcementAssessment $record): string => $record->edits_count
-                ? 'Every edit since submission'
-                : 'No edits since submission')
-            ->modalHeading('Change log')
+            ->disabled(fn (LawEnforcementAssessment $record): bool => ! $withAccess && ! $record->edits_count)
+            ->tooltip(fn (LawEnforcementAssessment $record): string => match (true) {
+                $withAccess => 'Every view, download and edit since submission',
+                (bool) $record->edits_count => 'Every edit since submission',
+                default => 'No edits since submission',
+            })
+            ->modalHeading($withAccess ? 'Log' : 'Change log')
             // Old and new values are the record's contents, so opening this
             // is a view. mountUsing, not afterFormFilled: this pop-up has no
             // schema, and Filament only calls afterFormFilled when there is
             // one. Not in modalContent(), which re-runs on every render.
+            // Logged before the content is built, so the Log includes this
+            // opening too.
             ->mountUsing(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
-            ->modalContent(function (LawEnforcementAssessment $record) {
+            ->modalContent(function (LawEnforcementAssessment $record) use ($withAccess) {
                 $edits = $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all();
 
+                if (! $withAccess) {
+                    return view(self::VIEW, [
+                        'header' => self::header($record, count($edits)),
+                        'edits' => self::entries($edits),
+                    ]);
+                }
+
+                $access = AssessmentAccessLog::visibleTo(Filament::auth()->user())
+                    ->where('LawEnforcementDocumentID', $record->getKey())
+                    ->with('user')
+                    ->get();
+
                 return view(self::VIEW, [
-                    'header' => self::header($record, count($edits)),
-                    'edits' => self::entries($edits),
+                    'header' => [
+                        ...self::header($record, count($edits)),
+                        'title' => 'Log',
+                        'views' => $access->count(),
+                    ],
+                    'events' => self::timeline($record, $edits, $access->all()),
                 ]);
             })
             ->modalSubmitAction(false)
@@ -103,6 +137,57 @@ final class ChangeHistory
                 : '—',
             'edits' => $editCount,
         ];
+    }
+
+    /**
+     * Views, downloads and edits of one record, newest first, then the
+     * submission. Each item: kind ('edit' | 'view' | 'download' |
+     * 'submitted'), plus the edit's fields (entries()) or who and when.
+     *
+     * @param  list<AssessmentEdit>  $edits
+     * @param  list<AssessmentAccessLog>  $access
+     * @return list<array<string, mixed>>
+     */
+    private static function timeline(LawEnforcementAssessment $record, array $edits, array $access): array
+    {
+        $when = fn ($at): string => $at
+            ? Carbon::parse($at)->setTimezone(Timezones::DISPLAY)->format('M j, Y g:i a')
+            : '';
+
+        $events = [];
+
+        foreach ($edits as $edit) {
+            $events[] = ['kind' => 'edit', 'at' => $edit->EditedAt, ...self::entries([$edit])[0]];
+        }
+
+        foreach ($access as $row) {
+            $events[] = [
+                'kind' => $row->Action->value,
+                'at' => $row->AccessedAt,
+                'when' => $when($row->AccessedAt),
+                'who' => $row->user?->name ?? 'Unknown',
+                'label' => $row->Action->label(),
+            ];
+        }
+
+        // Newest first. Stable for equal times, so an edit keeps its place
+        // beside the view logged when its pop-up opened.
+        usort($events, fn (array $a, array $b): int => Carbon::parse($b['at'])->getTimestamp() <=> Carbon::parse($a['at'])->getTimestamp());
+
+        $record->loadMissing('submitter');
+
+        $events[] = [
+            'kind' => 'submitted',
+            'when' => $when($record->DateCreated),
+            'who' => $record->submitter?->name ?? 'Unknown',
+            'label' => 'Submitted',
+        ];
+
+        return array_map(function (array $event): array {
+            unset($event['at']);
+
+            return $event;
+        }, $events);
     }
 
     /**

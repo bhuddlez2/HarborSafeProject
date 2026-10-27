@@ -11,7 +11,11 @@
     on Tailwind compilation. The purple brand colour (#5C0F8B) matches the
     rest of the panel.
 --}}
-<div style="font-family: 'Nunito', sans-serif; max-width: 680px; margin: 0 auto;">
+{{-- overflow-wrap: anywhere (inherited by every line) breaks a long unbroken
+     word - a venue name typed to its 150-character limit, say - instead of
+     letting it run off the card. "anywhere" rather than "break-word" so the
+     flex rows (date, location) can shrink to fit too. --}}
+<div style="font-family: 'Nunito', sans-serif; max-width: 680px; margin: 0 auto; overflow-wrap: anywhere;">
 
     {{--
         Image section — three possible states:
@@ -27,7 +31,8 @@
         above it, so the corners always look right.
     --}}
     @if($imageUrl)
-    <img src="{{ $imageUrl }}" alt="{{ $title }}"
+    {{-- The Image description field, as the website uses it (PublicEventResource: alt ?? ""). --}}
+    <img src="{{ $imageUrl }}" alt="{{ $imageAlt ?? '' }}"
          style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px 12px 0 0; display: block;">
     @elseif($hasImage)
     <div style="height: 160px; background: #ede3f5; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: #5C0F8B; margin-bottom: 0;">
@@ -83,6 +88,18 @@
                     {{ $startsAt->format('F j, Y') }} &middot; {{ $startsAt->format('g:i A') }}{{ $endsAt ? ' – ' . $endsAt->format('g:i A') : '' }} ET
                 @endif
             </span>
+        </div>
+        @endif
+
+        {{-- Recurrence ("Annually in September"): free text, shown as typed,
+             under the date with a repeat icon - where the website's event
+             card puts it (EventsContent.js). --}}
+        @if(filled($recurrence ?? null))
+        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; color: #6b7280; font-size: 14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#5C0F8B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;">
+                <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+            </svg>
+            <span>{{ $recurrence }}</span>
         </div>
         @endif
 
