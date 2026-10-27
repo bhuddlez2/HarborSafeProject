@@ -18,10 +18,11 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /*
-The one filter setup for every law-enforcement assessment table: My Assessments
+The one filter setup for every assessment table: My Assessments
 (LawEnforcementAssessmentResource) and Assessment review
-(AssessmentReviewResource) both call apply() from their table(), so the two
-cannot drift apart. Any future assessment table must use it too.
+(AssessmentReviewResource) both call apply() from their table(), and Civilian
+assessments (CivilianAssessmentResource) calls civilian(), so the three cannot
+drift apart. Any future assessment table must use it too.
 
 Filters only ever narrow a screen's own query, which each resource already
 scopes with LawEnforcementAssessment::visibleTo(). The dropdown options are
@@ -61,6 +62,26 @@ final class AssessmentFilters
     }
 
     /*
+    Civilian assessments: the same card, with the filters both police tables
+    share (date submitted, victim and offender names; no officer or agency,
+    since the public submits these). $extra are the civilian screen's own
+    filters (its high-risk checkbox), on a row of their own after the names.
+    The resource already scopes the query with PrivateAssessment::visibleTo().
+    */
+    public static function civilian(Table $table, array $extra = []): Table
+    {
+        if ($extra !== []) {
+            $extra[0] = $extra[0]->columnStart(1);
+        }
+
+        return self::layout($table, [
+            self::dateRange('date_submitted', 'DateCreated', 'Submitted'),
+            ...self::nameFilters(),
+            ...$extra,
+        ]);
+    }
+
+    /*
     The helpers below are shared with ChangeLogFilters, so the Logs page's
     card behaves and reads like the assessment tables' rather than copying them.
     */
@@ -69,7 +90,7 @@ final class AssessmentFilters
     // until opened (so the top of the page stays uncluttered), three columns,
     // deferred until Apply, Reset beside it, kept in the session. Applied
     // filters still show as chips above the table while the card is closed.
-    // Shared by Assessment review, My Assessments and Logs.
+    // Shared by Assessment review, My Assessments, Civilian assessments and Logs.
     public static function layout(Table $table, array $filters): Table
     {
         return $table

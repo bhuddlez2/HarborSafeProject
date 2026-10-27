@@ -12,6 +12,7 @@ use App\Models\AssessmentAccessLog;
 use App\Models\PrivateAssessment;
 use App\Support\HighRisk;
 use App\Support\Timezones;
+use App\Filament\Tables\AssessmentFilters;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -113,7 +114,7 @@ class CivilianAssessmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AssessmentFilters::civilian($table
             ->columns([
                 TextColumn::make('DateCreated')
                     ->label('Submitted')
@@ -159,20 +160,6 @@ class CivilianAssessmentResource extends Resource
             // submitterInfo is deliberately not eager-loaded: nothing in the
             // table reads it, and the detail view loads one record anyway.
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('assessmentAnswers'))
-            ->filters([
-                Filter::make('high_risk')
-                    ->label('High risk ('.HighRisk::RULE.')')
-                    // Counted in SQL here rather than in PHP, because a filter
-                    // has to narrow the query itself, not the loaded page.
-                    ->query(fn (Builder $query): Builder => $query->whereHas(
-                        'assessmentAnswers',
-                        fn (Builder $inner): Builder => $inner->whereRaw(HighRisk::sql()),
-                    )),
-
-                Filter::make('named')
-                    ->label('Submitted with contact details')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('SubmissionID')),
-            ])
             // View only - no edit, no delete, no bulk actions. See the class
             // comment. Opening View and downloading the PDF both show the safe
             // phone number, so both are recorded (AssessmentAccessLog).
@@ -192,7 +179,19 @@ class CivilianAssessmentResource extends Resource
                     ]),
             ])
             ->emptyStateHeading('No civilian assessments yet')
-            ->emptyStateDescription('Assessments submitted through the public civilian flow appear here.');
+            ->emptyStateDescription('Assessments submitted through the public civilian flow appear here.'),
+            // The police tables' filter card (date submitted, victim and
+            // offender names), plus this screen's own high-risk checkbox.
+            [
+                Filter::make('high_risk')
+                    ->label('High risk ('.HighRisk::RULE.')')
+                    // Counted in SQL here rather than in PHP, because a filter
+                    // has to narrow the query itself, not the loaded page.
+                    ->query(fn (Builder $query): Builder => $query->whereHas(
+                        'assessmentAnswers',
+                        fn (Builder $inner): Builder => $inner->whereRaw(HighRisk::sql()),
+                    )),
+            ]);
     }
 
     public static function getPages(): array

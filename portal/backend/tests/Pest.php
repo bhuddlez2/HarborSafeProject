@@ -341,7 +341,9 @@ function cleanupAssessmentAccessLog(): void
 
 // Creates one civilian submission, the way the public flow does: answers
 // first, then the identity record pointing at it.
-function pestCivilianAssessment(array $yesIndicators = [1], ?App\Models\SubmitterInfo $submitter = null): App\Models\PrivateAssessment
+// $overrides replace the default fields; keep VictimFirstName starting with
+// STAFF_TEST_PREFIX, which is what cleanupCivilianAssessments() sweeps on.
+function pestCivilianAssessment(array $yesIndicators = [1], ?App\Models\SubmitterInfo $submitter = null, array $overrides = []): App\Models\PrivateAssessment
 {
     $answers = App\Models\AssessmentAnswers::create(collect(range(1, 11))
         ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => in_array($id, $yesIndicators, true)])
@@ -359,6 +361,7 @@ function pestCivilianAssessment(array $yesIndicators = [1], ?App\Models\Submitte
         'OffenderVictimRelationship' => 'spouse',
         'SubmissionID' => $submitter?->getKey(),
         'AssessmentDocID' => $answers->getKey(),
+        ...$overrides,
     ]);
 }
 

@@ -1093,6 +1093,11 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
   agency dropdowns take their options from the database, limited to rows `visibleTo()`
   returns (§5 rule 5). The table's search box still searches victim and offender names
   too. Enforced by `tests/Feature/Staff/AssessmentFiltersTest.php`.
+- **Civilian assessments** uses the same card through `AssessmentFilters::civilian($table, $extra)`
+  (2026-10-26, Finishing Touches item 13): date submitted and the four name filters — no
+  officer or agency, since the public submits these — then the screen's own High risk
+  checkbox on a row of its own (its old Submitted with contact details filter was dropped).
+  `CivilianAssessmentFiltersTest`.
 
 ### Logs filters
 
