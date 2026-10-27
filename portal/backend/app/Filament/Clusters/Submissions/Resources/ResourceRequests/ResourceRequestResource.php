@@ -12,6 +12,7 @@ use App\Models\ResourceRequestForm;
 use App\Support\RecordPdf;
 use App\Support\Timezones;
 use App\Filament\Tables\EncryptedColumnSearch;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -28,6 +29,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 /*
 Resource requests submitted through the public website's form.
@@ -106,44 +108,37 @@ class ResourceRequestResource extends Resource
             ]);
     }
 
-    private static function sourceLabel(?string $source): string
-    {
-        return $source === ResourceRequestForm::SOURCE_STAFF ? 'Staff' : 'Online';
-    }
-
     public static function table(Table $table): Table
     {
-        return $table
+        // Four columns, and a card on a phone (RecordCards): name and email
+        // on top, county and resources, then the date. Where a form came from
+        // is a small "Staff" tag under the date, shown only on forms staff
+        // entered; website forms show nothing.
+        return RecordCards::apply($table)
             ->columns([
-                TextColumn::make('SubmissionDate')
+                RecordCards::meta(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
+                    ->description(fn (ResourceRequestForm $record): ?HtmlString => $record->Source === ResourceRequestForm::SOURCE_STAFF
+                        ? RecordCards::staffTag()
+                        : null)
+                    ->sortable()),
 
-                TableAlignment::symbol(TextColumn::make('Source')
-                    ->label('Source')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
-                    ->color(fn (?string $state): string => $state === ResourceRequestForm::SOURCE_STAFF ? 'info' : 'gray')),
-
-                TextColumn::make('FirstName')
+                // The email in grey under the name. The search box finds
+                // either.
+                RecordCards::title(TextColumn::make('FirstName')
                     ->label('Name')
-                    ->searchable(query: EncryptedColumnSearch::query(ResourceRequestForm::class, ['FirstName', 'LastName']))
+                    ->searchable(query: EncryptedColumnSearch::query(ResourceRequestForm::class, ['FirstName', 'LastName', 'EmailAddress']))
                     ->formatStateUsing(fn (?string $state, ResourceRequestForm $record): string => trim(
                         ($state ?? '').' '.($record->LastName ?? ''),
-                    ) ?: '-'),
+                    ) ?: '-')
+                    ->description(fn (ResourceRequestForm $record): ?HtmlString => RecordCards::email($record->EmailAddress))),
 
                 TextColumn::make('county.Name')
                     ->label('County')
                     ->placeholder('-')
                     ->sortable(),
-
-                TextColumn::make('EmailAddress')
-                    ->label('Email')
-                    ->placeholder('-')
-                    ->searchable(query: EncryptedColumnSearch::query(ResourceRequestForm::class, ['EmailAddress']))
-                    ->copyable(),
 
                 // SafePhoneNumber is deliberately absent - see the class
                 // comment. It lives in the detail view only.

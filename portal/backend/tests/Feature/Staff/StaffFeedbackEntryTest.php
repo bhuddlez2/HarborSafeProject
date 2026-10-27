@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
+use App\Filament\Tables\RecordCards;
 use App\Models\FeedbackScan;
 use App\Models\ServiceFeedback;
 use App\Support\Timezones;
@@ -84,10 +85,10 @@ test('admins and secretaries can fill in a feedback form, marked as staff', func
         ->and($feedback->ScanFileID)->toBeNull();
 
     // Shown back in Eastern with a time stamp, like online feedback, and a
-    // Staff badge.
+    // Staff tag under it.
     Livewire::test(ListServiceFeedback::class)
         ->assertCanSeeTableRecords([$feedback])
-        ->assertTableColumnFormattedStateSet('Source', 'Staff', $feedback)
+        ->assertTableColumnHasDescription('SubmissionDate', RecordCards::staffTag(), $feedback)
         ->assertTableColumnFormattedStateSet('SubmissionDate', 'Sep 15, 2026 2:30 pm', $feedback);
 })->with([UserRole::Admin, UserRole::Secretary]);
 

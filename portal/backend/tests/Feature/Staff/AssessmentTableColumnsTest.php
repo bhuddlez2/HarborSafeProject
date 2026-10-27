@@ -4,7 +4,7 @@ use App\Enums\UserRole;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
-use App\Filament\Tables\AssessmentColumns;
+use App\Filament\Tables\RecordCards;
 use App\Services\AssessmentEditor;
 use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
@@ -81,7 +81,7 @@ test('every assessment table is a card on a phone', function (string $page, User
         ? pestCivilianAssessment()
         : pestOfficerAssessment(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Columns PD')), 'Card');
 
-    expect($table->getRecordClasses($record))->toContain(AssessmentColumns::CARD_CLASS);
+    expect($table->getRecordClasses($record))->toContain(RecordCards::ROW);
 })->with([
     'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
     'Assessment review' => [ListAssessmentReview::class, UserRole::PoliceAdmin],

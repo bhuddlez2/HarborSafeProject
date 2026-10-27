@@ -14,6 +14,7 @@ use App\Models\ServiceFeedback;
 use App\Support\RecordPdf;
 use App\Support\Timezones;
 use App\Filament\Tables\AssessmentFilters;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -36,6 +37,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 /*
 Service feedback: submitted through the public website's form, or filled in by
@@ -184,33 +186,29 @@ class ServiceFeedbackResource extends Resource
             ]);
     }
 
-    private static function sourceLabel(?string $source): string
-    {
-        return $source === ServiceFeedback::SOURCE_STAFF ? 'Staff' : 'Online';
-    }
-
     public static function table(Table $table): Table
     {
-        return $table
+        // Four columns, and a card on a phone (RecordCards): service and
+        // rating on top, the comment, then the date. Where a form came from is
+        // a small "Staff" tag under the date, shown only on forms staff
+        // entered themselves; website forms show nothing.
+        return RecordCards::apply($table)
             ->columns([
-                TextColumn::make('SubmissionDate')
+                RecordCards::meta(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
+                    ->description(fn (ServiceFeedback $record): ?HtmlString => $record->Source === ServiceFeedback::SOURCE_STAFF
+                        ? RecordCards::staffTag()
+                        : null)
+                    ->sortable()),
 
-                TableAlignment::symbol(TextColumn::make('Source')
-                    ->label('Source')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
-                    ->color(fn (?string $state): string => $state === ServiceFeedback::SOURCE_STAFF ? 'info' : 'gray')),
-
-                TextColumn::make('service.Name')
+                RecordCards::title(TextColumn::make('service.Name')
                     ->label('Service')
                     ->placeholder('-')
-                    ->sortable(),
+                    ->sortable()),
 
-                TableAlignment::symbol(TextColumn::make('Rating')
+                RecordCards::corner(TableAlignment::symbol(TextColumn::make('Rating')
                     ->label('Rating')
                     ->badge()
                     ->color(fn (?int $state): string => match (true) {
@@ -220,16 +218,16 @@ class ServiceFeedbackResource extends Resource
                         default => 'danger',
                     })
                     ->formatStateUsing(fn (?int $state): string => $state === null ? '-' : $state.'/5')
-                    ->sortable()),
+                    ->sortable())),
 
-                TextColumn::make('Comment')
+                RecordCards::body(TextColumn::make('Comment')
                     ->label('Comment')
                     ->placeholder('-')
                     ->limit(60)
                     // The cell truncates, so make the full text reachable
                     // without opening the record.
                     ->tooltip(fn (ServiceFeedback $record): ?string => $record->Comment)
-                    ->searchable(),
+                    ->searchable()),
             ])
             ->defaultSort('SubmissionDate', 'desc')
             // Date submitted and service are what a grant report is cut by

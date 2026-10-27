@@ -30,10 +30,9 @@ offender. There is no Status (Amended) column: the Change log button already
 shows it, purple when the record has been edited and gray when it hasn't.
 The row buttons are each resource's recordActions(), after these.
 
-cards() turns each row into a card on a phone (theme.css, "Assessment
-cards"): victim and Yes badge on top, then offender and submitted, then the
-buttons. The card layout places cells by their column names, so renaming a
-column here needs the same change there.
+cards() turns each row into a card on a phone and stacks the buttons on
+narrower screens (RecordCards): victim and Yes badge on top, then offender,
+then submitted, then the buttons.
 
 The law-enforcement tables' queries must eager-load assessmentAnswers and
 submitter and ->withCount('edits') (the Change log button reads
@@ -41,9 +40,6 @@ edits_count); the civilian one assessmentAnswers.
 */
 final class AssessmentColumns
 {
-    // On each row (<tr>), so theme.css can lay it out as a card on a phone.
-    public const CARD_CLASS = 'hs-assessment-card';
-
     /** The law-enforcement tables. @return list<TextColumn> */
     public static function for(bool $reviewScreen): array
     {
@@ -56,13 +52,9 @@ final class AssessmentColumns
         return self::columns(PrivateAssessment::class, withOfficer: false);
     }
 
-    // Filament's stacked layout below its sm breakpoint (40rem), which
-    // theme.css then arranges as a card.
     public static function cards(Table $table): Table
     {
-        return $table
-            ->stackedOnMobile()
-            ->recordClasses(self::CARD_CLASS);
+        return RecordCards::apply($table);
     }
 
     public static function yesCount(LawEnforcementAssessment|PrivateAssessment $record): int
@@ -88,7 +80,7 @@ final class AssessmentColumns
             ($record->{$first} ?? '').' '.($state ?? ''),
         ) ?: '-';
 
-        $submitted = TextColumn::make('DateCreated')
+        $submitted = RecordCards::meta(TextColumn::make('DateCreated'))
             ->label('Submitted')
             ->dateTime('M j, Y g:i a')
             ->timezone(Timezones::DISPLAY)
@@ -101,10 +93,10 @@ final class AssessmentColumns
         return [
             $submitted,
 
-            TextColumn::make('VictimLastName')
+            RecordCards::title(TextColumn::make('VictimLastName')
                 ->label('Victim')
                 ->formatStateUsing($fullName('VictimFirstName'))
-                ->searchable(query: EncryptedColumnSearch::query($model, ['VictimFirstName', 'VictimLastName'])),
+                ->searchable(query: EncryptedColumnSearch::query($model, ['VictimFirstName', 'VictimLastName']))),
 
             TextColumn::make('OffenderLastName')
                 ->label('Offender')
@@ -119,7 +111,7 @@ final class AssessmentColumns
             // high risk (HighRisk, the rule Analytics counts), amber for any
             // other yes. Counted in PHP rather than SQL so the column list
             // stays readable; the relation is eager-loaded by each table's query.
-            TableAlignment::symbol(TextColumn::make('risk_count')
+            RecordCards::corner(TableAlignment::symbol(TextColumn::make('risk_count')
                 ->label('Yes')
                 ->badge()
                 ->state(fn ($record): string => self::yesCount($record).' of 11')
@@ -127,7 +119,7 @@ final class AssessmentColumns
                     HighRisk::of($record->assessmentAnswers) => 'danger',
                     self::yesCount($record) >= 1 => 'warning',
                     default => 'gray',
-                })),
+                }))),
         ];
     }
 }

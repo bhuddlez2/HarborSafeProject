@@ -1015,23 +1015,23 @@
 }
 
 /*
- * Assessment cards: on a phone, each row of My Assessments, Assessment review
- * and Civilian assessments is a card (App\Filament\Tables\AssessmentColumns,
- * Finishing Touches item 9):
+ * Record cards (App\Filament\Tables\RecordCards, Finishing Touches item 9):
+ * the assessment tables, Service feedback, Resource requests and Follow-ups.
+ * On a phone each row is a card:
  *
- *   Victim name                [5 of 11]
- *   OFFENDER   Offender name
- *              Relationship
- *   SUBMITTED  Oct 27, 2026 3:14 pm
- *              by Officer name            (Assessment review only)
- *   [Change log] [View] [Edit]
+ *   [ ] Title                     [corner]     (checkbox only with bulk delete)
+ *   Body text, full width
+ *   LABEL      value
+ *              grey line under it
+ *   SUBMITTED  date                            (meta: after the other lines)
+ *   [Button] [Button]
  *
- * Built on Filament's stacked layout, so cells are placed by their
- * fi-ta-cell-{column} class: renaming a column in AssessmentColumns needs the
- * same change here.
+ * Built on Filament's stacked layout. Each column's role is a cell class
+ * (hs-card-title, -corner, -body, -meta; none is a labelled line), so a new
+ * table needs no CSS of its own.
  */
 @media (max-width: 39.99rem) {
-    .fi-ta-table-stacked-on-mobile > tbody:has(> tr.hs-assessment-card) {
+    .fi-ta-table-stacked-on-mobile > tbody:has(> tr.hs-card) {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
@@ -1039,14 +1039,9 @@
         background-color: #f7f5fa;
     }
 
-    .fi-ta-table-stacked-on-mobile > tbody > tr.hs-assessment-card {
+    .fi-ta-table-stacked-on-mobile > tbody > tr.hs-card {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas:
-            "victim yes"
-            "offender offender"
-            "submitted submitted"
-            "actions actions";
         column-gap: 0.75rem;
         row-gap: 0.5rem;
         padding: 0.875rem 1rem;
@@ -1056,53 +1051,99 @@
         box-shadow: 0 1px 2px rgb(45 22 64 / 0.06);
     }
 
-    .hs-assessment-card > .fi-ta-cell,
-    .fi-ta-row.hs-assessment-card:hover > td {
+    /* A bulk-select checkbox takes its own narrow column, top left. */
+    .fi-ta-table-stacked-on-mobile > tbody > tr.hs-card:has(> .fi-ta-selection-cell) {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .hs-card > .fi-ta-cell,
+    .fi-ta-row.hs-card:hover > td {
         padding: 0;
         background-color: transparent;
     }
 
-    .hs-assessment-card > .fi-ta-cell-victim-last-name {
-        grid-area: victim;
+    /* Every line spans the card, in table order; dates, then buttons, last. */
+    .hs-card > .fi-ta-cell {
+        grid-column: 1 / -1;
+    }
+
+    .hs-card > .hs-card-meta {
+        order: 1;
+    }
+
+    .hs-card > .fi-ta-cell:has(> .fi-ta-actions) {
+        order: 2;
+        margin-top: 0.25rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #ece7f2;
+    }
+
+    /* The top row: checkbox, title, corner. */
+    /* width: Filament sizes this cell for a table column (w-1), which let the
+       checkbox spill over the title. */
+    .hs-card > .fi-ta-selection-cell {
+        position: static;
+        display: flex;
+        width: auto;
+        grid-row: 1;
+        grid-column: 1 / 2;
         align-self: center;
     }
 
-    .hs-assessment-card > .fi-ta-cell-victim-last-name .fi-ta-cell-content {
+    /* Badge lists (Resource requests' "Interested in") wrap onto more lines
+       rather than being cut off at the card's edge. */
+    /* The list itself, or the list inside it on a "Show N more" row. */
+    .hs-card .fi-ta-text-has-badges,
+    .hs-card .fi-ta-text-has-badges ul {
+        flex-wrap: wrap;
+        row-gap: 0.375rem;
+    }
+
+    .hs-card > .hs-card-title {
+        grid-row: 1;
+        grid-column: -3 / -2;
+        align-self: center;
+    }
+
+    .hs-card > .hs-card-title .fi-ta-cell-content {
         font-size: 1rem;
         font-weight: 700;
     }
 
-    .hs-assessment-card > .fi-ta-cell-risk-count {
-        grid-area: yes;
+    /* A grey line under the title (an email) stays plain. */
+    .hs-card > .hs-card-title .fi-ta-text-description {
+        font-weight: 400;
+    }
+
+    .hs-card > .hs-card-corner {
+        grid-row: 1;
+        grid-column: -2 / -1;
         align-self: center;
         justify-self: end;
     }
 
-    /* The name and the badge speak for themselves at the top of a card. */
-    .hs-assessment-card > .fi-ta-cell-victim-last-name > .fi-ta-cell-label,
-    .hs-assessment-card > .fi-ta-cell-risk-count > .fi-ta-cell-label {
+    /* Plain text in the corner (a form type) reads as a small grey note. */
+    .hs-card > .hs-card-corner:not(:has(.fi-badge)) :is(.fi-ta-cell-content, .fi-ta-text, .fi-ta-text-item) {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    /* The title, corner and body speak for themselves: no label. */
+    .hs-card > .hs-card-title > .fi-ta-cell-label,
+    .hs-card > .hs-card-corner > .fi-ta-cell-label,
+    .hs-card > .hs-card-body > .fi-ta-cell-label {
         display: none;
     }
 
-    .hs-assessment-card > .fi-ta-cell-offender-last-name {
-        grid-area: offender;
-    }
-
-    .hs-assessment-card > .fi-ta-cell-date-created {
-        grid-area: submitted;
-    }
-
-    /* Offender and Submitted: a small label on the left, the value beside it. */
-    .hs-assessment-card > .fi-ta-cell-offender-last-name,
-    .hs-assessment-card > .fi-ta-cell-date-created {
+    /* Every other line: a small label on the left, the value beside it. */
+    .hs-card > .fi-ta-cell:not(.hs-card-title, .hs-card-corner, .hs-card-body, .fi-ta-selection-cell):not(:has(> .fi-ta-actions)) {
         display: grid;
-        grid-template-columns: 5.5rem minmax(0, 1fr);
+        grid-template-columns: 6.75rem minmax(0, 1fr);
         column-gap: 0.5rem;
         align-items: baseline;
     }
 
-    .hs-assessment-card > .fi-ta-cell-offender-last-name > .fi-ta-cell-label,
-    .hs-assessment-card > .fi-ta-cell-date-created > .fi-ta-cell-label {
+    .hs-card > .fi-ta-cell > .fi-ta-cell-label {
         padding-top: 0;
         font-size: 0.6875rem;
         font-weight: 700;
@@ -1111,42 +1152,63 @@
         text-transform: uppercase;
         color: #6b7280;
     }
-
-    .hs-assessment-card > .fi-ta-cell:has(> .fi-ta-actions) {
-        grid-area: actions;
-        margin-top: 0.25rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid #ece7f2;
-    }
 }
 
 /*
  * Between a phone and a full-width monitor (40rem-80rem: a monitor turned on
- * its side, a small laptop, a tablet) the assessment tables are still tables
- * but too narrow for Change log, View and Edit side by side, so the last
- * buttons ran off the edge. There they stack in one compact column, icon
- * at the left so the icons line up down the column, label centred beside it.
- * Above 80rem they sit in a row as before.
- */
-/*
- * Below 50rem even stacked buttons don't fit beside one-line cells, so dates
- * and names may wrap there too (Filament keeps table cells on one line). Not
- * above it, where everything fits and wrapping would split "10:30 am".
+ * its side, a small laptop, a tablet) these tables are still tables but too
+ * narrow for their buttons side by side, so the last ones ran off the edge.
+ * There they stack in one compact column, icon at the left so the icons line
+ * up down the column, label centred beside it. Above 80rem they sit in a row.
+ *
+ * Text may wrap there too (Filament keeps table cells on one line), or a
+ * comment, a list of badges or a long name pushes the buttons off the edge.
+ * Dates (meta) stay on one line down to 50rem, so "10:30 am" isn't split
+ * where there is room; below it they wrap as well.
  */
 @media (min-width: 40rem) and (max-width: 49.99rem) {
-    .fi-ta-row.hs-assessment-card > .fi-ta-cell {
+    .fi-ta-row.hs-card > .fi-ta-cell.hs-card-meta,
+    .fi-ta-table:has(> tbody > tr.hs-card) > thead .fi-ta-header-cell {
         white-space: normal;
     }
 }
 
+/* At every table width, not only in between: a long comment or name pushed
+   the buttons off even a full-width monitor. A table only wraps a cell when
+   it would otherwise overflow, so short rows are unchanged. */
+@media (min-width: 40rem) {
+    .fi-ta-row.hs-card > .fi-ta-cell:not(.hs-card-meta) {
+        white-space: normal;
+    }
+
+    .fi-ta-row.hs-card .fi-ta-text-has-badges,
+    .fi-ta-row.hs-card .fi-ta-text-has-badges ul {
+        flex-wrap: wrap;
+        row-gap: 0.375rem;
+    }
+}
+
+/* A long email address (Resource requests) breaks only when it can't fit:
+   anywhere on a phone card, which is narrow; on a table only when the
+   column itself is too narrow, so "name@example.test" stays whole there. */
+.fi-ta-row.hs-card .fi-ta-text-description {
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 39.99rem) {
+    .fi-ta-row.hs-card .fi-ta-text-description {
+        overflow-wrap: anywhere;
+    }
+}
+
 @media (min-width: 40rem) and (max-width: 79.99rem) {
-    .fi-ta-row.hs-assessment-card .fi-ta-actions {
+    .fi-ta-row.hs-card .fi-ta-actions {
         flex-direction: column;
         align-items: stretch;
         gap: 0.375rem;
     }
 
-    .fi-ta-row.hs-assessment-card .fi-ta-actions .fi-link {
+    .fi-ta-row.hs-card .fi-ta-actions .fi-link {
         display: flex;
         align-items: center;
         justify-content: flex-start;
@@ -1158,10 +1220,27 @@
 
     /* Centred in the space beside the icon. Not balanced against the icon,
        which would widen every button enough to overflow at 1080px. */
-    .fi-ta-row.hs-assessment-card .fi-ta-actions .fi-link .fi-link-label {
+    .fi-ta-row.hs-card .fi-ta-actions .fi-link .fi-link-label {
         flex: 1;
         text-align: center;
     }
+}
+
+/*
+ * "Staff" under the date of a form staff entered themselves (Service
+ * feedback, Resource requests: RecordCards::staffTag()). Website forms show
+ * nothing there. Blue, like Filament's info badge it replaced.
+ */
+.hs-staff-tag {
+    display: inline-block;
+    padding: 0 0.375rem;
+    border-radius: 0.375rem;
+    background-color: #eff6ff;
+    box-shadow: inset 0 0 0 1px #bfdbfe;
+    color: #1d4ed8;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.125rem;
 }
 
 /*

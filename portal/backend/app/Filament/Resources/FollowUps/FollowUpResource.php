@@ -8,6 +8,7 @@ use App\Filament\FollowUps\FollowUpLog;
 use App\Filament\Resources\FollowUps\Pages\ListFollowUps;
 use App\Filament\Resources\FollowUps\Pages\ViewFollowUp;
 use App\Filament\Tables\AssessmentFilters;
+use App\Filament\Tables\RecordCards;
 use App\Models\FollowUp;
 use App\Support\Timezones;
 use BackedEnum;
@@ -88,32 +89,34 @@ class FollowUpResource extends Resource
     {
         $seesSeveralKinds = fn (): bool => count(FollowUp::kindsFor(Filament::auth()->user())) > 1;
 
-        return $table
+        // A card on a phone, and stacked buttons on narrower screens
+        // (RecordCards): name and type on top, then the two dates.
+        return RecordCards::apply($table)
             ->columns([
                 // The requester for a resource request, the victim for an
                 // assessment. Read from the form itself, never copied.
-                TextColumn::make('name')
+                RecordCards::title(TextColumn::make('name')
                     ->label('Name')
-                    ->state(fn (FollowUp $record): string => $record->formName() ?? '-'),
+                    ->state(fn (FollowUp $record): string => $record->formName() ?? '-')),
 
-                TextColumn::make('Kind')
+                RecordCards::corner(TextColumn::make('Kind')
                     ->label('Type')
                     ->formatStateUsing(fn (FollowUpKind $state): string => $state->label())
-                    ->visible($seesSeveralKinds),
+                    ->visible($seesSeveralKinds)),
 
-                TextColumn::make('SubmittedAt')
+                RecordCards::meta(TextColumn::make('SubmittedAt')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
+                    ->sortable()),
 
-                TextColumn::make('LastUpdatedAt')
+                RecordCards::meta(TextColumn::make('LastUpdatedAt')
                     ->label('Last updated')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
                     ->description(fn (FollowUp $record): ?string => $record->lastUpdatedBy?->name)
                     ->placeholder('Not yet')
-                    ->sortable(),
+                    ->sortable()),
             ])
             ->defaultSort('SubmittedAt', 'asc')
             ->filters([
