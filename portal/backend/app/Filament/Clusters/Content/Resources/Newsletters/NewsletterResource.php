@@ -7,6 +7,10 @@ use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\Newsletters\Pages\ManageNewsletters;
 use App\Filament\Forms\Components\DatabaseFileUpload;
+use App\Filament\Forms\DateWindow;
+use App\Support\Timezones;
+use Closure;
+use Illuminate\Support\Carbon;
 use App\Models\Newsletter;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
@@ -52,6 +56,19 @@ class NewsletterResource extends Resource
 {
     use AllowsOnlyListedActions;
 
+    // The issue date's range: 2000 to a month ahead, so an issue can be put
+    // up a little before its date.
+    public const EARLIEST_ISSUE = '2000-01-01';
+
+    private const TOO_EARLY = "Can't be before 2000.";
+
+    private const TOO_LATE = "Can't be more than a month from now.";
+
+    public static function latestIssueDay(): string
+    {
+        return now(Timezones::DISPLAY)->addMonthNoOverflow()->toDateString();
+    }
+
     protected static ?string $model = Newsletter::class;
 
     protected static ?string $cluster = ContentCluster::class;
@@ -96,6 +113,24 @@ class NewsletterResource extends Resource
                             DatePicker::make('issue_date')
                                 ->label('Issue date')
                                 ->required()
+                                // From 2000 to a month ahead (DateWindow). The
+                                // calendar limits apply to a new newsletter; an
+                                // existing one keeps its saved date and only a
+                                // changed date is checked.
+                                ->minDate(fn (?Newsletter $record): ?string => $record ? null : self::EARLIEST_ISSUE)
+                                ->maxDate(fn (?Newsletter $record): ?string => $record ? null : self::latestIssueDay())
+                                ->rule(fn (?Newsletter $record): Closure => DateWindow::rule(
+                                    fn (): string => self::EARLIEST_ISSUE,
+                                    self::latestIssueDay(...),
+                                    self::TOO_EARLY,
+                                    self::TOO_LATE,
+                                    fn (Carbon $picked): bool => $record?->issue_date !== null
+                                        && $picked->toDateString() === $record->issue_date->toDateString(),
+                                ))
+                                ->validationMessages([
+                                    'after_or_equal' => self::TOO_EARLY,
+                                    'before_or_equal' => self::TOO_LATE,
+                                ])
                                 ->helperText('Used to order the list, newest first.'),
 
                             Textarea::make('summary')

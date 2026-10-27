@@ -111,7 +111,7 @@
             <div class="flex flex-col gap-1">
                 <label for="analytics-from" class="text-sm font-semibold text-gray-700">From<sup class="fi-fo-field-label-required-mark font-medium text-danger-600">*</sup></label>
                 <x-filament::input.wrapper :valid="! $errors->has('customFrom')">
-                    <x-filament::input type="date" id="analytics-from" wire:model="customFrom" required />
+                    <x-filament::input type="date" id="analytics-from" wire:model="customFrom" :max="\App\Support\Timezones::today()" required />
                 </x-filament::input.wrapper>
                 @error('customFrom')
                     <p class="text-sm text-danger-600">{{ $message }}</p>
@@ -120,7 +120,7 @@
             <div class="flex flex-col gap-1">
                 <label for="analytics-to" class="text-sm font-semibold text-gray-700">To<sup class="fi-fo-field-label-required-mark font-medium text-danger-600">*</sup></label>
                 <x-filament::input.wrapper :valid="! $errors->has('customTo')">
-                    <x-filament::input type="date" id="analytics-to" wire:model="customTo" required />
+                    <x-filament::input type="date" id="analytics-to" wire:model="customTo" :max="\App\Support\Timezones::today()" required />
                 </x-filament::input.wrapper>
                 @error('customTo')
                     <p class="text-sm text-danger-600">{{ $message }}</p>

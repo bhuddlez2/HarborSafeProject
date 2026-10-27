@@ -9,6 +9,7 @@ use App\Support\Timezones;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\FiltersResetActionPosition;
 use Filament\Tables\Filters\Filter;
@@ -109,9 +110,20 @@ final class AssessmentFilters
     public static function dateRange(string $name, string $column, string $verb): Filter
     {
         return Filter::make($name)
+            // The calendars offer no future day, and "until" nothing before
+            // "from" (nor "from" anything after "until"). Filters only narrow
+            // the list, so nothing is refused on Apply; the calendar simply
+            // can't pick a day outside the range.
             ->schema([
-                DatePicker::make('from')->label($verb.' from'),
-                DatePicker::make('until')->label($verb.' until'),
+                DatePicker::make('from')
+                    ->label($verb.' from')
+                    ->maxDate(fn (Get $get): string => filled($get('until')) ? min($get('until'), Timezones::today()) : Timezones::today())
+                    ->live(),
+                DatePicker::make('until')
+                    ->label($verb.' until')
+                    ->minDate(fn (Get $get): ?string => $get('from'))
+                    ->maxDate(fn (): string => Timezones::today())
+                    ->live(),
             ])
             ->columns(2)
             ->columnSpan(2)

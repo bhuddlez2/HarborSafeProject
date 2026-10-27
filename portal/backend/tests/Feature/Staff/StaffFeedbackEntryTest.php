@@ -23,6 +23,10 @@ beside the feedback and opened only by admins and secretaries; online
 feedback still has no edit; resource requests still have no create action.
 */
 
+// The dates typed below must sit inside the form's range (up to two years
+// back) whenever the suite runs, so "now" is fixed.
+beforeEach(fn () => $this->travelTo(Carbon::parse('2026-10-26 12:00', 'America/New_York')));
+
 afterEach(function () {
     cleanupPublicFormData();
     cleanupStaffData();

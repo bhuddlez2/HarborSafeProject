@@ -145,7 +145,16 @@ class ServiceFeedbackResource extends Resource
                     ->seconds(false)
                     ->timezone(Timezones::DISPLAY)
                     ->default(fn () => now())
-                    ->maxDate(fn () => now())
+                    // Up to two years back, from the start of that Eastern
+                    // day; never in the future. Written as Eastern clock time,
+                    // because Filament compares the limits with the value as
+                    // typed (a UTC now() let in times 4-5 hours ahead).
+                    ->minDate(fn (): string => now(Timezones::DISPLAY)->subYearsNoOverflow(2)->startOfDay()->toDateTimeString())
+                    ->maxDate(fn (): string => now(Timezones::DISPLAY)->toDateTimeString())
+                    ->validationMessages([
+                        'after_or_equal' => "Can't be more than 2 years ago.",
+                        'before_or_equal' => "Can't be in the future.",
+                    ])
                     ->helperText('When the form was filled in. Defaults to now.')
                     ->required(),
 

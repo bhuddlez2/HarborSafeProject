@@ -27,7 +27,7 @@ import Modal from "../components/Modal";
 import { OPTIONAL_PLACEHOLDER } from "../components/FormControls";
 import { lethalityQuestions } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
-import { isValidEmail, isValidPhone, isNotFutureDate, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
+import { isValidEmail, isValidPhone, dateOfBirthBounds, dateOfBirthError, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
 
 // pt-22.5 on the layout already clears the fixed navbar (5.625rem), so the grey
 // backdrop fills the rest of the viewport.
@@ -207,9 +207,11 @@ export default function AssessmentContent() {
   // feedback before Submit. The API applies the same rules again.
   const emailError = email.trim() && !isValidEmail(email.trim()) ? "Enter a valid email address." : null;
   const phoneError = phone.trim() && !isValidPhone(phone.trim()) ? PHONE_ERROR : null;
-  const victimDobError = !isNotFutureDate(victimDob) ? "Date of birth can't be in the future." : null;
+  const victimDobError = dateOfBirthError(victimDob);
   const victimPhoneError = victimPhone.trim() && !isValidPhone(victimPhone.trim()) ? PHONE_ERROR : null;
-  const offenderDobError = !isNotFutureDate(offenderDob) ? "Date of birth can't be in the future." : null;
+  const offenderDobError = dateOfBirthError(offenderDob);
+  // The date boxes' calendars only offer days in this range.
+  const dob = dateOfBirthBounds();
 
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -511,7 +513,7 @@ export default function AssessmentContent() {
             <div>
               <Label htmlFor="victim-dob" required>Date of Birth</Label>
               <input id="victim-dob" type="date" value={victimDob} onChange={(e) => setVictimDob(e.target.value)}
-                autoComplete="off" aria-required="true"
+                min={dob.earliest} max={dob.latest} autoComplete="off" aria-required="true"
                 aria-invalid={!!victimDobError} aria-describedby={victimDobError ? "victim-dob-error" : undefined}
                 className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#5C0F8B] transition" />
               <FieldError id="victim-dob-error">{victimDobError}</FieldError>
@@ -571,7 +573,7 @@ export default function AssessmentContent() {
             <div>
               <Label htmlFor="offender-dob" optional>Date of Birth</Label>
               <input id="offender-dob" type="date" value={offenderDob} onChange={(e) => setOffenderDob(e.target.value)}
-                autoComplete="off"
+                min={dob.earliest} max={dob.latest} autoComplete="off"
                 aria-invalid={!!offenderDobError} aria-describedby={offenderDobError ? "offender-dob-error" : undefined}
                 className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#5C0F8B] transition" />
               <FieldError id="offender-dob-error">{offenderDobError}</FieldError>

@@ -42,6 +42,8 @@ test('every new assessment and resource request opens a follow-up in Needs follo
         'VictimFirstName' => STAFF_TEST_PREFIX.'Victim',
         'VictimLastName' => 'Doe',
         'VictimSex' => 'F',
+        // Required, as on the website.
+        'VictimDOB' => '1990-04-12',
         'VictimSafePhoneNumber' => '(423)555-0100',
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',

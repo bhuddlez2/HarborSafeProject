@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Assessments\AssessmentInputs;
 use App\Filament\Assessments\RelationshipFields;
 use App\Filament\PoliceAdminNavigation;
 use App\Filament\Forms\RequirementMarkers;
@@ -13,11 +14,9 @@ use App\Enums\NewSubmission;
 use App\Services\FollowUps;
 use App\Services\SubmissionAlerts;
 use App\Support\AssessmentDraft;
-use App\Support\PhoneNumber;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -26,8 +25,6 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -75,8 +72,6 @@ class NewAssessment extends Page
     private const QUESTIONS_STEP_INDEX = 4;
 
     private const REVIEW_STEP_INDEX = 5;
-
-    private const NAME_PATTERN = "/^[a-zA-Z\s'-]+$/";
 
     // Tailwind classes lifted from the original buttons.
     // Narrower side padding on phones so Back and Continue fit side by side
@@ -239,24 +234,12 @@ class NewAssessment extends Page
                     $this->nameInput('VictimLastName', 'Last name'),
                 ]),
                 Flex::make([
-                    $this->dateOfBirthInput('VictimDOB', 'Date of birth')
-                        ->required(),
+                    $this->dateOfBirthInput('VictimDOB', 'Date of birth', required: true),
                     $this->sexSelect('VictimSex'),
                 ]),
                 // Required so the organisation can follow up with the victim.
-                // A full 10-digit number, shown as (xxx)xxx-xxxx while typing.
-                TextInput::make('VictimSafePhoneNumber')
-                    ->label('Safe phone number')
-                    ->tel()
-                    ->mask(PhoneNumber::MASK)
-                    ->required()
-                    ->maxLength(20)
-                    ->rule(PhoneNumber::rule())
-                    // A confirmation given for one number never carries over
-                    // to another (see reviewStep()).
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(fn (Set $set) => $set('SafePhoneConfirmed', false))
-                    ->validationMessages(['required' => 'Required']),
+                // Confirmed as safe on the review (reviewStep()).
+                AssessmentInputs::safePhone('Safe phone number'),
             ]);
     }
 
@@ -270,7 +253,7 @@ class NewAssessment extends Page
                     $this->nameInput('OffenderLastName', 'Last name'),
                 ]),
                 Flex::make([
-                    $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth')),
+                    $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth'), required: false),
                     $this->sexSelect('OffenderSex'),
                 ]),
                 // The shared dropdown + "Please specify" for Other.
@@ -321,21 +304,10 @@ class NewAssessment extends Page
                         'questionsStep' => self::QUESTIONS_STEP_INDEX,
                     ]),
 
-                /*
-                A second check that the safe number really is safe, required
-                by validation in create(), not only by the disabled button.
-                Unticked whenever the number changes. Never stored: it only
-                makes sure the officer knows the number must be safe to call.
-                The civilian assessment makes the same check in its own wording.
-                */
-                Checkbox::make('SafePhoneConfirmed')
-                    ->label(fn (Get $get): string => 'I have confirmed that '
-                        .(filled($get('VictimSafePhoneNumber')) ? $get('VictimSafePhoneNumber') : 'the safe phone number')
-                        .' is safe to use to contact the victim.')
-                    ->accepted()
-                    ->live()
-                    ->dehydrated(false)
-                    ->validationMessages(['accepted' => 'Confirm the safe phone number before submitting.']),
+                // Required by validation in create(), not only by the
+                // disabled button. The civilian assessment makes the same
+                // check in its own wording.
+                AssessmentInputs::safePhoneConfirmation(),
             ]);
     }
 
@@ -345,53 +317,26 @@ class NewAssessment extends Page
             ->viewData(['text' => $text]);
     }
 
+    // The field rules are AssessmentInputs', shared with the Edit pop-up;
+    // only the wizard's look is added here.
     protected function nameInput(string $name, string $label): TextInput
     {
-        return TextInput::make($name)
-            ->label($label)
-            ->required()
-            ->maxLength(50)
-            ->regex(self::NAME_PATTERN)
-            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? trim($state) : $state)
-            ->validationMessages([
-                'required' => 'Required',
-                'regex' => 'Cannot contain numbers or symbols',
-            ]);
+        return AssessmentInputs::name($name, $label);
     }
 
-    protected function dateOfBirthInput(string $name, string | Htmlable $label): DatePicker
+    protected function dateOfBirthInput(string $name, string | Htmlable $label, bool $required): DatePicker
     {
-        return DatePicker::make($name)
-            ->label($label)
-            ->native()
-            ->maxDate(now())
-            ->grow(false)
-            ->validationMessages([
-                'required' => 'Required',
-                'date' => 'Enter a valid date',
-                'before_or_equal' => 'Date cannot be in the future',
-            ]);
+        return AssessmentInputs::dateOfBirth($name, $label, $required)
+            ->grow(false);
     }
 
     protected function sexSelect(string $name): Select
     {
-        return Select::make($name)
-            ->label('Sex')
-            ->native()
+        return AssessmentInputs::sex($name)
             ->placeholder('Select')
             ->selectablePlaceholder()
-            ->options([
-                'M' => 'Male',
-                'F' => 'Female',
-                'O' => 'Other',
-            ])
-            ->required()
             ->grow(false)
-            ->extraAttributes(['class' => 'hs-lap-sex'])
-            ->validationMessages([
-                'required' => 'Select an option',
-                'in' => 'Select an option',
-            ]);
+            ->extraAttributes(['class' => 'hs-lap-sex']);
     }
 
     // Records the current question's answer and moves on. Returns true once

@@ -5,6 +5,7 @@ namespace App\Filament\Analytics;
 use App\Filament\Clusters\Analytics\AnalyticsCluster;
 use App\Services\Analytics\AssessmentStats;
 use App\Support\Analytics\DateRange;
+use App\Support\Timezones;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
@@ -127,11 +128,16 @@ abstract class AnalyticsPage extends Page
 
     public function applyCustomRange(): void
     {
+        // Neither end in the future (the Eastern day, as the inputs' max).
+        $today = Timezones::today();
+
         $this->validate([
-            'customFrom' => ['required', 'date_format:Y-m-d'],
-            'customTo' => ['required', 'date_format:Y-m-d', 'after_or_equal:customFrom'],
+            'customFrom' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.$today],
+            'customTo' => ['required', 'date_format:Y-m-d', 'after_or_equal:customFrom', 'before_or_equal:'.$today],
         ], [
             'customTo.after_or_equal' => 'The end date must be on or after the start date.',
+            'customFrom.before_or_equal' => "The start date can't be in the future.",
+            'customTo.before_or_equal' => "The end date can't be in the future.",
         ], [
             'customFrom' => 'start date',
             'customTo' => 'end date',

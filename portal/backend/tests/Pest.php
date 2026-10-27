@@ -407,6 +407,8 @@ function pestOfficerAssessment(User $officer, string $victim, array $details = [
         'VictimFirstName' => STAFF_TEST_PREFIX.$victim,
         'VictimLastName' => 'Doe',
         'VictimSex' => 'F',
+        // Required by the wizard, so by the Edit pop-up too.
+        'VictimDOB' => '1990-01-01',
         'VictimSafePhoneNumber' => '423-555-0100',
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',

@@ -284,6 +284,44 @@ test('the safe phone number formats as it is typed and needs all 10 digits', asy
   await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled();
 });
 
+// The backend's App\Support\DateOfBirth rule: today back to 125 years ago,
+// "today" being the Eastern day.
+test('a date of birth must be within the last 125 years', async ({ page }) => {
+  // 11 am Eastern on 26 October 2026.
+  await page.clock.setFixedTime(new Date('2026-10-26T15:00:00Z'));
+  await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+  await page.getByRole('button', { name: 'Myself' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByLabel('First Name').fill('Jane');
+  await page.getByLabel('Last Name').fill('Doe');
+  await page.getByLabel('Sex').selectOption('F');
+  await page.getByLabel('Safe Phone Number').fill('(423) 555-0100');
+
+  // The calendar only offers the range.
+  const dob = page.getByLabel('Date of Birth');
+  await expect(dob).toHaveAttribute('min', '1901-10-26');
+  await expect(dob).toHaveAttribute('max', '2026-10-26');
+
+  const continueButton = page.getByRole('button', { name: 'Continue' });
+
+  await dob.fill('1901-10-25');
+  await expect(page.getByText("Date of birth can't be more than 125 years ago.")).toBeVisible();
+  await expect(continueButton).toBeDisabled();
+
+  await dob.fill('2026-10-27');
+  await expect(page.getByText("Date of birth can't be in the future.")).toBeVisible();
+  await expect(continueButton).toBeDisabled();
+
+  // Both ends are allowed.
+  await dob.fill('1901-10-26');
+  await expect(continueButton).toBeEnabled();
+  await dob.fill('2026-10-26');
+  await expect(continueButton).toBeEnabled();
+});
+
 /*
 The review before Submit (team plan task 31): every detail and answer, Edit and Change
 buttons that come straight back to the review, and the safe-phone box - the officer

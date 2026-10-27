@@ -10,6 +10,7 @@ use App\Models\Newsletter;
 use Filament\Actions\EditAction;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Http\Testing\File as TestingFile;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
 /*
@@ -23,6 +24,10 @@ Events and newsletters are both edited in pop-ups on their list page
 (ManageEvents / ManageNewsletters), so these call the create and edit actions
 there rather than visiting separate create/edit pages.
 */
+
+// The dates typed below must sit inside the event range (a year back, two
+// ahead) whenever the suite runs, so "now" is fixed.
+beforeEach(fn () => $this->travelTo(Carbon::parse('2026-10-26 12:00', 'America/New_York')));
 
 afterEach(fn () => cleanupStaffData());
 

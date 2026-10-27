@@ -1,6 +1,8 @@
 <?php
 
+use App\Support\DateOfBirth;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /*
@@ -163,7 +165,10 @@ test('bad input is refused and nothing is written', function (array $overrides, 
     'phone too short' => [['VictimSafePhoneNumber' => '123'], 'VictimSafePhoneNumber'],
     'free-text relationship' => [['OffenderVictimRelationship' => 'Boyfriend'], 'OffenderVictimRelationship'],
     'unknown sex code' => [['VictimSex' => 'X'], 'VictimSex'],
+    'missing victim birth date' => [['VictimDOB' => null], 'VictimDOB'],
+    'blank victim birth date' => [['VictimDOB' => '   '], 'VictimDOB'],
     'future birth date' => [['VictimDOB' => now()->addDay()->toDateString()], 'VictimDOB'],
+    'birth date over 125 years ago' => [fn () => ['OffenderDOB' => Carbon::parse(DateOfBirth::earliest())->subDay()->toDateString()], 'OffenderDOB'],
     'date in another format' => [['OffenderDOB' => '04/12/1990'], 'OffenderDOB'],
     'name over 50 characters' => [['OffenderFirstName' => str_repeat('a', 51)], 'OffenderFirstName'],
     'name as an array' => [['OffenderFirstName' => ['a', 'b']], 'OffenderFirstName'],
@@ -174,6 +179,15 @@ test('bad input is refused and nothing is written', function (array $overrides, 
     'a named report with no name' => [['ForWhom' => 'other', 'Anonymous' => false], 'SubmitterFirstName'],
     'a bad submitter email' => [['ForWhom' => 'other', 'Anonymous' => false, 'SubmitterFirstName' => 'A', 'SubmitterLastName' => 'B', 'SubmitterEmail' => 'not-an-email'], 'SubmitterEmail'],
 ]);
+
+test('a birth date exactly 125 years ago, or today, is accepted', function () {
+    $this->postJson('/api/public/civilian-assessments', civilianPayload([
+        'VictimDOB' => DateOfBirth::earliest(),
+        'OffenderDOB' => DateOfBirth::latest(),
+    ]))->assertCreated();
+
+    expect(civilianStoredRow())->not->toBeNull();
+});
 
 test('blank optional fields are stored as null, and names are trimmed', function () {
     $this->postJson('/api/public/civilian-assessments', civilianPayload([

@@ -56,6 +56,8 @@ function changeLogAssessment(User $officer): LawEnforcementAssessment
         'VictimFirstName' => 'Test',
         'VictimLastName' => 'Doe',
         'VictimSex' => 'F',
+        // Required by the wizard, so by the Edit pop-up too.
+        'VictimDOB' => '1990-01-01',
         'VictimSafePhoneNumber' => '423-555-0100',
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
@@ -112,7 +114,7 @@ test('a save that changes nothing records nothing', function () {
     // Same values, an empty string for a null, and true for a stored 1.
     $edit = AssessmentEditor::apply(
         $assessment,
-        ['VictimLastName' => 'Doe', 'VictimDOB' => ''],
+        ['VictimLastName' => 'Doe', 'OffenderDOB' => ''],
         ['RiskIndicator1' => true, 'RiskIndicator2' => false],
         'No real change',
         $officer,

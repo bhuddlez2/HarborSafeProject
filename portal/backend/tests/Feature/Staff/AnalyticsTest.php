@@ -51,7 +51,9 @@ function analyticsBackdate(string $connection, string $table, string $key, strin
 // An officer assessment in March 2003 with exactly the given questions answered yes.
 function analyticsOfficerAssessment($officer, string $victim, array $yes, string $createdUtc, array $details = []): LawEnforcementAssessment
 {
-    $assessment = pestOfficerAssessment($officer, $victim, $details);
+    // No birth date unless given, so the age chart's "Not given" is tested
+    // (pestOfficerAssessment() fills one in by default).
+    $assessment = pestOfficerAssessment($officer, $victim, ['VictimDOB' => null, ...$details]);
 
     DB::connection('Portal')->table('_assessment_answers')
         ->where('AssessmentDocID', $assessment->AssessmentDocID)
