@@ -4,17 +4,13 @@ namespace App\Filament\Resources\CivilianAssessments;
 
 use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\AssessmentAccess;
-use App\Enums\OffenderRelationship;
 use App\Enums\UserRole;
-use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Models\AssessmentAccessLog;
 use App\Models\PrivateAssessment;
 use App\Support\HighRisk;
-use App\Support\Timezones;
+use App\Filament\Tables\AssessmentColumns;
 use App\Filament\Tables\AssessmentFilters;
-use App\Filament\Tables\EncryptedColumnSearch;
-use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -23,7 +19,6 @@ use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -115,47 +110,11 @@ class CivilianAssessmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return AssessmentFilters::civilian($table
-            ->columns([
-                TextColumn::make('DateCreated')
-                    ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
-
-                TextColumn::make('VictimLastName')
-                    ->label('Victim')
-                    ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
-                        ($record->VictimFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->searchable(query: EncryptedColumnSearch::query(PrivateAssessment::class, ['VictimFirstName', 'VictimLastName'])),
-
-                TextColumn::make('OffenderLastName')
-                    ->label('Offender')
-                    ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
-                        ($record->OffenderFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->searchable(query: EncryptedColumnSearch::query(PrivateAssessment::class, ['OffenderFirstName', 'OffenderLastName'])),
-
-                // As on the law-enforcement tables (AssessmentColumns).
-                TextColumn::make('OffenderVictimRelationship')
-                    ->label('Relationship')
-                    ->formatStateUsing(fn (?string $state, $record): ?string => OffenderRelationship::display($state, $record->OffenderVictimRelationshipOther))
-                    ->placeholder('-'),
-
-                // VictimSafePhoneNumber is deliberately absent - see the class
-                // comment. It is in the detail view only.
-
-                TableAlignment::symbol(TextColumn::make('risk_count')
-                    ->label('Yes')
-                    ->badge()
-                    ->state(fn (PrivateAssessment $record): string => self::yesCount($record).' of 11')
-                    ->color(fn (PrivateAssessment $record): string => match (true) {
-                        HighRisk::of($record->assessmentAnswers) => 'danger',
-                        self::yesCount($record) >= 1 => 'warning',
-                        default => 'gray',
-                    })),
-            ])
+        return AssessmentFilters::civilian(AssessmentColumns::cards($table)
+            // The law-enforcement tables' columns, without an officer - see
+            // AssessmentColumns. VictimSafePhoneNumber is deliberately absent
+            // (see the class comment); it is in the detail view only.
+            ->columns(AssessmentColumns::civilian())
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.
             // submitterInfo is deliberately not eager-loaded: nothing in the
@@ -200,18 +159,5 @@ class CivilianAssessmentResource extends Resource
         return [
             'index' => ListCivilianAssessments::route('/'),
         ];
-    }
-
-    private static function yesCount(PrivateAssessment $record): int
-    {
-        $answers = $record->assessmentAnswers;
-
-        if (! $answers) {
-            return 0;
-        }
-
-        return collect(array_keys(NewAssessment::QUESTIONS))
-            ->filter(fn (int $id): bool => (bool) $answers->{"RiskIndicator{$id}"})
-            ->count();
     }
 }

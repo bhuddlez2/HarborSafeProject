@@ -2,7 +2,6 @@
 
 namespace App\Filament\Assessments;
 
-use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use App\Models\LogEntry;
@@ -10,7 +9,6 @@ use App\Support\Timezones;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Carbon;
 
 /*
@@ -82,18 +80,6 @@ final class ChangeHistory
                     'edits' => self::entries([$edit]),
                 ];
             });
-    }
-
-    // "Amended" on any record that has been edited since submission. Needs
-    // ->withCount('edits') on the table query.
-    public static function amendedColumn(): TextColumn
-    {
-        return TableAlignment::symbol(TextColumn::make('edits_count')
-            ->label('Status')
-            ->badge()
-            ->formatStateUsing(fn (?int $state): string => $state ? 'Amended' : 'Submitted')
-            ->color(fn (?int $state): string => $state ? 'warning' : 'gray')
-            ->tooltip(fn (?int $state): ?string => $state ? "Edited {$state} ".str('time')->plural($state).' since submission' : null));
     }
 
     /**

@@ -991,6 +991,112 @@
 }
 
 /*
+ * Assessment cards: on a phone, each row of My Assessments, Assessment review
+ * and Civilian assessments is a card (App\Filament\Tables\AssessmentColumns,
+ * Finishing Touches item 9):
+ *
+ *   Victim name                [5 of 11]
+ *   OFFENDER   Offender name
+ *              Relationship
+ *   SUBMITTED  Oct 27, 2026 3:14 pm
+ *              by Officer name            (Assessment review only)
+ *   [Change log] [View] [Edit]
+ *
+ * Built on Filament's stacked layout, so cells are placed by their
+ * fi-ta-cell-{column} class: renaming a column in AssessmentColumns needs the
+ * same change here.
+ */
+@media (max-width: 39.99rem) {
+    .fi-ta-table-stacked-on-mobile > tbody:has(> tr.hs-assessment-card) {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background-color: #f7f5fa;
+    }
+
+    .fi-ta-table-stacked-on-mobile > tbody > tr.hs-assessment-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "victim yes"
+            "offender offender"
+            "submitted submitted"
+            "actions actions";
+        column-gap: 0.75rem;
+        row-gap: 0.5rem;
+        padding: 0.875rem 1rem;
+        border: 1px solid #ddd7e6;
+        border-radius: 12px;
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgb(45 22 64 / 0.06);
+    }
+
+    .hs-assessment-card > .fi-ta-cell,
+    .fi-ta-row.hs-assessment-card:hover > td {
+        padding: 0;
+        background-color: transparent;
+    }
+
+    .hs-assessment-card > .fi-ta-cell-victim-last-name {
+        grid-area: victim;
+        align-self: center;
+    }
+
+    .hs-assessment-card > .fi-ta-cell-victim-last-name .fi-ta-cell-content {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .hs-assessment-card > .fi-ta-cell-risk-count {
+        grid-area: yes;
+        align-self: center;
+        justify-self: end;
+    }
+
+    /* The name and the badge speak for themselves at the top of a card. */
+    .hs-assessment-card > .fi-ta-cell-victim-last-name > .fi-ta-cell-label,
+    .hs-assessment-card > .fi-ta-cell-risk-count > .fi-ta-cell-label {
+        display: none;
+    }
+
+    .hs-assessment-card > .fi-ta-cell-offender-last-name {
+        grid-area: offender;
+    }
+
+    .hs-assessment-card > .fi-ta-cell-date-created {
+        grid-area: submitted;
+    }
+
+    /* Offender and Submitted: a small label on the left, the value beside it. */
+    .hs-assessment-card > .fi-ta-cell-offender-last-name,
+    .hs-assessment-card > .fi-ta-cell-date-created {
+        display: grid;
+        grid-template-columns: 5.5rem minmax(0, 1fr);
+        column-gap: 0.5rem;
+        align-items: baseline;
+    }
+
+    .hs-assessment-card > .fi-ta-cell-offender-last-name > .fi-ta-cell-label,
+    .hs-assessment-card > .fi-ta-cell-date-created > .fi-ta-cell-label {
+        padding-top: 0;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: 1.25rem;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+
+    .hs-assessment-card > .fi-ta-cell:has(> .fi-ta-actions) {
+        grid-area: actions;
+        margin-top: 0.25rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #ece7f2;
+    }
+}
+
+/*
  * Symbol columns (App\Filament\Tables\TableAlignment::symbol()): centred
  * under the heading's WORDS. Filament centres the label and its sort arrow
  * together, which nudges the label left of the icons below it. Here the sort

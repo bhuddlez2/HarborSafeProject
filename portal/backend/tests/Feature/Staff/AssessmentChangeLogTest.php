@@ -231,7 +231,8 @@ test('the change log button shows the history with readable labels', function ()
     $this->actingAs($officer);
 
     Livewire::test(ListLawEnforcementAssessments::class)
-        ->assertTableColumnFormattedStateSet('edits_count', 'Amended', $assessment)
+        // Enabled (and purple) because the record has been edited.
+        ->assertActionEnabled(TestAction::make('changeLog')->table($assessment))
         ->mountAction(TestAction::make('changeLog')->table($assessment))
         ->assertMountedActionModalSee([
             'Corrected on review',

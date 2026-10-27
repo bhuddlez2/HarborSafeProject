@@ -77,7 +77,7 @@ test('text columns sit left and symbol columns sit centred', function (string $p
     'Officers' => [ListOfficerAccounts::class, UserRole::PoliceAdmin],
 ]);
 
-test('Civilian assessments has a Relationship column after Offender', function () {
+test('Civilian assessments has the shared assessment columns', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
     $labels = collect(Livewire::test(ListCivilianAssessments::class)->instance()->getTable()->getColumns())
@@ -85,7 +85,7 @@ test('Civilian assessments has a Relationship column after Offender', function (
         ->values()
         ->all();
 
-    expect($labels)->toBe(['Submitted', 'Victim', 'Offender', 'Relationship', 'Yes']);
+    expect($labels)->toBe(['Submitted', 'Victim', 'Offender', 'Yes']);
 });
 
 test('an account\'s Created date is the Eastern day it happened on', function () {
