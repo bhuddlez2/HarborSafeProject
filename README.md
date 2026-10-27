@@ -248,6 +248,8 @@ a 12-second timeout. That is the intended behaviour, not a bug — but it does m
 
 Events and newsletters come from the staff panel, so the page is empty until
 someone publishes something there. Empty is a normal state and the page says so.
+A published newsletter with a future Publish Date is scheduled: it stays off the
+page, PDF included, until that day (Eastern), with no rebuild needed.
 
 The API base URL defaults to `http://127.0.0.1:8000`, so nothing to configure
 locally. It is inlined at build time, so on a deploy target it must be set

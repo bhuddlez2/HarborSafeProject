@@ -428,6 +428,11 @@ text, e.g. "Annually in September"), `location_name`, `location_address`,
 `NewsletterID` (uuid PK), `title`, `issue_date`, `summary` (nullable), `file_path`,
 `file_size_bytes` (nullable), `file_pages` (nullable), `is_published` (bool).
 
+`issue_date` is labelled **Publish Date** in the panel. New or changed dates run from the
+1st of the month six months back to today, or, with the form's **Schedule post** box
+ticked, to the end of the month six months ahead; a published issue stays off the website
+(PDF included) until that day. Schedule post is not a column.
+
 ### 6.4 Conventions you must follow
 
 These come from `CLAUDE.md` and are the things an agent unfamiliar with this repo gets
@@ -516,7 +521,7 @@ Serving them is two routes, with two different authorization rules:
 
 | Route | For | Rule |
 |---|---|---|
-| `GET /api/public/content-files/{file}` | the public site | served only while a **published** event or newsletter points at the file |
+| `GET /api/public/content-files/{file}` | the public site | served only while a **published** event, or a published newsletter whose publish date has arrived, points at the file |
 | `GET /files/{file}` | the panel | any signed-in staff member who passes `canAccessPanel()` |
 
 The public rule is phrased that way because `content_files` has no owner and no published
@@ -540,7 +545,9 @@ in a scheduled command that checks both referencing columns, not in a form hook.
 ## 7. Public content API — built
 
 `GET /api/public/events` and `GET /api/public/newsletters`. Published records only, read
-through `ContentPublic`, in the existing `Route::prefix('public')` group.
+through `ContentPublic`, in the existing `Route::prefix('public')` group. A newsletter also
+waits for its publish date (`issue_date`, an Eastern day; `Newsletter::scopeOnWebsite()`),
+so staff can schedule an issue ahead (Finishing Touches item 26).
 `App\Http\Resources\PublicEventResource` and `PublicNewsletterResource` reconstruct the
 nested `location` / `image` / `registration` / `file` objects from the flattened columns.
 
@@ -755,8 +762,9 @@ creating an officer; `police_admin` has no edit action on assessments.
   recorded. Police admins and admins are kept
   out by the resource's `canAccess()`, while `LawEnforcementAssessmentPolicy` still grants
   them record view (admin all, police admin own agency), because `Assessment review`
-  authorizes through the same policy. The officer Home page's "past assessment" link
-  (`Police::pastAssessmentsUrl()`) sends police admins to Assessment review instead.
+  authorizes through the same policy. On the officer Home page, an officer's
+  **View Assessments** card (`Police::pastAssessmentsUrl()`) opens My Assessments; a
+  police admin's View Assessments card opens Assessment review instead.
 - **Officers** — `App\Filament\Resources\OfficerAccounts` (on `User`), at
   `/police/officers` in a "Police Admin" navigation group: officer provisioning,
   list, create and edit, no delete. Police admins with an agency only, and only that
@@ -1086,7 +1094,10 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
   `User::hasActiveRole(UserRole::Admin)`. A
   hidden filter is neither rendered nor applied, so forcing its state does nothing. The
   four name filters are typed text: a case-insensitive partial match, with `%` and `_` in
-  the input matched literally; blank turns a filter off, and each active filter shows a
+  the input matched literally. Since 2026-10-27 the names are encrypted (Finishing
+  Touches item 14), so the match runs in PHP on the decrypted names of the viewer's own
+  `visibleTo()` rows (`AssessmentFilters::encryptedTextContains()`,
+  `App\Support\EncryptedSearch`), never in SQL; blank turns a filter off, and each active filter shows a
   chip. There is deliberately no filter on the victim's safe phone number.
 - **Layout:** `filtersFormColumns(3)`, one row per group, each opened with
   `columnStart(1)`: dates; officer and agency; victim first and last name; offender
@@ -1133,7 +1144,8 @@ field-level tables (`assessment_change_log`, `assessment_answer_change_log`) han
   only, by `users.role` (`AssessmentFilters::showsAgency()`); hidden from police admins,
   and a hidden filter is never applied.
 - **Names** match the officer assessment's current name columns — case-insensitive,
-  partial, `%` and `_` literal. **An edit's logged `PreviousValue` / `NewValue` are
+  partial, `%` and `_` literal, decrypted and matched in PHP like the assessment tables'
+  name filters (the names are encrypted). **An edit's logged `PreviousValue` / `NewValue` are
   deliberately not searchable or filterable**: the log is read per record, not mined for
   values.
 - **Scoped:** the table's query is `LogEntry::visibleTo()` (each half scoped before the
