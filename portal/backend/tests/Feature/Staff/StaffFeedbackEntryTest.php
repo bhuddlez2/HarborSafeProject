@@ -85,8 +85,10 @@ test('admins and secretaries can fill in a feedback form, marked as staff', func
         ->and($feedback->ScanFileID)->toBeNull();
 
     // Shown back in Eastern with a time stamp, like online feedback, and a
-    // Staff tag under it.
-    Livewire::test(ListServiceFeedback::class)
+    // Staff tag under it. Filtered to this test's own service: the table shows
+    // 10 rows a page, newest first, so newer local feedback would otherwise
+    // push this September form off page 1.
+    pestApplyFilter(Livewire::test(ListServiceFeedback::class), 'ServiceID', $serviceId)
         ->assertCanSeeTableRecords([$feedback])
         ->assertTableColumnHasDescription('SubmissionDate', RecordCards::staffTag(), $feedback)
         ->assertTableColumnFormattedStateSet('SubmissionDate', 'Sep 15, 2026 2:30 pm', $feedback);

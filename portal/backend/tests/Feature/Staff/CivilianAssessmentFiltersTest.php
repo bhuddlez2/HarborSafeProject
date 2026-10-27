@@ -79,7 +79,10 @@ test('the civilian date filter does nothing until Apply, then keeps rows inside 
     $rows = pestCivilianFilterRows();
     $this->actingAs(staffUser(UserRole::Admin));
 
-    Livewire::test(ListCivilianAssessments::class)
+    // Narrowed to this test's two rows first (both victims' first names carry
+    // the test prefix): the table shows 10 rows a page, newest first, so the
+    // local database's own rows would otherwise push these 2003 rows off page 1.
+    pestApplyFilter(Livewire::test(ListCivilianAssessments::class), 'victim_first_name', STAFF_TEST_PREFIX)
         ->set('tableDeferredFilters.date_submitted.from', '2003-06-01')
         ->set('tableDeferredFilters.date_submitted.until', '2003-06-30')
         ->assertCanSeeTableRecords([$rows->january, $rows->june])
