@@ -100,9 +100,9 @@ class LocalSubmissionSeeder extends Seeder
         }
 
         foreach (self::REQUESTS as [$submitted, $first, $last, $email, $phone, $countyId, $resourceIds, $message]) {
-            $exists = ResourceRequestForm::where('SubmissionDate', $submitted)
-                ->where('FirstName', $first)
-                ->exists();
+            // FirstName is encrypted, so matched after decrypting.
+            $exists = ResourceRequestForm::where('SubmissionDate', $submitted)->get()
+                ->contains(fn (ResourceRequestForm $r): bool => $r->FirstName === $first);
 
             if ($exists) {
                 continue;

@@ -2,14 +2,22 @@
 
 namespace App\Models;
 
-use App\Support\PhoneNumber;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Models\Concerns\EncryptsSensitiveFields;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class SubmitterInfo extends BaseModel
 {
     //Sets up UUID input for new records
-    use HasUuids;
+    use EncryptsSensitiveFields, HasUuids;
+
+    // The civilian submitter's contact details, encrypted under
+    // DATA_ENCRYPTION_KEY (App\Support\SensitiveData).
+    public const ENCRYPTED = [
+        'SubmitterEmail',
+        'SubmitterPhoneNumber',
+        'SubmitterFirstName',
+        'SubmitterLastName',
+    ];
 
     //DB Connection
     protected $connection = 'Portal';
@@ -36,9 +44,9 @@ class SubmitterInfo extends BaseModel
 
     // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
     // App\Support\PhoneNumber, which also validates it.
-    protected function submitterPhoneNumber(): Attribute
+    protected function phoneNumberFields(): array
     {
-        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+        return ['SubmitterPhoneNumber'];
     }
 
     public function uniqueIds(): array

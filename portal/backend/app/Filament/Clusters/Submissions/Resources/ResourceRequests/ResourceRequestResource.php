@@ -11,6 +11,7 @@ use App\Models\Resource as ResourceType;
 use App\Models\ResourceRequestForm;
 use App\Support\RecordPdf;
 use App\Support\Timezones;
+use App\Filament\Tables\EncryptedColumnSearch;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -128,7 +129,7 @@ class ResourceRequestResource extends Resource
 
                 TextColumn::make('FirstName')
                     ->label('Name')
-                    ->searchable(['FirstName', 'LastName'])
+                    ->searchable(query: EncryptedColumnSearch::query(ResourceRequestForm::class, ['FirstName', 'LastName']))
                     ->formatStateUsing(fn (?string $state, ResourceRequestForm $record): string => trim(
                         ($state ?? '').' '.($record->LastName ?? ''),
                     ) ?: '-'),
@@ -141,7 +142,7 @@ class ResourceRequestResource extends Resource
                 TextColumn::make('EmailAddress')
                     ->label('Email')
                     ->placeholder('-')
-                    ->searchable()
+                    ->searchable(query: EncryptedColumnSearch::query(ResourceRequestForm::class, ['EmailAddress']))
                     ->copyable(),
 
                 // SafePhoneNumber is deliberately absent - see the class

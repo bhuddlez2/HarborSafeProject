@@ -7,8 +7,10 @@ use App\Models\LawEnforcementAssessment;
 use App\Models\User;
 use App\Policies\LawEnforcementAssessmentPolicy;
 use App\Rules\KeyboardCharactersOnly;
+use App\Support\SensitiveData;
 use BladeUI\Icons\Factory as IconFactory;
 use Filament\Support\View\Components\ModalComponent;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -35,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Every `encrypted` model cast uses DATA_ENCRYPTION_KEY, never APP_KEY,
+        // and refuses to run without it - see App\Support\SensitiveData.
+        Model::encryptUsing(SensitiveData::encrypter());
+
         // Registered explicitly rather than left to discovery, so nothing
         // depends on the policy's file name or folder.
         Gate::policy(LawEnforcementAssessment::class, LawEnforcementAssessmentPolicy::class);

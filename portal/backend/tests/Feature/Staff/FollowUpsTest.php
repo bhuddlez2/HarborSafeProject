@@ -50,7 +50,7 @@ test('every new assessment and resource request opens a follow-up in Needs follo
         'OffenderSex' => 'M',
         'OffenderVictimRelationship' => 'spouse',
     ])->assertCreated();
-    $civilian = App\Models\PrivateAssessment::where('VictimFirstName', STAFF_TEST_PREFIX.'Victim')->sole();
+    $civilian = encryptedRows(App\Models\PrivateAssessment::class, 'VictimFirstName', STAFF_TEST_PREFIX.'Victim')->sole();
 
     // Officer wizard.
     $officer = pestAgencyMember(UserRole::LawEnforcement, pestAgency('Wizard PD'));

@@ -204,7 +204,14 @@ cd portal\backend
 composer install
 copy .env.example .env
 php artisan key:generate
+php artisan data-key:generate
 ```
+
+`data-key:generate` creates `DATA_ENCRYPTION_KEY`, the key that encrypts victim,
+offender and requester details in the database. Run it once, before any records
+exist. Every machine has its own, so a database copied from someone else's
+machine can't be read with yours. On the server, keep a copy of it somewhere
+safe: if it is lost, every encrypted record is lost with it.
 
 `.env` holds your local settings and is never committed. With default XAMPP the
 database section already works as shipped — user `root`, blank password — so
@@ -357,6 +364,8 @@ If classes are mysteriously not applying, check this first.
 | `requires ext-intl` during `composer install` | Step 4 — and check the other seven while you're there |
 | `could not find driver` on any database command | `extension=pdo_mysql` still commented out (step 4) |
 | `No application encryption key` | You skipped `php artisan key:generate` |
+| `DATA_ENCRYPTION_KEY is not set` | You skipped `php artisan data-key:generate` |
+| `The payload is invalid` / `The MAC is invalid` when opening a record | The database was encrypted with a different `DATA_ENCRYPTION_KEY` (for example one copied from another machine) |
 | `SQLSTATE[HY000] [2002]` or connection refused | MySQL isn't running — start it in the XAMPP Control Panel |
 | `Unknown database` | Run `php artisan db:create` |
 | Login rejects every password | You skipped `LocalStaffUserSeeder` |

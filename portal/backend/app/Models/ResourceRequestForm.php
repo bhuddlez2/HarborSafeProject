@@ -4,9 +4,8 @@ namespace App\Models;
 
 use App\Enums\FollowUpKind;
 use App\Http\Requests\Public\ResourceRequestStoreRequest;
+use App\Models\Concerns\EncryptsSensitiveFields;
 use Illuminate\Database\Eloquent\Builder;
-use App\Support\PhoneNumber;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -14,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class ResourceRequestForm extends BaseModel
 {
-    use HasUuids;
+    use EncryptsSensitiveFields, HasUuids;
 
     protected $connection = 'Feedback';
 
@@ -35,11 +34,22 @@ class ResourceRequestForm extends BaseModel
         'Message',
     ];
 
+    // Who is asking and what they wrote, encrypted under DATA_ENCRYPTION_KEY
+    // (App\Support\SensitiveData). County, resource types and dates stay
+    // plain. Searching these goes through App\Support\EncryptedSearch.
+    public const ENCRYPTED = [
+        'FirstName',
+        'LastName',
+        'EmailAddress',
+        'SafePhoneNumber',
+        'Message',
+    ];
+
     // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
     // App\Support\PhoneNumber, which also validates it.
-    protected function safePhoneNumber(): Attribute
+    protected function phoneNumberFields(): array
     {
-        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+        return ['SafePhoneNumber'];
     }
 
     public function uniqueIds(): array

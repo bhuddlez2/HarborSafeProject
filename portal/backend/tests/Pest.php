@@ -130,8 +130,9 @@ function cleanupPublicFormData(): void
     // Submissions first - resource_request_resource_types cascades off
     // resource_request_form, so deleting the parent clears the junction rows.
     // Their follow-ups (on Portal, no foreign key) go with them.
-    cleanupFollowUps('ResourceRequestFormID', $feedback->table('resource_request_form')->where('FirstName', publicFormsRunToken())->pluck('FormID'));
-    $feedback->table('resource_request_form')->where('FirstName', publicFormsRunToken())->delete();
+    $requests = encryptedRows(App\Models\ResourceRequestForm::class, 'FirstName', publicFormsRunToken())->pluck('FormID');
+    cleanupFollowUps('ResourceRequestFormID', $requests);
+    $feedback->table('resource_request_form')->whereIn('FormID', $requests)->delete();
 
     if ($registry->services !== []) {
         // Paper entries may carry a scan; the feedback row points at it, so
@@ -266,31 +267,43 @@ function cleanupStaffData(): void
     $portal->table('agencies')->where('name', 'like', $token . '%')->delete();
 }
 
+// Rows of $modelClass whose encrypted $column equals $value (or, with
+// $prefix, starts with it). The database holds only ciphertext
+// (App\Support\SensitiveData), so rows are decrypted and compared here;
+// $scope narrows the query first on plain columns.
+function encryptedRows(string $modelClass, string $column, string $value, bool $prefix = false, ?Closure $scope = null): Illuminate\Support\Collection
+{
+    $query = $modelClass::query();
+
+    if ($scope !== null) {
+        $scope($query);
+    }
+
+    return $query->get()
+        ->filter(function ($model) use ($column, $value, $prefix): bool {
+            $stored = $model->getAttribute($column);
+
+            return $prefix ? str_starts_with((string) $stored, $value) : $stored === $value;
+        })
+        ->values();
+}
+
 // Civilian submissions made by the staff tests (pestCivilianAssessment()),
 // tagged on the victim name. Children first: _private_assessment has foreign
 // keys to its answers and submitter, and the access log points at it.
 function cleanupCivilianAssessments(): void
 {
     cleanupAssessmentAccessLog();
-    cleanupFollowUps('PrivateDocumentID', Illuminate\Support\Facades\DB::connection('Portal')->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->pluck('DocumentID'));
+
+    $rows = encryptedRows(App\Models\PrivateAssessment::class, 'VictimFirstName', STAFF_TEST_PREFIX, prefix: true);
+    cleanupFollowUps('PrivateDocumentID', $rows->pluck('DocumentID'));
 
     $portal = Illuminate\Support\Facades\DB::connection('Portal');
-    $docs = $portal->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->pluck('AssessmentDocID', 'SubmissionID');
-
-    $portal->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->delete();
-
-    foreach ($docs as $assessmentDocId) {
-        $portal->table('_assessment_answers')->where('AssessmentDocID', $assessmentDocId)->delete();
-    }
+    $portal->table('_private_assessment')->whereIn('DocumentID', $rows->pluck('DocumentID'))->delete();
+    $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $rows->pluck('AssessmentDocID'))->delete();
 
     $portal->table('_submitter_info')
-        ->where('SubmitterFirstName', 'like', STAFF_TEST_PREFIX.'%')
+        ->whereIn('SubmissionID', encryptedRows(App\Models\SubmitterInfo::class, 'SubmitterFirstName', STAFF_TEST_PREFIX, prefix: true)->pluck('SubmissionID'))
         ->delete();
 }
 

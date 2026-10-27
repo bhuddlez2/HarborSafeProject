@@ -5,6 +5,7 @@ namespace App\Filament\Tables;
 use App\Enums\UserRole;
 use App\Models\LawEnforcementAgent;
 use App\Models\LawEnforcementAssessment;
+use App\Support\EncryptedSearch;
 use App\Support\Timezones;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
@@ -34,7 +35,9 @@ itself (Filament_CMS_Design.md section 5, rule 5).
 The filters, in card order: date submitted (both tables); submitting officer
 and agency (Assessment review only - agency for admins and super admins only, by users.role);
 victim first and last name; offender first and last name (both tables). Names
-are case-insensitive partial matches with LIKE wildcards taken literally. The
+are case-insensitive partial matches. They are encrypted in the database
+(App\Support\SensitiveData), so the name filters decrypt the rows the user may
+see and match them in PHP (App\Support\EncryptedSearch) rather than in SQL. The
 victim's safe phone number is deliberately not filterable.
 
 Layout: a card above the table, folded away behind a Filters button until
@@ -151,10 +154,10 @@ final class AssessmentFilters
     public static function nameFilters(?string $relationship = null): array
     {
         return [
-            self::textContains('victim_first_name', 'VictimFirstName', 'Victim first name', $relationship)->columnStart(1),
-            self::textContains('victim_last_name', 'VictimLastName', 'Victim last name', $relationship),
-            self::textContains('offender_first_name', 'OffenderFirstName', 'Offender first name', $relationship)->columnStart(1),
-            self::textContains('offender_last_name', 'OffenderLastName', 'Offender last name', $relationship),
+            self::encryptedTextContains('victim_first_name', 'VictimFirstName', 'Victim first name', $relationship)->columnStart(1),
+            self::encryptedTextContains('victim_last_name', 'VictimLastName', 'Victim last name', $relationship),
+            self::encryptedTextContains('offender_first_name', 'OffenderFirstName', 'Offender first name', $relationship)->columnStart(1),
+            self::encryptedTextContains('offender_last_name', 'OffenderLastName', 'Offender last name', $relationship),
         ];
     }
 
@@ -211,9 +214,36 @@ final class AssessmentFilters
             ->visible(fn (): bool => self::showsAgency());
     }
 
-    // Case-insensitive (the columns use a _ci collation) partial match, with
-    // the user's % and _ escaped so they match literally. Blank is off.
-    // Public for ChangeLogFilters' Assessment ID filter.
+    // The name filters: a case-insensitive partial match on an encrypted
+    // column, decrypted in PHP over the rows the user may see - the filtered
+    // model's own visibleTo(), or, with $relationship, the related model's
+    // (Logs matches the assessment a row is about). Blank is off.
+    public static function encryptedTextContains(string $name, string $column, string $label, ?string $relationship = null): Filter
+    {
+        return Filter::make($name)
+            ->schema([TextInput::make('value')->label($label)->maxLength(50)])
+            ->query(function (Builder $query, array $data) use ($column, $relationship): void {
+                $value = trim((string) ($data['value'] ?? ''));
+
+                if ($value === '') {
+                    return;
+                }
+
+                $model = $relationship === null
+                    ? $query->getModel()
+                    : $query->getModel()->{$relationship}()->getRelated();
+
+                EncryptedSearch::constrain($query, EncryptedColumnSearch::visible($model::class), [$column], $value, $relationship);
+            })
+            ->indicateUsing(fn (array $data): array => filled(trim((string) ($data['value'] ?? '')))
+                ? [Indicator::make($label.': '.trim($data['value']))->removeField('value')]
+                : []);
+    }
+
+    // Case-insensitive partial match on a plain column, with the user's %
+    // and _ escaped so they match literally. Blank is off. Never for an
+    // encrypted column (use encryptedTextContains()). Public for
+    // ChangeLogFilters' Assessment ID filter.
     public static function textContains(string $name, string $column, string $label, ?string $relationship = null): Filter
     {
         return Filter::make($name)

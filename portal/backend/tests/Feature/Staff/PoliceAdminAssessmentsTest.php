@@ -138,8 +138,10 @@ test('a tampered submitted_by is ignored', function () {
         ->call('create')
         ->assertSet('submitted', true);
 
-    expect(LawEnforcementAssessment::where('VictimLastName', 'Seven')->where('submitted_by', $w->officerA->getKey())->exists())->toBeFalse()
-        ->and(LawEnforcementAssessment::where('VictimLastName', 'Seven')->where('submitted_by', $w->policeAdminA->getKey())->count())->toBe(1);
+    $submittedBy = fn (User $user): Closure => fn ($query) => $query->where('submitted_by', $user->getKey());
+
+    expect(encryptedRows(LawEnforcementAssessment::class, 'VictimLastName', 'Seven', scope: $submittedBy($w->officerA)))->toBeEmpty()
+        ->and(encryptedRows(LawEnforcementAssessment::class, 'VictimLastName', 'Seven', scope: $submittedBy($w->policeAdminA)))->toHaveCount(1);
 });
 
 test('a police admin with no agency can\'t open New assessment, and it isn\'t offered', function () {

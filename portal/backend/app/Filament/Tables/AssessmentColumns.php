@@ -54,14 +54,14 @@ final class AssessmentColumns
                 ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
                     ($record->VictimFirstName ?? '').' '.($state ?? ''),
                 ) ?: '-')
-                ->searchable(['VictimFirstName', 'VictimLastName']),
+                ->searchable(query: EncryptedColumnSearch::query(LawEnforcementAssessment::class, ['VictimFirstName', 'VictimLastName'])),
 
             TextColumn::make('OffenderLastName')
                 ->label('Offender')
                 ->formatStateUsing(fn (?string $state, LawEnforcementAssessment $record): string => trim(
                     ($record->OffenderFirstName ?? '').' '.($state ?? ''),
                 ) ?: '-')
-                ->searchable(['OffenderFirstName', 'OffenderLastName']),
+                ->searchable(query: EncryptedColumnSearch::query(LawEnforcementAssessment::class, ['OffenderFirstName', 'OffenderLastName'])),
 
             // Its own column rather than a grey line under the offender.
             TextColumn::make('OffenderVictimRelationship')

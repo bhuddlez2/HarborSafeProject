@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SensitiveData;
 use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
 use App\Enums\UserRole;
@@ -169,8 +170,9 @@ test('service feedback and resource requests are counted per service, county and
     $withCounty = (string) Str::uuid();
 
     foreach ([[$withCounty, $county, 'online'], [(string) Str::uuid(), null, 'staff']] as [$id, $countyId, $source]) {
+        // Encrypted by hand, as the model would (App\Support\SensitiveData).
         $feedback->table('resource_request_form')->insert([
-            'FormID' => $id, 'FirstName' => publicFormsRunToken(), 'LastName' => 'Requester',
+            'FormID' => $id, 'FirstName' => SensitiveData::encrypt(publicFormsRunToken()), 'LastName' => SensitiveData::encrypt('Requester'),
             'CountyID' => $countyId, 'Source' => $source, 'SubmissionDate' => '2003-03-08 15:00:00',
         ]);
     }

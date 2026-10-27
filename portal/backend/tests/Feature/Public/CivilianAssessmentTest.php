@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PrivateAssessment;
 use App\Support\DateOfBirth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
@@ -19,12 +20,10 @@ const CIVILIAN_TEST_VICTIM = 'PestCivilianVictim';
 
 afterEach(function () {
     $portal = DB::connection('Portal');
-    $rows = $portal->table('_private_assessment')
-        ->where('VictimFirstName', 'like', CIVILIAN_TEST_VICTIM.'%')
-        ->get(['DocumentID', 'AssessmentDocID', 'SubmissionID']);
+    $rows = encryptedRows(PrivateAssessment::class, 'VictimFirstName', CIVILIAN_TEST_VICTIM, prefix: true);
 
     cleanupFollowUps('PrivateDocumentID', $rows->pluck('DocumentID'));
-    $portal->table('_private_assessment')->where('VictimFirstName', 'like', CIVILIAN_TEST_VICTIM.'%')->delete();
+    $portal->table('_private_assessment')->whereIn('DocumentID', $rows->pluck('DocumentID'))->delete();
     $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $rows->pluck('AssessmentDocID'))->delete();
     $portal->table('_submitter_info')->whereIn('SubmissionID', $rows->pluck('SubmissionID')->filter())->delete();
 });
@@ -52,10 +51,10 @@ function civilianPayload(array $overrides = []): array
     ], $overrides);
 }
 
-function civilianStoredRow(string $victimFirstName = CIVILIAN_TEST_VICTIM): ?object
+// The stored record, decrypted (names are encrypted in the database).
+function civilianStoredRow(string $victimFirstName = CIVILIAN_TEST_VICTIM): ?PrivateAssessment
 {
-    return DB::connection('Portal')->table('_private_assessment')
-        ->where('VictimFirstName', $victimFirstName)->first();
+    return encryptedRows(PrivateAssessment::class, 'VictimFirstName', $victimFirstName)->first();
 }
 
 test('a submission for yourself writes the answers and the record, and no submitter', function () {
@@ -94,8 +93,7 @@ test('someone reporting for another person who gives their name gets a linked su
     ]))->assertCreated();
 
     $row = civilianStoredRow();
-    $submitter = DB::connection('Portal')->table('_submitter_info')
-        ->where('SubmissionID', $row->SubmissionID)->first();
+    $submitter = App\Models\SubmitterInfo::find($row->SubmissionID);
 
     expect($submitter->SubmitterFirstName)->toBe('Friend')
         ->and($submitter->SubmitterEmail)->toBe('friend@example.com');
