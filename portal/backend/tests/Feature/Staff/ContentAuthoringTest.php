@@ -264,6 +264,22 @@ test('an event description is capped at 500 characters', function () {
     expect(Event::where('title', $title)->firstOrFail()->description)->toBe([str_repeat('a', 500)]);
 });
 
+test('the newsletter Create pop-up saves only from its last step, with no "create another"', function () {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    $page = Livewire::test(ManageNewsletters::class)->mountAction('create');
+    $action = $page->instance()->getMountedAction();
+
+    // A wizard action has no footer, so no "Create & create another"; its
+    // Create button is drawn inside the wizard, shown on the last step only.
+    expect($action->isWizard())->toBeTrue()
+        ->and($action->getModalFooterActions())->toBe([])
+        ->and($action->canCreateAnother())->toBeFalse();
+
+    $page->assertMountedActionModalSee(['Publish Date', 'Schedule post', '500 Character Limit'])
+        ->assertMountedActionModalDontSee(['create another', 'A line about what is in this issue.']);
+});
+
 test('a secretary can upload a newsletter and its size is recorded', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 

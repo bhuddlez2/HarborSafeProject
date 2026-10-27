@@ -21,6 +21,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
@@ -56,17 +57,60 @@ class NewsletterResource extends Resource
 {
     use AllowsOnlyListedActions;
 
-    // The issue date's range: 2000 to a month ahead, so an issue can be put
-    // up a little before its date.
-    public const EARLIEST_ISSUE = '2000-01-01';
+    /*
+    The publish date's range (Finishing Touches item 26), in Eastern days:
+    from the 1st of the month six months back up to today, or, with Schedule
+    post ticked, up to the end of the month six months ahead. On 15 October
+    2026 that is 1 April 2026 to today, or to 30 April 2027 when scheduled.
+    The website hides an issue until its date (Newsletter::scopeOnWebsite()).
+    */
+    public const MONTHS_BACK = 6;
 
-    private const TOO_EARLY = "Can't be before 2000.";
+    public const MONTHS_AHEAD = 6;
 
-    private const TOO_LATE = "Can't be more than a month from now.";
-
-    public static function latestIssueDay(): string
+    public static function earliestPublishDay(): string
     {
-        return now(Timezones::DISPLAY)->addMonthNoOverflow()->toDateString();
+        return now(Timezones::DISPLAY)->subMonthsNoOverflow(self::MONTHS_BACK)->startOfMonth()->toDateString();
+    }
+
+    public static function latestPublishDay(bool $scheduled): string
+    {
+        $today = now(Timezones::DISPLAY);
+
+        return $scheduled
+            ? $today->addMonthsNoOverflow(self::MONTHS_AHEAD)->endOfMonth()->toDateString()
+            : $today->toDateString();
+    }
+
+    private static function tooEarlyMessage(): string
+    {
+        return "Can't be before ".Carbon::parse(self::earliestPublishDay())->format('F j, Y').'.';
+    }
+
+    private static function tooLateMessage(bool $scheduled): string
+    {
+        return $scheduled
+            ? "Can't be after ".Carbon::parse(self::latestPublishDay(true))->format('F j, Y').'.'
+            : "Can't be in the future. Tick Schedule post to choose a later date.";
+    }
+
+    // An existing issue keeps its saved date unchecked, so an old one can
+    // still be edited - unless that date is in the future and Schedule post
+    // has been unticked.
+    private static function keepsSavedDate(?Newsletter $record, Carbon $picked, bool $scheduled): bool
+    {
+        $day = $picked->toDateString();
+
+        return $record?->issue_date !== null
+            && $day === $record->issue_date->toDateString()
+            && ($scheduled || $day <= self::latestPublishDay(false));
+    }
+
+    // A saved issue whose date hasn't arrived yet.
+    private static function isScheduled(?Newsletter $record): bool
+    {
+        return $record?->issue_date !== null
+            && $record->issue_date->toDateString() > self::latestPublishDay(false);
     }
 
     protected static ?string $model = Newsletter::class;
@@ -96,122 +140,159 @@ class NewsletterResource extends Resource
         return ['create', 'update', 'delete', 'deleteAny'];
     }
 
+    // The Edit pop-up: the same steps, with Save always in the footer.
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Wizard::make([
-                    Step::make('Issue')
-                        ->icon('heroicon-o-document-text')
-                        ->schema([
-                            TextInput::make('title')
-                                ->required()
-                                ->maxLength(200)
-                                ->placeholder('Autumn 2026')
-                                ->columnSpanFull(),
-
-                            DatePicker::make('issue_date')
-                                ->label('Issue date')
-                                ->required()
-                                // From 2000 to a month ahead (DateWindow). The
-                                // calendar limits apply to a new newsletter; an
-                                // existing one keeps its saved date and only a
-                                // changed date is checked.
-                                ->minDate(fn (?Newsletter $record): ?string => $record ? null : self::EARLIEST_ISSUE)
-                                ->maxDate(fn (?Newsletter $record): ?string => $record ? null : self::latestIssueDay())
-                                ->rule(fn (?Newsletter $record): Closure => DateWindow::rule(
-                                    fn (): string => self::EARLIEST_ISSUE,
-                                    self::latestIssueDay(...),
-                                    self::TOO_EARLY,
-                                    self::TOO_LATE,
-                                    fn (Carbon $picked): bool => $record?->issue_date !== null
-                                        && $picked->toDateString() === $record->issue_date->toDateString(),
-                                ))
-                                ->validationMessages([
-                                    'after_or_equal' => self::TOO_EARLY,
-                                    'before_or_equal' => self::TOO_LATE,
-                                ])
-                                ->helperText('Used to order the list, newest first.'),
-
-                            Textarea::make('summary')
-                                ->maxLength(500)
-                                ->rows(3)
-                                ->columnSpanFull()
-                                ->helperText('Optional. A line about what is in this issue.'),
-                        ])
-                        ->columns(2),
-
-                    Step::make('File & Visibility')
-                        ->icon('heroicon-o-paper-clip')
-                        ->schema([
-                            DatabaseFileUpload::forDocument('file_id')
-                                ->label('PDF')
-                                ->columnSpanFull(),
-
-                            TextInput::make('file_pages')
-                                ->label('Page count')
-                                ->numeric()
-                                ->minValue(1)
-                                ->maxValue(9999)
-                                ->helperText('Optional. Shown next to the file size.'),
-
-                            // Shown for reference only. The value is derived from
-                            // the uploaded file by a saving hook on the model, not
-                            // from this field — dehydrated(false) keeps the form
-                            // from writing it and the two from ever disagreeing.
-                            TextInput::make('file_size_bytes')
-                                ->label('File size (bytes)')
-                                ->numeric()
-                                ->readOnly()
-                                ->dehydrated(false)
-                                ->helperText('Set automatically from the uploaded file.'),
-
-                            Toggle::make('is_published')
-                                ->label('Published')
-                                ->helperText('Off keeps it off the website, and makes its PDF unreachable.')
-                                ->columnSpanFull(),
-                        ])
-                        ->columns(2),
-
-                    Step::make('Preview')
-                        ->icon('heroicon-o-sparkles')
-                        ->description('How your newsletter will appear on the website.')
-                        ->schema([
-                            /*
-                            Same pattern as the event preview: Placeholder with a
-                            ->content() closure that reads all earlier steps' values
-                            via $get and renders a Blade template. HtmlString stops
-                            Filament from escaping the rendered HTML as plain text.
-                            */
-                            Placeholder::make('newsletter_preview')
-                                ->label('')
-                                ->content(function (Get $get): HtmlString {
-                                    // issue_date is stored as a plain date (no time),
-                                    // so Carbon::parse() gives us a Carbon instance we
-                                    // can format as "Month Year" in the template.
-                                    $issueDate = filled($get('issue_date'))
-                                        ? \Carbon\Carbon::parse($get('issue_date'))
-                                        : null;
-
-                                    // file_size_bytes is read-only and set by a model
-                                    // hook on save, so it's only available here when
-                                    // editing an existing newsletter — it will be null
-                                    // when creating a new one.
-                                    return new HtmlString(view('filament.forms.newsletter-preview', [
-                                        'title'         => $get('title'),
-                                        'summary'       => $get('summary'),
-                                        'issueDate'     => $issueDate,
-                                        'hasFile'       => filled($get('file_id')),
-                                        'fileSizeBytes' => $get('file_size_bytes'),
-                                        'filePages'     => $get('file_pages'),
-                                        'isPublished'   => (bool) $get('is_published'),
-                                    ])->render());
-                                })
-                                ->columnSpanFull(),
-                        ]),
-                ])
-                ->columnSpanFull(),
+                Wizard::make(self::steps())->columnSpanFull(),
             ]);
+    }
+
+    /*
+    The Create pop-up. Given as action steps rather than the resource form, so
+    Filament puts Create inside the wizard on its last step (Preview) and drops
+    the footer, "Create & create another" with it: a half-finished newsletter
+    can't be saved. Used by the page header and the table's empty state.
+    */
+    public static function createAction(): CreateAction
+    {
+        return CreateAction::make()
+            ->label('Add an issue')
+            ->steps(self::steps())
+            ->createAnother(false)
+            // Filament draws an action's wizard uncontained; keep the Edit
+            // pop-up's look.
+            ->modifyWizardUsing(fn (Wizard $wizard): Wizard => $wizard->contained());
+    }
+
+    /**
+     * @return array<Step>
+     */
+    public static function steps(): array
+    {
+        return [
+            Step::make('Issue')
+                ->icon('heroicon-o-document-text')
+                ->schema([
+                    TextInput::make('title')
+                        ->required()
+                        ->maxLength(200)
+                        ->placeholder('Autumn 2026')
+                        ->columnSpanFull(),
+
+                    DatePicker::make('issue_date')
+                        ->label('Publish Date')
+                        ->required()
+                        // Six months back to today, or six months ahead
+                        // with Schedule post. The calendar limits apply
+                        // to a new newsletter; an existing one keeps its
+                        // saved date and only a changed date is checked
+                        // (DateWindow).
+                        ->minDate(fn (?Newsletter $record): ?string => $record ? null : self::earliestPublishDay())
+                        ->maxDate(fn (?Newsletter $record, Get $get): ?string => $record ? null : self::latestPublishDay((bool) $get('schedule_post')))
+                        ->rule(fn (?Newsletter $record, Get $get): Closure => DateWindow::rule(
+                            self::earliestPublishDay(...),
+                            fn (): string => self::latestPublishDay((bool) $get('schedule_post')),
+                            self::tooEarlyMessage(),
+                            self::tooLateMessage((bool) $get('schedule_post')),
+                            fn (Carbon $picked): bool => self::keepsSavedDate($record, $picked, (bool) $get('schedule_post')),
+                        ))
+                        ->validationMessages([
+                            'after_or_equal' => fn (): string => self::tooEarlyMessage(),
+                            'before_or_equal' => fn (Get $get): string => self::tooLateMessage((bool) $get('schedule_post')),
+                        ])
+                        ->helperText('Orders the list on the website, newest first.'),
+
+                    // Not stored: a future publish date is what makes an
+                    // issue scheduled, so Edit ticks it from the date.
+                    Checkbox::make('schedule_post')
+                        ->label('Schedule post')
+                        ->live()
+                        ->dehydrated(false)
+                        ->afterStateHydrated(fn (Checkbox $component, ?Newsletter $record) => $component->state(self::isScheduled($record)))
+                        ->helperText('Allows a date up to 6 months ahead. The issue stays off the website until that date.')
+                        ->columnSpanFull(),
+
+                    Textarea::make('summary')
+                        ->maxLength(500)
+                        ->rows(3)
+                        ->columnSpanFull()
+                        ->helperText('500 Character Limit'),
+                ])
+                ->columns(2),
+
+            Step::make('File & Visibility')
+                ->icon('heroicon-o-paper-clip')
+                ->schema([
+                    DatabaseFileUpload::forDocument('file_id')
+                        ->label('PDF')
+                        ->columnSpanFull(),
+
+                    TextInput::make('file_pages')
+                        ->label('Page count')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(9999)
+                        ->helperText('Optional. Shown next to the file size.'),
+
+                    // Shown for reference only. The value is derived from
+                    // the uploaded file by a saving hook on the model, not
+                    // from this field — dehydrated(false) keeps the form
+                    // from writing it and the two from ever disagreeing.
+                    TextInput::make('file_size_bytes')
+                        ->label('File size (bytes)')
+                        ->numeric()
+                        ->readOnly()
+                        ->dehydrated(false)
+                        ->helperText('Set automatically from the uploaded file.'),
+
+                    Toggle::make('is_published')
+                        ->label('Published')
+                        ->helperText('Off keeps it off the website, and makes its PDF unreachable.')
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
+
+            Step::make('Preview')
+                ->icon('heroicon-o-sparkles')
+                ->description('How your newsletter will appear on the website.')
+                ->schema([
+                    /*
+                    Same pattern as the event preview: Placeholder with a
+                    ->content() closure that reads all earlier steps' values
+                    via $get and renders a Blade template. HtmlString stops
+                    Filament from escaping the rendered HTML as plain text.
+                    */
+                    Placeholder::make('newsletter_preview')
+                        ->label('')
+                        ->content(function (Get $get): HtmlString {
+                            // issue_date is stored as a plain date (no time),
+                            // so Carbon::parse() gives us a Carbon instance we
+                            // can format as "Month Year" in the template.
+                            $issueDate = filled($get('issue_date'))
+                                ? \Carbon\Carbon::parse($get('issue_date'))
+                                : null;
+
+                            // file_size_bytes is read-only and set by a model
+                            // hook on save, so it's only available here when
+                            // editing an existing newsletter — it will be null
+                            // when creating a new one.
+                            return new HtmlString(view('filament.forms.newsletter-preview', [
+                                'title'         => $get('title'),
+                                'summary'       => $get('summary'),
+                                'issueDate'     => $issueDate,
+                                'hasFile'       => filled($get('file_id')),
+                                'fileSizeBytes' => $get('file_size_bytes'),
+                                'filePages'     => $get('file_pages'),
+                                'isPublished'   => (bool) $get('is_published'),
+                                'isScheduled'   => $issueDate !== null
+                                    && $issueDate->toDateString() > self::latestPublishDay(false),
+                            ])->render());
+                        })
+                        ->columnSpanFull(),
+                ]),
+        ];
     }
 
     public static function table(Table $table): Table
@@ -272,7 +353,7 @@ class NewsletterResource extends Resource
             ])
             ->emptyStateHeading('No newsletters yet')
             ->emptyStateActions([
-                CreateAction::make()->label('Add an issue'),
+                self::createAction(),
             ]);
     }
 

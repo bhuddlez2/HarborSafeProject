@@ -66,6 +66,13 @@
         </svg>
         This newsletter is set to <strong>Draft</strong> — it won't appear on the website until Published is turned on.
     </div>
+    @elseif($isScheduled ?? false)
+    <div style="margin-top: 12px; padding: 10px 16px; background: #ede3f5; border-radius: 8px; font-size: 13px; color: #5C0F8B; display: flex; gap: 8px; align-items: center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <span><strong>Scheduled</strong> — it will appear on the website on {{ $issueDate->format('F j, Y') }}.</span>
+    </div>
     @endif
 
 </div>

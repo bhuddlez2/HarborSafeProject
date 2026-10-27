@@ -88,8 +88,10 @@ class ContentFileController extends Controller
             ->where('is_published', true)
             ->where('image_file_id', $file)
             ->exists()
+            // A scheduled issue's PDF stays hidden until its date, like
+            // the issue itself.
             || Newsletter::query()
-                ->where('is_published', true)
+                ->onWebsite()
                 ->where('file_id', $file)
                 ->exists();
     }

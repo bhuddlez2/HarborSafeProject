@@ -18,7 +18,8 @@ use Livewire\Livewire;
 Realistic ranges for typed dates (dates of birth are DateOfBirthTest):
 
   - event start/end: a year back to two years ahead;
-  - newsletter issue date: 2000 to a month ahead;
+  - newsletter publish date: the 1st of the month six months back to today,
+    or with Schedule post to the end of the month six months ahead;
   - a staff-entered feedback form: up to two years back, never ahead;
   - the tables' from/until filters and the Analytics custom range: no future
     day, and the end not before the start.
@@ -73,20 +74,62 @@ test('an older event can still be edited, but not moved to another old date', fu
         ->assertHasActionErrors(['starts_at']);
 });
 
-test('a newsletter issue date runs from 2000 to a month ahead', function (string $date, bool $allowed) {
+test('a newsletter publish date runs from six months back to today, or six months ahead when scheduled', function (string $date, bool $scheduled, bool $allowed) {
     $this->actingAs(staffUser(UserRole::Secretary));
 
     $page = Livewire::test(ManageNewsletters::class)
-        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => $date]);
+        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => $date, 'schedule_post' => $scheduled]);
 
     // Only the date is judged here; the test sends no file.
     $allowed ? $page->assertHasNoActionErrors(['issue_date']) : $page->assertHasActionErrors(['issue_date']);
 })->with([
-    '1 January 2000' => ['2000-01-01', true],
-    'the day before' => ['1999-12-31', false],
-    'a month ahead' => ['2026-11-26', true],
-    'a month and a day ahead' => ['2026-11-27', false],
+    '1 April, the 1st of the month six months back' => ['2026-04-01', false, true],
+    'the day before' => ['2026-03-31', false, false],
+    'today' => ['2026-10-26', false, true],
+    'tomorrow, not scheduled' => ['2026-10-27', false, false],
+    'tomorrow, scheduled' => ['2026-10-27', true, true],
+    '30 April 2027, scheduled' => ['2027-04-30', true, true],
+    '1 May 2027, scheduled' => ['2027-05-01', true, false],
+    'six months back, scheduled' => ['2026-04-01', true, true],
 ]);
+
+test('the publish date explains what went wrong', function () {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    Livewire::test(ManageNewsletters::class)
+        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => '2026-03-31'])
+        ->assertHasActionErrors(['issue_date' => "Can't be before April 1, 2026."]);
+
+    Livewire::test(ManageNewsletters::class)
+        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => '2026-11-02'])
+        ->assertHasActionErrors(['issue_date' => "Can't be in the future. Tick Schedule post to choose a later date."]);
+
+    Livewire::test(ManageNewsletters::class)
+        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => '2027-05-01', 'schedule_post' => true])
+        ->assertHasActionErrors(['issue_date' => "Can't be after April 30, 2027."]);
+});
+
+test('a scheduled newsletter opens with Schedule post ticked, and unticking it refuses its future date', function () {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    $newsletter = Newsletter::create([
+        'title' => staffRunToken().' Winter issue',
+        'issue_date' => '2026-12-01',
+        'is_published' => true,
+    ]);
+
+    Livewire::test(ManageNewsletters::class)
+        ->mountAction(TestAction::make(EditAction::class)->table($newsletter))
+        ->assertActionDataSet(['schedule_post' => true])
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    Livewire::test(ManageNewsletters::class)
+        ->callAction(TestAction::make(EditAction::class)->table($newsletter), data: ['schedule_post' => false])
+        ->assertHasActionErrors(['issue_date']);
+
+    expect($newsletter->fresh()->issue_date->toDateString())->toBe('2026-12-01');
+});
 
 test('an older newsletter keeps its date when edited', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
