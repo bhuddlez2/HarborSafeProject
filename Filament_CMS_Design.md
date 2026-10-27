@@ -1017,8 +1017,10 @@ and its PDF, and the Civilian assessments high-risk filter. The pages
 authorize themselves with `canAccess()`. `AnalyticsTest`.
 
 **Logs** (`/logs`, `App\Filament\Resources\Logs\LogResource`, list page `ListLogs`): one
-sidebar item and **one list** of every view, PDF download and edit, newest first. Decided
-2026-10-26; it replaces the two tabs (Access log at `/logs/access`, Change log at
+sidebar item and **one list** of every view, PDF download and edit of an officer or
+civilian assessment, newest first. Decided 2026-10-26; resource request rows dropped
+2026-10-27 (Finishing Touches item 28: they are still recorded in `assessment_access_log`,
+just not listed); it replaces the two tabs (Access log at `/logs/access`, Change log at
 `/logs/changes`) and **the plan's "Change log page stays edits only"**.
 
 **How the list is built.** The rows are `App\Models\LogEntry`, a read-only model with no
@@ -1026,7 +1028,8 @@ table of its own and **no database view**. `LogEntry::visibleTo($user)` UNIONs
 `assessment_access_log` (views and downloads) and `assessment_edits` (one row per save) in
 a subquery named `log_entries`, with common columns `EntryID` (the `AccessID` or
 `EditID`), `OccurredAt`, `UserID`, `Action` (`App\Enums\LogAction`: view / download /
-edit), the three form pointers, and `EditID` on edit rows; an edit's assessment sits in
+edit), the two assessment pointers, and `EditID` on edit rows (the access half leaves out
+resource request rows with `whereNull('ResourceRequestFormID')` before the union); an edit's assessment sits in
 `LawEnforcementDocumentID`, like an access row about an officer assessment. **Each half is
 scoped before the union** by its own scope — `AssessmentAccessLog::visibleTo()` and
 `AssessmentEdit::visibleTo()`, both built on `LawEnforcementAssessment::visibleTo()` (§5
@@ -1035,9 +1038,9 @@ query, can only narrow it. A bare `LogEntry::query()` reads a missing table and 
 the model refuses writes.
 
 **Who sees what** (unchanged): **admins and super admins** see every row — officer and
-civilian assessments, resource requests, edits; **police admins with an agency** see only
-rows about their own agency's officers' assessments, whoever made them — never a civilian
-assessment or resource request, never another agency's. Everyone else, and a police admin
+civilian assessments, edits; **police admins with an agency** see only rows about their
+own agency's officers' assessments, whoever made them — never a civilian assessment,
+never another agency's. Everyone else, and a police admin
 with **no** agency, gets no Logs item and a 403 (`LogResource::canOpenLogs()`).
 
 **Columns:** When (Eastern) · Who · Action (badge: Viewed / Downloaded PDF / Edited) ·

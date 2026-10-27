@@ -12,6 +12,11 @@ use LogicException;
 One row of the Logs page: a view or PDF download (assessment_access_log) or an
 edit (assessment_edits, one row per save), read together as one list.
 
+Assessments only - officer and civilian (Finishing Touches item 28). The
+access log also records resource request PDF downloads and follow-up page
+views, but those rows stay out of this list; they are left out here, in the
+access half, before anything else applies.
+
 There is no log_entries table and no database view. The rows come from
 visibleTo(), which UNIONs the two tables in a subquery and names it
 log_entries. Each half is scoped BEFORE the union by its own scope -
@@ -23,8 +28,8 @@ LogEntry::query() reads the missing table and fails, so the only way in is the
 scoped one.
 
 Common columns: EntryID (the AccessID or EditID), OccurredAt, UserID (who
-viewed, downloaded or edited), Action (LogAction), the three form pointers, and
-EditID on edit rows. An edit row's assessment sits in LawEnforcementDocumentID,
+viewed, downloaded or edited), Action (LogAction), the two assessment
+pointers, and EditID on edit rows. An edit row's assessment sits in LawEnforcementDocumentID,
 like an access row about an officer assessment, so the record column and every
 officer-assessment filter treat both the same way.
 
@@ -66,6 +71,7 @@ class LogEntry extends BaseModel
     {
         $access = AssessmentAccessLog::query()
             ->visibleTo($user)
+            ->whereNull('ResourceRequestFormID')
             ->select([
                 'AccessID as EntryID',
                 'AccessedAt as OccurredAt',
@@ -73,7 +79,6 @@ class LogEntry extends BaseModel
                 'Action',
                 'LawEnforcementDocumentID',
                 'PrivateDocumentID',
-                'ResourceRequestFormID',
                 DB::raw('NULL as EditID'),
             ]);
 
@@ -86,7 +91,6 @@ class LogEntry extends BaseModel
                 DB::raw("'".LogAction::Edit->value."' as Action"),
                 'DocumentID as LawEnforcementDocumentID',
                 DB::raw('NULL as PrivateDocumentID'),
-                DB::raw('NULL as ResourceRequestFormID'),
                 'EditID',
             ]);
 
@@ -117,13 +121,6 @@ class LogEntry extends BaseModel
     public function privateAssessment()
     {
         return $this->belongsTo(PrivateAssessment::class, 'PrivateDocumentID');
-    }
-
-    // On the Feedback connection, so no foreign key: the form can be gone (a
-    // resource request deleted as spam) while its log rows remain.
-    public function resourceRequestForm()
-    {
-        return $this->belongsTo(ResourceRequestForm::class, 'ResourceRequestFormID');
     }
 
     public function edit()

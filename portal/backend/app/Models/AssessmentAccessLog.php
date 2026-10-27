@@ -67,8 +67,9 @@ class AssessmentAccessLog extends BaseModel
         ]);
     }
 
-    // The access rows the Logs page shows $user (one half of
-    // LogEntry::visibleTo()). Admin and super admin: every row, of every kind.
+    // The access rows $user may see (one half of LogEntry::visibleTo(), which
+    // then leaves out resource request rows; also each assessment's own Log
+    // pop-up). Admin and super admin: every row, of every kind.
     // Police admin: only rows about a law-enforcement assessment that
     // LawEnforcementAssessment::visibleTo() lets them see - their own
     // agency's officers' - whoever opened it; never a civilian assessment or

@@ -8,14 +8,18 @@ use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Models\AssessmentAccessLog;
 use App\Models\ResourceRequestForm;
+use App\Support\Timezones;
 use Filament\Actions\Testing\TestAction;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
 /*
 The views and PDF downloads on the Logs page (LogResource, /logs): rows of
 assessment_access_log, read-only, naming each record by its kind, submitted
-time and id alone - never by anything in it. Admins see every row; a police
+time and id alone - never by anything in it. Officer and civilian assessments
+only: resource request views and downloads are recorded in the same table but
+never listed (Finishing Touches item 28). Admins see every row; a police
 admin with an agency sees only rows about their own agency's officers'
 assessments, whoever opened them (AssessmentAccessLog::visibleTo(), the access
 half of LogEntry::visibleTo()). Edits mixed in, the filters on these rows and
@@ -79,21 +83,48 @@ test('an admin opens Logs and sees the access rows, and opening it logs nothing'
 
     $this->get(LogResource::getUrl('index'))->assertOk();
 
+    // Stored UTC, shown Eastern.
+    $civilianSubmitted = Carbon::parse($f->civilian->refresh()->DateCreated)
+        ->setTimezone(Timezones::DISPLAY)
+        ->format('M j, Y g:i a');
+
     Livewire::test(ListLogs::class)
         ->searchTable(accessLogRename($f->admin, 'Opener'))
-        ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView, $f->requestView])
-        ->assertCanNotSeeTableRecords([$f->officerView])
+        ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView])
+        ->assertCanNotSeeTableRecords([$f->officerView, $f->requestView])
         ->assertTableColumnFormattedStateSet('Action', 'Downloaded PDF', $f->adminDownload)
         ->assertTableColumnStateSet('record', 'Officer assessment', $f->adminDownload)
         ->assertTableColumnStateSet('record', 'Civilian assessment', $f->civilianView)
-        ->assertTableColumnStateSet('record', 'Resource request', $f->requestView)
-        // 18:30 UTC is 2:30 pm Eastern in September.
-        ->assertTableColumnHasDescription('record', 'Submitted Sep 15, 2026 2:30 pm · '.substr($f->request->FormID, 0, 8), $f->requestView)
+        ->assertTableColumnHasDescription('record', "Submitted {$civilianSubmitted} · ".substr($f->civilian->DocumentID, 0, 8), $f->civilianView)
         // Access rows have no change count.
         ->assertTableColumnStateSet('changes_count', null, $f->civilianView);
 
     expect(AssessmentAccessLog::count())->toBe($before);
 });
+
+// Finishing Touches item 28: a resource request's PDF downloads and follow-up
+// page views are still recorded, but Logs lists assessments only - for every
+// role that can open it, whatever Show or the search box say.
+test('resource request rows are recorded but never listed on Logs', function (UserRole $role) {
+    $f = accessLogFixture();
+    $download = AssessmentAccessLog::record($f->request, AssessmentAccess::Download, $f->admin);
+    $user = $role === UserRole::Admin ? $f->admin : staffUser($role);
+    $this->actingAs($user);
+
+    expect(AssessmentAccessLog::where('ResourceRequestFormID', $f->request->FormID)->count())->toBe(2)
+        ->and(LogResource::getEloquentQuery()->whereIn('EntryID', [$f->requestView->AccessID, $download->AccessID])->count())->toBe(0);
+
+    $list = Livewire::test(ListLogs::class)->searchTable(accessLogRename($f->admin, 'Requester'));
+
+    foreach ([ListLogs::SHOW_ALL, LogAction::View->value, LogAction::Download->value] as $show) {
+        $list->set('show', $show)->assertCanNotSeeTableRecords([$f->requestView, $download]);
+    }
+
+    $list->set('show', ListLogs::SHOW_ALL)->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView]);
+})->with([
+    'admin' => [UserRole::Admin],
+    'super admin' => [UserRole::SuperAdmin],
+]);
 
 test('everyone but an active admin or a police admin with an agency is kept out of Logs', function (Closure $makeUser) {
     $user = $makeUser();
@@ -141,7 +172,7 @@ test('Logs shows no names or phone numbers from the records', function () {
 
     $html = Livewire::test(ListLogs::class)
         ->searchTable(accessLogRename($f->admin, 'Opener'))
-        ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView, $f->requestView])
+        ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView])
         ->html();
 
     expect($html)
@@ -152,7 +183,7 @@ test('Logs shows no names or phone numbers from the records', function () {
         // filter card's labels ("Offender first name").
         ->not->toMatch('/Offender(?! (first|last) name)/')
         ->not->toContain('(423)555-0100')
-        // The resource request's requester.
+        // The resource request's requester (its row isn't listed at all).
         ->not->toContain($f->request->FirstName)
         ->not->toContain('(423)555-0177')
         ->not->toContain($f->request->EmailAddress);
@@ -166,7 +197,7 @@ test('the Show dropdown picks All, Viewed, Downloaded PDF or Edited, and applies
     // The admin's own edit, so the search box narrows to it as well.
     $edit = App\Services\AssessmentEditor::apply($f->assessmentA, ['OffenderVictimRelationship' => 'spouse'], [], 'Pest Show', $f->admin);
 
-    $views = [$f->civilianView, $f->requestView];
+    $views = [$f->civilianView];
     $downloads = [$f->adminDownload];
     $edits = [$edit];
 
@@ -175,6 +206,7 @@ test('the Show dropdown picks All, Viewed, Downloaded PDF or Edited, and applies
         ->assertSet('show', ListLogs::SHOW_ALL)
         ->searchTable($name)
         ->assertCanSeeTableRecords([...$views, ...$downloads, ...$edits])
+        ->assertCanNotSeeTableRecords([$f->requestView])
         // Viewed: views only.
         ->set('show', LogAction::View->value)
         ->assertCanSeeTableRecords($views)
@@ -250,7 +282,7 @@ test('Logs can only be read: no create, edit or view pages, and no action on acc
         ->and($table->getHeaderActions())->toBeEmpty()
         ->and(LogResource::canCreate())->toBeFalse();
 
-    foreach ([$f->adminDownload, $f->civilianView, $f->requestView] as $row) {
+    foreach ([$f->adminDownload, $f->civilianView] as $row) {
         $list->assertActionHidden(TestAction::make('view')->table($row));
     }
 });
@@ -262,7 +294,7 @@ them, and nothing else (Filament_CMS_Design.md section 5, rule 5).
 
 // Assessment A opened by its officer, its police admin and an admin;
 // assessment B by its officer; a civilian assessment and a resource request
-// by the admin.
+// by the admin (the request's row is never listed).
 function accessLogAgencyFixture(): object
 {
     $f = accessLogFixture();
@@ -312,13 +344,13 @@ test('a police admin of the other agency sees the other half, and nothing withou
     $this->get(LogResource::getUrl('index'))->assertForbidden();
 });
 
-test('an admin still sees every row, of every kind', function () {
+test('an admin still sees every assessment row, of both kinds', function () {
     $f = accessLogAgencyFixture();
     $this->actingAs($f->admin);
 
-    $all = [$f->officerView, $f->adminDownload, $f->policeAdminView, $f->otherAgencyView, $f->civilianView, $f->requestView];
+    $all = [$f->officerView, $f->adminDownload, $f->policeAdminView, $f->otherAgencyView, $f->civilianView];
 
-    expect(LogResource::getEloquentQuery()->whereIn('EntryID', collect($all)->pluck('AccessID'))->count())->toBe(6);
+    expect(LogResource::getEloquentQuery()->whereIn('EntryID', collect([...$all, $f->requestView])->pluck('AccessID'))->count())->toBe(5);
 
     Livewire::test(ListLogs::class)
         ->searchTable(accessLogRename($f->officerB, 'Elsewhere'))
@@ -388,16 +420,16 @@ test('a police admin searching for another agency\'s officer gets no rows', func
         ->assertCountTableRecords(1);
 });
 
-test('an admin searching still finds rows of all three record types', function () {
+test('an admin searching still finds rows of both assessment kinds, and no resource request', function () {
     $f = accessLogAgencyFixture();
     $name = accessLogRename($f->admin, 'Ashworth');
     $this->actingAs($f->admin);
 
     Livewire::test(ListLogs::class)
         ->searchTable(strtolower($name))
-        ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView, $f->requestView])
-        ->assertCanNotSeeTableRecords([$f->officerView, $f->policeAdminView, $f->otherAgencyView])
-        ->assertCountTableRecords(3);
+        ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView])
+        ->assertCanNotSeeTableRecords([$f->officerView, $f->policeAdminView, $f->otherAgencyView, $f->requestView])
+        ->assertCountTableRecords(2);
 });
 
 test('only the Who column is searched, never record ids', function () {

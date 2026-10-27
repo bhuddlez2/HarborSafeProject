@@ -2,10 +2,13 @@
 
 namespace App\Filament\FollowUps;
 
+use App\Enums\AssessmentAccess;
+use App\Models\AssessmentAccessLog;
 use App\Models\FollowUp;
 use App\Models\FollowUpEntry;
 use App\Support\Timezones;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Support\Icons\Heroicon;
 
 /*
@@ -16,6 +19,12 @@ downloads are recorded in assessment_access_log and never shown here.
 
 One Blade view renders it everywhere: the Log button on the Follow-ups queue
 and the history on each form's follow-up page.
+
+The notes can hold names, so opening the queue's pop-up is recorded as a view
+of the form in assessment_access_log, like opening the follow-up page
+(Finishing Touches item 28, AS 2026-10-27: opening it anywhere counts). An
+assessment's view then shows on Logs; a resource request's is recorded but
+not listed there.
 */
 final class FollowUpLog
 {
@@ -29,6 +38,17 @@ final class FollowUpLog
             ->icon(Heroicon::OutlinedClock)
             ->modalHeading('Follow-up log')
             ->modalDescription(fn (FollowUp $record): string => $record->Kind->label().' · now '.$record->Status->label())
+            // Once per open, after the row is found through the queue's
+            // scoped query and before the pop-up is sent. mountUsing, as this
+            // pop-up has no schema (see AssessmentViews). No catch: a failed
+            // write stops it opening.
+            ->mountUsing(function (FollowUp $record): void {
+                $form = $record->form();
+
+                if ($form !== null) {
+                    AssessmentAccessLog::record($form, AssessmentAccess::View, Filament::auth()->user());
+                }
+            })
             ->modalContent(fn (FollowUp $record) => view(self::VIEW, ['steps' => self::steps($record)]))
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close');

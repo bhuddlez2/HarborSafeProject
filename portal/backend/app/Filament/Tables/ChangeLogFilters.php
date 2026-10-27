@@ -20,8 +20,8 @@ filters apply to every row:
   - Who: the person who viewed, downloaded or edited;
   - Date: the row's own time (OccurredAt).
 The rest look at the officer assessment a row is about, so setting any of
-them leaves only officer-assessment rows (civilian and resource request rows
-have no officer assessment to match):
+them leaves only officer-assessment rows (civilian assessment rows have no
+officer assessment to match):
   - Original submitter, Assessment ID (part of its DocumentID - the 8
     characters in a PDF's file name work), Agency (admins and super admins
     only, by users.role), victim and offender first and last name.

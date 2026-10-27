@@ -27,17 +27,19 @@ use Illuminate\Support\Carbon;
 use UnitEnum;
 
 /*
-Logs (/logs): one list of every view, PDF download and edit, newest first.
-Views and downloads come from assessment_access_log, edits (one row per save)
-from assessment_edits; App\Models\LogEntry reads both together, each scoped
-before they are combined.
+Logs (/logs): one list of every view, PDF download and edit of an officer or
+civilian assessment, newest first. Views and downloads come from
+assessment_access_log, edits (one row per save) from assessment_edits;
+App\Models\LogEntry reads both together, each scoped before they are
+combined. Resource request rows are recorded in assessment_access_log too, but
+never listed here (Finishing Touches item 28): LogEntry leaves them out.
 
 Who sees what (Filament_CMS_Design.md section 5, rule 5):
   - admins and super admins: every row - officer and civilian assessments,
-    resource requests, edits;
+    edits;
   - police admins with an agency: only rows about their own agency's
-    officers' assessments, whoever made them - never a civilian assessment or
-    resource request, never another agency's;
+    officers' assessments, whoever made them - never a civilian assessment,
+    never another agency's;
   - everyone else, and a police admin with no agency: no Logs item, and 403.
 
 Above the table, the page's Show dropdown (ListLogs) and the search box, which
@@ -75,13 +77,13 @@ class LogResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    // Which pointer is set says what kind of form a row is about; exactly one
-    // is (assessment_access_log's CHECK constraint; edits always point at an
-    // officer assessment).
+    // Which pointer is set says what kind of assessment a row is about;
+    // exactly one is (assessment_access_log's CHECK constraint, with resource
+    // request rows left out by LogEntry; edits always point at an officer
+    // assessment).
     private const KINDS = [
         'LawEnforcementDocumentID' => 'Officer assessment',
         'PrivateDocumentID' => 'Civilian assessment',
-        'ResourceRequestFormID' => 'Resource request',
     ];
 
     // Grouping and order only - see App\Filament\PoliceAdminNavigation.
@@ -183,14 +185,12 @@ class LogResource extends Resource
             // Cards instead of a wide table on phones (team plan task 10).
             ->stackedOnMobile()
             // Only the two columns recordLabel() reads, so nothing personal is
-            // even loaded. The resource request is on Feedback, which eager
-            // loading reaches with its own query.
+            // even loaded.
             ->modifyQueryUsing(fn (Builder $query): Builder => $query
                 ->with([
                     'user',
                     'lawEnforcementAssessment:DocumentID,DateCreated',
                     'privateAssessment:DocumentID,DateCreated',
-                    'resourceRequestForm:FormID,SubmissionDate',
                 ])
                 ->withCount(['detailChanges', 'answerChanges']))
             ->recordActions([
@@ -202,7 +202,7 @@ class LogResource extends Resource
                     ->afterFormFilled(fn (LogEntry $record) => AssessmentViews::log($record->edit->assessment)),
             ])
             ->emptyStateHeading('Nothing logged yet')
-            ->emptyStateDescription('Views, PDF downloads and edits of assessments and resource requests appear here.'));
+            ->emptyStateDescription('Views, PDF downloads and edits of assessments appear here.'));
     }
 
     public static function getPages(): array
@@ -225,16 +225,14 @@ class LogResource extends Resource
     }
 
     // "Submitted Oct 20, 2026 3:15 pm · 1a2b3c4d", or "Removed · 1a2b3c4d"
-    // when the form is gone (a resource request deleted as spam: that pointer
-    // has no foreign key).
+    // if the assessment is somehow gone.
     private static function recordLabel(LogEntry $record): string
     {
         $column = self::pointer($record);
 
-        [$form, $submittedColumn] = match ($column) {
-            'LawEnforcementDocumentID' => [$record->lawEnforcementAssessment, 'DateCreated'],
-            'PrivateDocumentID' => [$record->privateAssessment, 'DateCreated'],
-            'ResourceRequestFormID' => [$record->resourceRequestForm, 'SubmissionDate'],
+        $form = match ($column) {
+            'LawEnforcementDocumentID' => $record->lawEnforcementAssessment,
+            'PrivateDocumentID' => $record->privateAssessment,
         };
 
         $id = substr((string) $record->{$column}, 0, 8);
@@ -243,7 +241,7 @@ class LogResource extends Resource
             return "Removed · {$id}";
         }
 
-        $submitted = $form->getAttribute($submittedColumn);
+        $submitted = $form->getAttribute('DateCreated');
 
         if ($submitted === null) {
             return $id;

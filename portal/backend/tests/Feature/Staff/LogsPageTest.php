@@ -23,7 +23,9 @@ use Livewire\Livewire;
 The Logs page (App\Filament\Resources\Logs\LogResource, /logs): one list of
 views, PDF downloads and edits, newest first, built by LogEntry::visibleTo()
 from assessment_access_log and assessment_edits, each scoped before the
-union. Admins and super admins see every row; a police admin with an agency
+union. Officer and civilian assessments only: resource request rows are
+recorded in the access log but never listed (Finishing Touches item 28).
+Admins and super admins see every row; a police admin with an agency
 only their own agency's officer-assessment rows; everyone else, including a
 police admin with no agency, is refused and has no Logs item. The old
 addresses - its two former tabs and the pages before them - redirect here.
@@ -79,7 +81,8 @@ function logsResourceRequest(): ResourceRequestForm
 
 // Two agencies. Officer A views, downloads and edits assessment A at three
 // different times; officer B edits assessment B; an admin views a civilian
-// assessment and a resource request, and downloads assessment A.
+// assessment and a resource request, and downloads assessment A. The resource
+// request's view is recorded but never listed.
 function logsWorld(): object
 {
     $w = pestTwoAgencies();
@@ -96,7 +99,7 @@ function logsWorld(): object
     $w->adminDownload = logsAt(AssessmentAccessLog::record($w->assessmentA, AssessmentAccess::Download, $w->admin), '2026-05-06 12:00:00');
 
     $w->agencyA = [$w->viewA, $w->editA, $w->downloadA, $w->adminDownload];
-    $w->notAgencyA = [$w->editB, $w->civilianView, $w->requestView];
+    $w->notAgencyA = [$w->editB, $w->civilianView];
 
     return $w;
 }
@@ -122,7 +125,7 @@ test('a super admin sees every row, like an admin', function () {
     $this->actingAs(staffUser(UserRole::SuperAdmin));
 
     expect(LogResource::canAccess())->toBeTrue()
-        ->and(LogResource::getEloquentQuery()->whereIn('EntryID', collect([...$w->agencyA, ...$w->notAgencyA])->map->getKey())->count())->toBe(7);
+        ->and(LogResource::getEloquentQuery()->whereIn('EntryID', collect([...$w->agencyA, ...$w->notAgencyA, $w->requestView])->map->getKey())->count())->toBe(6);
 });
 
 test('everyone else is refused Logs, and has no Logs item', function (Closure $makeUser) {
@@ -220,13 +223,13 @@ test('search finds views, downloads and edits by the person\'s name, in any case
 
 // --- Who sees what -----------------------------------------------------
 
-test('a police admin sees only their agency\'s rows, never civilian or resource requests', function () {
+test('a police admin sees only their agency\'s rows, never civilian assessments', function () {
     $w = logsWorld();
     $this->actingAs($w->policeAdminA);
 
     Livewire::test(ListLogs::class)
         ->assertCanSeeTableRecords($w->agencyA)
-        ->assertCanNotSeeTableRecords($w->notAgencyA);
+        ->assertCanNotSeeTableRecords([...$w->notAgencyA, $w->requestView]);
 
     // Agency A exists only in this test, so the scoped rows are exactly these.
     expect(LogResource::getEloquentQuery()->pluck('EntryID')->sort()->values()->all())
@@ -247,11 +250,11 @@ test('the other agency\'s police admin sees none of agency A\'s rows, in the lis
         ->assertCountTableRecords(0);
 });
 
-test('an admin sees every row of every kind', function () {
+test('an admin sees every assessment row of both kinds, and no resource request', function () {
     $w = logsWorld();
     $this->actingAs($w->admin);
 
-    expect(LogResource::getEloquentQuery()->whereIn('EntryID', collect([...$w->agencyA, ...$w->notAgencyA])->map->getKey())->count())->toBe(7);
+    expect(LogResource::getEloquentQuery()->whereIn('EntryID', collect([...$w->agencyA, ...$w->notAgencyA, $w->requestView])->map->getKey())->count())->toBe(6);
 });
 
 // --- Filters across the merged list ------------------------------------
@@ -266,15 +269,16 @@ test('Who and Date apply to every row, access and edit alike', function () {
         ->assertCountTableRecords(3)
         ->resetTableFilters();
 
-    // May 4th and 5th, Eastern, as the admin: the civilian and resource
-    // request views only.
+    // May 4th and 5th, Eastern, as the admin: the civilian view only (the
+    // resource request view on the 5th is never listed).
     Livewire::test(ListLogs::class)
         ->set('tableDeferredFilters.who.value', $w->admin->getKey())
         ->set('tableDeferredFilters.date.from', '2026-05-04')
         ->set('tableDeferredFilters.date.until', '2026-05-05')
         ->call('applyTableFilters')
-        ->assertCanSeeTableRecords([$w->civilianView, $w->requestView])
-        ->assertCountTableRecords(2);
+        ->assertCanSeeTableRecords([$w->civilianView])
+        ->assertCanNotSeeTableRecords([$w->requestView])
+        ->assertCountTableRecords(1);
 });
 
 test('officer-assessment filters leave only officer-assessment rows', function (string $filter, Closure $value) {
@@ -282,10 +286,11 @@ test('officer-assessment filters leave only officer-assessment rows', function (
     $this->actingAs($w->admin);
     $name = logsRename($w->admin, 'Narrow');
 
-    // The admin's own rows: two of the three are not about an officer assessment.
+    // The admin's own listed rows: one of the two is not about an officer
+    // assessment.
     $list = Livewire::test(ListLogs::class)
         ->searchTable($name)
-        ->assertCanSeeTableRecords([$w->adminDownload, $w->civilianView, $w->requestView]);
+        ->assertCanSeeTableRecords([$w->adminDownload, $w->civilianView]);
 
     pestApplyFilter($list, $filter, $value($w))
         ->assertCanSeeTableRecords([$w->adminDownload])
