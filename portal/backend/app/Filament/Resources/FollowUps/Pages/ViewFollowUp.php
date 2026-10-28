@@ -201,7 +201,7 @@ class ViewFollowUp extends Page
                 ]),
                 Select::make('CountyID')
                     ->label('County')
-                    ->options(fn (): array => County::query()->orderBy('Name')->pluck('Name', 'id')->all()),
+                    ->options(fn (): array => County::query()->otherLast()->orderBy('Name')->pluck('Name', 'id')->all()),
                 CheckboxList::make('ResourceTypeIDs')
                     ->label('Resources of interest')
                     ->options(fn (): array => ResourceType::query()->orderBy('Name')->pluck('Name', 'id')->all())

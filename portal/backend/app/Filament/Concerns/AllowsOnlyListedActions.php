@@ -43,6 +43,14 @@ trait AllowsOnlyListedActions
         return true;
     }
 
+    // A row the screen refuses for a reason staff should see: the button
+    // stays, greyed out, with this as its hover text (an action opts in with
+    // ->authorizationTooltip()). Null when the row is not refused this way.
+    protected static function recordRefusal(string $action, Model $record): ?string
+    {
+        return null;
+    }
+
     public static function getAuthorizationResponse(string | UnitEnum $action, ?Model $record = null): Response
     {
         $action = match (true) {
@@ -54,6 +62,10 @@ trait AllowsOnlyListedActions
         $allowed = static::canAccess()
             && ($action === 'viewAny' || in_array($action, static::allowedActions(), true))
             && ($record === null || static::allowsRecord($action, $record));
+
+        if ($allowed && $record !== null && filled($reason = static::recordRefusal($action, $record))) {
+            return Response::deny($reason);
+        }
 
         return $allowed ? Response::allow() : Response::deny();
     }

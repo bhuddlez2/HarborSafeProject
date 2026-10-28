@@ -107,11 +107,14 @@ abstract class LookupResource extends Resource
             ])
             ->defaultSort('Name')
             ->recordActions([
-                EditAction::make(),
+                // A built-in row (CountyResource's "Other") keeps both
+                // buttons, greyed out with the reason on hover.
+                EditAction::make()->authorizationTooltip(),
                 DeleteAction::make()
+                    ->authorizationTooltip()
                     // A foreign key would reject this anyway; hiding the
                     // action explains why far better than a database error.
-                    ->visible(fn (Model $record): bool => ! static::isInUse($record)),
+                    ->visible(fn (Model $record): bool => filled(static::recordRefusal('delete', $record)) || ! static::isInUse($record)),
             ])
             // No bulk delete: a bulk action cannot say which row of the
             // selection was still in use.

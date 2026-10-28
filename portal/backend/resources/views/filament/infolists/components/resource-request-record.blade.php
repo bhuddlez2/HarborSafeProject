@@ -27,7 +27,7 @@
             {{-- Stored UTC, shown Eastern - see App\Support\Timezones. --}}
             <span>{{ $record->SubmissionDate ? \Carbon\Carbon::parse($record->SubmissionDate)->setTimezone(Timezones::DISPLAY)->format('M j, Y \a\t g:i a') : '—' }}</span>
             <span class="hs-ar-header-sep">·</span>
-            <span>{{ $record->county?->Name ? $record->county->Name.' County' : 'No county given' }}</span>
+            <span>{{ $record->county ? $record->county->displayName() : 'No county given' }}</span>
             @if ($isStaff)
                 <span class="hs-ar-header-sep">·</span>
                 <span>Staff · entered by {{ $record->enteredByName() ?? 'Unknown' }}</span>
