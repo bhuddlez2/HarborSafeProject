@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Agencies;
 use App\Enums\UserRole;
 use App\Filament\Resources\Agencies\Pages\ManageAgencies;
 use App\Models\Agency;
+use App\Rules\DistinctListName;
+use App\Support\ListNames;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
@@ -114,8 +116,9 @@ class AgencyResource extends Resource
                     ->label('Agency name')
                     ->required()
                     ->maxLength(255)
-                    ->unique(ignoreRecord: true)
-                    ->dehydrateStateUsing(fn (string $state): string => trim($state))
+                    // No duplicates or sound-alikes on the list (B55/B60).
+                    ->rule(fn (?Model $record): DistinctListName => new DistinctListName(Agency::class, 'name', $record))
+                    ->dehydrateStateUsing(fn (?string $state): ?string => ListNames::tidy($state))
                     ->columnSpanFull(),
             ]);
     }

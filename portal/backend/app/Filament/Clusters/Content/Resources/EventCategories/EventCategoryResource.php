@@ -8,6 +8,9 @@ use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\EventCategories\Pages\ManageEventCategories;
 use App\Models\EventCategory;
 use App\Filament\Tables\TableAlignment;
+use App\Rules\DistinctListName;
+use App\Support\ListNames;
+use Illuminate\Database\Eloquent\Model;
 use BackedEnum;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -74,6 +77,9 @@ class EventCategoryResource extends Resource
                     ->label('Category name')
                     ->required()
                     ->maxLength(250)
+                    // No duplicates or sound-alikes on the list (B55/B60).
+                    ->rule(fn (?Model $record): DistinctListName => new DistinctListName(EventCategory::class, 'Name', $record))
+                    ->dehydrateStateUsing(fn (?string $state): ?string => ListNames::tidy($state))
                     ->columnSpanFull(),
             ]);
     }

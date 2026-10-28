@@ -3,6 +3,8 @@
 namespace App\Filament\Clusters\FormOptions\Resources;
 
 use App\Filament\Concerns\AllowsOnlyListedActions;
+use App\Rules\DistinctListName;
+use App\Support\ListNames;
 use App\Enums\UserRole;
 use App\Filament\Clusters\FormOptions\FormOptionsCluster;
 use App\Support\Timezones;
@@ -78,6 +80,9 @@ abstract class LookupResource extends Resource
                     ->label('Option name')
                     ->required()
                     ->maxLength(250)
+                    // No duplicates or sound-alikes on the list (B55/B60).
+                    ->rule(fn (?Model $record): DistinctListName => new DistinctListName(static::$model, 'Name', $record))
+                    ->dehydrateStateUsing(fn (?string $state): ?string => ListNames::tidy($state))
                     ->helperText('This is the wording the public sees in the dropdown.')
                     ->columnSpanFull(),
 

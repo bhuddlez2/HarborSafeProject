@@ -291,7 +291,7 @@ test('a super admin adds and renames agencies, never with a duplicate name, and 
 
     Livewire::test(ManageAgencies::class)
         ->callAction(CreateAction::class, ['name' => $existing->name])
-        ->assertHasFormErrors(['name' => 'unique']);
+        ->assertHasFormErrors(['name' => "\"{$existing->name}\" is already on the list."]);
 
     Livewire::test(ManageAgencies::class)
         ->callAction(TestAction::make(EditAction::class)->table($agency), ['name' => staffRunToken().' Renamed PD'])
