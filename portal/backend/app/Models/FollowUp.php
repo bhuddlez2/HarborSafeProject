@@ -112,6 +112,26 @@ class FollowUp extends BaseModel
     }
 
     /*
+    How overdue the queue shows this form (Burchfield B41, 2026-10-28): the
+    largest of FollowUps::REMINDER_HOURS (24, 48) that has passed since
+    submission while it is still in Needs Follow-Up, or null. The same clock
+    as the bell reminders, so a yellow row (24) means the first reminder has
+    gone out and a red one (48) the second. Other statuses are never overdue.
+    */
+    public function overdueHours(?CarbonInterface $now = null): ?int
+    {
+        if ($this->Status !== FollowUpStatus::NeedsFollowUp || $this->SubmittedAt === null) {
+            return null;
+        }
+
+        $now ??= now();
+
+        return collect(\App\Services\FollowUps::REMINDER_HOURS)
+            ->filter(fn (int $hours): bool => $this->SubmittedAt->copy()->addHours($hours) <= $now)
+            ->max();
+    }
+
+    /*
     When the form entered its current status: the last entry that changed
     the status, or the submission if none ever has. Not LastUpdatedAt, which
     a note on its own moves too.

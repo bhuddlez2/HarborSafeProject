@@ -21,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 
 /*
 The Follow-ups queue (team plan task 16; roadmap Phase Z): every form Harbor
@@ -104,10 +105,16 @@ class FollowUpResource extends Resource
                     ->formatStateUsing(fn (FollowUpKind $state): string => $state->label())
                     ->visible($seesSeveralKinds)),
 
+                // "Over 24 hours" / "Over 48 hours" under the date of a form
+                // still in Needs Follow-Up that long (B41), so the row's
+                // colour is never the only sign.
                 RecordCards::meta(TextColumn::make('SubmittedAt')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
+                    ->description(fn (FollowUp $record): ?HtmlString => ($hours = $record->overdueHours()) !== null
+                        ? new HtmlString('<span class="hs-overdue-tag hs-overdue-tag-'.$hours.'">Over '.$hours.' hours</span>')
+                        : null)
                     ->sortable()),
 
                 RecordCards::meta(TextColumn::make('LastUpdatedAt')
@@ -118,6 +125,12 @@ class FollowUpResource extends Resource
                     ->placeholder('Not yet')
                     ->sortable()),
             ])
+            // Overdue rows tinted yellow (24 h) or red (48 h), keeping the
+            // card class RecordCards::apply() set (B41).
+            ->recordClasses(fn (FollowUp $record): array => array_filter([
+                RecordCards::ROW,
+                ($hours = $record->overdueHours()) !== null ? 'hs-overdue-'.$hours : null,
+            ]))
             ->defaultSort('SubmittedAt', 'asc')
             ->filters([
                 SelectFilter::make('Kind')
