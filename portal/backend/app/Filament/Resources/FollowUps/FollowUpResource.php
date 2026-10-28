@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\FollowUps;
 
 use App\Enums\FollowUpKind;
+use App\Enums\FollowUpStatus;
 use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Filament\FollowUps\FollowUpLog;
 use App\Filament\Resources\FollowUps\Pages\ListFollowUps;
@@ -131,7 +132,13 @@ class FollowUpResource extends Resource
                 RecordCards::ROW,
                 ($hours = $record->overdueHours()) !== null ? 'hs-overdue-'.$hours : null,
             ]))
-            ->defaultSort('SubmittedAt', 'asc')
+            // Needs Follow-Up: oldest submitted first, so the longest wait
+            // (the yellow and red rows) is on top. Every other tab: last
+            // updated, newest first, so today's work is on top (B42).
+            ->defaultSort(
+                fn ($livewire): string => static::sortsOldestFirst($livewire->activeTab ?? null) ? 'SubmittedAt' : 'LastUpdatedAt',
+                fn ($livewire): string => static::sortsOldestFirst($livewire->activeTab ?? null) ? 'asc' : 'desc',
+            )
             ->filters([
                 SelectFilter::make('Kind')
                     ->label('Type')
@@ -152,6 +159,13 @@ class FollowUpResource extends Resource
             ])
             ->emptyStateHeading('Nothing here')
             ->emptyStateDescription('Forms in this stage of follow-up appear here.');
+    }
+
+    // The queue's starting order per status tab (Burchfield B42,
+    // 2026-10-28): only Needs Follow-Up, the default tab, is oldest first.
+    public static function sortsOldestFirst(?string $tab): bool
+    {
+        return ($tab ?? FollowUpStatus::NeedsFollowUp->value) === FollowUpStatus::NeedsFollowUp->value;
     }
 
     public static function getPages(): array
