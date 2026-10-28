@@ -88,7 +88,8 @@ test('every assessment table is a card on a phone', function (string $page, User
     'Civilian assessments' => [ListCivilianAssessments::class, UserRole::Admin],
 ]);
 
-test('the buttons sit on the right: Change log, View, Edit', function () {
+// Centred in their column: TableAlignmentTest.
+test('the buttons are in order: Change log, View, Edit', function () {
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Columns PD')));
     expect(recordActionsOf(ListLawEnforcementAssessments::class))->toBe(['changeLog', 'view', 'edit']);
 });

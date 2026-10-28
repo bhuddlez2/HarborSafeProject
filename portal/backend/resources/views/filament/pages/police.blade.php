@@ -56,7 +56,7 @@
                         <x-officer-icon name="clipboard" :size="32" />
                     </span>
                     <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
-                        View Assessments
+                        My Assessments
                     </span>
                     <span class="text-[17px] text-[#5A5566]">
                         Your agency's submitted LAP screenings and their change logs
@@ -77,14 +77,14 @@
             </div>
         @endif
 
-        {{-- Officers: their past records, in the same card as the police admin's View Assessments. --}}
+        {{-- Officers: their past records, in the same card as the police admin's My Assessments. --}}
         @if ($this->isOfficer())
             <a href="{{ $this->pastAssessmentsUrl() }}" class="{{ $lightCard }}">
                 <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5C0F8B]/10 p-4">
                     <x-officer-icon name="clipboard" :size="32" />
                 </span>
                 <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
-                    View Assessments
+                    My Assessments
                 </span>
                 <span class="text-[17px] text-[#5A5566]">
                     Your submitted LAP screenings. Each view is logged with your name and a timestamp.

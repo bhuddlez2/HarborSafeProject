@@ -32,7 +32,8 @@ The row buttons are each resource's recordActions(), after these.
 
 cards() turns each row into a card on a phone and stacks the buttons on
 narrower screens (RecordCards): victim and Yes badge on top, then offender,
-then submitted, then the buttons.
+then submitted, then the buttons. On a table the buttons are centred in
+their column (TableAlignment::buttons()).
 
 The law-enforcement tables' queries must eager-load assessmentAnswers and
 submitter and ->withCount('edits') (the Change log button reads
@@ -54,7 +55,7 @@ final class AssessmentColumns
 
     public static function cards(Table $table): Table
     {
-        return RecordCards::apply($table);
+        return TableAlignment::buttons(RecordCards::apply($table));
     }
 
     public static function yesCount(LawEnforcementAssessment|PrivateAssessment $record): int

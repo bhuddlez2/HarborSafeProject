@@ -749,7 +749,7 @@ creating an officer; `police_admin` has no edit action on assessments.
   badge (display only — the stored `badge_number` is never written). Their submissions
   fall inside `visibleTo()` for their agency, so they appear in their Assessment review and
   never in an officer's My Assessments. The police admin Home shows the officer's purple
-  **Start New Lethality Assessment** card above View Assessments and Personnel Management
+  **Start New Lethality Assessment** card above My Assessments and Personnel Management
   (`Police::canStartAssessment()`, which is `NewAssessment::canAccess()`).
 - **Civilian assessments** — submissions from the public civilian flow, view-only, for
   admin alone (§5). Each record's View pop-up has **Download PDF**
@@ -763,8 +763,8 @@ creating an officer; `police_admin` has no edit action on assessments.
   out by the resource's `canAccess()`, while `LawEnforcementAssessmentPolicy` still grants
   them record view (admin all, police admin own agency), because `Assessment review`
   authorizes through the same policy. On the officer Home page, an officer's
-  **View Assessments** card (`Police::pastAssessmentsUrl()`) opens My Assessments; a
-  police admin's View Assessments card opens Assessment review instead.
+  **My Assessments** card (`Police::pastAssessmentsUrl()`) opens My Assessments; a
+  police admin's card has the same name but opens Assessment review instead.
 - **Officers** — `App\Filament\Resources\OfficerAccounts` (on `User`), at
   `/police/officers` in a "Police Admin" navigation group: officer provisioning,
   list, create and edit, no delete. Police admins with an agency only, and only that

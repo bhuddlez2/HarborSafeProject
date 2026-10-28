@@ -36,6 +36,14 @@ class EditProfile extends BaseEditProfile
     // law_enforcement_agents.badge_number is a varchar(255).
     private const BADGE_MAX = 255;
 
+    // Every label above its box, so every box starts at the left edge.
+    // Filament puts labels beside the boxes on a full-page Account page,
+    // which left the two name boxes out of line with the rest.
+    public function defaultForm(Schema $schema): Schema
+    {
+        return parent::defaultForm($schema)->inlineLabel(false);
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
