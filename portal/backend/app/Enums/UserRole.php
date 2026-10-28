@@ -25,11 +25,13 @@ enum UserRole: string
     case SuperAdmin = 'super_admin';
 
     // How the panel names the role: on Accounts' role picker and badge.
+    // The secretary role is shown as "Staff" (Burchfield B39, 2026-10-28);
+    // its stored value and the code keep "secretary".
     public function label(): string
     {
         return match ($this) {
             self::LawEnforcement => 'Officer',
-            self::Secretary => 'Secretary',
+            self::Secretary => 'Staff',
             self::Admin => 'Admin',
             self::PoliceAdmin => 'Police Admin',
             self::SuperAdmin => 'Super Admin',

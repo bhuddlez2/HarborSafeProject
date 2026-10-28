@@ -157,7 +157,7 @@ test('an admin still creates only secretaries: the role shows greyed out, with n
     expect(StaffAccountResource::choosesRole())->toBeFalse();
 
     Livewire::test(CreateStaffAccount::class)
-        ->assertFormSet(['role_label' => 'Secretary'])
+        ->assertFormSet(['role_label' => 'Staff'])
         ->assertFormFieldDisabled('role_label')
         ->assertFormFieldHidden('role')
         ->assertFormFieldHidden('agency_id')

@@ -88,7 +88,7 @@ test('every create-account page has the same full-width layout', function (Closu
 test('a fixed role shows greyed out on every create page', function () {
     $this->actingAs(staffUser(UserRole::Admin));
     Livewire::test(CreateStaffAccount::class)
-        ->assertFormSet(['role_label' => 'Secretary'])
+        ->assertFormSet(['role_label' => 'Staff'])
         ->assertFormFieldDisabled('role_label');
 
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Fixed role PD')));
