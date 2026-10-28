@@ -13,6 +13,10 @@ portal/backend/tests/Feature/Public/CivilianAssessmentTest.php.
 
 const SAFETY_NOTICE_KEY = 'hshac-safety-notice-dismissed';
 
+// "Email, optional" - browsers put a space before the hidden ", optional",
+// which screen readers don't voice, so allow it.
+const optionalName = (label) => new RegExp(`^${label}\\s*, optional$`);
+
 const RELATIONSHIPS = [
   { value: 'spouse', label: 'Spouse' },
   { value: 'dating_partner', label: 'Dating Partner' },
@@ -148,6 +152,41 @@ test('an anonymous report for someone else sends no contact details', async ({ p
   expect(sent.ForWhom).toBe('other');
   expect(sent.Anonymous).toBe(true);
   expect(Object.keys(sent).filter((k) => k.startsWith('Submitter'))).toEqual([]);
+});
+
+// Burchfield B23/B30: each step with a red asterisk explains it above its buttons, and
+// screen readers hear which boxes are optional (ghost text alone isn't reliable).
+test('steps with an asterisk show "* Required", and optional boxes are announced as optional', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+
+  await page.getByRole('button', { name: 'Someone else' }).click();
+  await page.getByRole('button', { name: 'No', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  // Your information: names required, email and phone optional.
+  await expect(page.getByText('* Required', { exact: true })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: optionalName('Email') })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: optionalName('Phone Number') })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'First Name', exact: true })).toHaveAttribute('aria-required', 'true');
+  await page.getByLabel('First Name').fill('Sam');
+  await page.getByLabel('Last Name').fill('Friend');
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  // About the victim: every box required, so nothing is called optional.
+  await expect(page.getByText('* Required', { exact: true })).toBeVisible();
+  await expect(page.getByText(', optional')).toHaveCount(0);
+  await fillVictim(page);
+
+  // About the offender: the date of birth shows its own visible "Optional".
+  await expect(page.getByText('* Required', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Date of Birth')).toBeVisible();
+  await fillOffender(page);
+
+  // The questions intro has no asterisk, so no note.
+  await expect(page.getByRole('button', { name: 'Begin assessment' })).toBeVisible();
+  await expect(page.getByText('* Required', { exact: true })).toHaveCount(0);
 });
 
 test('a named report for someone else includes the submitter', async ({ page }) => {

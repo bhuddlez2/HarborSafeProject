@@ -11,6 +11,7 @@ import {
   selectClass,
   describedBy,
   SubmitButton,
+  RequiredNote,
   FormMessage,
   FormSection,
 } from "../components/FormControls";
@@ -164,7 +165,7 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             maxLength={PHONE_INPUT_MAX_LENGTH}
             value={values.SafePhoneNumber}
             onChange={(event) => setValues((current) => ({ ...current, SafePhoneNumber: formatPhoneInput(event.target.value) }))}
-            aria-describedby={describedBy("phone", true, errorFor("SafePhoneNumber"))}
+            aria-describedby={describedBy("phone", false, errorFor("SafePhoneNumber"))}
             className={inputClass}
           />
         </Field>
@@ -239,11 +240,12 @@ function ResourceRequestForm({ resourceTypes, counties }) {
           value={values.Message}
           onChange={update("Message")}
           placeholder={OPTIONAL_PLACEHOLDER}
-          aria-describedby={describedBy("message", true, errorFor("Message"))}
+          aria-describedby={describedBy("message", false, errorFor("Message"))}
           className={inputClass}
         />
       </Field>
 
+      <RequiredNote className="-mb-3" />
       <SubmitButton status={status}>Send request</SubmitButton>
     </form>
   );

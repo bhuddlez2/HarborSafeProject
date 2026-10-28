@@ -24,7 +24,7 @@ names typed here, and the state is cleared as soon as the submission is accepted
 
 import { useState, useEffect } from "react";
 import Modal from "../components/Modal";
-import { OPTIONAL_PLACEHOLDER } from "../components/FormControls";
+import { OPTIONAL_PLACEHOLDER, RequiredNote } from "../components/FormControls";
 import { lethalityQuestions } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
 import { isValidEmail, isValidPhone, dateOfBirthBounds, dateOfBirthError, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
@@ -68,7 +68,10 @@ const SEX_OPTIONS = [
 Required and optional markers - the same rule as the site's other forms (FormControls)
 and the staff panel: a red asterisk after a required field's label, and faded grey
 "Optional" ghost text inside an optional text box. A date can't hold ghost text, so an
-optional date gets the same grey word after its label instead.
+optional date gets the same grey word after its label instead (`optional`). A label with
+neither is an optional box using ghost text, which screen readers can't rely on, so it
+carries ", optional" for them only. Steps with an asterisk show RequiredNote above their
+buttons.
 */
 function Label({ htmlFor, required = false, optional = false, children }) {
   return (
@@ -76,6 +79,7 @@ function Label({ htmlFor, required = false, optional = false, children }) {
       {children}
       {required && <span className="text-red-700 ml-1" aria-hidden="true">*</span>}
       {optional && <span className="text-gray-400 font-normal ml-1">{OPTIONAL_PLACEHOLDER}</span>}
+      {!required && !optional && <span className="sr-only">, optional</span>}
     </label>
   );
 }
@@ -474,6 +478,7 @@ export default function AssessmentContent() {
             <FieldError id="submitter-phone-error">{phoneError}</FieldError>
           </div>
 
+          <RequiredNote className="-mt-4 mb-4" />
           <div className="flex gap-4">
             <button onClick={() => setPhase("prescreen")} className={SECONDARY}>Back</button>
             <button
@@ -533,6 +538,7 @@ export default function AssessmentContent() {
             <FieldError id="victim-phone-error">{victimPhoneError}</FieldError>
           </div>
 
+          <RequiredNote className="-mt-4 mb-4" />
           <div className="flex gap-4">
             <button onClick={() => setPhase(identified ? "info" : "prescreen")} className={SECONDARY}>Back</button>
             <button
@@ -623,6 +629,7 @@ export default function AssessmentContent() {
             )}
           </div>
 
+          <RequiredNote className="-mt-4 mb-4" />
           <div className="flex gap-4">
             <button onClick={() => setPhase("victim")} className={SECONDARY}>Back</button>
             <button

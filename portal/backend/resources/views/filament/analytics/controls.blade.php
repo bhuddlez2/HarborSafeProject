@@ -94,7 +94,8 @@
                             @enderror
                         </div>
 
-                        <div class="flex gap-2">
+                        @include('filament.partials.required-note')
+                        <div class="-mt-2 flex gap-2">
                             <x-filament::button type="submit">Apply</x-filament::button>
                             <x-filament::button type="button" color="gray" wire:click="resetSexFilter">Reset</x-filament::button>
                         </div>
@@ -126,7 +127,8 @@
                     <p class="text-sm text-danger-600">{{ $message }}</p>
                 @enderror
             </div>
-            <x-filament::button type="submit" class="mt-6">Apply</x-filament::button>
+            <div class="basis-full">@include('filament.partials.required-note')</div>
+            <x-filament::button type="submit" class="-mt-1">Apply</x-filament::button>
         </form>
     @endif
 
