@@ -82,8 +82,8 @@ class LogResource extends Resource
     // request rows left out by LogEntry; edits always point at an officer
     // assessment).
     private const KINDS = [
-        'LawEnforcementDocumentID' => 'Officer assessment',
-        'PrivateDocumentID' => 'Civilian assessment',
+        'LawEnforcementDocumentID' => 'Officer Assessment',
+        'PrivateDocumentID' => 'Civilian Assessment',
     ];
 
     // Grouping and order only - see App\Filament\PoliceAdminNavigation.

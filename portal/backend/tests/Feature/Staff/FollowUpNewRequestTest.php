@@ -130,7 +130,7 @@ test('an admin sees where a request came from, both ways', function () {
         ->get($started->url())
         ->assertOk()
         ->assertSee('Started by staff')
-        ->assertSee('From Civilian assessment', false)
+        ->assertSee('From Civilian Assessment', false)
         ->assertSee($from->url(), false);
 
     // And the assessment's own page lists the request started from it.

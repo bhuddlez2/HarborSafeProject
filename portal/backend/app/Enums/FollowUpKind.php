@@ -17,12 +17,14 @@ enum FollowUpKind: string
     case CivilianAssessment = 'civilian_assessment';
     case ResourceRequest = 'resource_request';
 
+    // A title, so title case (Finishing Touches item 29): the Log pop-up, the
+    // queue's Type column, the follow-up page. Lowercase it inside a sentence.
     public function label(): string
     {
         return match ($this) {
-            self::LawEnforcementAssessment => 'Officer assessment',
-            self::CivilianAssessment => 'Civilian assessment',
-            self::ResourceRequest => 'Resource request',
+            self::LawEnforcementAssessment => 'Officer Assessment',
+            self::CivilianAssessment => 'Civilian Assessment',
+            self::ResourceRequest => 'Resource Request',
         };
     }
 

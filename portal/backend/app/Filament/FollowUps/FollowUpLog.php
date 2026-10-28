@@ -36,8 +36,8 @@ final class FollowUpLog
         return Action::make('log')
             ->label('Log')
             ->icon(Heroicon::OutlinedClock)
-            ->modalHeading('Follow-up log')
-            ->modalDescription(fn (FollowUp $record): string => $record->Kind->label().' · now '.$record->Status->label())
+            ->modalHeading('Follow-Up Log')
+            ->modalDescription(fn (FollowUp $record): string => $record->Kind->label().' · Current Status: '.$record->Status->label())
             // Once per open, after the row is found through the queue's
             // scoped query and before the pop-up is sent. mountUsing, as this
             // pop-up has no schema (see AssessmentViews). No catch: a failed

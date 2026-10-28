@@ -171,7 +171,7 @@ test('views, downloads and edits are one list, newest first, each with its actio
         ->assertTableColumnFormattedStateSet('Action', 'Edited', $w->editA)
         ->assertTableColumnFormattedStateSet('Action', 'Viewed', $w->viewA)
         // An edit is about its officer assessment, like the access rows.
-        ->assertTableColumnStateSet('record', 'Officer assessment', $w->editA)
+        ->assertTableColumnStateSet('record', 'Officer Assessment', $w->editA)
         ->assertTableColumnHasDescription('record', 'Submitted '.Illuminate\Support\Carbon::parse($w->assessmentA->DateCreated)->setTimezone('America/New_York')->format('M j, Y g:i a').' · '.substr($w->assessmentA->getKey(), 0, 8), $w->editA)
         ->assertTableColumnFormattedStateSet('changes_count', '1 field', $w->editA)
         ->assertTableColumnStateSet('changes_count', null, $w->viewA);

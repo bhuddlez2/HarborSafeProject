@@ -186,7 +186,7 @@ test('every view, PDF download and edit of an assessment is recorded once and li
 
         $row = $new->first();
     }
-    $label = $kind === 'officer' ? 'Officer assessment' : 'Civilian assessment';
+    $label = $kind === 'officer' ? 'Officer Assessment' : 'Civilian Assessment';
 
     if ($row instanceof AssessmentAccessLog) {
         expect($row->Action->value)->toBe($action->value)

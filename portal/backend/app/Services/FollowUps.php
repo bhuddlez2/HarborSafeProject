@@ -231,7 +231,7 @@ class FollowUps
 
             if ($changes && ! $current->Status->canMoveTo($status)) {
                 throw ValidationException::withMessages([
-                    'status' => "A {$current->Kind->label()} can't move from {$current->Status->label()} to {$status->label()}.",
+                    'status' => 'This '.strtolower($current->Kind->label())." can't move from {$current->Status->label()} to {$status->label()}.",
                 ]);
             }
 

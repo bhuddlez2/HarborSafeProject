@@ -241,6 +241,8 @@ test('the queue\'s Log shows the history from submission to now', function () {
 
     followUpQueue()
         ->set('activeTab', FollowUpStatus::Reached->value)
+        ->assertActionExists(TestAction::make('log')->table($followUp), fn (Action $action): bool => $action->getModalHeading() === 'Follow-Up Log'
+            && $action->getModalDescription() === 'Resource Request · Current Status: Reached')
         ->mountAction(TestAction::make('log')->table($followUp))
         ->assertMountedActionModalSee([
             'Submitted',

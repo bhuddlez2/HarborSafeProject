@@ -93,8 +93,8 @@ test('an admin opens Logs and sees the access rows, and opening it logs nothing'
         ->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView])
         ->assertCanNotSeeTableRecords([$f->officerView, $f->requestView])
         ->assertTableColumnFormattedStateSet('Action', 'Downloaded PDF', $f->adminDownload)
-        ->assertTableColumnStateSet('record', 'Officer assessment', $f->adminDownload)
-        ->assertTableColumnStateSet('record', 'Civilian assessment', $f->civilianView)
+        ->assertTableColumnStateSet('record', 'Officer Assessment', $f->adminDownload)
+        ->assertTableColumnStateSet('record', 'Civilian Assessment', $f->civilianView)
         ->assertTableColumnHasDescription('record', "Submitted {$civilianSubmitted} · ".substr($f->civilian->DocumentID, 0, 8), $f->civilianView)
         // Access rows have no change count.
         ->assertTableColumnStateSet('changes_count', null, $f->civilianView);
@@ -163,7 +163,7 @@ test('an officer opening an assessment\'s View appears in Logs', function () {
         ->assertCanSeeTableRecords([$row])
         ->assertTableColumnStateSet('user.name', $w->officerA->refresh()->name, $row)
         ->assertTableColumnFormattedStateSet('Action', 'Viewed', $row)
-        ->assertTableColumnStateSet('record', 'Officer assessment', $row);
+        ->assertTableColumnStateSet('record', 'Officer Assessment', $row);
 });
 
 test('Logs shows no names or phone numbers from the records', function () {
