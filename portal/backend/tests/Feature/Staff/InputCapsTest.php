@@ -4,7 +4,6 @@ use App\Enums\UserRole;
 use App\Filament\Concerns\CapsTableSearch;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
-use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\EditStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
@@ -118,18 +117,6 @@ test('a longer search sent anyway is cut to the cap on the server', function () 
         ->assertOk();
 
     expect(mb_strlen($page->instance()->getTableSearch()))->toBe(TableSearch::MAX_LENGTH);
-});
-
-test('a search-by-field box is cut to the cap too, in the browser and on the server', function () {
-    $this->actingAs(staffUser(UserRole::Admin));
-
-    $page = Livewire::test(ListAssessmentReview::class)
-        ->assertSeeHtml('wire:model.live.debounce.500ms="tableColumnSearches.VictimLastName"')
-        ->assertDontSeeHtml('maxlength="1000"')
-        ->set('tableColumnSearches.VictimLastName', str_repeat('x', TableSearch::MAX_LENGTH + 50))
-        ->assertOk();
-
-    expect(mb_strlen($page->instance()->getTableColumnSearches()['VictimLastName']))->toBe(TableSearch::MAX_LENGTH);
 });
 
 test('every table page in the panel caps its search', function () {

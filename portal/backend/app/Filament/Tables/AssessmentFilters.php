@@ -268,8 +268,7 @@ final class AssessmentFilters
                 : []);
     }
 
-    // Public for AssessmentColumns' officer search.
-    public static function escapeLike(string $value): string
+    private static function escapeLike(string $value): string
     {
         return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }

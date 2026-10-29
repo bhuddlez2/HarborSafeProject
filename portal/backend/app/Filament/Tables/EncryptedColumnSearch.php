@@ -14,8 +14,8 @@ database can't LIKE ciphertext, so a column's search box goes through
 App\Support\EncryptedSearch instead, over the rows the signed-in user may see
 ($modelClass::visibleTo()):
 
-  TextColumn::make('VictimLastName')
-      ->searchable(query: EncryptedColumnSearch::query(LawEnforcementAssessment::class, ['VictimFirstName', 'VictimLastName']))
+  TextColumn::make('FirstName')
+      ->searchable(query: EncryptedColumnSearch::query(ResourceRequestForm::class, ['FirstName', 'LastName', 'EmailAddress']))
 
 Never ->searchable(['SomeEncryptedColumn']): it would search ciphertext and
 quietly find nothing.
@@ -33,23 +33,6 @@ final class EncryptedColumnSearch
             self::visible($modelClass),
             $columns,
             $search,
-        );
-    }
-
-    /**
-     * Like query(), matched against texts built from the columns rather than
-     * each column alone - a full "First Last" name, a relationship's label
-     * (EncryptedSearch::keysMatching()). Same scope: the viewer's own rows.
-     *
-     * @param  class-string<Model>  $modelClass  a model with a visibleTo() scope
-     * @param  list<string>  $columns
-     * @param  Closure(Model): list<?string>  $texts
-     */
-    public static function matching(string $modelClass, array $columns, Closure $texts): Closure
-    {
-        return fn (Builder $query, string $search): Builder => $query->whereIn(
-            $query->getModel()->getQualifiedKeyName(),
-            EncryptedSearch::keysMatching(self::visible($modelClass), $columns, $texts, $search),
         );
     }
 
