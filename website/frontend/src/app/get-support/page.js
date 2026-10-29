@@ -35,6 +35,32 @@ export default function GetSupport() {
       <section className="py-32 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
 
+          {/*
+          Lethality assessment, first so someone worried about their safety sees it
+          before the services (B14), tinted so it stands out from the page (B15)
+          */}
+          <div className="mb-24 bg-purple-100 border border-purple-200 rounded-2xl p-8 md:p-10">
+            {/* max-w-5xl keeps the lines from running too long on wide screens */}
+            <div className="max-w-5xl mx-auto flex flex-col items-center text-center">
+              <h2 className="text-xl font-semibold text-brand mb-2">Do you have safety concerns?</h2>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Our lethality assessment asks 11 yes/no questions that can help show whether a relationship is
+                becoming more dangerous. You can answer for yourself or for someone you&apos;re worried about.
+                Your answers are sent confidentially to Harbor Safe House.{" "}
+                {/* its own line, so it never splits with a lone "call 911." */}
+                <strong className="block font-semibold text-gray-900">If you are in immediate danger,{" "}
+                  <a href="tel:911" className="whitespace-nowrap text-red-700 hover:underline">call 911</a>.
+                </strong>
+              </p>
+              <a
+                href={CIVILIAN_ASSESSMENT_URL}
+                className="mt-6 whitespace-nowrap bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
+              >
+                Take the assessment
+              </a>
+            </div>
+          </div>
+
           {/* Scroll targets for the home page's "Learn more" links (#shelter, #counseling) */}
           <span id="shelter" className="block scroll-mt-28" aria-hidden="true"></span>
           <span id="counseling" className="block scroll-mt-28" aria-hidden="true"></span>
@@ -149,30 +175,6 @@ export default function GetSupport() {
               </p>
             </div>
 
-          </div>
-
-          <div className="mt-24 border border-gray-200 rounded-2xl p-8 md:p-10 grid md:grid-cols-[auto_1fr_auto] gap-6 md:gap-8 items-center">
-            <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-7 h-7 stroke-brand stroke-2 fill-none" aria-hidden="true">
-                {/* clipboard icon, feathericons.com */}
-                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-brand mb-2">Do you feel safe?</h2>
-              <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
-                Our lethality assessment asks 11 yes/no questions that can help show whether a relationship is
-                becoming more dangerous. You can answer for yourself or for someone you&apos;re worried about.
-                Your answers are sent confidentially to Harbor Safe House. If you are in immediate danger,{" "}
-                <a href="tel:911" className="whitespace-nowrap font-semibold text-red-700 hover:underline">call 911</a>.
-              </p>
-            </div>
-            <a
-              href={CIVILIAN_ASSESSMENT_URL}
-              className="justify-self-start md:justify-self-end whitespace-nowrap bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
-            >
-              Take the assessment
-            </a>
           </div>
         </div>
       </section>
