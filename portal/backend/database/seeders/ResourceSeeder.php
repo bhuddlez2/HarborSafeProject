@@ -41,5 +41,15 @@ class ResourceSeeder extends Seeder
                 ['Name' => $name, 'ChangeDate' => now()]
             );
         }
+
+        // Added later for Get Support's "Request this service" links, which
+        // tick a type by name. Keyed on the name, not an id: staff may already
+        // have added them on a given database, under any id, and a second
+        // copy would show twice on the form.
+        foreach (['Support Groups', 'Community Education'] as $name) {
+            if (! DB::connection('Feedback')->table('resources')->where('Name', $name)->exists()) {
+                DB::connection('Feedback')->table('resources')->insert(['Name' => $name, 'ChangeDate' => now()]);
+            }
+        }
     }
 }
