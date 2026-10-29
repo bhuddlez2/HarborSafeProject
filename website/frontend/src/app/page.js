@@ -6,6 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Modal from "./components/Modal";
 import CrisisHotlineStrip from "./components/CrisisHotlineStrip";
+import PhoneLink from "./components/PhoneLink";
+import { CRISIS_CALL, CRISIS_TEXT, formatPhone } from "./lib/phone";
 
 export default function Home() {
   /*
@@ -51,20 +53,16 @@ export default function Home() {
               <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-1">24/7 Crisis Line</p>
               <p className="text-sm font-semibold text-brand mb-3">Harbor Safe House &amp; Advocacy Center</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <a href="tel:423-476-3886" className="text-center bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">
-                  Call (423) 476-3886
-                </a>
-                <a href="sms:423-715-9614" className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">
-                  Text (423) 715-9614
-                </a>
+                <PhoneLink number={CRISIS_CALL} prefix="Call " className="text-center bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all" />
+                <PhoneLink number={CRISIS_TEXT} sms prefix="Text " className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all" />
               </div>
             </div>
 
             <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl">
               {[
-                { name: "National Domestic Violence Hotline", note: "Call 24/7 · Text START to 88788", phone: "1-800-799-7233", tel: "18007997233" },
-                { name: "988 Suicide & Crisis Lifeline", note: "Call or text, 24/7", phone: "988", tel: "988" },
-              ].map(({ name, note, phone, tel }) => (
+                { name: "National Domestic Violence Hotline", note: "Call 24/7 · Text START to 88788", phone: "1-800-799-7233" },
+                { name: "988 Suicide & Crisis Lifeline", note: "Call or text, 24/7", phone: "988" },
+              ].map(({ name, note, phone }) => (
                 /* stacked on phones so the pill doesn't squeeze the name, side by side from sm up */
                 <div key={name} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 px-4 py-3">
                   <div>
@@ -73,16 +71,16 @@ export default function Home() {
                     <p className="text-xs text-gray-600">{note}</p>
                   </div>
                   {/* pill with phone icon (feathericons.com) so the number is intuitively tappable */}
-                  <a
-                    href={`tel:${tel}`}
-                    aria-label={`Call ${name} at ${phone}`}
+                  <PhoneLink
+                    number={phone}
+                    aria-label={`Call ${name} at ${formatPhone(phone)}`}
                     className="shrink-0 inline-flex items-center gap-1.5 bg-purple-100 text-brand text-sm font-semibold px-3 py-1.5 rounded-full hover:bg-brand hover:text-white transition-all"
                   >
                     <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 stroke-current stroke-2 fill-none" aria-hidden="true">
                       <path d="M22 16.92v3a2 2 0 01-2.18 2A19.86 19.86 0 013.09 4.18 2 2 0 015.09 2h3a2 2 0 012 1.72c.13 1 .37 1.97.72 2.9a2 2 0 01-.45 2.11L9.09 10a16 16 0 006.91 6.91l1.27-1.27a2 2 0 012.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0122 16.92z" />
                     </svg>
-                    {phone}
-                  </a>
+                    <span className="whitespace-nowrap">{formatPhone(phone)}</span>
+                  </PhoneLink>
                 </div>
               ))}
             </div>
@@ -313,8 +311,8 @@ export default function Home() {
                   <p className="text-sm font-semibold text-brand mb-2">24/7 Crisis Line</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Trained advocates available any time — call or text, day or night, always free.</p>
                   {/* Call and text, matching the card copy and the hotline strip */}
-                  <a href="tel:423-476-3886" className="text-xs font-semibold text-brand hover:underline transition-all">Call →</a>
-                  <a href="sms:423-715-9614" className="ml-4 text-xs font-semibold text-brand hover:underline transition-all">Text →</a>
+                  <PhoneLink number={CRISIS_CALL} className="text-xs font-semibold text-brand hover:underline transition-all">Call →</PhoneLink>
+                  <PhoneLink number={CRISIS_TEXT} sms className="ml-4 text-xs font-semibold text-brand hover:underline transition-all">Text →</PhoneLink>
                 </div>
 
               </div>

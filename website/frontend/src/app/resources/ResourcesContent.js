@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Modal from "../components/Modal";
+import PhoneLink, { withPhoneLinks } from "../components/PhoneLink";
+import { CRISIS_CALL, CRISIS_TEXT } from "../lib/phone";
 import { generalCategory } from "./general";
 import { legalCategory } from "./legal";
 import { thingsToKnowCategory } from "./things-to-know";
@@ -66,6 +68,20 @@ const ICONS = {
   ),
 };
 
+/*
+The resources data writes labelled numbers as one string ("Voice 423-476-3886",
+"Text 423-715-9614", "Intake Line: 423-472-0769"). splitPhoneLabel separates the
+label from the number, says "Call" for "Voice" to match the rest of the site, and
+makes "Text" numbers tap-to-text
+*/
+function splitPhoneLabel(entry) {
+  const firstDigit = entry.search(/\d/);
+  const label = entry.slice(0, firstDigit).trim();
+  const sms = /^text/i.test(label);
+  const shown = /^voice$/i.test(label) ? "Call" : label;
+  return { label: shown ? `${shown} ` : "", number: entry.slice(firstDigit), sms };
+}
+
 // ── Modal variants ────────────────────────────────────────────────────────────
 
 function SubResourceModal({ resource, onClose }) {
@@ -103,9 +119,7 @@ function SubResourceModal({ resource, onClose }) {
                     <p className="text-sm font-medium text-gray-700">{loc.label}</p>
                     {loc.address && <p className="text-xs text-gray-500">{loc.address}</p>}
                     {loc.phone && (
-                      <a href={`tel:${loc.phone.replace(/\D/g, "")}`} className="text-xs font-semibold text-brand hover:underline">
-                        {loc.phone}
-                      </a>
+                      <PhoneLink number={loc.phone} className="text-xs font-semibold text-brand hover:underline" />
                     )}
                   </div>
                 ))}
@@ -114,17 +128,12 @@ function SubResourceModal({ resource, onClose }) {
             <div className="space-y-1">
               <div className="flex flex-wrap gap-4">
                 {sub.phone && (
-                  <a href={`tel:${sub.phone.replace(/\D/g, "")}`} className="text-xs font-semibold text-brand hover:underline">
-                    {sub.phone}
-                  </a>
+                  <PhoneLink number={sub.phone} className="text-xs font-semibold text-brand hover:underline" />
                 )}
                 {sub.phones && sub.phones.map((p, i) => {
-                  const isSms = p.toLowerCase().startsWith("text");
-                  const digits = p.replace(/\D/g, "");
+                  const { label, number, sms } = splitPhoneLabel(p);
                   return (
-                    <a key={i} href={`${isSms ? "sms" : "tel"}:${digits}`} className="text-xs font-semibold text-brand hover:underline">
-                      {p}
-                    </a>
+                    <PhoneLink key={i} number={number} sms={sms} prefix={label} className="text-xs font-semibold text-brand hover:underline" />
                   );
                 })}
                 {sub.url && (
@@ -175,31 +184,32 @@ function InfoModal({ resource, onClose }) {
               {section.subheading && (
                 <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">{section.subheading}</h4>
               )}
+              {/* withPhoneLinks makes any number written in this text tap-to-call */}
               {section.intro && (
-                <p className="text-sm text-gray-700 leading-relaxed mb-2">{section.intro}</p>
+                <p className="text-sm text-gray-700 leading-relaxed mb-2">{withPhoneLinks(section.intro)}</p>
               )}
               {section.paragraphs && section.paragraphs.map((p, j) => (
-                <p key={j} className="text-sm text-gray-700 leading-relaxed mb-2">{p}</p>
+                <p key={j} className="text-sm text-gray-700 leading-relaxed mb-2">{withPhoneLinks(p)}</p>
               ))}
               {section.bullets && section.bullets.length > 0 && (
                 <ul className="space-y-1.5">
                   {section.bullets.map((b, j) => (
                     <li key={j} className="flex items-start gap-1.5 text-sm text-gray-600">
                       <span className="text-brand mt-0.5 shrink-0" aria-hidden="true">•</span>
-                      <span>{b}</span>
+                      <span>{withPhoneLinks(b)}</span>
                     </li>
                   ))}
                 </ul>
               )}
               {section.outro && (
-                <p className="text-sm text-gray-700 leading-relaxed mt-2">{section.outro}</p>
+                <p className="text-sm text-gray-700 leading-relaxed mt-2">{withPhoneLinks(section.outro)}</p>
               )}
             </div>
           );
         })}
         {resource.disclaimer && (
           <div className="px-6 py-5 border-t-2 border-purple-300">
-            <p className="text-xs text-gray-400 leading-relaxed italic">{resource.disclaimer}</p>
+            <p className="text-xs text-gray-400 leading-relaxed italic">{withPhoneLinks(resource.disclaimer, "underline")}</p>
           </div>
         )}
       </div>
@@ -220,7 +230,7 @@ function ImageModal({ resource, onClose }) {
           className="w-full h-auto rounded-lg"
         />
         {resource.disclaimer && (
-          <p className="text-xs text-gray-400 leading-relaxed italic mt-4">{resource.disclaimer}</p>
+          <p className="text-xs text-gray-400 leading-relaxed italic mt-4">{withPhoneLinks(resource.disclaimer, "underline")}</p>
         )}
       </div>
     </Modal>
@@ -587,9 +597,9 @@ export default function ResourcesContent() {
           <p className="text-gray-600 text-center leading-relaxed mb-12">
             Select a category below to explore available resources. If you need immediate
             assistance, our crisis hotline is available 24 hours a day, 7 days a week: call{" "}
-            <a href="tel:423-476-3886" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 476-3886</a>{" "}
+            <PhoneLink number={CRISIS_CALL} className="font-semibold text-brand hover:underline" />{" "}
             or text{" "}
-            <a href="sms:423-715-9614" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 715-9614</a>.
+            <PhoneLink number={CRISIS_TEXT} sms className="font-semibold text-brand hover:underline" />.
           </p>
 
           <div className="flex flex-col gap-3">

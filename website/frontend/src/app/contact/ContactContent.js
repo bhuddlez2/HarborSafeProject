@@ -15,6 +15,8 @@ import {
   FormSection,
 } from "../components/FormControls";
 import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+import PhoneLink from "../components/PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 
 const EMPTY_REQUEST = {
   FirstName: "",
@@ -83,7 +85,8 @@ function ResourceRequestForm({ resourceTypes, counties }) {
     return (
       <FormMessage tone="success">
         Thank you — your request has been received. If you need help before we reach you,
-        our crisis line is answered 24 hours a day at (423) 476-3886.
+        our crisis line is answered 24 hours a day at{" "}
+        <PhoneLink number={CRISIS_CALL} className="underline" />.
       </FormMessage>
     );
   }

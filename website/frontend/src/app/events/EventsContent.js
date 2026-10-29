@@ -13,6 +13,8 @@ import {
   formatFileSize,
 } from "../lib/content";
 import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+import PhoneLink from "../components/PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 
 /*
 EventsContent: the Events & News page
@@ -450,7 +452,7 @@ function ErrorState({ onRetry }) {
       <h3 className="text-xl font-semibold text-gray-900 mb-3">We couldn&apos;t load this right now</h3>
       <p className="text-gray-600 leading-relaxed">
         Please try again in a few minutes. If you need help now, our crisis line is answered 24 hours a
-        day at <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>.
+        day at <PhoneLink number={CRISIS_CALL} className="text-brand font-semibold hover:underline" />.
       </p>
       {onRetry ? (
         <button
@@ -555,7 +557,7 @@ export default function EventsContent() {
             {upcoming.length === 0 ? (
               <EmptyState heading="No upcoming events right now">
                 Check back soon; our 24/7 crisis line is always available at{" "}
-                <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>.
+                <PhoneLink number={CRISIS_CALL} className="text-brand font-semibold hover:underline" />.
               </EmptyState>
             ) : (
               <EventsCarousel events={upcoming} onOpen={setSelectedEvent} />

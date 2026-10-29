@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, startTransition } from "react";
+import PhoneLink from "./PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 
 
 // sessionStorage key marking that the safety notice was dismissed in this tab
@@ -139,7 +141,7 @@ export default function SafetyModal() {
                 <p className="text-sm font-semibold text-brand mb-0.5">Call us confidentially</p>
                 <p className="text-xs text-gray-500 leading-relaxed">
                   If you&apos;re worried about being monitored, call{" "}
-                  <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>{" "}
+                  <PhoneLink number={CRISIS_CALL} className="text-brand font-semibold hover:underline" />{" "}
                   — available 24/7, always free.
                 </p>
               </div>
