@@ -18,7 +18,7 @@ class ManageAgencies extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add an agency'),
+            CreateAction::make()->label('Add an Agency'),
         ];
     }
 }

@@ -18,7 +18,7 @@ class ManageServices extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add a service'),
+            CreateAction::make()->label('Add a Service'),
         ];
     }
 }

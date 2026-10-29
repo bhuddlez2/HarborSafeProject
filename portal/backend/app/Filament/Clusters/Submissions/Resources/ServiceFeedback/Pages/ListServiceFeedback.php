@@ -72,9 +72,9 @@ class ListServiceFeedback extends ListRecords
                 ->button(),
 
             CreateAction::make()
-                ->label('New feedback form')
+                ->label('New Feedback Form')
                 ->icon('heroicon-o-document-plus')
-                ->modalHeading('New feedback form')
+                ->modalHeading('New Feedback Form')
                 ->modalSubmitActionLabel('Save form')
                 ->createAnother(false)
                 ->using(fn (array $data): ServiceFeedback => ServiceFeedback::recordStaffEntry($data, Filament::auth()->user()))

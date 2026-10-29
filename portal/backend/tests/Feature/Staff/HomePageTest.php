@@ -9,29 +9,30 @@ use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 
 /*
 The officer portal Home (App\Filament\Pages\Police), team plan task 11: police
-admins get My Assessments and Personnel Management cards, under the Start
+admins get Assessment Review and Staff Management cards, under the Start
 New Lethality Assessment card when they may open the wizard (an agency, team
-plan task 7). Officers get a My Assessments card of their own. Both cards are
-called My Assessments (tracker item 70); a police admin's opens
-Assessment review, an officer's opens My Assessments, and the sidebar keeps
-its own names. Every card under Start shares one light purple design (team
+plan task 7). Officers get a My Assessments card of their own. Each card is
+named after the sidebar item it opens (2026-10-28, replacing tracker item
+70's shared "My Assessments"); the police admin's names their agency. Every card under Start shares one light purple design (team
 plan item 5). And the sidebar identity block: name, badge and agency on
 separate rows, with the badge for officers only.
 */
 
 afterEach(fn () => cleanupStaffData());
 
-test('a police admin\'s Home offers Start New Lethality Assessment above My Assessments and Personnel Management', function () {
+test('a police admin\'s Home offers Start New Lethality Assessment above Assessment Review and Staff Management', function () {
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Home PD')))
         ->get(Police::getUrl())
         ->assertOk()
-        ->assertSeeInOrder(['Start New Lethality Assessment', 'My Assessments', 'Personnel Management'])
-        ->assertDontSee('View Assessments')
+        ->assertSeeInOrder([
+            'Start New Lethality Assessment', 'Open a blank LAP screening form',
+            'Assessment Review', "Home PD's submitted LAP screenings and change logs",
+            // Test agency names start with a run token, hence the split.
+            'Staff Management', 'Add and manage', "Home PD's staff accounts",
+        ])
+        ->assertDontSee('My Assessments')
         ->assertSee(NewAssessment::getUrl(), escape: false)
-        // The card is called My Assessments but still opens Assessment review,
-        // which keeps its name in the sidebar.
         ->assertSee(AssessmentReviewResource::getUrl('index'), escape: false)
-        ->assertSee('Assessment Review')
         ->assertSee(OfficerAccountResource::getUrl('index'), escape: false)
         // My Assessments the screen stays officer-only; police admins review in Assessment review.
         ->assertDontSee(LawEnforcementAssessmentResource::getUrl('index'), escape: false);
@@ -54,7 +55,7 @@ test('an officer\'s Home offers Start New Lethality Assessment above My Assessme
         ->assertSee(NewAssessment::getUrl(), escape: false)
         ->assertSee(LawEnforcementAssessmentResource::getUrl('index'), escape: false)
         ->assertSee('Each view is logged with your name and a timestamp.')
-        ->assertDontSee('Personnel Management');
+        ->assertDontSee('Staff Management');
 });
 
 test('the sidebar shows an officer\'s name, badge and agency', function () {
@@ -79,4 +80,12 @@ test('the sidebar shows a police admin\'s name and agency but no badge', functio
         ->assertSeeInOrder([$identity['name'], $identity['agency']])
         ->assertDontSee('Badge '.$stored)
         ->assertDontSee($stored);
+});
+
+test('the Staff Management page is headed like its sidebar item, with a New User button', function () {
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Home PD')))
+        ->get(OfficerAccountResource::getUrl('index'))
+        ->assertOk()
+        ->assertSeeInOrder(['Staff Management', 'New User'])
+        ->assertDontSee('New officer');
 });

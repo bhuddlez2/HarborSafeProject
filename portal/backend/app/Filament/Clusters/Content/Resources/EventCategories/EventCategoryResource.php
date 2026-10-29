@@ -110,7 +110,7 @@ class EventCategoryResource extends Resource
             ->emptyStateHeading('No categories yet')
             ->emptyStateDescription('Categories are optional. An event without one simply shows no badge.')
             ->emptyStateActions([
-                CreateAction::make()->label('Add a category'),
+                CreateAction::make()->label('Add a Category'),
             ]);
     }
 

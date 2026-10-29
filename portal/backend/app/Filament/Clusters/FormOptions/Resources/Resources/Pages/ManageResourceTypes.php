@@ -18,7 +18,7 @@ class ManageResourceTypes extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add a resource type'),
+            CreateAction::make()->label('Add a Resource Type'),
         ];
     }
 }

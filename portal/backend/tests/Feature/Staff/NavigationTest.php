@@ -39,7 +39,7 @@ test('each role sees exactly its own sidebar', function (Closure $makeUser, arra
 })->with([
     'police admin' => [
         fn () => pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Nav agency')),
-        ['Police Admin' => ['Home', 'New Assessment', 'Assessment Review', 'Logs', 'Officers', 'Account']],
+        ['Police Admin' => ['Home', 'New Assessment', 'Assessment Review', 'Logs', 'Staff Management', 'Account']],
     ],
     // New Assessment, Officers and Logs need an agency (their canAccess());
     // the rest of the group is unaffected.
@@ -93,7 +93,7 @@ test('the police admin group leaves gaps between positions', function () {
         'New Assessment' => PoliceAdminNavigation::NEW_ASSESSMENT,
         'Assessment Review' => PoliceAdminNavigation::ASSESSMENT_REVIEW,
         'Logs' => PoliceAdminNavigation::LOGS,
-        'Officers' => PoliceAdminNavigation::OFFICERS,
+        'Staff Management' => PoliceAdminNavigation::OFFICERS,
         'Account' => PoliceAdminNavigation::ACCOUNT,
     ])
         ->and(array_values($sorts))->toBe([10, 20, 30, 40, 50, 60]);

@@ -126,7 +126,7 @@ abstract class LookupResource extends Resource
             ->emptyStateHeading('No options yet')
             ->emptyStateDescription(static::formDescription())
             ->emptyStateActions([
-                CreateAction::make()->label('Add an option'),
+                CreateAction::make()->label('Add an Option'),
             ]);
     }
 }

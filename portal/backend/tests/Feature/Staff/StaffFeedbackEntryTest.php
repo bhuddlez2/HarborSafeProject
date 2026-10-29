@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
 /*
-Service-feedback forms filled in by an admin or secretary ("New feedback form"
+Service-feedback forms filled in by an admin or secretary ("New Feedback Form"
 on the Service feedback tab) - typically ones that arrived on paper, though
 nothing on screen says so. Phase M's gate, as tests: admins and secretaries
 can add one, marked Source = staff with its date and time and who entered it;
@@ -64,7 +64,7 @@ test('admins and secretaries can fill in a feedback form, marked as staff', func
 
     Livewire::test(ListServiceFeedback::class)
         // Just a feedback form to the person entering it - no mention of paper.
-        ->assertActionHasLabel('create', 'New feedback form')
+        ->assertActionHasLabel('create', 'New Feedback Form')
         ->callAction('create', data: [
             'ServiceID' => $serviceId,
             'Rating' => 2,

@@ -18,7 +18,7 @@ class ManageCounties extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add a county'),
+            CreateAction::make()->label('Add a County'),
         ];
     }
 }

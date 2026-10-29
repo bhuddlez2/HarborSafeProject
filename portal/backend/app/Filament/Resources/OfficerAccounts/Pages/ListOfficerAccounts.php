@@ -15,10 +15,16 @@ class ListOfficerAccounts extends ListRecords
 
     protected static string $resource = OfficerAccountResource::class;
 
+    // Headed like its sidebar item and the Home card, not "Officers".
+    public function getTitle(): string
+    {
+        return OfficerAccountResource::getNavigationLabel();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()->label('New User'),
         ];
     }
 }

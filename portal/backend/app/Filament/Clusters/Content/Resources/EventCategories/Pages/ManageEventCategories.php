@@ -18,7 +18,7 @@ class ManageEventCategories extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add a category'),
+            CreateAction::make()->label('Add a Category'),
         ];
     }
 }

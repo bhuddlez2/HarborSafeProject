@@ -22,7 +22,7 @@ test('pop-ups are not closed by clicking outside them, but Esc still closes them
         ->and(ModalComponent::$isClosedByEscaping)->toBeTrue();
 });
 
-test('the New event pop-up keeps its form when someone clicks outside it', function () {
+test('the New Event pop-up keeps its form when someone clicks outside it', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
     $action = Livewire::test(ManageEvents::class)->instance()->getAction('create');

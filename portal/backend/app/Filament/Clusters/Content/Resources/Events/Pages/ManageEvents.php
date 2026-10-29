@@ -18,7 +18,7 @@ class ManageEvents extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('New event'),
+            CreateAction::make()->label('New Event'),
         ];
     }
 }

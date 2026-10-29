@@ -358,7 +358,7 @@ class EventResource extends Resource
             ->emptyStateHeading('No events yet')
             ->emptyStateDescription('Events created here appear on the website once published.')
             ->emptyStateActions([
-                CreateAction::make()->label('Add an event'),
+                CreateAction::make()->label('Add an Event'),
             ]);
     }
 

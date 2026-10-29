@@ -158,7 +158,7 @@ class NewsletterResource extends Resource
     public static function createAction(): CreateAction
     {
         return CreateAction::make()
-            ->label('Add an issue')
+            ->label('Add an Issue')
             ->steps(self::steps())
             ->createAnother(false)
             // Filament draws an action's wizard uncontained; keep the Edit

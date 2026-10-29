@@ -40,7 +40,7 @@ class OfficerAccountResource extends Resource
 
     protected static ?string $slug = 'police/officers';
 
-    protected static ?string $navigationLabel = 'Officers';
+    protected static ?string $navigationLabel = 'Staff Management';
 
     protected static ?string $modelLabel = 'officer';
 
