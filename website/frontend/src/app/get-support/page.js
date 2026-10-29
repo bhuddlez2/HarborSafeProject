@@ -73,8 +73,9 @@ export default function GetSupport() {
           </div>
 
           {/* Scroll targets for the home page's "Learn more" links (#shelter, #counseling) */}
-          <span id="shelter" className="block scroll-mt-28" aria-hidden="true"></span>
-          <span id="counseling" className="block scroll-mt-28" aria-hidden="true"></span>
+          {/* scroll-mt-44 clears the fixed navbar plus the sticky hotline strip under it */}
+          <span id="shelter" className="block scroll-mt-44" aria-hidden="true"></span>
+          <span id="counseling" className="block scroll-mt-44" aria-hidden="true"></span>
 
           <div className="text-center mb-16">
             <h2 className="text-3xl font-semibold text-brand mb-3">Ways We Can Support You</h2>
