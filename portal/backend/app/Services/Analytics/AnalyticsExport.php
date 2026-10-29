@@ -182,19 +182,24 @@ class AnalyticsExport
 
     protected function printPdf(string $html): string
     {
-        return HtmlPdf::render($html, 'letter', 'portrait', function (Canvas $canvas, FontMetrics $fonts, int $page, int $pages): void {
-            $text = "Page {$page} of {$pages}";
-            $font = $fonts->getFont(HtmlPdf::FONT);
-            $size = 7;
+        return HtmlPdf::render($html, 'letter', 'portrait', $this->decoratePage(...));
+    }
 
-            $canvas->text(
-                ($canvas->get_width() - $fonts->getTextWidth($text, $font, $size)) / 2,
-                $canvas->get_height() - self::PDF_MARGIN_BOTTOM / 2 - $size / 2,
-                $text,
-                $font,
-                $size,
-                [0.42, 0.447, 0.502],
-            );
-        });
+    // The page number, drawn straight onto each page: black, like the rest
+    // of the PDF (#44: PDFs are black and white).
+    protected function decoratePage(Canvas $canvas, FontMetrics $fonts, int $page, int $pages): void
+    {
+        $text = "Page {$page} of {$pages}";
+        $font = $fonts->getFont(HtmlPdf::FONT);
+        $size = 7;
+
+        $canvas->text(
+            ($canvas->get_width() - $fonts->getTextWidth($text, $font, $size)) / 2,
+            $canvas->get_height() - self::PDF_MARGIN_BOTTOM / 2 - $size / 2,
+            $text,
+            $font,
+            $size,
+            [0, 0, 0],
+        );
     }
 }

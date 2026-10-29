@@ -26,6 +26,10 @@
     // Red when high risk (App\Support\HighRisk, the rule Analytics counts).
     $highRisk = \App\Support\HighRisk::of($answers);
 
+    // The PDF is black and white (filament/pdf/record.blade.php), so it says
+    // "High risk" in words where the screen colours the score red.
+    $isPdf = $isPdf ?? false;
+
     $scoreColor = match (true) {
         $highRisk      => '#b91c1c',
         $yesCount >= 1 => '#b45309',
@@ -132,9 +136,13 @@
     <div class="hs-ar-risk">
         <div class="hs-ar-risk-header">
             <span class="hs-ar-risk-title">Risk Indicators</span>
-            <span class="hs-ar-risk-score" style="color:{{ $scoreColor }}; background-color:{{ $scoreBg }}">
-                {{ $yesCount }} of 11 yes
-            </span>
+            @if ($isPdf)
+                <span class="hs-ar-risk-score">{{ $yesCount }} of 11 yes{{ $highRisk ? ' · High risk' : '' }}</span>
+            @else
+                <span class="hs-ar-risk-score" style="color:{{ $scoreColor }}; background-color:{{ $scoreBg }}">
+                    {{ $yesCount }} of 11 yes
+                </span>
+            @endif
         </div>
         <div class="hs-ar-risk-list">
             @foreach (NewAssessment::QUESTIONS as $id => $question)

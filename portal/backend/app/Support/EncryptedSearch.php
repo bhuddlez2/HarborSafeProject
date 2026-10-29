@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 /*
 Search and filtering on encrypted columns (App\Support\SensitiveData).
@@ -35,7 +37,28 @@ final class EncryptedSearch
     /** @return list<string|int> keys of the $scope rows where any column contains $search */
     public static function keys(Builder $scope, array $columns, string $search): array
     {
-        $search = trim($search);
+        return self::keysMatching(
+            $scope,
+            $columns,
+            fn ($row): array => array_map(fn (string $column): ?string => $row->getAttribute($column), $columns),
+            $search,
+        );
+    }
+
+    /**
+     * Keys of the $scope rows where any of the texts $texts($row) returns
+     * contains $search - for a search over values built from the columns, such
+     * as a full name ("First Last") or a relationship's label. Only $columns
+     * (and the key) are read and decrypted. Runs of spaces in $search count as
+     * one, and % and _ are ordinary characters.
+     *
+     * @param  list<string>  $columns
+     * @param  Closure(Model): list<?string>  $texts
+     * @return list<string|int>
+     */
+    public static function keysMatching(Builder $scope, array $columns, Closure $texts, string $search): array
+    {
+        $search = preg_replace('/\s+/u', ' ', trim($search));
         $model = $scope->getModel();
         $key = $model->getKeyName();
 
@@ -46,8 +69,8 @@ final class EncryptedSearch
         $keys = [];
 
         foreach ($rows as $row) {
-            foreach ($columns as $column) {
-                if (self::contains($row->getAttribute($column), $search)) {
+            foreach ($texts($row) as $text) {
+                if (self::contains($text, $search)) {
                     $keys[] = $row->getKey();
                     break;
                 }

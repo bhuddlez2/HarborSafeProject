@@ -8,8 +8,10 @@ use App\Models\LawEnforcementAssessment;
 use App\Models\PrivateAssessment;
 use App\Support\HighRisk;
 use App\Support\Timezones;
+use Closure;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /*
 The one column list for every assessment table - My Assessments
@@ -38,19 +40,36 @@ their column (TableAlignment::buttons()).
 The law-enforcement tables' queries must eager-load assessmentAnswers and
 submitter and ->withCount('edits') (the Change log button reads
 edits_count); the civilian one assessmentAnswers.
+
+Search by field (#64), on the two law-enforcement tables (for()): Filament's
+own per-column search, a box under a column's heading for what that column
+shows -
+
+  Victim     the victim's name: "First Last", or either part
+  Offender   the offender's name the same way, or the relationship's label
+             ("Spouse", "Other: <detail>") shown under it
+  Submitted  the submitting officer's name (Assessment review only, where
+             "by {officer}" shows under the date)
+
+Names and relationship are encrypted, so they are searched like every other
+encrypted search (EncryptedColumnSearch, App\Support\EncryptedSearch): the
+viewer's own visibleTo() rows are decrypted in PHP and the table narrowed to
+the matches. Case-insensitive, % and _ literal. The main search bar shares
+these searches. The safe phone number is never searchable. Civilian
+assessments keeps its main bar only, searching each name column as before.
 */
 final class AssessmentColumns
 {
     /** The law-enforcement tables. @return list<TextColumn> */
     public static function for(bool $reviewScreen): array
     {
-        return self::columns(LawEnforcementAssessment::class, withOfficer: $reviewScreen);
+        return self::columns(LawEnforcementAssessment::class, withOfficer: $reviewScreen, fieldSearch: true);
     }
 
     /** Civilian assessments. @return list<TextColumn> */
     public static function civilian(): array
     {
-        return self::columns(PrivateAssessment::class, withOfficer: false);
+        return self::columns(PrivateAssessment::class, withOfficer: false, fieldSearch: false);
     }
 
     public static function cards(Table $table): Table
@@ -71,11 +90,27 @@ final class AssessmentColumns
             ->count();
     }
 
+    // A person's name as typed in a search box: first, last or "First Last";
+    // with $withRelationship (the offender) also the relationship's label.
+    private static function nameSearch(string $model, string $person, bool $withRelationship = false): Closure
+    {
+        $first = "{$person}FirstName";
+        $last = "{$person}LastName";
+        $relationship = $withRelationship ? ['OffenderVictimRelationship', 'OffenderVictimRelationshipOther'] : [];
+
+        return EncryptedColumnSearch::matching($model, [$first, $last, ...$relationship], fn ($row): array => [
+            $row->{$first},
+            $row->{$last},
+            trim(($row->{$first} ?? '').' '.($row->{$last} ?? '')),
+            ...($withRelationship ? [OffenderRelationship::display($row->OffenderVictimRelationship, $row->OffenderVictimRelationshipOther)] : []),
+        ]);
+    }
+
     /**
      * @param  class-string<LawEnforcementAssessment|PrivateAssessment>  $model
      * @return list<TextColumn>
      */
-    private static function columns(string $model, bool $withOfficer): array
+    private static function columns(string $model, bool $withOfficer, bool $fieldSearch): array
     {
         $fullName = fn (string $first) => fn (?string $state, $record): string => trim(
             ($record->{$first} ?? '').' '.($state ?? ''),
@@ -88,7 +123,20 @@ final class AssessmentColumns
             ->sortable();
 
         if ($withOfficer) {
-            $submitted->description(fn (LawEnforcementAssessment $record): string => 'by '.($record->submitter?->name ?? 'Unknown'));
+            $submitted->description(fn (LawEnforcementAssessment $record): string => 'by '.($record->submitter?->name ?? 'Unknown'))
+                // users.name is plain text ("First Last"), so the database searches it.
+                ->searchable(
+                    query: fn (Builder $query, string $search): Builder => $query->whereHas(
+                        'submitter',
+                        fn (Builder $users): Builder => $users->where(
+                            'name',
+                            'like',
+                            '%'.AssessmentFilters::escapeLike(mb_strtolower(preg_replace('/\s+/u', ' ', trim($search)))).'%',
+                        ),
+                    ),
+                    isIndividual: $fieldSearch,
+                )
+                ->splitIndividualSearchTerms(false);
         }
 
         return [
@@ -97,7 +145,10 @@ final class AssessmentColumns
             RecordCards::title(TextColumn::make('VictimLastName')
                 ->label('Victim')
                 ->formatStateUsing($fullName('VictimFirstName'))
-                ->searchable(query: EncryptedColumnSearch::query($model, ['VictimFirstName', 'VictimLastName']))),
+                ->searchable(query: $fieldSearch
+                    ? self::nameSearch($model, 'Victim')
+                    : EncryptedColumnSearch::query($model, ['VictimFirstName', 'VictimLastName']), isIndividual: $fieldSearch)
+                ->splitIndividualSearchTerms(false)),
 
             TextColumn::make('OffenderLastName')
                 ->label('Offender')
@@ -106,7 +157,10 @@ final class AssessmentColumns
                     $record->OffenderVictimRelationship,
                     $record->OffenderVictimRelationshipOther,
                 ))
-                ->searchable(query: EncryptedColumnSearch::query($model, ['OffenderFirstName', 'OffenderLastName'])),
+                ->searchable(query: $fieldSearch
+                    ? self::nameSearch($model, 'Offender', withRelationship: true)
+                    : EncryptedColumnSearch::query($model, ['OffenderFirstName', 'OffenderLastName']), isIndividual: $fieldSearch)
+                ->splitIndividualSearchTerms(false),
 
             // The screening result the eleven answers add up to: red when
             // high risk (HighRisk, the rule Analytics counts), amber for any
