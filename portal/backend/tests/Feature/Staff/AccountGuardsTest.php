@@ -122,6 +122,20 @@ test('name and email are shown read-only on the Account page, and a payload chan
     expect(accountSnapshot($user))->toBe($before);
 })->with(ACCOUNT_PAGE_ROLES);
 
+// Tracker item 75: every label above its box, so every box starts at the
+// left edge (EditProfile::defaultForm()).
+test('every label on the Account page sits above its box', function (UserRole $role) {
+    $this->actingAs(accountPageUser($role));
+
+    $fields = Livewire::test(EditProfile::class)->instance()->getSchema('form')->getFlatFields();
+
+    expect($fields)->not->toBeEmpty();
+
+    foreach ($fields as $name => $field) {
+        expect($field->hasInlineLabel())->toBeFalse("{$name} has its label beside the box");
+    }
+})->with(ACCOUNT_PAGE_ROLES);
+
 test('nobody changes their own role, agency or active flag on the Account page', function (UserRole $role) {
     $w = pestTwoAgencies();
     $user = accountPageUser($role);

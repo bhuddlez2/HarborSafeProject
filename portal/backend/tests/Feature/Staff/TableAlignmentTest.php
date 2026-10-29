@@ -77,6 +77,26 @@ test('text columns sit left and symbol columns sit centred', function (string $p
     'Officers' => [ListOfficerAccounts::class, UserRole::PoliceAdmin],
 ]);
 
+// Tracker items 62 and 72: the row buttons are centred in their column, and
+// the table carries the class theme.css uses to give every button the same
+// height, side by side (TableAlignment::buttons(), through
+// AssessmentColumns::cards()).
+test('the assessment tables centre their row buttons', function (string $page, UserRole $role) {
+    $this->actingAs($role === UserRole::Admin
+        ? staffUser($role)
+        : pestAgencyMember($role, pestAgency('Alignment PD')));
+
+    $table = Livewire::test($page)->instance()->getTable();
+
+    expect($table->getRecordActionsAlignment())->toBe(Alignment::Center->value)
+        ->and((string) ($table->getExtraAttributes()['class'] ?? ''))->toContain(TableAlignment::BUTTONS_CLASS);
+})->with([
+    'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
+    'Assessment review, admin' => [ListAssessmentReview::class, UserRole::Admin],
+    'Assessment review, police admin' => [ListAssessmentReview::class, UserRole::PoliceAdmin],
+    'Civilian assessments' => [ListCivilianAssessments::class, UserRole::Admin],
+]);
+
 test('Civilian assessments has the shared assessment columns', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
