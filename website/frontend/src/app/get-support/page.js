@@ -78,7 +78,7 @@ export default function GetSupport() {
           <span id="counseling" className="block scroll-mt-44" aria-hidden="true"></span>
 
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-semibold text-brand mb-3">Ways We Can Support You</h2>
+            <h2 className="text-3xl font-semibold text-brand mb-3">Services We Offer</h2>
             <p className="text-gray-600 leading-relaxed max-w-xl mx-auto">
               No matter where you are in your journey, our advocates are here to walk alongside you.
             </p>
