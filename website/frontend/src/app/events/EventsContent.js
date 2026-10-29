@@ -584,10 +584,7 @@ export default function EventsContent() {
   return (
     <main>
 
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Events &amp; News</h1>
         <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
           Upcoming events and past newsletters.

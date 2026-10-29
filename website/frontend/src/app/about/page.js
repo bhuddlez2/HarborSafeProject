@@ -13,12 +13,8 @@ export default function About() {
     <main>
 
       {/* PAGE TITLE BAND */}
-      {/* brand purple banner matching the navbar, mt-32 offsets the fixed navbar */}
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        {/* Eyebrow kicker */}
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      {/* brand purple banner matching the navbar, padded like every page's hero */}
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         {/* Page title */}
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Who We Are</h1>
         {/* Short tagline */}
@@ -30,7 +26,7 @@ export default function About() {
       <CrisisHotlineStrip />
 
       {/* MISSION  */}
-      <section className="py-20 px-4 bg-white">
+      <section className="pt-12 md:pt-16 pb-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
 
           {/* Two-column: photo left, vision + mission text right */}

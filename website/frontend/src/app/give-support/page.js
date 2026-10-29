@@ -34,7 +34,7 @@ export default function GiveSupport() {
       <CrisisHotlineStrip />
 
       {/* Intro, left-aligned on phones where a long centered paragraph is hard to read, centered from sm up */}
-      <section className="py-20 px-4 bg-white">
+      <section className="pt-12 md:pt-16 pb-20 px-4 bg-white">
         <div className="max-w-3xl mx-auto text-left sm:text-center">
           <p className="text-gray-700 leading-relaxed text-lg">
             We are so thankful you want to learn more about HSHAC and the ways you and your family can get involved.
