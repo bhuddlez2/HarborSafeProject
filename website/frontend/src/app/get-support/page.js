@@ -1,6 +1,8 @@
 import Link from "next/link";
 import HashHighlight from "./HashHighlight";
 import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+import PhoneLink from "../components/PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 import { CIVILIAN_ASSESSMENT_URL } from "../lib/portal";
 
 // Browser tab title and search description for this page (overrides the default in layout.js)
@@ -169,7 +171,7 @@ export default function GetSupport() {
           {/* The office line, kept from the removed "Ask about any of these services" box: it's nowhere else on the site */}
           <p className="mt-12 text-center text-sm text-gray-600 leading-relaxed">
             For court advocacy or community education, you can also call or text our office at{" "}
-            <a href="tel:423-889-1479" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 889-1479</a>.
+            <PhoneLink number="423-889-1479" className="font-semibold text-brand hover:underline" />.
           </p>
         </div>
       </section>
@@ -192,12 +194,11 @@ export default function GetSupport() {
             >
               Contact Us
             </Link>
-            <a
-              href="tel:423-476-3886"
+            <PhoneLink
+              number={CRISIS_CALL}
+              prefix="Call "
               className="border-2 border-brand text-brand px-8 py-3 rounded-lg font-semibold hover:bg-brand hover:text-white transition-all"
-            >
-              Call (423) 476-3886
-            </a>
+            />
           </div>
         </div>
       </section>
