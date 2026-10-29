@@ -50,10 +50,10 @@ test('Service feedback has four columns, with no Source column', function () {
     expect(cardTableLabels(ListServiceFeedback::class))->toBe(['Submitted', 'Service', 'Rating', 'Comment']);
 });
 
-test('Resource requests has four columns, with no Source or Email column', function () {
+test('Resource requests has five columns, with Follow-Up and no Source or Email column', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
-    expect(cardTableLabels(ListResourceRequests::class))->toBe(['Submitted', 'Name', 'County', 'Interested in']);
+    expect(cardTableLabels(ListResourceRequests::class))->toBe(['Submitted', 'Name', 'County', 'Interested in', 'Follow-Up']);
 });
 
 test('Follow-ups keeps its columns', function () {

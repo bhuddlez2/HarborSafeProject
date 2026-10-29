@@ -149,6 +149,15 @@ class ResourceRequestResource extends Resource
                     ->placeholder('-')
                     ->limitList(2)
                     ->expandableLimitedList()),
+
+                // Where the request's follow-up stands (Burchfield B58). It is
+                // updated on its follow-up page, through the Follow-Up button.
+                RecordCards::corner(TableAlignment::symbol(TextColumn::make('follow_up_status')
+                    ->label('Follow-Up')
+                    ->badge()
+                    ->color('gray')
+                    ->state(fn (ResourceRequestForm $record, ListResourceRequests $livewire): ?string => $livewire->followUpFor($record)?->Status->label())
+                    ->placeholder('-'))),
             ])
             ->defaultSort('SubmissionDate', 'desc')
             ->filters([
@@ -183,6 +192,16 @@ class ResourceRequestResource extends Resource
                         )),
             ])
             ->recordActions([
+                // The request's follow-up page, where Update Follow-Up is
+                // (Burchfield B58). Only while this user may work it:
+                // followUpFor() is scoped by FollowUp::visibleTo().
+                Action::make('follow_up')
+                    ->label('Follow-Up')
+                    ->icon(Heroicon::OutlinedClipboardDocumentCheck)
+                    ->color('gray')
+                    ->url(fn (ResourceRequestForm $record, ListResourceRequests $livewire): ?string => $livewire->followUpFor($record)?->url())
+                    ->visible(fn (ResourceRequestForm $record, ListResourceRequests $livewire): bool => $livewire->followUpFor($record) !== null),
+
                 // The plain form as a PDF, through its own logged route
                 // (ResourceRequestPdfController), as civilian assessments do.
                 ViewAction::make()
