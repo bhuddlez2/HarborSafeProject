@@ -25,7 +25,7 @@ names typed here, and the state is cleared as soon as the submission is accepted
 import { useState, useEffect } from "react";
 import Modal from "../components/Modal";
 import { OPTIONAL_PLACEHOLDER, RequiredNote } from "../components/FormControls";
-import { lethalityQuestions } from "../lib/lethality-questions";
+import { lethalityQuestions, questionText } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
 import { isValidEmail, isValidPhone, dateOfBirthBounds, dateOfBirthError, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
 
@@ -221,6 +221,15 @@ export default function AssessmentContent() {
   const current = lethalityQuestions[index];
   const identified = forWhom === "other" && anonymous === false;
 
+  // The names the questions are asked with (#33): the offender's as entered, and the
+  // victim's first name - except on a report for oneself, where the reader is the
+  // victim and "you" stays. Anonymity only hides the reporter, so it changes nothing
+  // here. Display only: answers are still sent by question number.
+  const questionNames = {
+    victim: forWhom === "other" ? victimFirstName : null,
+    offender: [offenderFirstName, offenderLastName].join(" "),
+  };
+
   // Records the answer and moves on: to the next question, or to the review after the
   // last one - or straight back to it when the answer was changed from there.
   const handleAnswer = (value) => {
@@ -292,7 +301,7 @@ export default function AssessmentContent() {
       setPhase("submitted");
     } catch (error) {
       if (error.status === 429) {
-        setSubmitError("Too many submissions just now. Please wait a minute and try again.");
+        setSubmitError("Too many submissions just now. Nothing was saved. Please wait a minute and try again. Your answers are still here.");
       } else if (error instanceof TypeError) {
         // fetch rejects with a TypeError when the server can't be reached at all
         setSubmitError("We couldn't reach the server. Please check your connection and try again.");
@@ -328,10 +337,12 @@ export default function AssessmentContent() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Your information is protected</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Nothing is saved until you submit</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      Nothing is saved until you press Submit. After that, your answers are seen
-                      only by Harbor Safe, except where the law requires us to report.
+                      What you type stays on this page only. Nothing is sent to Harbor Safe or saved
+                      anywhere until you press Submit at the end. If you close or leave this page
+                      first, everything you entered is gone. After you submit, only Harbor Safe sees
+                      your answers, except where the law requires us to report.
                     </p>
                   </div>
                 </div>
@@ -656,7 +667,8 @@ export default function AssessmentContent() {
             This screen contains {total} yes/no questions. Ask each question exactly as written.
           </p>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            Nothing is saved until you submit. Closing the tab before then clears your answers.
+            Nothing is sent or saved until you press Submit at the end. If you close or leave
+            this page before then, your answers are gone.
           </p>
           <button onClick={() => setPhase("questions")} className={PRIMARY}>Begin assessment</button>
         </div>
@@ -679,7 +691,8 @@ export default function AssessmentContent() {
         <div className={CARD}>
           <h1 className={`${HEADING} mb-2`}>Review &amp; Submit</h1>
           <p className="text-gray-600 mb-6">
-            Check every detail and answer below. Use Edit or Change to fix anything before you submit.
+            Check every detail and answer below. Use Edit or Change to fix anything. Nothing has
+            been sent yet. It is sent only when you press Submit assessment.
           </p>
 
           <div className="flex flex-col gap-4">
@@ -740,7 +753,7 @@ export default function AssessmentContent() {
                       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500">
                         {question.id}
                       </span>
-                      <span className="flex-1 min-w-48 text-sm leading-relaxed text-gray-700">{question.text}</span>
+                      <span className="flex-1 min-w-48 text-sm leading-relaxed text-gray-700">{questionText(question, questionNames)}</span>
                       <span className="flex items-center gap-2 shrink-0 ml-auto">
                         <span className={`rounded-md px-2 py-0.5 text-xs font-bold tracking-wide ${
                           value === true ? "bg-[#F5F0FB] text-[#5C0F8B]" : "bg-gray-100 text-gray-600"
@@ -800,7 +813,8 @@ export default function AssessmentContent() {
         <div className={CARD}>
           <h1 className={`${HEADING} mb-6`}>Assessment Submitted</h1>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            The assessment has been saved successfully.
+            Your assessment has been sent to Harbor Safe. Harbor Safe will follow up at the safe
+            phone number you gave. Your answers have been cleared from this page.
           </p>
           <button onClick={() => { clearEntries(); setPhase("prescreen"); }} className={PRIMARY}>
             Start new assessment
@@ -850,7 +864,7 @@ export default function AssessmentContent() {
         </div>
 
         <h2 className="text-2xl md:text-3xl text-gray-900 font-medium leading-snug mb-10" aria-live="polite">
-          {current.text}
+          {questionText(current, questionNames)}
         </h2>
 
         {/* Inside the card on desktop */}
