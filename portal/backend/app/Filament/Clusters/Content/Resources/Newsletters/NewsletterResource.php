@@ -225,8 +225,12 @@ class NewsletterResource extends Resource
             Step::make('File & Visibility')
                 ->icon('heroicon-o-paper-clip')
                 ->schema([
+                    // Required (Burchfield B53): on the website an issue is
+                    // its PDF. Newsletter::scopeOnWebsite() also leaves out
+                    // any older one saved without.
                     DatabaseFileUpload::forDocument('file_id')
                         ->label('PDF')
+                        ->required()
                         ->columnSpanFull(),
 
                     TextInput::make('file_pages')

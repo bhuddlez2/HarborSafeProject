@@ -115,6 +115,8 @@ test('a scheduled newsletter opens with Schedule post ticked, and unticking it r
     $newsletter = Newsletter::create([
         'title' => staffRunToken().' Winter issue',
         'issue_date' => '2026-12-01',
+        // Edit requires a PDF (Burchfield B53).
+        'file_id' => pestStoredPdf()->getKey(),
         'is_published' => true,
     ]);
 

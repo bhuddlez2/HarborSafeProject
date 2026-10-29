@@ -492,3 +492,14 @@ function pestPngOfSize(int $width, int $height): string
         .$chunk('IDAT', gzcompress($pixels))
         .$chunk('IEND', '');
 }
+
+// A stored newsletter PDF (a content_files row, swept by cleanupStaffData()),
+// for newsletters made directly rather than through the form. The form
+// requires one, and the website leaves out issues without (Burchfield B53).
+function pestStoredPdf(): App\Models\ContentFile
+{
+    $resource = tmpfile();
+    fwrite($resource, '%PDF-1.4'.str_repeat('a', 2000));
+
+    return App\Models\ContentFile::storeUpload(new Illuminate\Http\Testing\File(staffRunToken().'-issue.pdf', $resource));
+}

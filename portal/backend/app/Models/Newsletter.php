@@ -95,11 +95,18 @@ class Newsletter extends BaseModel
     What the website may show: published, and its publish date has arrived
     (an Eastern day), so a scheduled issue stays hidden - its PDF too - until
     that day. Used by the public list and the public file route.
+
+    And it has a PDF (as hasFile() reads it): the form requires one (Burchfield
+    B53), and this keeps any older issue without one off the site rather than
+    showing a Download button that goes nowhere.
     */
     public function scopeOnWebsite(Builder $query): Builder
     {
         return $query->where('is_published', true)
-            ->where('issue_date', '<=', now(Timezones::DISPLAY)->toDateString());
+            ->where('issue_date', '<=', now(Timezones::DISPLAY)->toDateString())
+            ->where(fn (Builder $file): Builder => $file
+                ->whereNotNull('file_id')
+                ->orWhere(fn (Builder $path): Builder => $path->whereNotNull('file_path')->where('file_path', '!=', '')));
     }
 
     public function hasFile(): bool

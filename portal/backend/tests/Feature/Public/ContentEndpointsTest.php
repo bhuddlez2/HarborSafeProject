@@ -233,18 +233,18 @@ test('the newsletters endpoint serves published issues in the contracted shape',
         ->and($issue['file']['url'])->toStartWith('http');
 });
 
-test('a newsletter with no file attached emits a null file', function () {
+// The form requires a PDF (Burchfield B53); an older issue saved without one
+// is left off rather than shown with a Download button that goes nowhere.
+test('a published newsletter with no PDF is not served', function () {
     Newsletter::create([
         'title' => staffRunToken().' No PDF yet',
         'issue_date' => '2026-08-01',
         'is_published' => true,
     ]);
 
-    $issue = collect($this->getJson('/api/public/newsletters')->json('data'))
-        ->firstWhere('title', staffRunToken().' No PDF yet');
+    $titles = collect($this->getJson('/api/public/newsletters')->json('data'))->pluck('title');
 
-    // The site reads issue.file?.url ?? "#", so null is handled.
-    expect($issue['file'])->toBeNull();
+    expect($titles)->not->toContain(staffRunToken().' No PDF yet');
 });
 
 test('newsletters are ordered newest issue first', function () {
@@ -252,6 +252,7 @@ test('newsletters are ordered newest issue first', function () {
         Newsletter::create([
             'title' => staffRunToken().' '.$date,
             'issue_date' => $date,
+            'file_id' => pestStoredPdf()->getKey(),
             'is_published' => true,
         ]);
     }

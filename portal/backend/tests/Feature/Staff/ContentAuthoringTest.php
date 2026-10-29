@@ -282,6 +282,24 @@ test('the newsletter Create pop-up saves only from its last step, with no "creat
         ->assertMountedActionModalDontSee(['create another', 'A line about what is in this issue.']);
 });
 
+// Burchfield B53: on the website an issue is its PDF, so none is saved
+// without one, draft or published.
+test('a newsletter needs a PDF, even as a draft', function (bool $published) {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    $title = staffRunToken().' No PDF';
+
+    Livewire::test(ManageNewsletters::class)
+        ->callAction('create', data: [
+            'title' => $title,
+            'issue_date' => '2026-09-01',
+            'is_published' => $published,
+        ])
+        ->assertHasActionErrors(['file_id' => 'required']);
+
+    expect(Newsletter::where('title', $title)->exists())->toBeFalse();
+})->with(['draft' => false, 'published' => true]);
+
 test('a secretary can upload a newsletter and its size is recorded', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 
