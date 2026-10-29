@@ -51,6 +51,16 @@ test('Request Resources: optional fields are announced as optional, required one
   await expect(page.getByRole('textbox', { name: 'Safe phone number', exact: true })).toBeVisible();
 });
 
+// Get Support's "Request this service" links: the named types are ticked by name
+// (any case, unknown names ignored), and the address is cleaned at once so
+// browser history shows only /contact/.
+test('Request Resources: a ?need= link ticks that type, then leaves the address clean', async ({ page }) => {
+  await page.goto('/contact/?need=shelter&need=Not+A+Type');
+
+  await expect(page.getByRole('checkbox', { name: 'Shelter' })).toBeChecked();
+  expect(new URL(page.url()).search).toBe('');
+});
+
 test('Request Resources: "* Required" sits just above Send request', async ({ page }) => {
   await page.goto('/contact/');
 

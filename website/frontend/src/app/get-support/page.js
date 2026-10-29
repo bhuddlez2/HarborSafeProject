@@ -10,6 +10,17 @@ export const metadata = {
     "Free, confidential services for survivors of domestic violence and sexual assault in Cleveland, TN: emergency shelter, crisis counseling, support groups, court advocacy, and community education.",
 };
 
+// Opens Request Resources with these resource types ticked, matched by name
+// (ContactContent). A name staff haven't added yet just ticks nothing.
+function RequestLink({ needs }) {
+  const query = new URLSearchParams(needs.map((need) => ["need", need]));
+  return (
+    <Link replace href={`/contact/?${query}`} className="mt-auto pt-6 text-sm font-semibold text-brand hover:underline">
+      Request this service →
+    </Link>
+  );
+}
+
 export default function GetSupport() {
   return (
     <main>
@@ -90,6 +101,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed">
                 Safe, confidential housing for individuals and families escaping dangerous situations. Our advocates can help you plan a safe move and connect you with the support you need while you stay with us.
               </p>
+              <RequestLink needs={["Emergency Shelter"]} />
             </div>
 
             <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
@@ -103,6 +115,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed">
                 Trauma-informed counseling through our hotline, in-person sessions, and support groups. We help with safety planning, goal-setting, court navigation, and building a future free from abuse.
               </p>
+              <RequestLink needs={["Counseling"]} />
             </div>
 
             {/* Support Groups */}
@@ -117,6 +130,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed">
                 Weekly safe, confidential sessions for women and children to learn about domestic violence, build self-esteem, set goals, and create safety plans. Free childcare available with advance notice.
               </p>
+              <RequestLink needs={["Support Groups"]} />
             </div>
 
             {/* Court Advocacy, highlighted along with Crisis Counseling by the home page's Counseling & Advocacy link */}
@@ -132,6 +146,7 @@ export default function GetSupport() {
                 Help with filing for protection orders, preparing for court appearances, and connecting with legal referrals. We walk with you through the process every step of the way.
                 Please note: we do not provide legal advice or representation.
               </p>
+              <RequestLink needs={["Orders of Protection", "Legal Help"]} />
             </div>
 
             {/* Community Education */}
@@ -146,6 +161,7 @@ export default function GetSupport() {
               <p className="text-sm text-gray-600 leading-relaxed">
                 Trauma-informed presentations for schools, clubs, churches, businesses, and organizations to help communities recognize, respond to, and prevent abuse.
               </p>
+              <RequestLink needs={["Community Education"]} />
             </div>
 
           </div>

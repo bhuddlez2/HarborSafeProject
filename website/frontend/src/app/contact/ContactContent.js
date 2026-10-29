@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { fetchRequestOptions, submitResourceRequest } from "../lib/forms";
 import { formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
@@ -27,8 +27,8 @@ const EMPTY_REQUEST = {
   Message: "",
 };
 
-function ResourceRequestForm({ resourceTypes, counties }) {
-  const [values, setValues] = useState(EMPTY_REQUEST);
+function ResourceRequestForm({ resourceTypes, counties, preselected }) {
+  const [values, setValues] = useState({ ...EMPTY_REQUEST, ResourceTypeIDs: preselected });
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const [message, setMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -256,13 +256,28 @@ function ResourceRequestForm({ resourceTypes, counties }) {
 export default function ContactContent() {
   const [options, setOptions] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | ready | error
+  const needsRef = useRef(null);
 
   useEffect(() => {
     let active = true;
 
+    // Get Support's service cards link here as /contact?need=<resource type name>
+    // to tick that box. Matched by name, since staff manage the list; a name
+    // that no longer matches just ticks nothing. The address is cleaned at once
+    // so browser history never shows what someone asked for. Read once (a ref),
+    // since a re-run would find the address already cleaned.
+    if (needsRef.current === null) {
+      needsRef.current = new URLSearchParams(window.location.search).getAll("need").map((n) => n.toLowerCase());
+      if (needsRef.current.length) window.history.replaceState(null, "", window.location.pathname);
+    }
+    const needs = needsRef.current;
+
     fetchRequestOptions()
       .then((loaded) => {
         if (!active) return;
+        loaded.preselected = loaded.resourceTypes
+          .filter((type) => needs.includes(type.Name.toLowerCase()))
+          .map((type) => type.id);
         setOptions(loaded);
         setStatus("ready");
       })
@@ -301,6 +316,7 @@ export default function ContactContent() {
             <ResourceRequestForm
               resourceTypes={options?.resourceTypes ?? []}
               counties={options?.counties ?? []}
+              preselected={options?.preselected ?? []}
             />
           </FormSection>
         </div>
