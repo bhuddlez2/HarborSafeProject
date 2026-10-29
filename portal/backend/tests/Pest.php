@@ -473,3 +473,22 @@ function pestApplyFilter(Livewire\Features\SupportTesting\Testable $list, string
 {
     return $list->set("tableDeferredFilters.{$filter}.value", $value)->call('applyTableFilters');
 }
+
+/*
+A real PNG of the given size, built by hand because GD isn't installed
+(see CLAUDE.md on fake()->image()). One grey 8-bit channel, every pixel
+black, so even a large image compresses to a few hundred bytes. Used for
+the event image's minimum size (DatabaseFileUpload::MIN_IMAGE_WIDTH).
+*/
+function pestPngOfSize(int $width, int $height): string
+{
+    $chunk = fn (string $type, string $data): string => pack('N', strlen($data)).$type.$data.pack('N', crc32($type.$data));
+
+    // Each row starts with filter byte 0, then one byte per pixel.
+    $pixels = str_repeat("\0".str_repeat("\0", $width), $height);
+
+    return "\x89PNG\r\n\x1a\n"
+        .$chunk('IHDR', pack('NNCCCCC', $width, $height, 8, 0, 0, 0, 0))
+        .$chunk('IDAT', gzcompress($pixels))
+        .$chunk('IEND', '');
+}

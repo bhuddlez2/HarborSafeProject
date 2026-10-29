@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Filament\Clusters\Content\Resources\Newsletters\Pages\ManageNewsletters;
+use App\Filament\Forms\Components\DatabaseFileUpload;
 use App\Models\ContentFile;
 use App\Models\Event;
 use App\Models\EventCategory;
@@ -55,10 +56,11 @@ function pestUploadWithBytes(string $name, string $bytes): TestingFile
 
 function pestImageUpload(): TestingFile
 {
-    // A real 1x1 PNG, so getMimeType()'s content sniffing returns image/png.
+    // A real PNG at the minimum event image size, so getMimeType()'s content
+    // sniffing returns image/png and the size check passes.
     return pestUploadWithBytes(
         staffRunToken().'-event.png',
-        base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
+        pestPngOfSize(DatabaseFileUpload::MIN_IMAGE_WIDTH, DatabaseFileUpload::MIN_IMAGE_HEIGHT),
     );
 }
 
