@@ -223,7 +223,6 @@ class EventResource extends Resource
 
                     Step::make('Preview')
                         ->icon('heroicon-o-sparkles')
-                        ->description('How your event will appear on the website.')
                         ->schema([
                             /*
                             Placeholder renders arbitrary HTML inside a form step.

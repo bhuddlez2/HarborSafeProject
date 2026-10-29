@@ -256,7 +256,6 @@ class NewsletterResource extends Resource
 
             Step::make('Preview')
                 ->icon('heroicon-o-sparkles')
-                ->description('How your newsletter will appear on the website.')
                 ->schema([
                     /*
                     Same pattern as the event preview: Placeholder with a
