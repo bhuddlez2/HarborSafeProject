@@ -45,17 +45,6 @@ export default function Home() {
   */
   const [openTestimonial, setOpenTestimonial] = useState(null);
 
-  /*
-  replaceNavigate does a full page load that replaces the current history entry (same
-  history behavior as <Link replace>), used by the service cards' "Learn more" links to
-  /get-support/#... anchors. Next's client router mishandles repeat hash navigations in dev,
-  so these links bypass it and let the browser scroll to the anchor natively.
-  */
-  const replaceNavigate = (e) => {
-    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    window.location.replace(e.currentTarget.href);
-  };
 
   return (
     <div>
@@ -120,8 +109,8 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
-              <Link replace href="/get-support" className="font-semibold text-brand hover:underline">Our services →</Link>
-              <Link replace href="/resources" className="font-semibold text-brand hover:underline">More resources →</Link>
+              <Link href="/get-support" className="font-semibold text-brand hover:underline">Our services →</Link>
+              <Link href="/resources" className="font-semibold text-brand hover:underline">More resources →</Link>
             </div>
           </div>
         </Modal>
@@ -310,7 +299,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
-                  <a href="/get-support/#shelter" onClick={replaceNavigate} className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <a href="/get-support/#shelter" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
 
                 {/* Counseling & Advocacy card */}
@@ -323,7 +312,7 @@ export default function Home() {
                   </div>
                   <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
-                  <a href="/get-support/#counseling" onClick={replaceNavigate} className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <a href="/get-support/#counseling" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
 
                 {/* 24/7 Crisis Line card */}

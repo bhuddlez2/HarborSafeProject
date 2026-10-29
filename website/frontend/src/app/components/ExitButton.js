@@ -1,20 +1,28 @@
 /*
 ExitButton component,
 extracted into its own file so it renders on every page via layout.js,
-navbar links (and every other internal link) use the replace prop so every page visit
-overwrites the tab's current Back/Forward entry instead of pushing a new one, meaning only
-one site entry ever exists in the tab's Back/Forward history at a time,
-exit then uses location.replace() to overwrite that single remaining entry
-with Google so the back button cannot return to the site
+internal links push history entries as normal so Back and Forward move through the site,
+Safe Exit then works one way through a latch in SAFE_EXIT_SCRIPT below
 */
 
 export const SAFE_EXIT_URL = "https://www.google.com";
 
 export const SAFE_EXIT_SCRIPT = `(function () {
-  function leave() { window.location.replace(${JSON.stringify(SAFE_EXIT_URL)}); }
+  var KEY = "hshac-safe-exit";
+  function exited() { try { return sessionStorage.getItem(KEY) === "1"; } catch (e) { return false; } }
+  function go() {
+    document.documentElement.style.visibility = "hidden";
+    window.location.replace(${JSON.stringify(SAFE_EXIT_URL)});
+  }
+  function leave() { try { sessionStorage.setItem(KEY, "1"); } catch (e) {} go(); }
+
+  var nav = window.performance && performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+  if (exited() && nav && nav.type === "back_forward") go();
+  window.addEventListener("pageshow", function (e) { if (e.persisted && exited()) go(); });
+
   window.addEventListener("keyup", function (e) { if (e.key === "Escape") leave(); });
   document.addEventListener("click", function (e) {
-    if (e.target && e.target.closest && e.target.closest("#exit-button")) leave();
+    if (e.target && e.target.closest && e.target.closest("[data-safe-exit]")) leave();
   });
 })();`;
 
@@ -32,11 +40,12 @@ export default function ExitButton() {
     px-20 py-5 text-2xl for sizing,
     shadow-lg for depth,
     transition-all and hover:scale-110 for smooth scale animation on hover,
-    clicking it is handled by SAFE_EXIT_SCRIPT above (matched by id="exit-button"),
+    data-safe-exit hands the click to SAFE_EXIT_SCRIPT above,
     aria-label and title for accessibility and tooltip text
     */
     <button
       id="exit-button"
+      data-safe-exit
       type="button"
       className="fixed bottom-4 right-4 z-100 bg-red-600 hover:bg-white text-white hover:text-red-600 border-2
       border-red-600 rounded-full px-10 py-5 text-2xl font-semibold shadow-lg transition-all hover:scale-110"

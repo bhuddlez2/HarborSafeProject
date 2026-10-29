@@ -62,7 +62,7 @@ export default function Navbar() {
         aria-label="Main navigation"
       >
         {/* Logo image on the left; clicking routes to home, shrink-0 so the nav links can't squeeze it */}
-        <Link replace href="/" className="flex items-center gap-4 shrink-0">
+        <Link href="/" className="flex items-center gap-4 shrink-0">
           {/*
           width and height match the SVG's actual intrinsic dimensions so Next.js
           can calculate the correct aspect ratio,
@@ -100,7 +100,7 @@ export default function Navbar() {
         */}
         <div className="hidden lg:flex items-center gap-1 xl:gap-2">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} replace href={link.href} className="text-white font-bold whitespace-nowrap rounded-full">
+            <Link key={link.href} href={link.href} className="text-white font-bold whitespace-nowrap rounded-full">
               <span className={navClass(link.href)}>{link.label}</span>
             </Link>
           ))}
@@ -150,7 +150,6 @@ export default function Navbar() {
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
-              replace
               href={link.href}
               className="text-white font-bold rounded-full"
               onClick={() => setMenuOpen(false)}

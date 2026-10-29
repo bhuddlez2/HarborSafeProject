@@ -63,7 +63,7 @@ export default function GetSupport() {
                   Text (423) 715-9614
                 </a>
               </div>
-              <Link replace href="/contact" className="inline-block mt-3 text-sm font-semibold text-brand hover:underline">
+              <Link href="/contact" className="inline-block mt-3 text-sm font-semibold text-brand hover:underline">
                 Or send us a message →
               </Link>
               <p className="mt-4 pt-4 border-t border-purple-200 text-xs text-gray-600 leading-relaxed">
@@ -167,14 +167,12 @@ export default function GetSupport() {
                 <a href="tel:911" className="whitespace-nowrap font-semibold text-red-700 hover:underline">call 911</a>.
               </p>
             </div>
-            {/* replace, like every internal link, so the site keeps a single history entry for Safe Exit to overwrite */}
-            <Link
-              replace
+            <a
               href={CIVILIAN_ASSESSMENT_URL}
               className="justify-self-start md:justify-self-end whitespace-nowrap bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
             >
               Take the assessment
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -191,7 +189,6 @@ export default function GetSupport() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              replace
               href="/contact"
               className="bg-brand text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
             >

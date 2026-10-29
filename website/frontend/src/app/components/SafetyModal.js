@@ -165,7 +165,8 @@ export default function SafetyModal() {
               I understand — continue to site
             </button>
             <button
-              onClick={() => window.location.replace("https://www.google.com")}
+              type="button"
+              data-safe-exit
               className="hover:scale-105 w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-red-600 hover:bg-white hover:text-red-600 transition-all cursor-pointer"
             >
               Safe Exit

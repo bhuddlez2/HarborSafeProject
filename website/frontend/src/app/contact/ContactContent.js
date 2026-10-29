@@ -307,7 +307,7 @@ export default function ContactContent() {
       <section className="pb-16 px-4 bg-white">
         <p className="text-center text-gray-600 text-sm">
           Have you used one of our services?{" "}
-          <Link replace href="/feedback" className="text-brand font-semibold hover:underline">
+          <Link href="/feedback" className="text-brand font-semibold hover:underline">
             Share your feedback
           </Link>
           .
