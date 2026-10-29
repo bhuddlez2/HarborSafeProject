@@ -1044,7 +1044,7 @@ never another agency's. Everyone else, and a police admin
 with **no** agency, gets no Logs item and a 403 (`LogResource::canOpenLogs()`).
 
 **Columns:** When (Eastern) · Who · Action (badge: Viewed / Downloaded PDF / Edited) ·
-Record (the kind of form, with "Submitted … · first 8 characters of its id" under it) ·
+Record (the kind of form, with "Submitted … · last 8 characters of its id" under it) ·
 Changes (fields changed, edit rows only). **No personal details are shown** — no victim,
 offender or requester names, no phone numbers, no edit reason; the forms are loaded with
 just their id and submitted time. The old Change log's names and Reason columns went for

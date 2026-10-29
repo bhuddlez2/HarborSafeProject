@@ -238,7 +238,7 @@ class LogResource extends Resource
             'PrivateDocumentID' => $record->privateAssessment,
         };
 
-        $id = substr((string) $record->{$column}, 0, 8);
+        $id = substr((string) $record->{$column}, -8);
 
         if ($form === null) {
             return "Removed · {$id}";

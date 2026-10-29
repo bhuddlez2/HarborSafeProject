@@ -172,7 +172,7 @@ test('views, downloads and edits are one list, newest first, each with its actio
         ->assertTableColumnFormattedStateSet('Action', 'Viewed', $w->viewA)
         // An edit is about its officer assessment, like the access rows.
         ->assertTableColumnStateSet('record', 'Officer Assessment', $w->editA)
-        ->assertTableColumnHasDescription('record', 'Submitted '.Illuminate\Support\Carbon::parse($w->assessmentA->DateCreated)->setTimezone('America/New_York')->format('M j, Y g:i a').' · '.substr($w->assessmentA->getKey(), 0, 8), $w->editA)
+        ->assertTableColumnHasDescription('record', 'Submitted '.Illuminate\Support\Carbon::parse($w->assessmentA->DateCreated)->setTimezone('America/New_York')->format('M j, Y g:i a').' · '.substr($w->assessmentA->getKey(), -8), $w->editA)
         ->assertTableColumnFormattedStateSet('changes_count', '1 field', $w->editA)
         ->assertTableColumnStateSet('changes_count', null, $w->viewA);
 });
@@ -303,7 +303,7 @@ test('officer-assessment filters leave only officer-assessment rows', function (
 })->with([
     'original submitter' => ['submitted_by', fn (object $w) => $w->officerA->getKey()],
     'agency' => ['agency', fn (object $w) => $w->officerA->agencyId()],
-    'assessment ID' => ['assessment_id', fn (object $w) => substr($w->assessmentA->getKey(), 0, 8)],
+    'assessment ID' => ['assessment_id', fn (object $w) => substr($w->assessmentA->getKey(), -8)],
     'victim first name' => ['victim_first_name', fn (object $w) => $w->assessmentA->VictimFirstName],
 ]);
 
