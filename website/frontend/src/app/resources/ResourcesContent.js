@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Modal from "../components/Modal";
 import { generalCategory } from "./general";
@@ -60,7 +60,8 @@ const ICONS = {
   ),
   "science-of-hope": (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      {/* heart icon, feathericons.com */}
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   ),
 };
@@ -286,6 +287,17 @@ function ScienceOfHopeContent() {
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
 
+  /*
+  "Take the Hope Test" scrolls to the scale below the reading, in the same tab,
+  without a hash in the URL (so no extra history entry), and moves focus to the
+  scale's heading so keyboard and screen reader users land there too
+  */
+  const scaleHeadingRef = useRef(null);
+  const goToScale = () => {
+    scaleHeadingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scaleHeadingRef.current?.focus({ preventScroll: true });
+  };
+
   const answered = Object.keys(answers).length;
   const allAnswered = answered === HOPE_QUESTIONS.length;
   const pathways = [1, 3, 4, 5].reduce((s, id) => s + (answers[id] || 0), 0);
@@ -343,6 +355,20 @@ function ScienceOfHopeContent() {
   return (
     <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
 
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={goToScale}
+          className="inline-flex items-center gap-2 bg-brand text-white px-6 py-3 rounded-xl font-semibold text-base hover:bg-purple-800 transition-colors"
+        >
+          Take the Hope Test
+          {/* arrow-down icon, feathericons.com */}
+          <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-current stroke-2 fill-none" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" />
+          </svg>
+        </button>
+      </div>
+
       {/* Gentle Reminder */}
       <div className="bg-purple-50 border border-purple-100 rounded-xl p-5 text-center">
         <p className="text-xs font-bold text-brand uppercase tracking-wider mb-3">A Gentle Reminder</p>
@@ -378,7 +404,8 @@ function ScienceOfHopeContent() {
       {/* Adult Hope Scale */}
       <div className="border-t-2 border-purple-200 pt-6 space-y-6">
         <div className="text-center">
-          <p className="text-base font-bold text-brand uppercase tracking-wide">The Adult Hope Scale</p>
+          {/* scroll-mt-28 keeps it clear of the fixed navbar; tabIndex -1 lets goToScale focus it */}
+          <p ref={scaleHeadingRef} tabIndex={-1} className="scroll-mt-28 text-base font-bold text-brand uppercase tracking-wide focus:outline-none">The Adult Hope Scale</p>
           <p className="text-xs text-gray-500 mt-1">Read each sentence carefully and select the number that best describes you in most situations. There are no right or wrong answers.</p>
         </div>
 

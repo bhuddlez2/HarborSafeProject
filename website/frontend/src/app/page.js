@@ -147,17 +147,18 @@ export default function Home() {
               You are not alone.
             </p>
             {/*
-            Call-to-action button,
+            Call-to-action button, made to stand out more in the same spot,
             bg-white text-black for high contrast against the dark background,
-            px-10 py-4 for generous padding,
+            px-12 py-5 and text-xl (larger on md) so it's bigger than the old px-10 py-4,
             rounded-full for pill shape,
+            ring-4 ring-white/40 for a soft halo that sets it apart from the photo,
             hover:bg-gray-200 and hover:scale-105 for subtle hover feedback,
-            shadow-lg for depth,
-            font-semibold for emphasis
+            shadow-xl for depth,
+            font-bold for emphasis
             */}
             <button
               onClick={() => setShowHelpModal(true)}
-              className="bg-white text-black px-10 py-4 rounded-full hover:bg-gray-200 hover:scale-105 transition-all shadow-lg font-semibold cursor-pointer"
+              className="bg-white text-black px-12 py-5 md:px-14 md:py-6 text-xl md:text-2xl rounded-full ring-4 ring-white/40 hover:bg-gray-200 hover:scale-105 transition-all shadow-xl font-bold cursor-pointer"
             >
               Get Help Now
             </button>
@@ -209,7 +210,7 @@ export default function Home() {
               <div className="space-y-6">
 
                 {/* Section heading above the testimonials */}
-                <h1 className="text-center text-brand text-4xl font-semibold">We Are Here to Help You.</h1>
+                <h1 className="text-center text-brand text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight">We Are Here to Help You.</h1>
 
                 {/* First testimonial header and block */}
                 <h2 className="text-brand text-xl font-semibold mt-8">A Survivor&apos;s Story</h2>
