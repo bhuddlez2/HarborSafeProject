@@ -17,6 +17,7 @@ use App\Filament\Clusters\Submissions\Resources\ResourceRequests\ResourceRequest
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackResource;
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
 use App\Filament\Pages\NewAssessment;
+use App\Filament\Pages\AgencyAnalytics;
 use App\Filament\Pages\Police;
 use App\Filament\Resources\Agencies\AgencyResource;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
@@ -72,6 +73,9 @@ function allStaffComponents(): array
         'analytics.civilian-assessments' => CivilianAssessmentAnalytics::class,
         'analytics.feedback' => FeedbackAnalytics::class,
         'analytics.follow-ups' => FollowUpAnalytics::class,
+        // Police admins with an agency only (see the test below), so in no
+        // role's row here: staffUser() gives no agency.
+        'police.analytics' => AgencyAnalytics::class,
     ];
 }
 
@@ -186,6 +190,16 @@ test('a police admin reaches Logs only with an agency', function () {
 
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null));
     expect(LogResource::canAccess())->toBeFalse();
+});
+
+// Analytics for a police admin's own agency (#67) needs an agency, like Logs.
+test('a police admin reaches their Analytics only with an agency', function () {
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Analytics agency')));
+    expect(AgencyAnalytics::canAccess())->toBeTrue()
+        ->and(OfficerAssessmentAnalytics::canAccess())->toBeFalse();
+
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null));
+    expect(AgencyAnalytics::canAccess())->toBeFalse();
 });
 
 test('an inactive account is refused everything, whatever its role', function (UserRole $role) {
