@@ -29,11 +29,6 @@ class FeedbackAnalytics extends AnalyticsPage
         );
     }
 
-    public function description(): string
-    {
-        return 'Totals for the website’s feedback and resource request forms, plus forms entered by staff.';
-    }
-
     protected function sections(DateRange $range): array
     {
         $stats = app(FeedbackStats::class);

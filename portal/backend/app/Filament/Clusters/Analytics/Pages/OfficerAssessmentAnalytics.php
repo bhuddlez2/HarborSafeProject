@@ -24,11 +24,6 @@ class OfficerAssessmentAnalytics extends AnalyticsPage
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
     }
 
-    public function description(): string
-    {
-        return 'Totals across every agency. No names or phone numbers are shown.';
-    }
-
     public function offersSexFilter(): bool
     {
         return true;

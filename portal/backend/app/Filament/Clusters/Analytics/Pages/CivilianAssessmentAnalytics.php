@@ -24,11 +24,6 @@ class CivilianAssessmentAnalytics extends AnalyticsPage
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
     }
 
-    public function description(): string
-    {
-        return 'Totals for assessments submitted on the public website. No names or phone numbers are shown.';
-    }
-
     public function offersSexFilter(): bool
     {
         return true;

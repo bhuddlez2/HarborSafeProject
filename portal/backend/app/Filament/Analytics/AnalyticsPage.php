@@ -74,8 +74,11 @@ abstract class AnalyticsPage extends Page
     // [heading?, tiles, cards] for the view; see the stats services.
     abstract protected function sections(DateRange $range): array;
 
-    // The sentence under the heading.
-    abstract public function description(): string;
+    // The sentence under the heading; only Follow-Ups has one (FT33).
+    public function description(): ?string
+    {
+        return null;
+    }
 
     // Only the assessment tabs record sex, so only they offer the filter.
     public function offersSexFilter(): bool
