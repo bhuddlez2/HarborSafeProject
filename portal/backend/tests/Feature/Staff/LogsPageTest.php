@@ -187,7 +187,7 @@ test('the When column shows the row\'s own time, in Eastern', function () {
         ->assertTableColumnFormattedStateSet('OccurredAt', 'May 1, 2026 8:00:00 am', $w->viewA);
 });
 
-test('Show narrows the merged list to one kind', function (string $show, array $expected) {
+test('Show narrows the merged list to the kinds chosen', function (array $show, array $expected) {
     $w = logsWorld();
     $this->actingAs($w->policeAdminA);
 
@@ -204,10 +204,14 @@ test('Show narrows the merged list to one kind', function (string $show, array $
         $list->assertCanNotSeeTableRecords($hidden);
     }
 })->with([
-    'All' => [ListLogs::SHOW_ALL, ['view', 'download', 'edit']],
-    'Viewed' => [LogAction::View->value, ['view']],
-    'Downloaded PDF' => [LogAction::Download->value, ['download']],
-    'Edited' => [LogAction::Edit->value, ['edit']],
+    'All (nothing chosen)' => [[], ['view', 'download', 'edit']],
+    'Viewed' => [[LogAction::View->value], ['view']],
+    'Downloaded PDF' => [[LogAction::Download->value], ['download']],
+    'Edited' => [[LogAction::Edit->value], ['edit']],
+    // Multi-select (2026-10-28): several kinds together.
+    'Viewed and Edited' => [[LogAction::View->value, LogAction::Edit->value], ['view', 'edit']],
+    'Downloaded PDF and Edited' => [[LogAction::Download->value, LogAction::Edit->value], ['download', 'edit']],
+    'every kind chosen' => [array_map(fn (LogAction $a): string => $a->value, LogAction::cases()), ['view', 'download', 'edit']],
 ]);
 
 test('search finds views, downloads and edits by the person\'s name, in any case', function () {

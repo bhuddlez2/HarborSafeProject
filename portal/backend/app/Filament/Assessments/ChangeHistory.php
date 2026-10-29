@@ -63,13 +63,14 @@ final class ChangeHistory
                 default => 'No edits since submission',
             })
             ->modalHeading($withAccess ? 'Log' : 'Change log')
-            // Old and new values are the record's contents, so opening this
-            // is a view. mountUsing, not afterFormFilled: this pop-up has no
-            // schema, and Filament only calls afterFormFilled when there is
-            // one. Not in modalContent(), which re-runs on every render.
-            // Logged before the content is built, so the Log includes this
-            // opening too.
-            ->mountUsing(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
+            // Names and old and new values are the record's contents, so
+            // opening this is recorded - as "Viewed Log", its own kind
+            // (AssessmentViews::logHistory()). mountUsing, not
+            // afterFormFilled: this pop-up has no schema, and Filament only
+            // calls afterFormFilled when there is one. Not in modalContent(),
+            // which re-runs on every render. Logged before the content is
+            // built, so the Log includes this opening too.
+            ->mountUsing(fn (LawEnforcementAssessment $record) => AssessmentViews::logHistory($record))
             ->modalContent(function (LawEnforcementAssessment $record) use ($withAccess) {
                 $edits = $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all();
 
@@ -141,8 +142,8 @@ final class ChangeHistory
 
     /**
      * Views, downloads and edits of one record, newest first, then the
-     * submission. Each item: kind ('edit' | 'view' | 'download' |
-     * 'submitted'), plus the edit's fields (entries()) or who and when.
+     * submission. Each item: kind ('edit' | 'view' | 'view_log' |
+     * 'download' | 'download_with_log' | 'submitted'), plus the edit's fields (entries()) or who and when.
      *
      * @param  list<AssessmentEdit>  $edits
      * @param  list<AssessmentAccessLog>  $access

@@ -694,6 +694,12 @@
     background-color: #fffbeb;
 }
 
+/* "Viewed Log": someone opened this history (AssessmentAccess::ViewLog). */
+.hs-cl-event--view_log .hs-cl-event-icon {
+    color: #5c0f8b;
+    background-color: #f5f0fb;
+}
+
 .hs-cl-event--submitted {
     background-color: #f5f0fb;
     border-color: transparent;

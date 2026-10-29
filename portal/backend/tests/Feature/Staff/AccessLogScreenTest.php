@@ -116,11 +116,11 @@ test('resource request rows are recorded but never listed on Logs', function (Us
 
     $list = Livewire::test(ListLogs::class)->searchTable(accessLogRename($f->admin, 'Requester'));
 
-    foreach ([ListLogs::SHOW_ALL, LogAction::View->value, LogAction::Download->value] as $show) {
+    foreach ([[], [LogAction::View->value], [LogAction::Download->value], [LogAction::View->value, LogAction::Download->value]] as $show) {
         $list->set('show', $show)->assertCanNotSeeTableRecords([$f->requestView, $download]);
     }
 
-    $list->set('show', ListLogs::SHOW_ALL)->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView]);
+    $list->set('show', [])->assertCanSeeTableRecords([$f->adminDownload, $f->civilianView]);
 })->with([
     'admin' => [UserRole::Admin],
     'super admin' => [UserRole::SuperAdmin],
@@ -201,35 +201,39 @@ test('the Show dropdown picks All, Viewed, Downloaded PDF or Edited, and applies
     $downloads = [$f->adminDownload];
     $edits = [$edit];
 
-    // All is the default, and shows every kind.
+    // Nothing chosen (All) is the default, and shows every kind.
     Livewire::test(ListLogs::class)
-        ->assertSet('show', ListLogs::SHOW_ALL)
+        ->assertSet('show', [])
         ->searchTable($name)
         ->assertCanSeeTableRecords([...$views, ...$downloads, ...$edits])
         ->assertCanNotSeeTableRecords([$f->requestView])
         // Viewed: views only.
-        ->set('show', LogAction::View->value)
+        ->set('show', [LogAction::View->value])
         ->assertCanSeeTableRecords($views)
         ->assertCanNotSeeTableRecords([...$downloads, ...$edits])
         // Downloaded PDF: downloads only.
-        ->set('show', LogAction::Download->value)
+        ->set('show', [LogAction::Download->value])
         ->assertCanSeeTableRecords($downloads)
         ->assertCanNotSeeTableRecords([...$views, ...$edits])
         // Edited: edits only.
-        ->set('show', LogAction::Edit->value)
+        ->set('show', [LogAction::Edit->value])
         ->assertCanSeeTableRecords($edits)
         ->assertCanNotSeeTableRecords([...$views, ...$downloads])
+        // Several at once: views and edits, no downloads.
+        ->set('show', [LogAction::View->value, LogAction::Edit->value])
+        ->assertCanSeeTableRecords([...$views, ...$edits])
+        ->assertCanNotSeeTableRecords($downloads)
         // Back to All.
-        ->set('show', ListLogs::SHOW_ALL)
+        ->set('show', [])
         ->assertCanSeeTableRecords([...$views, ...$downloads, ...$edits]);
 });
 
-test('the Show options come from LogAction, after All, with the access log\'s own labels', function () {
+test('the Show options come from LogAction, with the access log\'s own labels', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
     expect(ListLogs::showOptions())->toBe([
-        'all' => 'All',
         'view' => 'Viewed',
+        'view_log' => 'Viewed Log',
         'download' => 'Downloaded PDF',
         'download_with_log' => 'Downloaded PDF with log',
         'edit' => 'Edited',
@@ -240,8 +244,8 @@ test('the Show options come from LogAction, after All, with the access log\'s ow
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Show PD')));
 
     expect(ListLogs::showOptions())->toBe([
-        'all' => 'All',
         'view' => 'Viewed',
+        'view_log' => 'Viewed Log',
         'download' => 'Downloaded PDF',
         'edit' => 'Edited',
     ]);
@@ -251,12 +255,12 @@ test('the Show options come from LogAction, after All, with the access log\'s ow
     }
 });
 
-test('a tampered Show value shows All, still scoped', function () {
+test('tampered Show values are ignored, leaving All, still scoped', function () {
     $f = accessLogAgencyFixture();
     $this->actingAs($f->policeAdminA);
 
     Livewire::test(ListLogs::class)
-        ->set('show', 'everything')
+        ->set('show', ['everything', 'download_with_log'])
         ->assertCanSeeTableRecords([$f->officerView, $f->adminDownload, $f->policeAdminView])
         ->assertCanNotSeeTableRecords([$f->otherAgencyView, $f->civilianView, $f->requestView]);
 });
@@ -378,7 +382,7 @@ test('Show, search and the police admin\'s scope together never reach another ag
 
     foreach (ListLogs::showOptions() as $value => $label) {
         Livewire::test(ListLogs::class)
-            ->set('show', $value)
+            ->set('show', [$value])
             ->assertCanNotSeeTableRecords([$f->otherAgencyView, $f->civilianView, $f->requestView])
             ->searchTable($nameB)
             ->assertCountTableRecords(0);

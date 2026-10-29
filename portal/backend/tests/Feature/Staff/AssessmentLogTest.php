@@ -70,12 +70,14 @@ test('a police admin\'s Log shows views, downloads and edits, newest first, then
         ->mountAction(TestAction::make('changeLog')->table($w->assessment))
         ->assertMountedActionModalSee(['Viewed', 'Downloaded PDF', 'Spelling fix', 'Submitted']);
 
-    // Opening the Log above was itself a view, so it comes first (Oct, now).
+    // Opening the Log above was recorded as its own kind, Viewed Log, so it
+    // comes first (now).
     $html = pestLogHtml($w->assessment, withAccess: true);
 
     expect($html)->toContain('Every view, PDF download and edit, newest first');
 
     $order = [
+        strpos($html, 'Viewed Log</span> by '.$w->policeAdmin->name),
         strpos($html, 'Downloaded PDF'),
         strpos($html, 'Spelling fix'),
         strrpos($html, 'Viewed</span> by '.$w->officer->name),

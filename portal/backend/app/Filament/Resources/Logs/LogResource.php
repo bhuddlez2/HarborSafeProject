@@ -51,9 +51,9 @@ no victim, offender or requester names, no phone numbers, no edit reason. The
 forms are loaded with just those columns.
 
 Read-only: no create, edit, delete or bulk action. Edit rows have a View
-pop-up showing the edit's changes, which logs a view of the assessment
-(AssessmentViews::log, before the pop-up is sent, so a failed write stops it
-opening). Access rows have no actions. Opening the page is not itself logged.
+pop-up showing the edit's changes, which records a "Viewed Log" of the
+assessment (AssessmentViews::logHistory, before the pop-up is sent, so a
+failed write stops it opening). Access rows have no actions. Opening the page is not itself logged.
 */
 class LogResource extends Resource
 {
@@ -196,12 +196,13 @@ class LogResource extends Resource
                 ])
                 ->withCount(['detailChanges', 'answerChanges']))
             ->recordActions([
-                // Shows the edit's old and new values, so opening it is a view
-                // of the assessment - see App\Filament\Assessments\AssessmentViews.
+                // Shows the edit's old and new values, so opening it is
+                // recorded, as a look at the assessment's history ("Viewed
+                // Log") - see App\Filament\Assessments\AssessmentViews.
                 ViewAction::make()
                     ->modalHeading('View edit')
                     ->visible(fn (LogEntry $record): bool => $record->isEdit())
-                    ->afterFormFilled(fn (LogEntry $record) => AssessmentViews::log($record->edit->assessment)),
+                    ->afterFormFilled(fn (LogEntry $record) => AssessmentViews::logHistory($record->edit->assessment)),
             ])
             ->emptyStateHeading('Nothing logged yet')
             ->emptyStateDescription('Views, PDF downloads and edits of assessments appear here.'));

@@ -109,7 +109,7 @@ dataset('assessment paths', [
         ->mountAction(TestAction::make('view')->table($w->assessmentA))],
     'My Assessments: Edit pop-up' => ['officerA', LogAction::View, 'officer', null, fn (object $w) => Livewire::test(ListLawEnforcementAssessments::class)
         ->mountAction(TestAction::make(EditAction::class)->table($w->assessmentA))],
-    'My Assessments: Change log' => ['officerA', LogAction::View, 'officer', fn (object $w) => coverageEdit($w->assessmentA, $w->officerA), fn (object $w) => Livewire::test(ListLawEnforcementAssessments::class)
+    'My Assessments: Change log' => ['officerA', LogAction::ViewLog, 'officer', fn (object $w) => coverageEdit($w->assessmentA, $w->officerA), fn (object $w) => Livewire::test(ListLawEnforcementAssessments::class)
         ->mountAction(TestAction::make('changeLog')->table($w->assessmentA))],
     'Assessment review: View (admin)' => ['admin', LogAction::View, 'officer', null, fn (object $w) => Livewire::test(ListAssessmentReview::class)
         ->mountAction(TestAction::make('view')->table($w->assessmentA))],
@@ -117,9 +117,9 @@ dataset('assessment paths', [
         ->mountAction(TestAction::make('view')->table($w->assessmentA))],
     'Assessment review: Edit pop-up (police admin)' => ['policeAdminA', LogAction::View, 'officer', null, fn (object $w) => Livewire::test(ListAssessmentReview::class)
         ->mountAction(TestAction::make(EditAction::class)->table($w->assessmentA))],
-    'Assessment review: Log' => ['admin', LogAction::View, 'officer', null, fn (object $w) => Livewire::test(ListAssessmentReview::class)
+    'Assessment review: Log' => ['admin', LogAction::ViewLog, 'officer', null, fn (object $w) => Livewire::test(ListAssessmentReview::class)
         ->mountAction(TestAction::make('changeLog')->table($w->assessmentA))],
-    'Logs: an edit row\'s View' => ['admin', LogAction::View, 'officer', fn (object $w) => $w->edit = coverageEdit($w->assessmentA, $w->officerA), fn (object $w) => Livewire::test(ListLogs::class)
+    'Logs: an edit row\'s View' => ['admin', LogAction::ViewLog, 'officer', fn (object $w) => $w->edit = coverageEdit($w->assessmentA, $w->officerA), fn (object $w) => Livewire::test(ListLogs::class)
         ->mountAction(TestAction::make('view')->table($w->edit))],
     'Follow-up page (officer assessment)' => ['admin', LogAction::View, 'officer', null, fn (object $w) => coverageFollowUpPage($w->officerFollowUp, $w->admin)],
     'Follow-ups queue: Log (officer assessment)' => ['admin', LogAction::View, 'officer', null, fn (object $w) => coverageQueue()
@@ -214,7 +214,7 @@ test('every view, PDF download and edit of an assessment is recorded once and li
         $shown = $action->shownTo($viewer);
 
         Livewire::test(ListLogs::class)
-            ->set('show', $shown->value)
+            ->set('show', [$shown->value])
             ->searchTable($actor->last_name)
             ->assertCanSeeTableRecords([$row])
             ->assertTableColumnFormattedStateSet('Action', $shown->label(), $row)

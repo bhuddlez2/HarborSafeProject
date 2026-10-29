@@ -17,11 +17,12 @@ use Livewire\Livewire;
 
 /*
 View logging for law-enforcement assessments (team plan task 9): every pop-up
-that shows a record's contents writes one 'view' row in
-assessment_access_log - View (My Assessments, Assessment review), Edit (My
-Assessments), the per-row Change log, and the Change log screen's View. Once
-per open, only after the open is allowed, and a failed write stops the
-pop-up opening. The hooks live in App\Filament\Assessments\AssessmentViews.
+that shows a record's contents writes one row in assessment_access_log -
+a 'view' for View (My Assessments, Assessment review) and Edit, and a
+'view_log' ("Viewed Log", 2026-10-28) for the record's history: the per-row
+Log / Change log and an edit row's View on Logs. Once per open, only after
+the open is allowed, and a failed write stops the pop-up opening. The hooks
+live in App\Filament\Assessments\AssessmentViews.
 
 The civilian View and every PDF download are covered in
 AssessmentAccessLogTest.
@@ -46,13 +47,14 @@ function leAccessRows(LawEnforcementAssessment $record, ?AssessmentAccess $actio
         ->get();
 }
 
-// Exactly one view row, by $user, pointing at the assessment and nothing else.
-function expectOneView(LawEnforcementAssessment $record, App\Models\User $user): void
+// Exactly one row of $kind, by $user, pointing at the assessment and nothing
+// else.
+function expectOneView(LawEnforcementAssessment $record, App\Models\User $user, AssessmentAccess $kind = AssessmentAccess::View): void
 {
     $rows = leAccessRows($record);
 
     expect($rows)->toHaveCount(1)
-        ->and($rows[0]->Action)->toBe(AssessmentAccess::View)
+        ->and($rows[0]->Action)->toBe($kind)
         ->and($rows[0]->AccessedBy)->toBe($user->getKey())
         ->and($rows[0]->PrivateDocumentID)->toBeNull()
         ->and($rows[0]->ResourceRequestFormID)->toBeNull()
@@ -108,7 +110,7 @@ test('an officer opening Edit on their own assessment is logged once', function 
     expectOneView($w->assessmentA, $w->officerA);
 });
 
-test('an officer opening the Change log pop-up on their own assessment is logged once', function () {
+test('an officer opening the Change log pop-up on their own assessment is logged once, as Viewed Log', function () {
     $w = pestTwoAgencies();
     leEdit($w->assessmentA, $w->officerA);
     $this->actingAs($w->officerA);
@@ -118,11 +120,11 @@ test('an officer opening the Change log pop-up on their own assessment is logged
         ->assertActionMounted(TestAction::make('changeLog')->table($w->assessmentA))
         ->assertMountedActionModalSee('Spelling');
 
-    expectOneView($w->assessmentA, $w->officerA);
+    expectOneView($w->assessmentA, $w->officerA, AssessmentAccess::ViewLog);
 });
 
 // Officers can't reach Logs (admins and police admins only).
-test('opening an edit row\'s View on Logs is logged once against the assessment', function (string $who) {
+test('opening an edit row\'s View on Logs is logged once against the assessment, as Viewed Log', function (string $who) {
     $w = pestTwoAgencies();
     $edit = leEdit($w->assessmentA, $w->officerA);
     $user = $who === 'admin' ? staffUser(UserRole::Admin) : $w->policeAdminA;
@@ -133,7 +135,7 @@ test('opening an edit row\'s View on Logs is logged once against the assessment'
         ->assertActionMounted(TestAction::make('view')->table($edit))
         ->assertMountedActionModalSee('Spelling');
 
-    expectOneView($w->assessmentA, $user);
+    expectOneView($w->assessmentA, $user, AssessmentAccess::ViewLog);
 })->with(['police admin', 'admin']);
 
 test('a police admin opening View in Assessment review on their agency\'s record is logged', function () {
@@ -159,7 +161,7 @@ test('an admin opening View in Assessment review is logged', function () {
     expectOneView($w->assessmentB, $admin);
 });
 
-test('an admin opening the Change log pop-up in Assessment review is logged', function () {
+test('an admin opening the Log pop-up in Assessment review is logged, as Viewed Log', function () {
     $w = pestTwoAgencies();
     leEdit($w->assessmentB, $w->officerB);
     $admin = staffUser(UserRole::Admin);
@@ -169,7 +171,7 @@ test('an admin opening the Change log pop-up in Assessment review is logged', fu
         ->mountAction(TestAction::make('changeLog')->table($w->assessmentB))
         ->assertActionMounted(TestAction::make('changeLog')->table($w->assessmentB));
 
-    expectOneView($w->assessmentB, $admin);
+    expectOneView($w->assessmentB, $admin, AssessmentAccess::ViewLog);
 });
 
 // --- Refused opens log nothing ---------------------------------------------

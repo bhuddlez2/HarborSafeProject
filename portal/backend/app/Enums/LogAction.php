@@ -4,14 +4,15 @@ namespace App\Enums;
 
 use App\Models\User;
 
-// What a row on the Logs page records (App\Models\LogEntry): a view or PDF
-// download from assessment_access_log, or an edit from assessment_edits. The
+// What a row on the Logs page records (App\Models\LogEntry): a view, log
+// view or PDF download from assessment_access_log, or an edit from assessment_edits. The
 // one list of actions: the page's Show dropdown, its Action badge and the
 // model's cast all read it. The access actions keep their AssessmentAccess
 // values and labels, so the two enums can't drift apart.
 enum LogAction: string
 {
     case View = 'view';
+    case ViewLog = 'view_log';
     case Download = 'download';
     case DownloadWithLog = 'download_with_log';
     case Edit = 'edit';
@@ -20,6 +21,7 @@ enum LogAction: string
     {
         return match ($this) {
             self::View => AssessmentAccess::View->label(),
+            self::ViewLog => AssessmentAccess::ViewLog->label(),
             self::Download => AssessmentAccess::Download->label(),
             self::DownloadWithLog => AssessmentAccess::DownloadWithLog->label(),
             self::Edit => 'Edited',
@@ -30,6 +32,7 @@ enum LogAction: string
     {
         return match ($this) {
             self::View => 'gray',
+            self::ViewLog => 'primary',
             self::Download, self::DownloadWithLog => 'warning',
             self::Edit => 'info',
         };
