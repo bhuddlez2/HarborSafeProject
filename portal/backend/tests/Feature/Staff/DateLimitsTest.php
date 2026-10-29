@@ -32,7 +32,12 @@ older record can still be edited.
 
 beforeEach(fn () => $this->travelTo(Carbon::parse('2026-10-26 12:00', 'America/New_York')));
 
-afterEach(fn () => cleanupStaffData());
+// Not ->after() on the feedback test: Pest skips it for a test with a dataset,
+// which left a "Pest Test Service" behind for every case on every run.
+afterEach(function () {
+    cleanupPublicFormData();
+    cleanupStaffData();
+});
 
 test('a new event starts and ends within a year back and two years ahead', function (string $field, string $value, bool $allowed) {
     $this->actingAs(staffUser(UserRole::Secretary));
@@ -163,7 +168,7 @@ test('a staff-entered feedback form is dated up to two years back, never ahead',
     'the evening before that' => ['2024-10-25 20:00', false],
     'earlier today' => ['2026-10-26 09:00', true],
     'tomorrow' => ['2026-10-27 09:00', false],
-])->after(fn () => cleanupPublicFormData());
+]);
 
 test('the table date filters offer no future day, and "until" nothing before "from"', function () {
     $this->actingAs(staffUser(UserRole::Admin));
