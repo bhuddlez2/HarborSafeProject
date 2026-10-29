@@ -217,7 +217,7 @@ class NewAssessment extends Page
 
     protected function officerStep(): Step
     {
-        return Step::make('Submitting officer')
+        return Step::make('Submitting Officer')
             ->schema([
                 View::make('filament.pages.new-assessment.officer')
                     ->viewData(fn (): array => ['officer' => Filament::auth()->user()->officerIdentity()]),
@@ -226,9 +226,9 @@ class NewAssessment extends Page
 
     protected function victimStep(): Step
     {
-        return Step::make('About the victim')
+        return Step::make('About the Victim')
             ->schema([
-                $this->heading('About the victim'),
+                $this->heading('About the Victim'),
                 Grid::make(2)->schema([
                     $this->nameInput('VictimFirstName', 'First name'),
                     $this->nameInput('VictimLastName', 'Last name'),
@@ -245,9 +245,9 @@ class NewAssessment extends Page
 
     protected function offenderStep(): Step
     {
-        return Step::make('About the offender')
+        return Step::make('About the Offender')
             ->schema([
-                $this->heading('About the offender'),
+                $this->heading('About the Offender'),
                 Grid::make(2)->schema([
                     $this->nameInput('OffenderFirstName', 'First name'),
                     $this->nameInput('OffenderLastName', 'Last name'),

@@ -62,7 +62,7 @@ final class ChangeHistory
                 (bool) $record->edits_count => 'Every edit since submission',
                 default => 'No edits since submission',
             })
-            ->modalHeading($withAccess ? 'Log' : 'Change log')
+            ->modalHeading($withAccess ? 'Log' : 'Change Log')
             // Names and old and new values are the record's contents, so
             // opening this is recorded - as "Viewed Log", its own kind
             // (AssessmentViews::logHistory()). mountUsing, not

@@ -13,7 +13,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Service feedback</title>
+<title>Service Feedback</title>
 <style>
     /* Black and white only (#44): white page, black text and rules, no
        fills - as ServiceFeedbackExport draws its headings on later pages. */
@@ -82,7 +82,7 @@
 <body>
     <div class="hs-fl-header">
         <div class="hs-fl-eyebrow">Harbor Safe</div>
-        <div class="hs-fl-title">Service feedback</div>
+        <div class="hs-fl-title">Service Feedback</div>
     </div>
 
     {{-- Only what each form holds: no filters, export date or names (ServiceFeedbackExport).

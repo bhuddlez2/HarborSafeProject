@@ -67,7 +67,7 @@ test('the submitted screen lists every hotline as text and as a working link', f
     Livewire::test(NewAssessment::class)
         ->fillForm(completedWizardData(['SafePhoneConfirmed' => true]))
         ->call('create')
-        ->assertSee('Assessment submitted')
+        ->assertSee('Assessment Submitted')
         ->assertDontSeeHtml('href="tel:911"')
         ->assertDontSee('call 911')
         ->assertSee('(423) 476-3886')

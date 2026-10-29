@@ -56,8 +56,8 @@ final class AssessmentSections
                 'note' => number_format($total).' '.str('assessment')->plural($total).' in this range',
                 'wide' => true,
             ]),
-            Chart::horizontal('Yes answers per question', $perQuestion, 'answered yes', ['max' => max(1, $total)]),
-            Chart::vertical('Yes answers per assessment', array_map(fn (int $yes, int $n): array => [
+            Chart::horizontal('Yes Answers per Question', $perQuestion, 'answered yes', ['max' => max(1, $total)]),
+            Chart::vertical('Yes Answers per Assessment', array_map(fn (int $yes, int $n): array => [
                 'label' => (string) $yes,
                 'tip' => "{$yes} yes",
                 'value' => $n,
@@ -67,18 +67,18 @@ final class AssessmentSections
         ];
 
         if ($isOfficer) {
-            $cards[] = Chart::horizontal('By agency', Chart::items($stats['agencies']), 'assessments', [
+            $cards[] = Chart::horizontal('By Agency', Chart::items($stats['agencies']), 'assessments', [
                 'note' => 'Counted by each officer’s current agency.',
             ]);
         }
 
-        $cards[] = Chart::horizontal('Relationship to victim', Chart::items($stats['relationships']), 'assessments', ['wide' => ! $isOfficer]);
-        $cards[] = Chart::horizontal('Victim sex', Chart::items($stats['victimSex']), 'assessments');
-        $cards[] = Chart::horizontal('Offender sex', Chart::items($stats['offenderSex']), 'assessments');
-        $cards[] = Chart::horizontal('Victim age', Chart::items($stats['victimAge']), 'assessments', [
+        $cards[] = Chart::horizontal('Relationship to Victim', Chart::items($stats['relationships']), 'assessments', ['wide' => ! $isOfficer]);
+        $cards[] = Chart::horizontal('Victim Sex', Chart::items($stats['victimSex']), 'assessments');
+        $cards[] = Chart::horizontal('Offender Sex', Chart::items($stats['offenderSex']), 'assessments');
+        $cards[] = Chart::horizontal('Victim Age', Chart::items($stats['victimAge']), 'assessments', [
             'note' => 'Age on the day the assessment was submitted.',
         ]);
-        $cards[] = Chart::horizontal('Offender age', Chart::items($stats['offenderAge']), 'assessments', [
+        $cards[] = Chart::horizontal('Offender Age', Chart::items($stats['offenderAge']), 'assessments', [
             'note' => 'Age on the day the assessment was submitted.',
         ]);
 

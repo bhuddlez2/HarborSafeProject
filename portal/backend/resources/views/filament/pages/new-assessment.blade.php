@@ -11,7 +11,7 @@
                 {{-- Submitted phase --}}
                 <div class="bg-white rounded-2xl shadow-lg w-full px-5 py-8 md:px-12 md:py-14">
                     <h1 class="text-3xl font-semibold text-gray-900 mb-6">
-                        Assessment submitted
+                        Assessment Submitted
                     </h1>
                     <p class="text-gray-700 text-lg mb-8 leading-relaxed">
                         The assessment has been saved successfully.

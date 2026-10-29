@@ -107,7 +107,7 @@ class ServiceFeedbackExport
 
         try {
             $writer->openToFile($path);
-            $writer->getCurrentSheet()->setName('Service feedback');
+            $writer->getCurrentSheet()->setName('Service Feedback');
             $writer->addRow(Row::fromValues(self::COLUMNS, (new Style)->setFontBold()));
 
             $dateStyle = (new Style)->setFormat('yyyy-mm-dd');

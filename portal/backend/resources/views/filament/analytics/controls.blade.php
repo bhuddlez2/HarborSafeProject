@@ -60,7 +60,7 @@
                     class="absolute left-0 z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-gray-200 bg-white p-4 shadow-lg"
                 >
                     <form wire:submit="applySexFilter" class="flex flex-col gap-4">
-                        <p class="font-montserrat text-sm font-bold text-gray-900">Filter by sex</p>
+                        <p class="font-montserrat text-sm font-bold text-gray-900">Filter by Sex</p>
 
                         <div class="flex flex-col gap-1.5">
                             <label for="analytics-victim-sex" class="text-sm font-semibold text-gray-700">

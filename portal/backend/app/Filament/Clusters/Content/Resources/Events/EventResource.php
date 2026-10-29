@@ -351,7 +351,7 @@ class EventResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->modalHeading('Delete Selected Events'),
                 ]),
             ])
             ->emptyStateHeading('No events yet')

@@ -215,7 +215,7 @@ class LogResource extends Resource
                 // recorded, as a look at the assessment's history ("Viewed
                 // Log") - see App\Filament\Assessments\AssessmentViews.
                 ViewAction::make()
-                    ->modalHeading('View edit')
+                    ->modalHeading('View Edit')
                     ->visible(fn (LogEntry $record): bool => $record->isEdit())
                     ->afterFormFilled(fn (LogEntry $record) => AssessmentViews::logHistory($record->edit->assessment)),
             ])
