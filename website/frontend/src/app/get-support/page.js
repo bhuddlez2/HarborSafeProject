@@ -65,38 +65,11 @@ export default function GetSupport() {
           <span id="shelter" className="block scroll-mt-28" aria-hidden="true"></span>
           <span id="counseling" className="block scroll-mt-28" aria-hidden="true"></span>
 
-          {/*
-          Heading on the left, how to ask about a service on the right (stacked below lg),
-          so who to contact is visible before the cards rather than after all five
-          */}
-          <div className="grid lg:grid-cols-[1fr_auto] gap-8 lg:gap-12 items-center mb-16">
-            <div>
-              <span className="inline-block text-xs font-semibold tracking-widest uppercase bg-purple-100 text-brand px-3 py-1 rounded-full mb-4">How we help</span>
-              <h2 className="text-3xl font-semibold text-brand mb-3">Ways we can support you</h2>
-              <p className="text-gray-600 leading-relaxed max-w-xl">
-                No matter where you are in your journey, our advocates are here to walk alongside you.
-              </p>
-            </div>
-
-            <div className="bg-purple-50 rounded-2xl p-6 lg:w-md">
-              <p className="text-sm font-semibold text-brand mb-1">Ask about any of these services</p>
-              <p className="text-sm text-gray-600 mb-4">Call or text any time, day or night. It&apos;s free and confidential.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <a href="tel:423-476-3886" className="text-center whitespace-nowrap bg-brand text-white py-2.5 px-3 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">
-                  Call (423) 476-3886
-                </a>
-                <a href="sms:423-715-9614" className="text-center whitespace-nowrap bg-white text-brand py-2.5 px-3 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">
-                  Text (423) 715-9614
-                </a>
-              </div>
-              <Link replace href="/contact" className="inline-block mt-3 text-sm font-semibold text-brand hover:underline">
-                Or send us a message →
-              </Link>
-              <p className="mt-4 pt-4 border-t border-purple-200 text-xs text-gray-600 leading-relaxed">
-                For court advocacy or community education, you can also call or text our office at{" "}
-                <a href="tel:423-889-1479" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 889-1479</a>.
-              </p>
-            </div>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-semibold text-brand mb-3">Ways We Can Support You</h2>
+            <p className="text-gray-600 leading-relaxed max-w-xl mx-auto">
+              No matter where you are in your journey, our advocates are here to walk alongside you.
+            </p>
           </div>
 
           {/*
@@ -176,6 +149,12 @@ export default function GetSupport() {
             </div>
 
           </div>
+
+          {/* The office line, kept from the removed "Ask about any of these services" box: it's nowhere else on the site */}
+          <p className="mt-12 text-center text-sm text-gray-600 leading-relaxed">
+            For court advocacy or community education, you can also call or text our office at{" "}
+            <a href="tel:423-889-1479" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 889-1479</a>.
+          </p>
         </div>
       </section>
 
