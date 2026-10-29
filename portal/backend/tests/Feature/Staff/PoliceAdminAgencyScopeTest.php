@@ -32,13 +32,10 @@ afterEach(function () {
     // cascade, so the assessments must go before cleanupStaffData() deletes
     // the users. Agent rows cascade with their users.
     $portal = DB::connection('Portal');
-    $docs = $portal->table('law_enforcement_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->pluck('AssessmentDocID');
+    $rows = encryptedRows(LawEnforcementAssessment::class, 'VictimFirstName', STAFF_TEST_PREFIX, prefix: true);
+    $docs = $rows->pluck('AssessmentDocID');
 
-    $portal->table('law_enforcement_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->delete();
+    $portal->table('law_enforcement_assessment')->whereIn('DocumentID', $rows->pluck('DocumentID'))->delete();
 
     $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $docs)->delete();
 

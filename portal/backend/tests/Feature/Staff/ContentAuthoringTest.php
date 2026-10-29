@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Filament\Clusters\Content\Resources\Newsletters\Pages\ManageNewsletters;
+use App\Filament\Forms\Components\DatabaseFileUpload;
 use App\Models\ContentFile;
 use App\Models\Event;
 use App\Models\EventCategory;
@@ -10,6 +11,7 @@ use App\Models\Newsletter;
 use Filament\Actions\EditAction;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Http\Testing\File as TestingFile;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
 /*
@@ -23,6 +25,10 @@ Events and newsletters are both edited in pop-ups on their list page
 (ManageEvents / ManageNewsletters), so these call the create and edit actions
 there rather than visiting separate create/edit pages.
 */
+
+// The dates typed below must sit inside the event range (a year back, two
+// ahead) whenever the suite runs, so "now" is fixed.
+beforeEach(fn () => $this->travelTo(Carbon::parse('2026-10-26 12:00', 'America/New_York')));
 
 afterEach(fn () => cleanupStaffData());
 
@@ -50,10 +56,11 @@ function pestUploadWithBytes(string $name, string $bytes): TestingFile
 
 function pestImageUpload(): TestingFile
 {
-    // A real 1x1 PNG, so getMimeType()'s content sniffing returns image/png.
+    // A real PNG at the minimum event image size, so getMimeType()'s content
+    // sniffing returns image/png and the size check passes.
     return pestUploadWithBytes(
         staffRunToken().'-event.png',
-        base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
+        pestPngOfSize(DatabaseFileUpload::MIN_IMAGE_WIDTH, DatabaseFileUpload::MIN_IMAGE_HEIGHT),
     );
 }
 
@@ -232,6 +239,66 @@ test('an empty description is stored as null, not an empty array', function () {
 
     expect(Event::where('title', $title)->firstOrFail()->description)->toBeNull();
 });
+
+test('an event description is capped at 500 characters', function () {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    $title = staffRunToken().' Long description';
+
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
+            'title' => $title,
+            'starts_at' => '2027-06-01 12:00',
+            'description' => str_repeat('a', 501),
+        ])
+        ->assertHasActionErrors(['description' => 'max']);
+
+    expect(Event::where('title', $title)->exists())->toBeFalse();
+
+    Livewire::test(ManageEvents::class)
+        ->callAction('create', data: [
+            'title' => $title,
+            'starts_at' => '2027-06-01 12:00',
+            'description' => str_repeat('a', 500),
+        ])
+        ->assertHasNoActionErrors();
+
+    expect(Event::where('title', $title)->firstOrFail()->description)->toBe([str_repeat('a', 500)]);
+});
+
+test('the newsletter Create pop-up saves only from its last step, with no "create another"', function () {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    $page = Livewire::test(ManageNewsletters::class)->mountAction('create');
+    $action = $page->instance()->getMountedAction();
+
+    // A wizard action has no footer, so no "Create & create another"; its
+    // Create button is drawn inside the wizard, shown on the last step only.
+    expect($action->isWizard())->toBeTrue()
+        ->and($action->getModalFooterActions())->toBe([])
+        ->and($action->canCreateAnother())->toBeFalse();
+
+    $page->assertMountedActionModalSee(['Publish Date', 'Schedule post', '500 Character Limit'])
+        ->assertMountedActionModalDontSee(['create another', 'A line about what is in this issue.']);
+});
+
+// Burchfield B53: on the website an issue is its PDF, so none is saved
+// without one, draft or published.
+test('a newsletter needs a PDF, even as a draft', function (bool $published) {
+    $this->actingAs(staffUser(UserRole::Secretary));
+
+    $title = staffRunToken().' No PDF';
+
+    Livewire::test(ManageNewsletters::class)
+        ->callAction('create', data: [
+            'title' => $title,
+            'issue_date' => '2026-09-01',
+            'is_published' => $published,
+        ])
+        ->assertHasActionErrors(['file_id' => 'required']);
+
+    expect(Newsletter::where('title', $title)->exists())->toBeFalse();
+})->with(['draft' => false, 'published' => true]);
 
 test('a secretary can upload a newsletter and its size is recorded', function () {
     $this->actingAs(staffUser(UserRole::Secretary));

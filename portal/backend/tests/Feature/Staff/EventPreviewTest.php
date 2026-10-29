@@ -72,3 +72,31 @@ test('the event and newsletter previews wrap long unbroken text', function () {
 
     expect($newsletter)->toContain('overflow-wrap: anywhere');
 });
+
+// Burchfield B51: the wizard's step header shows each step's name only. The
+// Preview step's subtitle ("How your ... will appear on the website.")
+// crowded the header and was removed from both wizards.
+test('the event and newsletter wizard headers show no Preview subtitle', function () {
+    $this->actingAs(staffUser(\App\Enums\UserRole::Secretary));
+
+    foreach ([
+        \App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents::class,
+        \App\Filament\Clusters\Content\Resources\Newsletters\Pages\ManageNewsletters::class,
+    ] as $page) {
+        // The pop-up isn't in the page's test HTML, so read its steps from
+        // the mounted action's own schema.
+        $schema = \Livewire\Livewire::test($page)
+            ->mountAction('create')
+            ->instance()
+            ->getSchema('mountedActionSchema0');
+
+        $preview = collect($schema->getFlatComponents(withHidden: true))
+            ->first(fn ($component) => $component instanceof \Filament\Schemas\Components\Wizard\Step
+                && $component->getLabel() === 'Preview');
+
+        expect($preview)->not->toBeNull()
+            ->and($preview->getDescription())->toBeNull();
+    }
+
+    cleanupStaffData();
+});

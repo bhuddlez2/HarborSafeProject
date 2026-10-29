@@ -1,4 +1,5 @@
 @php
+    use App\Support\PhoneNumber;
     use App\Support\Timezones;
 
     $record    = $getRecord();
@@ -9,6 +10,18 @@
     // export (App\Support\RecordPdf, isPdf).
     $isPdf     = $isPdf ?? false;
     $isStaff   = ! $isPdf && $record->isStaffEntry();
+
+    // On screen the email opens the computer's own email app with the address
+    // in To and nothing else: no subject, since subject lines show in inbox
+    // previews someone else may see. Plain text in the PDF, and for anything
+    // that isn't a valid address (checked when submitted; this is a backstop).
+    $email     = $record->EmailAddress;
+    $emailLink = ! $isPdf && filled($email) && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+
+    // The safe phone the same way (Burchfield B57): on screen a call link to
+    // the ten digits, plain in the PDF and for anything not a valid number.
+    $phone     = $record->SafePhoneNumber;
+    $phoneTel  = $isPdf ? null : PhoneNumber::digits($phone);
 @endphp
 
 <div class="hs-assessment-record">
@@ -20,7 +33,7 @@
             {{-- Stored UTC, shown Eastern - see App\Support\Timezones. --}}
             <span>{{ $record->SubmissionDate ? \Carbon\Carbon::parse($record->SubmissionDate)->setTimezone(Timezones::DISPLAY)->format('M j, Y \a\t g:i a') : '—' }}</span>
             <span class="hs-ar-header-sep">·</span>
-            <span>{{ $record->county?->Name ? $record->county->Name.' County' : 'No county given' }}</span>
+            <span>{{ $record->county ? $record->county->displayName() : 'No county given' }}</span>
             @if ($isStaff)
                 <span class="hs-ar-header-sep">·</span>
                 <span>Staff · entered by {{ $record->enteredByName() ?? 'Unknown' }}</span>
@@ -38,11 +51,23 @@
             </div>
             <div class="hs-ar-field">
                 <dt>Email</dt>
-                <dd>{{ $record->EmailAddress ?: '—' }}</dd>
+                <dd>
+                    @if ($emailLink)
+                        <a href="mailto:{{ $email }}" class="hs-ar-link">{{ $email }}</a>
+                    @else
+                        {{ $email ?: '—' }}
+                    @endif
+                </dd>
             </div>
             <div class="hs-ar-field">
                 <dt>Safe phone</dt>
-                <dd>{{ $record->SafePhoneNumber ?: '—' }}</dd>
+                <dd>
+                    @if ($phoneTel !== null)
+                        <a href="tel:+1{{ $phoneTel }}" class="hs-ar-link">{{ $phone }}</a>
+                    @else
+                        {{ $phone ?: '—' }}
+                    @endif
+                </dd>
             </div>
         </dl>
         {{-- "Safe" is the operative word - see ResourceRequestResource. --}}

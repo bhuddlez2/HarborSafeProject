@@ -227,11 +227,11 @@ class LocalAssessmentVarietySeeder extends Seeder
 
         // Matched on names the seeded edits never change (one renames the
         // victim's last name), so a re-run still recognises the record.
-        $exists = LawEnforcementAssessment::where('submitted_by', $officer->getKey())
-            ->where('VictimFirstName', $victimFirst)
-            ->where('OffenderFirstName', $offenderFirst)
-            ->where('OffenderLastName', $offenderLast)
-            ->exists();
+        // Names are encrypted, so matched after decrypting.
+        $exists = LawEnforcementAssessment::where('submitted_by', $officer->getKey())->get()
+            ->contains(fn (LawEnforcementAssessment $a): bool => $a->VictimFirstName === $victimFirst
+                && $a->OffenderFirstName === $offenderFirst
+                && $a->OffenderLastName === $offenderLast);
 
         if ($exists) {
             return;
@@ -278,9 +278,9 @@ class LocalAssessmentVarietySeeder extends Seeder
     {
         [$victimFirst, $victimLast] = $spec['victim'];
 
-        $exists = PrivateAssessment::where('VictimFirstName', $victimFirst)
-            ->where('VictimLastName', $victimLast)
-            ->exists();
+        $exists = PrivateAssessment::all()
+            ->contains(fn (PrivateAssessment $a): bool => $a->VictimFirstName === $victimFirst
+                && $a->VictimLastName === $victimLast);
 
         if ($exists) {
             return;

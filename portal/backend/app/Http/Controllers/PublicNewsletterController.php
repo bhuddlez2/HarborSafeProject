@@ -18,8 +18,9 @@ class PublicNewsletterController extends Controller
 {
     public function index(): AnonymousResourceCollection
     {
+        // Published, and not scheduled for a later day.
         $newsletters = Newsletter::on('ContentPublic')
-            ->where('is_published', true)
+            ->onWebsite()
             ->orderByDesc('issue_date')
             ->get();
 

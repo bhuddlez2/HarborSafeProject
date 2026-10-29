@@ -81,7 +81,7 @@ test('every signed-in role gets the idle-logout script with the session lifetime
         ->get('/')
         ->assertOk()
         ->assertSee('hs-last-server-request', false)
-        ->assertSee('const deadlineMs = 15 * 60 * 1000', false);
+        ->assertSee('const lifetimeMs = 900000;', false);
 })->with([
     'officer' => UserRole::LawEnforcement,
     'police admin' => UserRole::PoliceAdmin,
@@ -89,8 +89,112 @@ test('every signed-in role gets the idle-logout script with the session lifetime
     'admin' => UserRole::Admin,
 ]);
 
-test('the sign-in page carries no idle-logout script', function () {
+test('the sign-in page carries no idle-logout script or warning', function () {
     $this->get('/login')
         ->assertOk()
-        ->assertDontSee('hs-last-server-request', false);
+        ->assertDontSee('hs-last-server-request', false)
+        ->assertDontSee('hs-idle-warning', false);
+});
+
+// The warning two minutes before the deadline: a pop-up that can't be
+// dismissed by clicking away or Esc, whose two buttons keep the session or
+// sign out through Filament's own logout route.
+test('every signed-in role gets the warning, two minutes before the deadline', function (UserRole $role) {
+    config(['session.lifetime' => 15]);
+
+    $this->actingAs(staffUser($role))
+        ->followingRedirects()
+        ->get('/')
+        ->assertOk()
+        ->assertSee('id="hs-idle-warning"', false)
+        ->assertSee('role="alertdialog"', false)
+        ->assertSee("You'll be signed out soon")
+        ->assertSee('Stay signed in')
+        ->assertSee('Sign out now')
+        ->assertSee('const warningMs = 120000;', false)
+        ->assertSee('action="'.route('filament.staff.auth.logout').'"', false)
+        ->assertSee(str_replace('/', '\/', route('staff.session.keep-alive')), false);
+})->with([
+    'officer' => UserRole::LawEnforcement,
+    'police admin' => UserRole::PoliceAdmin,
+    'secretary' => UserRole::Secretary,
+    'admin' => UserRole::Admin,
+    'super admin' => UserRole::SuperAdmin,
+]);
+
+test('a short session lifetime warns for half of it instead of two minutes', function () {
+    config(['session.lifetime' => 3]);
+
+    $this->actingAs(staffUser(UserRole::Admin))
+        ->followingRedirects()
+        ->get('/')
+        ->assertOk()
+        ->assertSee('const lifetimeMs = 180000;', false)
+        ->assertSee('const warningMs = 90000;', false);
+});
+
+test('the warning is only ever closed by its buttons', function () {
+    $partial = file_get_contents(resource_path('views/filament/partials/idle-logout.blade.php'));
+
+    expect($partial)
+        ->toContain(':close-button="false"')
+        ->toContain(':close-by-clicking-away="false"')
+        ->toContain(':close-by-escaping="false"');
+});
+
+test('Stay signed in answers an active staff member with an empty 204', function (UserRole $role) {
+    $this->actingAs(staffUser($role))
+        ->post(route('staff.session.keep-alive'))
+        ->assertNoContent()
+        ->assertHeader('Cache-Control', 'no-store, private');
+})->with([
+    'officer' => UserRole::LawEnforcement,
+    'police admin' => UserRole::PoliceAdmin,
+    'secretary' => UserRole::Secretary,
+    'admin' => UserRole::Admin,
+    'super admin' => UserRole::SuperAdmin,
+]);
+
+// An expired session must not be revived: the button gets the sign-in
+// redirect (not a 500, see EnsureStaffPanelAccess), and the page reloads.
+test('Stay signed in cannot revive a session that has already ended', function () {
+    $this->post(route('staff.session.keep-alive'))
+        ->assertRedirect(url('/login'));
+
+    $this->actingAs(staffUser(UserRole::Admin, isActive: false))
+        ->post(route('staff.session.keep-alive'))
+        ->assertForbidden();
+});
+
+// Same session-cookie technique as the expiry test above: Stay signed in at
+// minute 14 restarts the clock, so minute 28 is still signed in, and the
+// session still ends 15 idle minutes after that request.
+test('Stay signed in restarts the 15 idle minutes', function () {
+    config(['session.lifetime' => 15]);
+    $user = staffUser(UserRole::LawEnforcement);
+
+    $this->withSession([auth()->guard('web')->getName() => $user->getAuthIdentifier()]);
+    $cookie = [config('session.cookie') => session()->getId()];
+    $fresh = function () {
+        session()->flush();
+        auth()->forgetGuards();
+    };
+    $home = function () use ($cookie, $fresh) {
+        $location = $this->withCookies($cookie)->get('/')->headers->get('Location');
+        $fresh();
+
+        return $location;
+    };
+
+    expect($home())->not->toBe(url('/login'));
+
+    $this->travel(14)->minutes();
+    $this->withCookies($cookie)->post(route('staff.session.keep-alive'))->assertNoContent();
+    $fresh();
+
+    $this->travel(14)->minutes();
+    expect($home())->not->toBe(url('/login'));
+
+    $this->travel(16)->minutes();
+    expect($home())->toBe(url('/login'));
 });

@@ -16,7 +16,7 @@ class FeedbackAnalytics extends AnalyticsPage
 {
     protected static ?string $slug = 'feedback-and-requests';
 
-    protected static ?string $title = 'Feedback and resource requests';
+    protected static ?string $title = 'Feedback and Resource Requests';
 
     protected static ?int $navigationSort = 3;
 

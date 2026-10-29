@@ -3,9 +3,9 @@
 use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
 use App\Filament\Assessments\ChangeHistory;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Models\AssessmentAccessLog;
 use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
@@ -18,8 +18,9 @@ Team plan task 22: one record's views, PDF downloads and edits together, in
 time order, in the Log pop-up on Assessment review (App\Filament\Assessments\
 ChangeHistory::action(withAccess: true)). Who may see the views is
 AssessmentAccessLog::visibleTo() - admins and police admins, never officers -
-so an officer's Change log on My Assessments stays edits only. The Change log
-page stays edits only too, and View stays history-free (AssessmentChangeLogTest).
+so an officer's Change log on My Assessments stays edits only. An edit row's
+View on the Logs page stays edits only too, and View stays history-free
+(AssessmentChangeLogTest).
 */
 
 afterEach(fn () => cleanupStaffData());
@@ -69,12 +70,14 @@ test('a police admin\'s Log shows views, downloads and edits, newest first, then
         ->mountAction(TestAction::make('changeLog')->table($w->assessment))
         ->assertMountedActionModalSee(['Viewed', 'Downloaded PDF', 'Spelling fix', 'Submitted']);
 
-    // Opening the Log above was itself a view, so it comes first (Oct, now).
+    // Opening the Log above was recorded as its own kind, Viewed Log, so it
+    // comes first (now).
     $html = pestLogHtml($w->assessment, withAccess: true);
 
     expect($html)->toContain('Every view, PDF download and edit, newest first');
 
     $order = [
+        strpos($html, 'Viewed Log</span> by '.$w->policeAdmin->name),
         strpos($html, 'Downloaded PDF'),
         strpos($html, 'Spelling fix'),
         strrpos($html, 'Viewed</span> by '.$w->officer->name),
@@ -113,13 +116,13 @@ test('the Log only lists the views its viewer may see', function () {
         ->toContain('Viewed</span>');
 });
 
-test('the Change log page stays edits only', function () {
+test('an edit row\'s View on the Logs page stays edits only', function () {
     $w = pestLoggedAssessment();
     $this->actingAs($w->policeAdmin);
 
     $edit = $w->assessment->edits()->sole();
 
-    Livewire::test(ListAssessmentEdits::class)
+    Livewire::test(ListLogs::class)
         ->mountAction(TestAction::make('view')->table($edit))
         ->assertMountedActionModalSee('Spelling fix')
         ->assertMountedActionModalDontSee(['Downloaded PDF', 'Viewed']);

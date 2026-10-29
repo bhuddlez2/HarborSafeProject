@@ -4,7 +4,7 @@
 
     // Every card under Start New Lethality Assessment shares one design
     // (team plan item 5): light purple with a purple outline.
-    $lightCard = 'flex min-h-55 flex-col justify-end gap-4 rounded-[18px] border-2 border-[#5C0F8B] bg-[#EDE3F5] p-6 text-[#5C0F8B]
+    $lightCard = 'flex min-h-55 flex-col justify-start gap-4 rounded-[18px] border-2 border-[#5C0F8B] bg-[#EDE3F5] p-6 text-[#5C0F8B]
                   transition-colors hover:bg-[#E2D3EF]
                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
                   md:min-h-70 md:p-9';
@@ -31,7 +31,7 @@
         @if ($this->canStartAssessment())
             <a
                 href="{{ \App\Filament\Pages\NewAssessment::getUrl() }}"
-                class="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
+                class="flex min-h-55 flex-col justify-start gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
                        transition-colors hover:bg-[#4C0B74]
                        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
                        md:min-h-70 md:p-9"
@@ -43,7 +43,7 @@
                     Start New Lethality Assessment
                 </span>
                 <span class="text-[17px] text-[#EDE3F5]">
-                    Opens a blank LAP screening form
+                    Open a blank LAP screening form
                 </span>
             </a>
         @endif
@@ -56,10 +56,10 @@
                         <x-officer-icon name="clipboard" :size="32" />
                     </span>
                     <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
-                        View Assessments
+                        Assessment Review
                     </span>
                     <span class="text-[17px] text-[#5A5566]">
-                        Your agency's submitted LAP screenings and their change logs
+                        {{ ucfirst($this->agencyPossessive()) }} submitted LAP screenings and change logs
                     </span>
                 </a>
 
@@ -68,23 +68,23 @@
                         <x-officer-icon name="users" :size="32" />
                     </span>
                     <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
-                        Personnel Management
+                        Staff Management
                     </span>
                     <span class="text-[17px] text-[#5A5566]">
-                        Add and manage your agency's officer accounts
+                        Add and manage {{ $this->agencyPossessive() }} staff accounts
                     </span>
                 </a>
             </div>
         @endif
 
-        {{-- Officers: their past records, in the same card as the police admin's View Assessments. --}}
+        {{-- Officers: their past records, in the same card as the police admin's My Assessments. --}}
         @if ($this->isOfficer())
             <a href="{{ $this->pastAssessmentsUrl() }}" class="{{ $lightCard }}">
                 <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5C0F8B]/10 p-4">
                     <x-officer-icon name="clipboard" :size="32" />
                 </span>
                 <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
-                    View Assessments
+                    My Assessments
                 </span>
                 <span class="text-[17px] text-[#5A5566]">
                     Your submitted LAP screenings. Each view is logged with your name and a timestamp.

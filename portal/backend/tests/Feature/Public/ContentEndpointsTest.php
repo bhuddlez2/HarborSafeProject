@@ -5,6 +5,7 @@ use App\Models\Event;
 use App\Models\EventCategory;
 use App\Models\Newsletter;
 use Illuminate\Http\Testing\File as TestingFile;
+use Illuminate\Support\Carbon;
 
 /*
 GET /api/public/events and /api/public/newsletters - the feed the public
@@ -232,18 +233,18 @@ test('the newsletters endpoint serves published issues in the contracted shape',
         ->and($issue['file']['url'])->toStartWith('http');
 });
 
-test('a newsletter with no file attached emits a null file', function () {
+// The form requires a PDF (Burchfield B53); an older issue saved without one
+// is left off rather than shown with a Download button that goes nowhere.
+test('a published newsletter with no PDF is not served', function () {
     Newsletter::create([
         'title' => staffRunToken().' No PDF yet',
         'issue_date' => '2026-08-01',
         'is_published' => true,
     ]);
 
-    $issue = collect($this->getJson('/api/public/newsletters')->json('data'))
-        ->firstWhere('title', staffRunToken().' No PDF yet');
+    $titles = collect($this->getJson('/api/public/newsletters')->json('data'))->pluck('title');
 
-    // The site reads issue.file?.url ?? "#", so null is handled.
-    expect($issue['file'])->toBeNull();
+    expect($titles)->not->toContain(staffRunToken().' No PDF yet');
 });
 
 test('newsletters are ordered newest issue first', function () {
@@ -251,6 +252,7 @@ test('newsletters are ordered newest issue first', function () {
         Newsletter::create([
             'title' => staffRunToken().' '.$date,
             'issue_date' => $date,
+            'file_id' => pestStoredPdf()->getKey(),
             'is_published' => true,
         ]);
     }
@@ -278,6 +280,33 @@ test('an unpublished newsletter is not served', function () {
     $titles = collect($this->getJson('/api/public/newsletters')->json('data'))->pluck('title');
 
     expect($titles)->not->toContain(staffRunToken().' Draft issue');
+});
+
+test('a scheduled newsletter and its PDF stay off the website until its publish date', function () {
+    // Late evening Eastern on 31 October is already 1 November in UTC; the
+    // issue must still wait for the Eastern day.
+    $this->travelTo(Carbon::parse('2026-10-31 22:00', 'America/New_York'));
+
+    $resource = tmpfile();
+    fwrite($resource, '%PDF-1.4'.str_repeat('a', 2000));
+    $file = ContentFile::storeUpload(new TestingFile(staffRunToken().'-scheduled.pdf', $resource));
+
+    $newsletter = Newsletter::create([
+        'title' => staffRunToken().' November',
+        'issue_date' => '2026-11-01',
+        'file_id' => $file->getKey(),
+        'is_published' => true,
+    ]);
+
+    $titles = fn () => collect($this->getJson('/api/public/newsletters')->json('data'))->pluck('title');
+
+    expect($titles())->not->toContain(staffRunToken().' November');
+    $this->get($newsletter->fileUrl())->assertNotFound();
+
+    $this->travelTo(Carbon::parse('2026-11-01 00:01', 'America/New_York'));
+
+    expect($titles())->toContain(staffRunToken().' November');
+    $this->get($newsletter->fileUrl())->assertOk();
 });
 
 test('both endpoints are reachable without authentication', function () {

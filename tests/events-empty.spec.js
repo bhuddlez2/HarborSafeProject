@@ -33,6 +33,7 @@ test('no content reads as empty, not as loading or broken', async ({ page }) => 
 
   // Both sections say so in their own words.
   await expect(page.getByText('No upcoming events right now')).toBeVisible();
+  await expect(page.getByText('Check back soon.', { exact: true })).toBeVisible();
   await expect(page.getByText('No newsletters yet')).toBeVisible();
 
   // And neither the loading nor the error state is left on screen.

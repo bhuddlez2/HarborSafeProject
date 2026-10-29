@@ -2,22 +2,22 @@
 
 namespace App\Filament\Assessments;
 
-use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentAccessLog;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
+use App\Models\LogEntry;
 use App\Support\Timezones;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Carbon;
 
 /*
 The change history of a law-enforcement assessment, shared by every screen
 that shows one: a "Change log" button beside View on My Assessments and
-Assessment review, and the Change log page (one edit at a time). One Blade
+Assessment review, and an edit row's View on the Logs page (one edit at a
+time). One Blade
 view renders all of them, so an edit reads the same wherever it is opened.
 
 Deliberately NOT part of the View pop-up: View shows the record as it is now,
@@ -63,13 +63,14 @@ final class ChangeHistory
                 default => 'No edits since submission',
             })
             ->modalHeading($withAccess ? 'Log' : 'Change log')
-            // Old and new values are the record's contents, so opening this
-            // is a view. mountUsing, not afterFormFilled: this pop-up has no
-            // schema, and Filament only calls afterFormFilled when there is
-            // one. Not in modalContent(), which re-runs on every render.
-            // Logged before the content is built, so the Log includes this
-            // opening too.
-            ->mountUsing(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
+            // Names and old and new values are the record's contents, so
+            // opening this is recorded - as "Viewed Log", its own kind
+            // (AssessmentViews::logHistory()). mountUsing, not
+            // afterFormFilled: this pop-up has no schema, and Filament only
+            // calls afterFormFilled when there is one. Not in modalContent(),
+            // which re-runs on every render. Logged before the content is
+            // built, so the Log includes this opening too.
+            ->mountUsing(fn (LawEnforcementAssessment $record) => AssessmentViews::logHistory($record))
             ->modalContent(function (LawEnforcementAssessment $record) use ($withAccess) {
                 $edits = $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all();
 
@@ -98,36 +99,27 @@ final class ChangeHistory
             ->modalCancelActionLabel('Close');
     }
 
-    // A single edit, for the Change log page's View pop-up.
+    // A single edit, for the View pop-up of an edit row on the Logs page
+    // (App\Filament\Resources\Logs\LogResource).
     public static function entry(): ViewEntry
     {
         return ViewEntry::make('change_history')
             ->hiddenLabel()
             ->view(self::VIEW)
             ->columnSpanFull()
-            ->state(fn (AssessmentEdit $record): array => [
-                'header' => self::header($record->assessment, null),
-                'edits' => self::entries([
-                    $record->loadMissing(['editor', 'detailChanges', 'answerChanges']),
-                ]),
-            ]);
-    }
+            ->state(function (LogEntry $record): array {
+                $edit = $record->edit->loadMissing(['assessment', 'editor', 'detailChanges', 'answerChanges']);
 
-    // "Amended" on any record that has been edited since submission. Needs
-    // ->withCount('edits') on the table query.
-    public static function amendedColumn(): TextColumn
-    {
-        return TableAlignment::symbol(TextColumn::make('edits_count')
-            ->label('Status')
-            ->badge()
-            ->formatStateUsing(fn (?int $state): string => $state ? 'Amended' : 'Submitted')
-            ->color(fn (?int $state): string => $state ? 'warning' : 'gray')
-            ->tooltip(fn (?int $state): ?string => $state ? "Edited {$state} ".str('time')->plural($state).' since submission' : null));
+                return [
+                    'header' => self::header($edit->assessment, null),
+                    'edits' => self::entries([$edit]),
+                ];
+            });
     }
 
     /**
-     * Which record the history belongs to. $editCount is null on the Change
-     * log page, which shows one edit rather than the whole history.
+     * Which record the history belongs to. $editCount is null on the Logs
+     * page, which shows one edit rather than the whole history.
      *
      * @return array{victim: string, offender: string, submitted: string, edits: ?int}
      */
@@ -150,8 +142,8 @@ final class ChangeHistory
 
     /**
      * Views, downloads and edits of one record, newest first, then the
-     * submission. Each item: kind ('edit' | 'view' | 'download' |
-     * 'submitted'), plus the edit's fields (entries()) or who and when.
+     * submission. Each item: kind ('edit' | 'view' | 'view_log' |
+     * 'download' | 'download_with_log' | 'submitted'), plus the edit's fields (entries()) or who and when.
      *
      * @param  list<AssessmentEdit>  $edits
      * @param  list<AssessmentAccessLog>  $access
@@ -170,12 +162,16 @@ final class ChangeHistory
         }
 
         foreach ($access as $row) {
+            // A download with the follow-up log reads as a plain download to
+            // a police admin (AssessmentAccess::shownTo()).
+            $shown = $row->Action->shownTo(Filament::auth()->user());
+
             $events[] = [
-                'kind' => $row->Action->value,
+                'kind' => $shown->value,
                 'at' => $row->AccessedAt,
                 'when' => $when($row->AccessedAt),
                 'who' => $row->user?->name ?? 'Unknown',
-                'label' => $row->Action->label(),
+                'label' => $shown->label(),
             ];
         }
 

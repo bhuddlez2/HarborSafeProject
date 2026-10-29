@@ -231,7 +231,7 @@ npm install
 npm run dev              # http://localhost:3000
 ```
 
-**Two parts of this site need the backend running (step 2).** Both fetch from
+**Three parts of this site need the backend running (step 2).** All fetch from
 the visitor's browser — it is a static export, so there is no server to fetch
 on its behalf:
 
@@ -239,14 +239,17 @@ on its behalf:
 |---|---|---|
 | Contact (the two forms) | `GET /api/public/{services,resources,counties}` | `POST /api/public/{resource-requests,service-feedback}` |
 | Events & News | `GET /api/public/{events,newsletters}` and `/api/public/content-files/{id}` for images | — |
+| The civilian assessment (§4) | `GET /api/public/relationships` | `POST /api/public/civilian-assessments` |
 
-Without the backend up, the contact forms cannot load their dropdowns and the
-events page shows its error state with the crisis line after a 12-second
-timeout. That is the intended behaviour, not a bug — but it does mean
-`npm run dev` alone is not enough to see those two pages working.
+Without the backend up, the contact forms and the assessment cannot load their
+dropdowns and the events page shows its error state with the crisis line after
+a 12-second timeout. That is the intended behaviour, not a bug — but it does mean
+`npm run dev` alone is not enough to see those pages working.
 
 Events and newsletters come from the staff panel, so the page is empty until
 someone publishes something there. Empty is a normal state and the page says so.
+A published newsletter with a future Publish Date is scheduled: it stays off the
+page, PDF included, until that day (Eastern), with no rebuild needed.
 
 The API base URL defaults to `http://127.0.0.1:8000`, so nothing to configure
 locally. It is inlined at build time, so on a deploy target it must be set
@@ -313,7 +316,7 @@ but the database does have to be running and migrated.
 Playwright boots `website/frontend` only — it doesn't exercise the portal or
 the backend.
 
-Neither frontend has a test runner configured.
+The website has no test runner of its own; Playwright is its test suite.
 
 ---
 
@@ -339,8 +342,14 @@ migration that has already run, that environment needs a deliberate
 **The root `package.json` is not a runnable app.** Its `dev`/`build`/`start`
 scripts are leftovers from before the repo was split; there's no `app/` at the
 root. The root exists to host the shared ESLint config and the Playwright
-setup. `npm run lint` at the root lints both frontends and the specs together —
-but it needs `npm install` at the root first.
+setup. `npm run lint` at the root lints the website and the specs together — but it
+needs `npm install` at the root first.
+
+**Saving an unfinished officer assessment needs a secure address.** The wizard
+keeps an unfinished form in the browser tab, encrypted with the browser's Web
+Crypto, which browsers only allow over https or on `localhost` / `127.0.0.1`.
+Opened over plain http on a network address (another device on your Wi-Fi, say),
+nothing is saved and the wizard behaves as it did before. Production must be https.
 
 **Granting a new table to the restricted user is manual.** Migrations can't
 issue MySQL `GRANT`s. If you add a table the public forms write to, add the

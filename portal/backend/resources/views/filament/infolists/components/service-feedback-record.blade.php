@@ -45,7 +45,8 @@
             <div class="hs-ar-field">
                 <dt>Rating</dt>
                 <dd>
-                    <span class="hs-ar-pill" style="color:{{ $ratingColor }}; background-color:{{ $ratingBg }}">
+                    {{-- Coloured on screen only: the PDF is black and white, and the words say it. --}}
+                    <span class="hs-ar-pill" @unless ($isPdf) style="color:{{ $ratingColor }}; background-color:{{ $ratingBg }}" @endunless>
                         {{ $rating === null ? 'Not recorded' : $rating.' out of 5' }}
                     </span>
                 </dd>

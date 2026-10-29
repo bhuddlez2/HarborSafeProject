@@ -391,23 +391,23 @@ function ScienceOfHopeContent() {
         </div>
       </div>
 
-      <p>Hope is a word people use often, especially during hard times. We might say, "I hope things get better," or "I'm trying to stay hopeful." But hope is more than a feeling or a wish. Research shows that hope is something people can learn and build, step by step. Hope is linked to better stress coping, stronger problem solving, more motivation, and greater resilience.</p>
+      <p>Hope is a word people use often, especially during hard times. We might say, &quot;I hope things get better,&quot; or &quot;I&apos;m trying to stay hopeful.&quot; But hope is more than a feeling or a wish. Research shows that hope is something people can learn and build, step by step. Hope is linked to better stress coping, stronger problem solving, more motivation, and greater resilience.</p>
 
-      <p>The science of hope shows that hope can grow again. This is good news, especially for people who have been through stress, trauma, or major life changes. If hope feels low right now, it doesn't mean anything is wrong with you. It may simply mean you've been carrying a lot.</p>
+      <p>The science of hope shows that hope can grow again. This is good news, especially for people who have been through stress, trauma, or major life changes. If hope feels low right now, it doesn&apos;t mean anything is wrong with you. It may simply mean you&apos;ve been carrying a lot.</p>
 
       <div>
         <p className="font-semibold text-brand mb-1">Hope Is Not Pretending</p>
-        <p>Hope does not mean pretending everything is okay. It doesn't mean ignoring problems or forcing yourself to be positive. Real hope says, "This is hard, and I can still look for a way forward." Hope makes room for honesty and struggle while still believing that change is possible. Hope doesn't remove challenges. It helps people face them one step at a time.</p>
+        <p>Hope does not mean pretending everything is okay. It doesn&apos;t mean ignoring problems or forcing yourself to be positive. Real hope says, &quot;This is hard, and I can still look for a way forward.&quot; Hope makes room for honesty and struggle while still believing that change is possible. Hope doesn&apos;t remove challenges. It helps people face them one step at a time.</p>
       </div>
 
       <div className="space-y-3">
         <p className="font-semibold text-brand">The Three Parts of Hope</p>
-        <p>Researchers have found that hope has three simple parts: <strong>goals</strong>, <strong>pathways</strong>, and <strong>willpower</strong>. A goal is something that matters to you. It can be big or small. Examples include finding safe housing, saving money, getting a job, feeling more stable. A goal gives you a direction. It's okay if your goal changes over time.</p>
-        <p>Pathways are the different ways you might reach your goal. There is usually more than one way to reach your goal. If one plan doesn't work, another might. Hitting a barrier does not mean you failed, it may just mean you need a different route. Case managers can help you find pathways and connect you to resources that can help you meet your goals.</p>
-        <p>Agency, or willpower, is the belief that your effort matters. After trauma or many setbacks, this belief can feel small. Willpower grows when you practice principles of self-care. Another part of willpower is making sure your steps on your pathway aren't too big to manage. When hope feels low, even the smallest steps matter. As you take care to replenish your energy, your willpower will move you along your pathway and those tiny steps will increase your hope.</p>
+        <p>Researchers have found that hope has three simple parts: <strong>goals</strong>, <strong>pathways</strong>, and <strong>willpower</strong>. A goal is something that matters to you. It can be big or small. Examples include finding safe housing, saving money, getting a job, feeling more stable. A goal gives you a direction. It&apos;s okay if your goal changes over time.</p>
+        <p>Pathways are the different ways you might reach your goal. There is usually more than one way to reach your goal. If one plan doesn&apos;t work, another might. Hitting a barrier does not mean you failed, it may just mean you need a different route. Case managers can help you find pathways and connect you to resources that can help you meet your goals.</p>
+        <p>Agency, or willpower, is the belief that your effort matters. After trauma or many setbacks, this belief can feel small. Willpower grows when you practice principles of self-care. Another part of willpower is making sure your steps on your pathway aren&apos;t too big to manage. When hope feels low, even the smallest steps matter. As you take care to replenish your energy, your willpower will move you along your pathway and those tiny steps will increase your hope.</p>
       </div>
 
-      <p>When hope feels low you might notice that you feel stuck, tired, overwhelmed, have difficulty making plans, or feel like you want to give up. These are common responses to stress and trauma, not personal failures. Hope grows slowly in small and steady ways. Notice your effort and give yourself credit for trying. Progress, no matter how little, is still progress. You don't have to build hope alone — borrowing hope by talking with an advocate, counselor, case manager, or trusted person will grow your hope as well.</p>
+      <p>When hope feels low you might notice that you feel stuck, tired, overwhelmed, have difficulty making plans, or feel like you want to give up. These are common responses to stress and trauma, not personal failures. Hope grows slowly in small and steady ways. Notice your effort and give yourself credit for trying. Progress, no matter how little, is still progress. You don&apos;t have to build hope alone — borrowing hope by talking with an advocate, counselor, case manager, or trusted person will grow your hope as well.</p>
 
       <p>You can measure your hope using the Adult Hope Scale below. It can be very helpful in determining if you need help with pathways or willpower to meet your goals.</p>
 

@@ -25,7 +25,7 @@ afterEach(fn () => cleanupStaffData());
 // The password rule checks Have I Been Pwned; never call it from a test.
 beforeEach(fn () => Http::fake(['api.pwnedpasswords.com/*' => Http::response('')]));
 
-const ACCOUNT_FORM_PASSWORD = 'a-long-enough-test-passphrase';
+const ACCOUNT_FORM_PASSWORD = 'A-long-enough-test-passphrase-7';
 
 function accountFormData(array $overrides = []): array
 {
@@ -88,7 +88,7 @@ test('every create-account page has the same full-width layout', function (Closu
 test('a fixed role shows greyed out on every create page', function () {
     $this->actingAs(staffUser(UserRole::Admin));
     Livewire::test(CreateStaffAccount::class)
-        ->assertFormSet(['role_label' => 'Secretary'])
+        ->assertFormSet(['role_label' => 'Staff'])
         ->assertFormFieldDisabled('role_label');
 
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Fixed role PD')));

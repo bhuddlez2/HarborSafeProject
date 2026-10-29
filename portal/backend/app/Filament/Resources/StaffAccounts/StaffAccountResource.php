@@ -72,7 +72,7 @@ class StaffAccountResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedUsers;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content management';
+    protected static string | UnitEnum | null $navigationGroup = 'Content Management';
 
     // After the three content clusters.
     protected static ?int $navigationSort = 4;

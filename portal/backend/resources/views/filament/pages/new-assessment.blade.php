@@ -47,4 +47,7 @@
             @endif
         </div>
     </main>
+
+    {{-- Keeps an unfinished assessment in this tab through the idle logout. --}}
+    @include('filament.pages.new-assessment.draft')
 </x-filament-panels::page>

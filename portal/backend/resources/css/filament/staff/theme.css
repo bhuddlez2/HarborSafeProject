@@ -430,6 +430,23 @@
     word-break: word-break;
 }
 
+/* A link inside a record, such as a resource request's email address. */
+.hs-ar-link {
+    color: #5c0f8b;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.hs-ar-link:hover {
+    color: #4c0b74;
+}
+
+.hs-ar-link:focus-visible {
+    outline: 2px solid #5c0f8b;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 /* Submission records (service feedback, resource requests): full-width cards. */
 .hs-ar-card {
     margin-bottom: 1rem;
@@ -671,9 +688,16 @@
     color: #1b1726;
 }
 
-.hs-cl-event--download .hs-cl-event-icon {
+.hs-cl-event--download .hs-cl-event-icon,
+.hs-cl-event--download_with_log .hs-cl-event-icon {
     color: #b45309;
     background-color: #fffbeb;
+}
+
+/* "Viewed Log": someone opened this history (AssessmentAccess::ViewLog). */
+.hs-cl-event--view_log .hs-cl-event-icon {
+    color: #5c0f8b;
+    background-color: #f5f0fb;
 }
 
 .hs-cl-event--submitted {
@@ -1004,6 +1028,30 @@
     text-transform: uppercase;
 }
 
+/*
+ * Next / Previous page buttons, shown under every table when it is too narrow
+ * for the numbered pages: the column headers' light purple and purple text,
+ * so they don't pass for a plain white box at the far end of the bar.
+ */
+.fi-pagination .fi-pagination-next-btn,
+.fi-pagination .fi-pagination-previous-btn {
+    background-color: #ede3f5;
+    color: #5c0f8b;
+    font-weight: 700;
+    --tw-ring-color: #c9a8e0;
+}
+
+.fi-pagination .fi-pagination-next-btn:hover,
+.fi-pagination .fi-pagination-previous-btn:hover {
+    background-color: #e0cdef;
+}
+
+.fi-pagination .fi-pagination-next-btn:focus-visible,
+.fi-pagination .fi-pagination-previous-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgb(92 15 139 / 0.3);
+    outline: none;
+}
+
 .fi-ta-row {
     border-bottom-color: #ddd7e6;
 }
@@ -1039,6 +1087,334 @@
         text-align: start;
         justify-content: flex-start;
     }
+}
+
+/*
+ * Record cards (App\Filament\Tables\RecordCards, Finishing Touches item 9):
+ * the assessment tables, Service feedback, Resource requests and Follow-ups.
+ * On a phone each row is a card:
+ *
+ *   [ ] Title                     [corner]     (checkbox only with bulk delete)
+ *   Body text, full width
+ *   LABEL      value
+ *              grey line under it
+ *   SUBMITTED  date                            (meta: after the other lines)
+ *   [Button] [Button]
+ *
+ * Built on Filament's stacked layout. Each column's role is a cell class
+ * (hs-card-title, -corner, -body, -meta; none is a labelled line), so a new
+ * table needs no CSS of its own.
+ */
+@media (max-width: 39.99rem) {
+    .fi-ta-table-stacked-on-mobile > tbody:has(> tr.hs-card) {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background-color: #f7f5fa;
+    }
+
+    .fi-ta-table-stacked-on-mobile > tbody > tr.hs-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: 0.75rem;
+        row-gap: 0.5rem;
+        padding: 0.875rem 1rem;
+        border: 1px solid #ddd7e6;
+        border-radius: 12px;
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgb(45 22 64 / 0.06);
+    }
+
+    /* A bulk-select checkbox takes its own narrow column, top left. */
+    .fi-ta-table-stacked-on-mobile > tbody > tr.hs-card:has(> .fi-ta-selection-cell) {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .hs-card > .fi-ta-cell,
+    .fi-ta-row.hs-card:hover > td {
+        padding: 0;
+        background-color: transparent;
+    }
+
+    /* Every line spans the card, in table order; dates, then buttons, last. */
+    .hs-card > .fi-ta-cell {
+        grid-column: 1 / -1;
+    }
+
+    .hs-card > .hs-card-meta {
+        order: 1;
+    }
+
+    .hs-card > .fi-ta-cell:has(> .fi-ta-actions) {
+        order: 2;
+        margin-top: 0.25rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #ece7f2;
+    }
+
+    /* The top row: checkbox, title, corner. */
+    /* width: Filament sizes this cell for a table column (w-1), which let the
+       checkbox spill over the title. */
+    .hs-card > .fi-ta-selection-cell {
+        position: static;
+        display: flex;
+        width: auto;
+        grid-row: 1;
+        grid-column: 1 / 2;
+        align-self: center;
+    }
+
+    /* Badge lists (Resource requests' "Interested in") wrap onto more lines
+       rather than being cut off at the card's edge. */
+    /* The list itself, or the list inside it on a "Show N more" row. */
+    .hs-card .fi-ta-text-has-badges,
+    .hs-card .fi-ta-text-has-badges ul {
+        flex-wrap: wrap;
+        row-gap: 0.375rem;
+    }
+
+    .hs-card > .hs-card-title {
+        grid-row: 1;
+        grid-column: -3 / -2;
+        align-self: center;
+    }
+
+    .hs-card > .hs-card-title .fi-ta-cell-content {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    /* A grey line under the title (an email) stays plain. */
+    .hs-card > .hs-card-title .fi-ta-text-description {
+        font-weight: 400;
+    }
+
+    .hs-card > .hs-card-corner {
+        grid-row: 1;
+        grid-column: -2 / -1;
+        align-self: center;
+        justify-self: end;
+    }
+
+    /* Plain text in the corner (a form type) reads as a small grey note. */
+    .hs-card > .hs-card-corner:not(:has(.fi-badge)) :is(.fi-ta-cell-content, .fi-ta-text, .fi-ta-text-item) {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    /* The title, corner and body speak for themselves: no label. */
+    .hs-card > .hs-card-title > .fi-ta-cell-label,
+    .hs-card > .hs-card-corner > .fi-ta-cell-label,
+    .hs-card > .hs-card-body > .fi-ta-cell-label {
+        display: none;
+    }
+
+    /* Every other line: a small label on the left, the value beside it. */
+    .hs-card > .fi-ta-cell:not(.hs-card-title, .hs-card-corner, .hs-card-body, .fi-ta-selection-cell):not(:has(> .fi-ta-actions)) {
+        display: grid;
+        grid-template-columns: 6.75rem minmax(0, 1fr);
+        column-gap: 0.5rem;
+        align-items: baseline;
+    }
+
+    .hs-card > .fi-ta-cell > .fi-ta-cell-label {
+        padding-top: 0;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: 1.25rem;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+}
+
+/*
+ * Between a phone and a full-width monitor (40rem-80rem: a monitor turned on
+ * its side, a small laptop, a tablet) these tables are still tables but too
+ * narrow for their buttons side by side, so the last ones ran off the edge.
+ * There they stack in one compact column, icon at the left so the icons line
+ * up down the column, label centred beside it. Above 80rem they sit in a row.
+ *
+ * Text may wrap there too (Filament keeps table cells on one line), or a
+ * comment, a list of badges or a long name pushes the buttons off the edge.
+ * Dates (meta) stay on one line down to 50rem, so "10:30 am" isn't split
+ * where there is room; below it they wrap as well.
+ */
+@media (min-width: 40rem) and (max-width: 49.99rem) {
+    .fi-ta-row.hs-card > .fi-ta-cell.hs-card-meta,
+    .fi-ta-table:has(> tbody > tr.hs-card) > thead .fi-ta-header-cell {
+        white-space: normal;
+    }
+}
+
+/* At every table width, not only in between: a long comment or name pushed
+   the buttons off even a full-width monitor. A table only wraps a cell when
+   it would otherwise overflow, so short rows are unchanged. */
+@media (min-width: 40rem) {
+    .fi-ta-row.hs-card > .fi-ta-cell:not(.hs-card-meta) {
+        white-space: normal;
+    }
+
+    .fi-ta-row.hs-card .fi-ta-text-has-badges,
+    .fi-ta-row.hs-card .fi-ta-text-has-badges ul {
+        flex-wrap: wrap;
+        row-gap: 0.375rem;
+    }
+}
+
+/* A long email address (Resource requests) breaks only when it can't fit:
+   anywhere on a phone card, which is narrow; on a table only when the
+   column itself is too narrow, so "name@example.test" stays whole there. */
+.fi-ta-row.hs-card .fi-ta-text-description {
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 39.99rem) {
+    .fi-ta-row.hs-card .fi-ta-text-description {
+        overflow-wrap: anywhere;
+    }
+}
+
+/* Row buttons on tables using TableAlignment::buttons() (the assessment
+   tables): icon beside label, every button the same height, side by side
+   and centred in the row. The pill rule further down makes them
+   inline-block, which puts the icon on a line of its own above the label.
+   Before the block below, which still stacks them from 640 to 1280px. */
+.hs-row-buttons .fi-ta-row .fi-ta-actions {
+    align-items: center;
+}
+
+.hs-row-buttons .fi-ta-row .fi-ta-actions .fi-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    line-height: 1.25rem;
+    white-space: nowrap;
+}
+
+/* On a phone card, a little tighter, so Change log, View and Edit still fit
+   on one line at 375px. */
+@media (max-width: 39.99rem) {
+    .hs-row-buttons .fi-ta-row .fi-ta-actions {
+        gap: 0.5rem;
+    }
+
+    .hs-row-buttons .fi-ta-row .fi-ta-actions .fi-link {
+        padding-inline: 0.625rem;
+    }
+}
+
+@media (min-width: 40rem) and (max-width: 79.99rem) {
+    .fi-ta-row.hs-card .fi-ta-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.375rem;
+    }
+
+    .fi-ta-row.hs-card .fi-ta-actions .fi-link {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    /* Centred in the space beside the icon. Not balanced against the icon,
+       which would widen every button enough to overflow at 1080px. */
+    .fi-ta-row.hs-card .fi-ta-actions .fi-link .fi-link-label {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/*
+ * "Staff" under the date of a form staff entered themselves (Service
+ * feedback, Resource requests: RecordCards::staffTag()). Website forms show
+ * nothing there. Blue, like Filament's info badge it replaced.
+ */
+.hs-staff-tag {
+    display: inline-block;
+    padding: 0 0.375rem;
+    border-radius: 0.375rem;
+    background-color: #eff6ff;
+    box-shadow: inset 0 0 0 1px #bfdbfe;
+    color: #1d4ed8;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.125rem;
+}
+
+/*
+ * Follow-up page header (Burchfield B43): Download PDF and the small arrow
+ * beside it (its menu holds "Download PDF with log") read as one control, so
+ * the arrow sits close; on a phone, Update Follow-Up takes the first row so
+ * the two never wrap apart.
+ */
+.fi-ac > .fi-dropdown:has(.hs-download-more) {
+    margin-inline-start: -0.5rem;
+}
+
+@media (max-width: 639px) {
+    .fi-ac:has(.hs-download-more) > .hs-fu-update {
+        flex-basis: 100%;
+    }
+}
+
+/*
+ * Overdue follow-ups (Burchfield B41, 2026-10-28; FollowUp::overdueHours()):
+ * a form still in Needs Follow-Up 24 hours after submission is tinted yellow,
+ * 48 hours red, with an "Over 24 hours" / "Over 48 hours" tag under its date
+ * so the colour is never the only sign. Table rows tint their cells; on a
+ * phone the card itself (RecordCards) is tinted.
+ */
+.fi-ta-row.hs-overdue-24 > td {
+    background-color: #fefce8;
+}
+
+.fi-ta-row.hs-overdue-24:hover > td {
+    background-color: #fef9c3;
+}
+
+.fi-ta-row.hs-overdue-48 > td {
+    background-color: #fef2f2;
+}
+
+.fi-ta-row.hs-overdue-48:hover > td {
+    background-color: #fee2e2;
+}
+
+.fi-ta-table-stacked-on-mobile > tbody > tr.hs-card.hs-overdue-24 {
+    background-color: #fefce8;
+    border-color: #fde68a;
+}
+
+.fi-ta-table-stacked-on-mobile > tbody > tr.hs-card.hs-overdue-48 {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.hs-overdue-tag {
+    display: inline-block;
+    padding: 0 0.375rem;
+    border-radius: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.125rem;
+}
+
+.hs-overdue-tag-24 {
+    background-color: #fef9c3;
+    box-shadow: inset 0 0 0 1px #fde047;
+    color: #854d0e;
+}
+
+.hs-overdue-tag-48 {
+    background-color: #fee2e2;
+    box-shadow: inset 0 0 0 1px #fca5a5;
+    color: #991b1b;
 }
 
 /*
@@ -1118,4 +1494,57 @@
 .fi-ta-row .fi-ta-actions .fi-link.fi-disabled .fi-icon,
 .fi-ta-record .fi-ta-actions .fi-link.fi-disabled .fi-icon {
     color: #9ca3af;
+}
+
+/*
+ * "* Required" (Burchfield B23/B30, 2026-10-28): wherever a red asterisk shows,
+ * a key just above the buttons says what it means. The website shows the same
+ * note (RequiredNote in website/frontend/src/app/components/FormControls.js).
+ *
+ * Drawn here rather than form by form, so every form gets it, new ones too, and
+ * only while an asterisk is on screen:
+ *   - a pop-up without steps: at the bottom of its content, above its buttons;
+ *   - a form with steps (pop-up or page): at the bottom of the current step,
+ *     when that step has an asterisk;
+ *   - a page form (Create/Edit pages, Account): above its Save buttons;
+ *   - hand-built forms (Analytics): the .hs-required-note partial,
+ *     filament/partials/required-note.blade.php.
+ * Filament leaves the asterisk off a disabled field, so a locked field never
+ * shows the note on its own. Hidden from screen readers ("/ ''" and
+ * aria-hidden), which already hear "required" on each required field.
+ *
+ * One box, two colours: the text is painted with a gradient clipped to the
+ * letters, Filament's danger red over the asterisk and gray over "Required".
+ * RequiredNoteTest pins these selectors.
+ */
+.fi-modal-content:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.fi-sc-form:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark) .fi-sc-actions[id$="form-actions"]::before {
+    content: "* Required" / "";
+    display: block;
+    grid-column: 1 / -1;
+    flex-basis: 100%;
+}
+
+.fi-modal-content:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.fi-sc-form:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark) .fi-sc-actions[id$="form-actions"]::before,
+.hs-required-note {
+    width: fit-content;
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: transparent;
+    background: linear-gradient(to right, var(--danger-600) 0 0.55em, var(--gray-600) 0.55em);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.fi-sc-form:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark) .fi-sc-actions[id$="form-actions"]::before {
+    margin-bottom: 0.75rem;
+}
+
+/* The officer wizard lays its steps out without gaps between rows. */
+.fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after {
+    margin-top: 0.75rem;
 }

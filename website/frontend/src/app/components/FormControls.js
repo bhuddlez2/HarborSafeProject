@@ -13,13 +13,16 @@ Required and optional markers - the same rule as the staff panel
 assessment:
   - requirement="required": a red asterisk after the label, plus the
     control's own `required` attribute.
-  - requirement="optional" (the default): nothing on the label. The control
-    itself shows OPTIONAL_PLACEHOLDER as faded grey ghost text - a text
+  - requirement="optional" (the default): nothing visible on the label. The
+    control itself shows OPTIONAL_PLACEHOLDER as faded grey ghost text - a text
     box's placeholder, or a dropdown's empty choice. Text boxes and dropdowns
-    only; checkboxes and radio buttons get no optional marker.
+    only; checkboxes and radio buttons get no optional marker. Screen readers
+    can't rely on ghost text (it goes once something is typed), so the label
+    also carries ", optional" for them only: "Last name, optional".
   - requirement="none": neither. For fields in a one-of-several group, where
     the group's legend says which is needed (see the email/phone fieldset in
     contact/ContactContent.js).
+A form with any asterisk shows RequiredNote just above its submit button.
 */
 import PhoneLink from "./PhoneLink";
 import { CRISIS_CALL } from "../lib/phone";
@@ -32,6 +35,7 @@ export function Field({ id, label, hint, error, requirement = "optional", childr
       <label htmlFor={id} className="font-semibold text-gray-900">
         {label}
         {requirement === "required" && <span className="text-red-700 ml-1" aria-hidden="true">*</span>}
+        {requirement === "optional" && <span className="sr-only">, optional</span>}
       </label>
 
       {hint && <p id={`${id}-hint`} className="text-sm text-gray-600">{hint}</p>}
@@ -60,6 +64,19 @@ export const selectClass = (value) =>
 
 export const describedBy = (id, hint, error) =>
   [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+
+/*
+The key to the red asterisk, just above the submit button of any form or step
+that has one (the staff panel shows the same note). Hidden from screen readers,
+which already hear "required" on each required control.
+*/
+export function RequiredNote({ className = "" }) {
+  return (
+    <p className={`text-sm text-gray-600 ${className}`} aria-hidden="true">
+      <span className="text-red-700">*</span> Required
+    </p>
+  );
+}
 
 export function SubmitButton({ status, children }) {
   return (

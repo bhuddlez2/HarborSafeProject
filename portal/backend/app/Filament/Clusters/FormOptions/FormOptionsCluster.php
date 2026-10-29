@@ -28,13 +28,13 @@ class FormOptionsCluster extends Cluster
 {
     protected static ?string $slug = 'form-options';
 
-    protected static ?string $title = 'Form options';
+    protected static ?string $title = 'Form Options';
 
-    protected static ?string $clusterBreadcrumb = 'Form options';
+    protected static ?string $clusterBreadcrumb = 'Form Options';
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content management';
+    protected static string | UnitEnum | null $navigationGroup = 'Content Management';
 
     protected static ?int $navigationSort = 3;
 

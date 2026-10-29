@@ -14,20 +14,21 @@ export default function Footer() {
     Footer,
     bg-brand for brand purple background,
     text-white for all text inside,
-    py-12 px-4 for vertical padding and horizontal gutters,
-    pb-32 below lg leaves room under the logo for the fixed Safe Exit button (bottom-right),
-    which would otherwise sit on top of the footer's last content on narrower screens,
+    pt-12 px-4 for top padding and horizontal gutters,
+    pb-32 on every screen leaves room for the fixed Safe Exit button (bottom-right, about 92px
+    from the bottom of the window), which would otherwise sit on top of the nondiscrimination notice,
     aria-label describes the footer region to screen readers
     */
-    <footer className="on-dark bg-brand text-white pt-12 pb-32 lg:pb-12 px-4" aria-label="Site footer with contact information, social media links and nondiscrimination notice">
+    <footer className="on-dark bg-brand text-white pt-12 pb-32 px-4" aria-label="Site footer with contact information, social media links and nondiscrimination notice">
 
       {/*
       Two-column layout: hotline info on the left, social links on the right,
       max-w-7xl mx-auto to match the width of the sections above,
-      grid md:grid-cols-2 for two columns on medium screens and up,
+      grid md:grid-cols-[1fr_auto] for two columns on medium screens and up, the social column only
+      as wide as it needs so the left column has room for the two form buttons side by side,
       gap-8 for spacing between columns
       */}
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_auto] gap-8">
 
         {/* Left column: crisis hotline heading and phone link */}
         <div>
@@ -56,24 +57,37 @@ export default function Footer() {
               <span>Text <span className="whitespace-nowrap">{formatPhone(CRISIS_TEXT)}</span></span>
             </PhoneLink>
 
-            <Link href="/contact" className="block hover:text-purple-200 transition-colors underline">
-              Request resources
-            </Link>
-            <Link href="/feedback" className="block hover:text-purple-200 transition-colors underline">
-              Share feedback on a service
-            </Link>
+            {/*
+            Form buttons, styled like the outlined "Call (423) 476-3886" button on Get Support
+            but filled light purple so they stand out on the footer's brand purple,
+            hover turns white rather than filling brand purple, which would vanish here,
+            side by side wherever they fit, flex-wrap only stacks them on phones too narrow for both
+            */}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link href="/contact" className="text-center whitespace-nowrap bg-purple-100 border-2 border-brand text-brand px-8 py-3 rounded-lg font-semibold hover:bg-white transition-all">
+                Request Resources
+              </Link>
+              <Link href="/feedback" className="text-center whitespace-nowrap bg-purple-100 border-2 border-brand text-brand px-8 py-3 rounded-lg font-semibold hover:bg-white transition-all">
+                Share Feedback on a Service
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Right column: social media links */}
-        <div>
+        {/*
+        Right column: social media links,
+        right-aligned from md up (when the columns sit side by side) so the footer is balanced,
+        its edge lines up with the max-w-7xl content above; stacked on phones it stays left-aligned
+        */}
+        <div className="md:text-right">
           {/* mb-4 for spacing between heading and icons below */}
           <h3 className="font-semibold mb-4">Connect With Us</h3>
           {/*
           flex gap-4 to lay the icons out in a row with spacing,
+          md:justify-end pushes the row to the right edge,
           hover:text-purple-200 on each link for consistent hover color
           */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 md:justify-end">
             {/* Facebook */}
             <a href="https://www.facebook.com/HarborSafeHouse/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Facebook (opens in new tab)">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
@@ -117,8 +131,8 @@ export default function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-purple-700 text-xs leading-relaxed text-purple-100">
-        {/* max-w-4xl keeps the lines readable and clear of the fixed Safe Exit button at the bottom right */}
-        <div className="max-w-4xl space-y-2">
+        {/* Full footer width; the footer's pb-32 keeps it clear of the fixed Safe Exit button */}
+        <div className="space-y-2">
           <p>
             <strong className="font-semibold text-white">Nondiscrimination notice.</strong>{" "}
             Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc., does not

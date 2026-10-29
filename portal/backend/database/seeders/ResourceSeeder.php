@@ -17,8 +17,8 @@ resource_request_resource_types rows that already reference them.
 This list and the services list are independent vocabularies - the same
 wording appearing in both (e.g. "Emergency Shelter") is intentional.
 
-"Something Else" is the catch-all; the form's free-text Message field is
-where the detail for those ends up, since there's no per-option text input.
+There is no catch-all option: "Something Else" (id 8) was dropped on purpose
+on 2026-10-29. Anything else goes in the form's free-text Message field.
 */
 class ResourceSeeder extends Seeder
 {
@@ -32,7 +32,6 @@ class ResourceSeeder extends Seeder
             5 => 'Legal Help',
             6 => 'Transportation',
             7 => 'Clothing',
-            8 => 'Something Else',
         ];
 
         foreach ($resources as $id => $name) {
@@ -40,6 +39,16 @@ class ResourceSeeder extends Seeder
                 ['id' => $id],
                 ['Name' => $name, 'ChangeDate' => now()]
             );
+        }
+
+        // Added later for Get Support's "Request this service" links, which
+        // tick a type by name. Keyed on the name, not an id: staff may already
+        // have added them on a given database, under any id, and a second
+        // copy would show twice on the form.
+        foreach (['Support Groups', 'Community Education'] as $name) {
+            if (! DB::connection('Feedback')->table('resources')->where('Name', $name)->exists()) {
+                DB::connection('Feedback')->table('resources')->insert(['Name' => $name, 'ChangeDate' => now()]);
+            }
         }
     }
 }

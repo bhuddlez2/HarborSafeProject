@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ResourceRequestForm;
 use Illuminate\Support\Facades\DB;
 
 afterEach(fn () => cleanupPublicFormData());
@@ -13,11 +14,10 @@ test('a valid request with email only is accepted', function () {
     $response->assertStatus(201)->assertJsonStructure(['message', 'FormID']);
     expect(array_keys($response->json()))->toEqualCanonicalizing(['message', 'FormID']);
 
-    $this->assertDatabaseHas('resource_request_form', [
-        'FormID'          => $response->json('FormID'),
-        'FirstName'       => publicFormsRunToken(),
-        'SafePhoneNumber' => null,
-    ], 'Feedback');
+    // Read through the model: the name is encrypted in the database.
+    $stored = ResourceRequestForm::find($response->json('FormID'));
+    expect($stored->FirstName)->toBe(publicFormsRunToken())
+        ->and($stored->SafePhoneNumber)->toBeNull();
 });
 
 test('a valid request with phone only is accepted', function () {
@@ -195,8 +195,5 @@ test('a phone number needs all 10 digits, and is stored as (xxx)xxx-xxxx', funct
         'SafePhoneNumber' => '423.555.0100',
     ])->assertStatus(201);
 
-    $this->assertDatabaseHas('resource_request_form', [
-        'FormID'          => $response->json('FormID'),
-        'SafePhoneNumber' => '(423)555-0100',
-    ], 'Feedback');
+    expect(ResourceRequestForm::find($response->json('FormID'))->SafePhoneNumber)->toBe('(423)555-0100');
 });

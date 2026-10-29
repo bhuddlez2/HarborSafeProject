@@ -34,6 +34,15 @@ ini_get() directly in the first test here.
 
 afterEach(fn () => cleanupStaffData());
 
+// A PNG at the minimum event image size, padded to exactly $bytes after its
+// end, so the pixel check passes and only the file size is under test.
+function pestPaddedPng(int $bytes): string
+{
+    $png = pestPngOfSize(DatabaseFileUpload::MIN_IMAGE_WIDTH, DatabaseFileUpload::MIN_IMAGE_HEIGHT);
+
+    return $png.str_repeat('x', $bytes - strlen($png));
+}
+
 test('the advertised limit never exceeds what PHP will accept', function () {
     $ceiling = DatabaseFileUpload::phpUploadCeilingKb();
 
@@ -68,10 +77,11 @@ test('this environment can actually carry the intended limits', function () {
 test('a 3.5 MB event photo is accepted', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 
-    // The exact size from the report, in real bytes.
+    // The exact size from the report, in real bytes: a PNG at the minimum
+    // event image size, padded out after its end.
     $bytes = 3_500_000;
     $resource = tmpfile();
-    fwrite($resource, str_repeat('x', $bytes));
+    fwrite($resource, pestPaddedPng($bytes));
     $upload = new TestingFile(staffRunToken().'-photo.png', $resource);
 
     $title = staffRunToken().' Big photo event';
@@ -99,10 +109,11 @@ test('a 3.5 MB event photo is accepted', function () {
 test('a file over the limit is rejected with a validation error', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 
-    // One kilobyte past the effective image limit.
+    // One kilobyte past the effective image limit, and big enough in pixels,
+    // so the size is the only thing wrong with it.
     $overBy = (DatabaseFileUpload::effectiveLimitKb(DatabaseFileUpload::MAX_IMAGE_KB) + 1) * 1024;
     $resource = tmpfile();
-    fwrite($resource, str_repeat('x', $overBy));
+    fwrite($resource, pestPaddedPng($overBy));
 
     Livewire::test(ManageEvents::class)
         ->callAction('create', data: [

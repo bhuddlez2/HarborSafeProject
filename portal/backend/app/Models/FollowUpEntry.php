@@ -4,13 +4,18 @@ namespace App\Models;
 
 use App\Enums\FollowUpStatus;
 use App\Models\Concerns\AppendOnly;
+use App\Models\Concerns\EncryptsSensitiveFields;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 // One step in a form's follow-up history: a status change with its note, or a
 // note on its own. Written only by App\Services\FollowUps, never changed.
 class FollowUpEntry extends BaseModel
 {
-    use AppendOnly, HasUuids;
+    use AppendOnly, EncryptsSensitiveFields, HasUuids;
+
+    // Staff write about the person they reached, so the note is encrypted
+    // under DATA_ENCRYPTION_KEY (App\Support\SensitiveData).
+    public const ENCRYPTED = ['Note'];
 
     protected $connection = 'Portal';
 

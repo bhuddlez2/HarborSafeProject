@@ -69,6 +69,9 @@ class ServiceFeedbackExport
 
     public const ROWS_PER_TABLE = 25;
 
+    // Everything drawn onto the page is black (#44: PDFs are black and white).
+    public const PDF_INK = [0, 0, 0];
+
     // A printed row's comment holds at most this many lines, counted at a
     // deliberately low PDF_CHARS_PER_LINE (the column fits about 90), so a
     // row always fits on a page with room to spare.
@@ -215,17 +218,23 @@ class ServiceFeedbackExport
 
     protected function printPdf(string $html): string
     {
-        return HtmlPdf::render($html, 'letter', 'landscape', function (Canvas $canvas, FontMetrics $fonts, int $page, int $pages): void {
-            if ($page > 1) {
-                $this->headings($canvas, $fonts);
-            }
+        return HtmlPdf::render($html, 'letter', 'landscape', $this->decoratePage(...));
+    }
 
-            $this->pageNumber($canvas, $fonts, "Page {$page} of {$pages}");
-        });
+    // What is drawn straight onto each page: the headings on every page after
+    // the first, and the page number. Black only, like the rest of the PDF (#44).
+    protected function decoratePage(Canvas $canvas, FontMetrics $fonts, int $page, int $pages): void
+    {
+        if ($page > 1) {
+            $this->headings($canvas, $fonts);
+        }
+
+        $this->pageNumber($canvas, $fonts, "Page {$page} of {$pages}");
     }
 
     // The column headings in the band above the rows, styled as the first
-    // page's <th> row (service-feedback-list.blade.php).
+    // page's <th> row (service-feedback-list.blade.php): no fill, black text
+    // and a black rule under them.
     private function headings(Canvas $canvas, FontMetrics $fonts): void
     {
         $font = $fonts->getFont(HtmlPdf::FONT, 'bold');
@@ -235,8 +244,7 @@ class ServiceFeedbackExport
         $width = $canvas->get_width() - 2 * self::PDF_MARGIN;
         $last = count(self::COLUMNS) - 1;
 
-        $canvas->filled_rectangle($x, $top, $width, self::PDF_HEADING_HEIGHT, [0.953, 0.941, 0.969]);
-        $canvas->line($x, $top + self::PDF_HEADING_HEIGHT, $x + $width, $top + self::PDF_HEADING_HEIGHT, [0.847, 0.812, 0.890], 1.5);
+        $canvas->line($x, $top + self::PDF_HEADING_HEIGHT, $x + $width, $top + self::PDF_HEADING_HEIGHT, self::PDF_INK, 1.5);
 
         foreach (self::COLUMNS as $index => $column) {
             $columnWidth = self::PDF_COLUMN_WIDTHS[$index] ?? $width - array_sum(array_slice(self::PDF_COLUMN_WIDTHS, 0, $last));
@@ -245,7 +253,7 @@ class ServiceFeedbackExport
                 ? $x + ($columnWidth - $fonts->getTextWidth($label, $font, $size)) / 2
                 : $x + 6;
 
-            $canvas->text($textX, $top + 6, $label, $font, $size, [0.231, 0.165, 0.302]);
+            $canvas->text($textX, $top + 6, $label, $font, $size, self::PDF_INK);
             $x += $columnWidth;
         }
     }
@@ -261,7 +269,7 @@ class ServiceFeedbackExport
             $text,
             $font,
             $size,
-            [0.42, 0.447, 0.502],
+            self::PDF_INK,
         );
     }
 }

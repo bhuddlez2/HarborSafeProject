@@ -22,9 +22,9 @@ class ResourceTypeResource extends LookupResource
 
     protected static ?string $slug = 'resource-types';
 
-    protected static ?string $title = 'Resource types';
+    protected static ?string $title = 'Resource Types';
 
-    protected static ?string $navigationLabel = 'Resource types';
+    protected static ?string $navigationLabel = 'Resource Types';
 
     protected static ?string $modelLabel = 'resource type';
 

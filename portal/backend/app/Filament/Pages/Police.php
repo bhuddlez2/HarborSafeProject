@@ -51,8 +51,8 @@ class Police extends Page
     Officers and police admins only - NOT admins.
 
     It opens "Welcome back, {first name}" over a Start New Lethality
-    Assessment card (officers, and police admins with an agency), then View
-    Assessments and Personnel Management cards for police admins. An admin has their own landing page
+    Assessment card (officers, and police admins with an agency), then
+    Assessment Review and Staff Management cards for police admins. An admin has their own landing page
     (see App\Filament\StaffLanding) and reaches assessments through
     App\Filament\Resources\AssessmentReview, which is the view-all list
     section 5 of Filament_CMS_Design.md actually grants them. Granting admins
@@ -102,6 +102,21 @@ class Police extends Page
     public function assessmentReviewUrl(): string
     {
         return AssessmentReviewResource::getUrl('index');
+    }
+
+    // The police admin cards: "{Agency}'s submitted LAP screenings..." and
+    // "Add and manage {Agency}'s staff accounts". Just an apostrophe after a
+    // name ending in s; "your agency's" without one (the view capitalises it
+    // at the start of a sentence).
+    public function agencyPossessive(): string
+    {
+        $agency = trim((string) Filament::auth()->user()?->officerIdentity()['agency']);
+
+        if ($agency === '') {
+            return "your agency's";
+        }
+
+        return str_ends_with(strtolower($agency), 's') ? "{$agency}'" : "{$agency}'s";
     }
 
     // Police admin card: their agency's officer accounts.
