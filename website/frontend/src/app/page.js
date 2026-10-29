@@ -269,50 +269,55 @@ export default function Home() {
               {/*
               Service cards grid,
               grid-cols-1 on mobile, md:grid-cols-3 on medium screens and up,
-              gap-5 for spacing between cards
+              gap-5 for spacing between cards,
+              each card is sized like the Get Support service cards (B8): 80px round icon,
+              text-lg title, body text-base from md up, centered, with the links pinned to
+              the bottom (mt-auto) so all three line up whatever the text length
               */}
               <div className="grid md:grid-cols-3 gap-5">
 
                 {/* Emergency Shelter card */}
-                <div className="border border-gray-200 rounded-xl p-6">
-                  {/* Icon box */}
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                <div className="border border-gray-200 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center">
+                  {/* Icon circle */}
+                  <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                       {/* home icon, feathericons.com */}
                       <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9,22 9,12 15,12 15,22" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
-                  <a href="/get-support/#shelter" onClick={replaceNavigate} className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <p className="text-lg md:text-xl font-semibold text-brand mb-3">Emergency Shelter</p>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
+                  <a href="/get-support/#shelter" onClick={replaceNavigate} className="mt-auto pt-6 text-sm font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
 
                 {/* Counseling & Advocacy card */}
-                <div className="border border-gray-200 rounded-xl p-6">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                <div className="border border-gray-200 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                       {/* message-square icon, feathericons.com */}
                       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
-                  <a href="/get-support/#counseling" onClick={replaceNavigate} className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <p className="text-lg md:text-xl font-semibold text-brand mb-3">Counseling &amp; Advocacy</p>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Individual and group counseling, legal advocacy, and court support for survivors.</p>
+                  <a href="/get-support/#counseling" onClick={replaceNavigate} className="mt-auto pt-6 text-sm font-semibold text-brand hover:underline transition-all">Learn more →</a>
                 </div>
 
                 {/* 24/7 Crisis Line card */}
-                <div className="border border-gray-200 rounded-xl p-6">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                <div className="border border-gray-200 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                       {/* clock icon, feathericons.com */}
                       <circle cx="12" cy="12" r="10" /><polyline points="12,6 12,12 16,14" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-brand mb-2">24/7 Crisis Line</p>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Trained advocates available any time — call or text, day or night, always free.</p>
+                  <p className="text-lg md:text-xl font-semibold text-brand mb-3">24/7 Crisis Line</p>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Trained advocates available any time — call or text, day or night, always free.</p>
                   {/* Call and text, matching the card copy and the hotline strip */}
-                  <PhoneLink number={CRISIS_CALL} className="text-xs font-semibold text-brand hover:underline transition-all">Call →</PhoneLink>
-                  <PhoneLink number={CRISIS_TEXT} sms className="ml-4 text-xs font-semibold text-brand hover:underline transition-all">Text →</PhoneLink>
+                  <div className="mt-auto pt-6 flex gap-6">
+                    <PhoneLink number={CRISIS_CALL} className="text-sm font-semibold text-brand hover:underline transition-all">Call →</PhoneLink>
+                    <PhoneLink number={CRISIS_TEXT} sms className="text-sm font-semibold text-brand hover:underline transition-all">Text →</PhoneLink>
+                  </div>
                 </div>
 
               </div>
