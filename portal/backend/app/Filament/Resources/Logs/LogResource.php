@@ -164,8 +164,10 @@ class LogResource extends Resource
 
                 TableAlignment::symbol(TextColumn::make('Action')
                     ->badge()
-                    ->formatStateUsing(fn (LogAction $state): string => $state->label())
-                    ->color(fn (LogAction $state): string => $state->color())),
+                    // A download with the follow-up log reads as a plain
+                    // download to a police admin (LogAction::shownTo()).
+                    ->formatStateUsing(fn (LogAction $state): string => $state->shownTo(Filament::auth()->user())->label())
+                    ->color(fn (LogAction $state): string => $state->shownTo(Filament::auth()->user())->color())),
 
                 TextColumn::make('record')
                     ->label('Record')

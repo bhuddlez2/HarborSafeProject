@@ -688,7 +688,8 @@
     color: #1b1726;
 }
 
-.hs-cl-event--download .hs-cl-event-icon {
+.hs-cl-event--download .hs-cl-event-icon,
+.hs-cl-event--download_with_log .hs-cl-event-icon {
     color: #b45309;
     background-color: #fffbeb;
 }
@@ -1309,6 +1310,22 @@
     font-size: 0.6875rem;
     font-weight: 600;
     line-height: 1.125rem;
+}
+
+/*
+ * Follow-up page header (Burchfield B43): Download PDF and the small arrow
+ * beside it (its menu holds "Download PDF with log") read as one control, so
+ * the arrow sits close; on a phone, Update Follow-Up takes the first row so
+ * the two never wrap apart.
+ */
+.fi-ac > .fi-dropdown:has(.hs-download-more) {
+    margin-inline-start: -0.5rem;
+}
+
+@media (max-width: 639px) {
+    .fi-ac:has(.hs-download-more) > .hs-fu-update {
+        flex-basis: 100%;
+    }
 }
 
 /*

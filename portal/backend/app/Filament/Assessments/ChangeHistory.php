@@ -161,12 +161,16 @@ final class ChangeHistory
         }
 
         foreach ($access as $row) {
+            // A download with the follow-up log reads as a plain download to
+            // a police admin (AssessmentAccess::shownTo()).
+            $shown = $row->Action->shownTo(Filament::auth()->user());
+
             $events[] = [
-                'kind' => $row->Action->value,
+                'kind' => $shown->value,
                 'at' => $row->AccessedAt,
                 'when' => $when($row->AccessedAt),
                 'who' => $row->user?->name ?? 'Unknown',
-                'label' => $row->Action->label(),
+                'label' => $shown->label(),
             ];
         }
 

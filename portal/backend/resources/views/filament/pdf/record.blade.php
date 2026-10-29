@@ -222,10 +222,74 @@
         color: #6b7280;
     }
     .hs-ar-indicator-badge--yes { background-color: #fee2e2; color: #b91c1c; }
+
 </style>
+@isset($followUpLog)
+<style>
+    /* "Download PDF with log" only (Burchfield B43): a banner over the form,
+       and the follow-up Log after it. Each step is a plain block, never a
+       table row: dompdf can't split a row across pages, and a note runs to
+       2,000 characters, so a long one simply carries on to the next page. */
+    .hs-pdf-internal {
+        border: 1pt solid #f59e0b;
+        background-color: #fffbeb;
+        color: #92400e;
+        border-radius: 6pt;
+        padding: 6pt 10pt;
+        margin-bottom: 10pt;
+        font-size: 8.5pt;
+        font-weight: bold;
+    }
+    .hs-pdf-log { margin-top: 14pt; }
+    .hs-pdf-log-title {
+        font-size: 7.5pt;
+        font-weight: bold;
+        letter-spacing: 0.8pt;
+        text-transform: uppercase;
+        color: #5c0f8b;
+        margin-bottom: 2pt;
+    }
+    .hs-pdf-log-status { font-size: 8.5pt; color: #6b7280; margin-bottom: 8pt; }
+    .hs-pdf-log-step {
+        border-left: 2pt solid #c9c1d6;
+        padding: 2pt 0 2pt 9pt;
+        margin-bottom: 8pt;
+    }
+    .hs-pdf-log-heading { font-size: 9.5pt; font-weight: bold; color: #1b1726; }
+    .hs-pdf-log-meta { font-size: 8pt; color: #6b7280; margin-top: 1pt; }
+    .hs-pdf-log-note {
+        font-size: 9pt;
+        line-height: 1.5;
+        color: #1b1726;
+        margin-top: 3pt;
+        white-space: pre-line;
+        word-wrap: break-word;
+    }
+</style>
+@endisset
 </head>
 <body>
+@isset($followUpLog)
+    <div class="hs-pdf-internal">Internal: includes follow-up notes</div>
+@endisset
+
 {{-- The record's own partial (App\Support\RecordPdf), printed by App\Services\AssessmentPdf. --}}
 @include($partial)
+
+@isset($followUpLog)
+    <div class="hs-pdf-log">
+        <div class="hs-pdf-log-title">Follow-Up Log</div>
+        <div class="hs-pdf-log-status">{{ $followUpLog['status'] }}</div>
+        @foreach ($followUpLog['steps'] as $step)
+            <div class="hs-pdf-log-step">
+                <div class="hs-pdf-log-heading">{{ $step['heading'] }}</div>
+                <div class="hs-pdf-log-meta">{{ $step['when'] }}@if ($step['who']) · {{ $step['who'] }}@endif</div>
+                @if ($step['note'])
+                    <p class="hs-pdf-log-note">{{ $step['note'] }}</p>
+                @endif
+            </div>
+        @endforeach
+    </div>
+@endisset
 </body>
 </html>

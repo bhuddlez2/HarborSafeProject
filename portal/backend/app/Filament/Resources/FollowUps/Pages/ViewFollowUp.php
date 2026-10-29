@@ -18,6 +18,7 @@ use App\Services\FollowUps;
 use App\Support\PhoneNumber;
 use App\Support\Timezones;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
@@ -95,13 +96,35 @@ class ViewFollowUp extends Page
             $this->updateAction(),
             $this->newRequestAction(),
 
-            // The plain form as a PDF: no follow-up or log information.
+            // The plain form as a PDF: no follow-up or log information. The
+            // usual choice, so a full button, first.
             Action::make('download_pdf')
                 ->label('Download PDF')
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->color('gray')
                 ->url(fn (): ?string => $this->pdfUrl())
                 ->openUrlInNewTab()
+                ->visible(fn (): bool => $this->pdfUrl() !== null),
+
+            // The form plus this Log (Burchfield B43), for when Harbor Safe
+            // has to provide it: in a menu on the small arrow right beside
+            // Download PDF, so the form-only PDF stays the one-click choice
+            // and the log version a deliberate second step.
+            // FollowUpPdfController.
+            ActionGroup::make([
+                Action::make('download_pdf_with_log')
+                    ->label('Download PDF with log')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->url(fn (): string => route('staff.follow-ups.pdf-with-log', $this->followUp()->getKey()))
+                    ->openUrlInNewTab(),
+            ])
+                ->label('More download options')
+                ->hiddenLabel()
+                ->icon(Heroicon::ChevronDown)
+                ->button()
+                ->color('gray')
+                ->dropdownPlacement('bottom-end')
+                ->extraAttributes(['class' => 'hs-download-more'])
                 ->visible(fn (): bool => $this->pdfUrl() !== null),
         ];
     }
@@ -111,6 +134,9 @@ class ViewFollowUp extends Page
         return Action::make('update')
             ->label('Update Follow-Up')
             ->icon(Heroicon::OutlinedPencilSquare)
+            // Its own row on a phone, so Download PDF and its arrow stay
+            // together on the next (theme.css, "Follow-up page header").
+            ->extraAttributes(['class' => 'hs-fu-update'])
             ->modalHeading('Update Follow-Up')
             ->modalDescription(fn (): string => $this->currentStatusLine())
             ->schema([

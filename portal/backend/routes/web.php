@@ -5,6 +5,7 @@ use App\Http\Controllers\AssessmentPdfController;
 use App\Http\Controllers\CivilianAssessmentPdfController;
 use App\Http\Controllers\ContentFileController;
 use App\Http\Controllers\FeedbackScanController;
+use App\Http\Controllers\FollowUpPdfController;
 use App\Http\Controllers\KeepSessionAliveController;
 use App\Http\Controllers\ResourceRequestPdfController;
 use App\Http\Controllers\SubmissionPdfController;
@@ -47,6 +48,11 @@ Route::middleware([
     // Every download recorded (assessment_access_log).
     Route::get('/submissions/resource-requests/{id}/pdf', ResourceRequestPdfController::class)
         ->name('staff.resource-requests.pdf');
+
+    // A form plus its follow-up Log, from the follow-up page only: those who
+    // work that form (FollowUp::visibleTo()). Every download recorded.
+    Route::get('/follow-ups/{id}/pdf', FollowUpPdfController::class)
+        ->name('staff.follow-ups.pdf-with-log');
 
     // Scans of paper feedback forms: admins and secretaries only, never
     // cached - see FeedbackScanController for why not /files/{file}.

@@ -148,6 +148,11 @@ dataset('assessment paths', [
         ->mountAction(TestAction::make('log')->table($w->civilianFollowUp))
         ->assertActionMounted(TestAction::make('log')->table($w->civilianFollowUp))],
     'Civilian PDF' => ['admin', LogAction::Download, 'civilian', null, fn (object $w) => test()->get(route('staff.civilian-assessments.pdf', $w->civilian->DocumentID))->assertOk()],
+
+    // The follow-up page's "Download PDF with log" (Burchfield B43): its own
+    // kind of row, which a police admin sees as a plain download.
+    'Follow-up PDF with log (officer assessment)' => ['admin', LogAction::DownloadWithLog, 'officer', null, fn (object $w) => test()->get(route('staff.follow-ups.pdf-with-log', $w->officerFollowUp->getKey()))->assertOk()],
+    'Follow-up PDF with log (civilian assessment)' => ['admin', LogAction::DownloadWithLog, 'civilian', null, fn (object $w) => test()->get(route('staff.follow-ups.pdf-with-log', $w->civilianFollowUp->getKey()))->assertOk()],
 ]);
 
 test('every view, PDF download and edit of an assessment is recorded once and listed on Logs', function (string $who, LogAction $action, string $kind, ?Closure $setUp, Closure $act) {
@@ -204,11 +209,15 @@ test('every view, PDF download and edit of an assessment is recorded once and li
     foreach ($viewers as $viewer) {
         $this->actingAs($viewer);
 
+        // What this viewer is shown: a police admin sees a download with the
+        // follow-up log as a plain download, and finds it under that choice.
+        $shown = $action->shownTo($viewer);
+
         Livewire::test(ListLogs::class)
-            ->set('show', $action->value)
+            ->set('show', $shown->value)
             ->searchTable($actor->last_name)
             ->assertCanSeeTableRecords([$row])
-            ->assertTableColumnFormattedStateSet('Action', $action->label(), $row)
+            ->assertTableColumnFormattedStateSet('Action', $shown->label(), $row)
             ->assertTableColumnStateSet('record', $label, $row);
     }
 })->with('assessment paths');

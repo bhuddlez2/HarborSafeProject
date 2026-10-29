@@ -6,6 +6,7 @@ use App\Enums\LogAction;
 use App\Filament\Concerns\BreadcrumbNamesThePage;
 use App\Filament\Concerns\CapsTableSearch;
 use App\Filament\Resources\Logs\LogResource;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\EmbeddedTable;
@@ -40,11 +41,13 @@ class ListLogs extends ListRecords
 
     // The dropdown's options, in one place: All, then one per LogAction,
     // labelled by the enum. A new action is a new enum case.
+    // A police admin gets no separate "with log" choice: they see those
+    // downloads as plain ones (LogAction::shownCases()).
     public static function showOptions(): array
     {
         return [
             self::SHOW_ALL => 'All',
-            ...collect(LogAction::cases())
+            ...collect(LogAction::shownCases(Filament::auth()->user()))
                 ->mapWithKeys(fn (LogAction $action): array => [$action->value => $action->label()])
                 ->all(),
         ];
@@ -84,8 +87,15 @@ class ListLogs extends ListRecords
     // An unknown or tampered value means All: it can only ever narrow.
     private function applyShow(Builder $query): Builder
     {
+        $viewer = Filament::auth()->user();
         $action = LogAction::tryFrom((string) $this->show);
 
-        return $action === null ? $query : $query->where($query->qualifyColumn('Action'), $action->value);
+        // A choice the viewer isn't offered (a police admin's "with log")
+        // counts as tampered too, so it can't single those downloads out.
+        if ($action === null || ! in_array($action, LogAction::shownCases($viewer), true)) {
+            return $query;
+        }
+
+        return $query->whereIn($query->qualifyColumn('Action'), $action->matchedValues($viewer));
     }
 }

@@ -225,6 +225,20 @@ test('the Show dropdown picks All, Viewed, Downloaded PDF or Edited, and applies
 });
 
 test('the Show options come from LogAction, after All, with the access log\'s own labels', function () {
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    expect(ListLogs::showOptions())->toBe([
+        'all' => 'All',
+        'view' => 'Viewed',
+        'download' => 'Downloaded PDF',
+        'download_with_log' => 'Downloaded PDF with log',
+        'edit' => 'Edited',
+    ]);
+
+    // A police admin sees a download with the follow-up log as a plain
+    // download, so gets no choice for it (Burchfield B43).
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Show PD')));
+
     expect(ListLogs::showOptions())->toBe([
         'all' => 'All',
         'view' => 'Viewed',
