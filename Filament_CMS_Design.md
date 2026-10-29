@@ -1053,7 +1053,11 @@ that reason; both still show in an edit's View pop-up.
 **Actions:** an edit row has **View**, the same one-edit card each record's Change log
 pop-up uses (`ChangeHistory::entry()`), and opening it logs a view of the assessment
 (`AssessmentViews::log()`, before the pop-up is sent, so a failed write stops it opening).
-It has no Download PDF. Access rows have no actions. No create, edit, delete or bulk
+It has no Download PDF. **Every row's Record cell is clickable** (Finishing Touches item
+35, 2026-10-29), with no new button: it opens the assessment's own View pop-up on the Logs
+page, with Download PDF, looked up again through `LawEnforcementAssessment::visibleTo()` /
+`PrivateAssessment::visibleTo()` and logged as a plain view before it is sent; it isn't
+clickable when the form is gone (`LogResource::openAssessmentAction()`). No create, edit, delete or bulk
 actions (`LogResource::allowedActions()` / `allowsRecord()`). Opening the page is not
 itself logged.
 

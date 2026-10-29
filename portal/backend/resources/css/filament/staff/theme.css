@@ -1276,6 +1276,12 @@
     }
 }
 
+/* Logs' Record cell opens the assessment (LogResource): its purple kind
+   underlines on hover and keyboard focus, like a link. */
+button.fi-ta-col:is(:hover, :focus-visible) .hs-record-link .fi-ta-text-item {
+    text-decoration: underline;
+}
+
 /* Row buttons on tables using TableAlignment::buttons() (the assessment
    tables): icon beside label, every button the same height, side by side
    and centred in the row. The pill rule further down makes them
