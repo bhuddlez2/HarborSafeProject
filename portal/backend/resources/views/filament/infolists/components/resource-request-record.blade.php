@@ -1,4 +1,5 @@
 @php
+    use App\Support\PhoneNumber;
     use App\Support\Timezones;
 
     $record    = $getRecord();
@@ -16,6 +17,11 @@
     // that isn't a valid address (checked when submitted; this is a backstop).
     $email     = $record->EmailAddress;
     $emailLink = ! $isPdf && filled($email) && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+
+    // The safe phone the same way (Burchfield B57): on screen a call link to
+    // the ten digits, plain in the PDF and for anything not a valid number.
+    $phone     = $record->SafePhoneNumber;
+    $phoneTel  = $isPdf ? null : PhoneNumber::digits($phone);
 @endphp
 
 <div class="hs-assessment-record">
@@ -55,7 +61,13 @@
             </div>
             <div class="hs-ar-field">
                 <dt>Safe phone</dt>
-                <dd>{{ $record->SafePhoneNumber ?: '—' }}</dd>
+                <dd>
+                    @if ($phoneTel !== null)
+                        <a href="tel:+1{{ $phoneTel }}" class="hs-ar-link">{{ $phone }}</a>
+                    @else
+                        {{ $phone ?: '—' }}
+                    @endif
+                </dd>
             </div>
         </dl>
         {{-- "Safe" is the operative word - see ResourceRequestResource. --}}
