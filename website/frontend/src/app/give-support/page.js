@@ -43,7 +43,7 @@ export default function GiveSupport() {
             strong message to every individual that no one should face domestic abuse or sexual assault alone and
             that they are loved. From the colors we use to the furniture we choose, every aspect conveys that they
             are safe and matter. Due to space constraints at our location, we can only accept items on the list
-            below, monetary gifts or gift cards. Please <Link replace href="/contact" className="text-brand font-semibold hover:underline">contact us</Link> to ask about other donations. Thank you for
+            below, monetary gifts or gift cards. Please <Link href="/contact" className="text-brand font-semibold hover:underline">contact us</Link> to ask about other donations. Thank you for
             thinking of us.
           </p>
         </div>

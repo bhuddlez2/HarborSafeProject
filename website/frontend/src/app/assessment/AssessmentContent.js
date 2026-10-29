@@ -22,7 +22,7 @@ storage, autofill is turned off on every field so a shared device doesn't rememb
 names typed here, and the state is cleared as soon as the submission is accepted.
 */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Modal from "../components/Modal";
 import { OPTIONAL_PLACEHOLDER, RequiredNote } from "../components/FormControls";
 import { lethalityQuestions, questionText } from "../lib/lethality-questions";
@@ -144,7 +144,11 @@ const RELATIONSHIP_LOAD_ERROR = "We couldn't load this list. Please try again.";
 const PHONE_ERROR = "Enter a 10-digit phone number, starting with the area code.";
 
 export default function AssessmentContent() {
-  const [showSafetyModal, setShowSafetyModal] = useState(true);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+  useEffect(() => {
+    startTransition(() => setShowSafetyModal(true));
+  }, []);
 
   // phase: "prescreen", "info", "victim", "offender", "intro", "questions", "complete", "submitted"
   const [phase, setPhase] = useState("prescreen");

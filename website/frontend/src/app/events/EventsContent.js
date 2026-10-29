@@ -142,7 +142,7 @@ function EventCard({ event, onOpen }) {
         )}
       </div>
 
-      <div className="flex-1 p-6 md:p-8 flex flex-col gap-4">
+      <div className="flex-1 min-w-0 wrap-anywhere p-6 md:p-8 flex flex-col gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <CategoryBadge category={event.category} />
           {event.isCancelled && (
@@ -212,7 +212,7 @@ function EventModal({ event, onClose }) {
     <Modal title={event.title} subtitle={event.category} onClose={onClose}>
       {event.image && <EventImage image={event.image} />}
 
-      <div className="p-6 flex flex-col gap-5">
+      <div className="p-6 flex flex-col gap-5 wrap-anywhere">
 
         {event.isCancelled && (
           <p className="text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
@@ -226,10 +226,17 @@ function EventModal({ event, onClose }) {
             <dt className="text-brand shrink-0 mt-0.5" aria-hidden="true">{ICONS.clock}</dt>
             <dd className="text-gray-700">
               <span className="block font-semibold text-gray-900">{formatEventDate(event.startsAt)}</span>
-              <span>{formatEventTimeRange(event)} Eastern</span>
-              {event.recurrence && <span className="block text-gray-500 mt-1">{event.recurrence}</span>}
+              <span>{event.allDay ? formatEventTimeRange(event) : `${formatEventTimeRange(event)} Eastern`}</span>
             </dd>
           </div>
+
+          {/* recurrence on its own row with the repeat icon, matching the card */}
+          {event.recurrence && (
+            <div className="flex items-start gap-3">
+              <dt className="text-brand shrink-0 mt-0.5" aria-hidden="true">{ICONS.repeat}</dt>
+              <dd className="text-gray-700">{event.recurrence}</dd>
+            </div>
+          )}
 
           {event.location && (
             <div className="flex items-start gap-3">
@@ -393,7 +400,7 @@ function NewsletterList({ newsletters }) {
         return (
           <li key={issue.id} className="border border-gray-200 rounded-xl p-5 hover:border-brand transition-all">
             <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex-1 min-w-[16rem]">
+              <div className="flex-1 min-w-[16rem] wrap-anywhere">
                 <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-1">
                   {formatIssueDate(issue.issueDate)}
                 </p>

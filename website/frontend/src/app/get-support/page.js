@@ -17,7 +17,7 @@ export const metadata = {
 function RequestLink({ needs }) {
   const query = new URLSearchParams(needs.map((need) => ["need", need]));
   return (
-    <Link replace href={`/contact/?${query}`} className="mt-auto pt-6 text-sm font-semibold text-brand hover:underline">
+    <Link href={`/contact/?${query}`} className="mt-auto pt-6 text-sm font-semibold text-brand hover:underline">
       Request this service →
     </Link>
   );
@@ -188,7 +188,6 @@ export default function GetSupport() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              replace
               href="/contact"
               className="bg-brand text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
             >
