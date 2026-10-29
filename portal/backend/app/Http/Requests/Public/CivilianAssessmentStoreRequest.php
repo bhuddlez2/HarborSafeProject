@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Public;
 
 use App\Enums\OffenderRelationship;
+use App\Support\DateOfBirth;
 use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -68,7 +69,10 @@ class CivilianAssessmentStoreRequest extends FormRequest
             $answers["RiskIndicator{$n}"] = ['required', 'boolean'];
         }
 
-        $date = ['nullable', 'date_format:Y-m-d', 'after_or_equal:1900-01-01', 'before_or_equal:today'];
+        // Dates of birth are within the last 125 years, App\Support\DateOfBirth -
+        // the same rule the website checks before sending (lib/validators.js
+        // dateOfBirthError). The victim's is required, the offender's optional.
+        $optionalDate = ['nullable', ...DateOfBirth::rules()];
         // A full 10-digit number, area code included - App\Support\PhoneNumber,
         // the same rule the website checks before sending (lib/validators.js
         // isValidPhone).
@@ -84,7 +88,9 @@ class CivilianAssessmentStoreRequest extends FormRequest
             'VictimFirstName'       => ['required', 'string', 'max:50'],
             'VictimLastName'        => ['required', 'string', 'max:50'],
             'VictimSex'             => ['required', Rule::in(self::SEXES)],
-            'VictimDOB'             => $date,
+            // Required, as on the website and in the officer wizard; checked
+            // here too as a backstop.
+            'VictimDOB'             => ['required', ...DateOfBirth::rules()],
             // Required so Harbor Safe can follow up with the victim,
             // anonymous submissions included.
             'VictimSafePhoneNumber' => ['required', ...$phone],
@@ -92,7 +98,7 @@ class CivilianAssessmentStoreRequest extends FormRequest
             'OffenderFirstName'     => ['required', 'string', 'max:50'],
             'OffenderLastName'      => ['required', 'string', 'max:50'],
             'OffenderSex'           => ['required', Rule::in(self::SEXES)],
-            'OffenderDOB'           => $date,
+            'OffenderDOB'           => $optionalDate,
             ...OffenderRelationship::validationRules(),
 
             // Contact details only when the submitter chose to give them; an
@@ -108,8 +114,10 @@ class CivilianAssessmentStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'VictimDOB.before_or_equal'   => "Date of birth can't be in the future.",
-            'OffenderDOB.before_or_equal' => "Date of birth can't be in the future.",
+            'VictimDOB.before_or_equal'   => DateOfBirth::FUTURE_MESSAGE,
+            'OffenderDOB.before_or_equal' => DateOfBirth::FUTURE_MESSAGE,
+            'VictimDOB.after_or_equal'    => DateOfBirth::TOO_OLD_MESSAGE,
+            'OffenderDOB.after_or_equal'  => DateOfBirth::TOO_OLD_MESSAGE,
         ];
     }
 

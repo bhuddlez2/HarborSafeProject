@@ -2,11 +2,15 @@
 
 namespace App\Filament\Clusters\Content\Resources\EventCategories;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\EventCategories\Pages\ManageEventCategories;
 use App\Models\EventCategory;
 use App\Filament\Tables\TableAlignment;
+use App\Rules\DistinctListName;
+use App\Support\ListNames;
+use Illuminate\Database\Eloquent\Model;
 use BackedEnum;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -23,7 +27,8 @@ use Filament\Tables\Table;
 The lookup behind an event's category badge.
 
 Deleting a category that events point at would violate the foreign key, so the
-delete action is hidden while any event references it. Renaming is always safe
+delete button is greyed out, with the reason on hover, while any event
+references it (B54). Renaming is always safe
 - events hold the id, and the public API serialises Name, so a rename
 propagates to the website on the next request.
 
@@ -32,6 +37,8 @@ the selection was the problem.
 */
 class EventCategoryResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = EventCategory::class;
 
     protected static ?string $cluster = ContentCluster::class;
@@ -57,6 +64,21 @@ class EventCategoryResource extends Resource
         );
     }
 
+    // Add, rename, and delete a category no event uses. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete'];
+    }
+
+    // The FK on events.category_id would refuse this anyway; the button stays,
+    // greyed out with this on hover (B54).
+    protected static function recordRefusal(string $action, Model $record): ?string
+    {
+        return $action === 'delete' && $record instanceof EventCategory && $record->events()->exists()
+            ? 'Can\'t delete: existing events use this category.'
+            : null;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -65,6 +87,9 @@ class EventCategoryResource extends Resource
                     ->label('Category name')
                     ->required()
                     ->maxLength(250)
+                    // No duplicates or sound-alikes on the list (B55/B60).
+                    ->rule(fn (?Model $record): DistinctListName => new DistinctListName(EventCategory::class, 'Name', $record))
+                    ->dehydrateStateUsing(fn (?string $state): ?string => ListNames::tidy($state))
                     ->columnSpanFull(),
             ]);
     }
@@ -87,15 +112,13 @@ class EventCategoryResource extends Resource
             ->defaultSort('Name')
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
-                    // The FK on events.category_id would reject this anyway;
-                    // hiding it gives a clearer answer than a database error.
-                    ->visible(fn (EventCategory $record): bool => ! $record->events()->exists()),
+                // Greyed out with the reason on hover while events use it (B54).
+                DeleteAction::make()->authorizationTooltip(),
             ])
             ->emptyStateHeading('No categories yet')
             ->emptyStateDescription('Categories are optional. An event without one simply shows no badge.')
             ->emptyStateActions([
-                CreateAction::make()->label('Add a category'),
+                CreateAction::make()->label('Add a Category'),
             ]);
     }
 

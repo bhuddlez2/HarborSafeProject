@@ -53,9 +53,9 @@ class AssessmentReviewResource extends Resource
 
     protected static ?string $slug = 'assessment-review';
 
-    protected static ?string $title = 'Assessment review';
+    protected static ?string $title = 'Assessment Review';
 
-    protected static ?string $navigationLabel = 'Assessment review';
+    protected static ?string $navigationLabel = 'Assessment Review';
 
     protected static ?string $modelLabel = 'assessment';
 
@@ -115,17 +115,17 @@ class AssessmentReviewResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return AssessmentFilters::apply($table
-            // Shared with the other assessment table - see AssessmentColumns.
+        return AssessmentFilters::apply(AssessmentColumns::cards($table)
+            // Shared with the other assessment tables - see AssessmentColumns.
             ->columns(AssessmentColumns::for(reviewScreen: true))
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
-            ->stackedOnMobile()
             // See the class comment: Edit for police admins only; no delete
             // or bulk actions anywhere on this resource.
             ->recordActions([
-                ChangeHistory::action(),
+                // Views, downloads and edits together (team plan task 22).
+                ChangeHistory::action(withAccess: true),
                 // Shared with My Assessments; logs each open.
                 AssessmentViews::viewAction(),
                 // Shared with My Assessments; shown only where the policy

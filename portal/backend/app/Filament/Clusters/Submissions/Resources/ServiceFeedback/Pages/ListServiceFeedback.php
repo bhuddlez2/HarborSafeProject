@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages;
 
+use App\Filament\Concerns\CapsTableSearch;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackResource;
 use App\Filament\Concerns\BreadcrumbNamesThePage;
 use App\Models\ServiceFeedback;
@@ -39,6 +40,7 @@ come only from the website.
 */
 class ListServiceFeedback extends ListRecords
 {
+    use CapsTableSearch;
     use BreadcrumbNamesThePage;
 
     protected static string $resource = ServiceFeedbackResource::class;
@@ -70,9 +72,9 @@ class ListServiceFeedback extends ListRecords
                 ->button(),
 
             CreateAction::make()
-                ->label('New feedback form')
+                ->label('New Feedback Form')
                 ->icon('heroicon-o-document-plus')
-                ->modalHeading('New feedback form')
+                ->modalHeading('New Feedback Form')
                 ->modalSubmitActionLabel('Save form')
                 ->createAnother(false)
                 ->using(fn (array $data): ServiceFeedback => ServiceFeedback::recordStaffEntry($data, Filament::auth()->user()))

@@ -35,7 +35,7 @@ class ContentCluster extends Cluster
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedNewspaper;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content management';
+    protected static string | UnitEnum | null $navigationGroup = 'Content Management';
 
     protected static ?int $navigationSort = 1;
 

@@ -15,7 +15,7 @@ class CivilianAssessmentAnalytics extends AnalyticsPage
 {
     protected static ?string $slug = 'civilian-assessments';
 
-    protected static ?string $title = 'Civilian assessments';
+    protected static ?string $title = 'Civilian Assessments';
 
     protected static ?int $navigationSort = 2;
 

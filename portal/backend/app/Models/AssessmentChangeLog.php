@@ -3,11 +3,17 @@
 namespace App\Models;
 
 use App\Models\Concerns\AppendOnly;
+use App\Models\Concerns\EncryptsSensitiveFields;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class AssessmentChangeLog extends BaseModel
 {
-    use AppendOnly, HasUuids;
+    use AppendOnly, EncryptsSensitiveFields, HasUuids;
+
+    // The old and new values of an edited detail are copies of the
+    // assessment's own encrypted columns, so they are encrypted too
+    // (App\Support\SensitiveData) - plain copies would undo it.
+    public const ENCRYPTED = ['PreviousValue', 'NewValue'];
 
     protected $connection = 'Portal';
 

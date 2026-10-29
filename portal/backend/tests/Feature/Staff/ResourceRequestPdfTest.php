@@ -81,7 +81,7 @@ test('nobody else can download one, and a refusal records nothing', function (Cl
 test('the PDF is the plain form: nothing from its follow-up, nothing about staff', function () {
     $admin = staffUser(UserRole::Admin);
     $from = pestFollowUp(FollowUpKind::ResourceRequest);
-    app(FollowUps::class)->update($from, FollowUpStatus::Reached, 'A note that must stay out of the PDF.', $admin);
+    app(FollowUps::class)->update($from, FollowUpStatus::Closed, 'A note that must stay out of the PDF.', $admin);
     $started = app(FollowUps::class)->startResourceRequest($from->refresh(), [
         'FirstName' => publicFormsRunToken(),
         'LastName' => 'Requester',
@@ -101,7 +101,7 @@ test('the PDF is the plain form: nothing from its follow-up, nothing about staff
         ->not->toContain('Entered by')
         ->not->toContain('entered by')
         ->not->toContain($admin->name)
-        ->not->toContain('Needs follow-up')
+        ->not->toContain('Needs Follow-Up')
         ->not->toContain('Log');
 });
 

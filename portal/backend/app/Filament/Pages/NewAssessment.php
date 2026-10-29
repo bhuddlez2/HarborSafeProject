@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Assessments\AssessmentInputs;
 use App\Filament\Assessments\RelationshipFields;
 use App\Filament\PoliceAdminNavigation;
 use App\Filament\Forms\RequirementMarkers;
@@ -12,11 +13,10 @@ use App\Enums\FollowUpKind;
 use App\Enums\NewSubmission;
 use App\Services\FollowUps;
 use App\Services\SubmissionAlerts;
-use App\Support\PhoneNumber;
+use App\Support\AssessmentDraft;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -25,17 +25,17 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
+use Filament\Support\Exceptions\Halt;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Throwable;
 use UnitEnum;
 
@@ -54,7 +54,7 @@ class NewAssessment extends Page
         2 => 'Have they threatened to kill you or your children?',
         3 => 'Have they ever tried to choke (strangle) you?',
         4 => 'Do they have a gun or can they get one easily?',
-        5 => 'Do they have an active order or protection against them?',
+        5 => 'Do they have an active order of protection against them?',
         6 => 'Are they a sex offender?',
         7 => 'Do you have injuries from previous incidents?',
         8 => 'Are they a serial abuser?',
@@ -63,11 +63,48 @@ class NewAssessment extends Page
         11 => 'Are there children involved who are at risk?',
     ];
 
+    /*
+    The question as the officer reads it aloud: the offender's first name in
+    place of "they", and "you" kept, since the victim is the one listening.
+    Written out per question, word for word the website's wording for a report
+    for oneself (personalTemplates in lethality-questions.js); change both
+    together. A blank first name, or one of only spaces, gives the generic
+    text. Display only: answers are stored by number, and the View pop-up,
+    record views and PDFs keep QUESTIONS. Plain text, printed escaped.
+    */
+    public static function questionText(int $id, ?string $offenderFirstName = null): string
+    {
+        $offender = Str::trim((string) $offenderFirstName);
+
+        if ($offender === '') {
+            return self::QUESTIONS[$id];
+        }
+
+        return match ($id) {
+            1 => "Has {$offender} ever used a weapon against you or threatened you with a weapon?",
+            2 => "Has {$offender} threatened to kill you or your children?",
+            3 => "Has {$offender} ever tried to choke (strangle) you?",
+            4 => "Does {$offender} have a gun or can {$offender} get one easily?",
+            5 => "Is there an active order of protection against {$offender}?",
+            6 => "Is {$offender} a sex offender?",
+            8 => "Is {$offender} a serial abuser?",
+            9 => "Is {$offender} affiliated with gangs or criminal organizations?",
+            10 => "Does {$offender} have any involvement in human trafficking?",
+            // 7 and 11 name no offender.
+            default => self::QUESTIONS[$id],
+        };
+    }
+
     // Wizard step order; the questions step's index is what the view and the
-    // theme key off (see resources/css/filament/staff/theme.css).
+    // theme key off (see resources/css/filament/staff/theme.css). The review's
+    // Edit and Change buttons jump to the victim, offender and questions steps.
+    private const VICTIM_STEP_INDEX = 1;
+
+    private const OFFENDER_STEP_INDEX = 2;
+
     private const QUESTIONS_STEP_INDEX = 4;
 
-    private const NAME_PATTERN = "/^[a-zA-Z\s'-]+$/";
+    private const REVIEW_STEP_INDEX = 5;
 
     // Tailwind classes lifted from the original buttons.
     // Narrower side padding on phones so Back and Continue fit side by side
@@ -80,7 +117,7 @@ class NewAssessment extends Page
 
     protected static ?string $slug = 'police/new-assessment';
 
-    protected static ?string $title = 'New assessment';
+    protected static ?string $title = 'New Assessment';
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedDocumentPlus;
 
@@ -93,6 +130,11 @@ class NewAssessment extends Page
     public ?array $data = [];
 
     public int $questionIndex = 0;
+
+    // Set once the last question is answered. From then on every step's
+    // Continue, and every answer, goes straight back to Review & Submit, so a
+    // fix made from the review doesn't mean walking through the whole form.
+    public bool $reviewReached = false;
 
     public bool $submitted = false;
 
@@ -137,10 +179,10 @@ class NewAssessment extends Page
         return $schema
             ->components([
                 Wizard::make([
-                    $this->officerStep(),
-                    $this->victimStep(),
-                    $this->offenderStep(),
-                    $this->introStep(),
+                    $this->backToReview($this->officerStep()),
+                    $this->backToReview($this->victimStep()),
+                    $this->backToReview($this->offenderStep()),
+                    $this->backToReview($this->introStep()),
                     $this->questionsStep(),
                     $this->reviewStep(),
                 ])
@@ -163,14 +205,47 @@ class NewAssessment extends Page
                         ->label('Continue')
                         ->extraAttributes([
                             'class' => self::PRIMARY_BUTTON,
-                            // The intro phase's button read "Begin assessment".
-                            'x-text' => "(\$refs.stepsData ? getStepIndex(step) : 0) === 3 ? 'Begin assessment' : 'Continue'",
+                            // The intro phase's button read "Begin assessment";
+                            // once the review has been reached, every step's
+                            // button goes back to it (backToReview()).
+                            'x-text' => "\$wire.reviewReached ? 'Return to review' : ((\$refs.stepsData ? getStepIndex(step) : 0) === 3 ? 'Begin assessment' : 'Continue')",
                         ]))
                     ->submitAction(new HtmlString(view('filament.pages.new-assessment.submit-button', [
                         'class' => self::PRIMARY_BUTTON,
                     ])->render())),
             ])
             ->statePath('data');
+    }
+
+    /*
+    Once the review has been reached, a step's Continue (or Enter) goes straight
+    back to Review & Submit instead of on to the next step. The step is checked
+    first, exactly as Continue checks it - this runs after its validation - and
+    then, instead of letting the wizard move one step on, it sends the browser
+    the wizard's own "next step" event pointing at the review and stops
+    (Halt), so the usual one-step move never happens.
+    */
+    protected function backToReview(Step $step): Step
+    {
+        return $step->afterValidation(function (Step $component): void {
+            if (! $this->reviewReached) {
+                return;
+            }
+
+            $steps = array_values(array_filter(
+                $component->getContainer()->getComponents(),
+                fn ($child): bool => $child instanceof Step,
+            ));
+
+            $this->dispatch(
+                'next-wizard-step',
+                key: $component->getContainer()->getParentComponent()->getKey(),
+                step: $steps[self::REVIEW_STEP_INDEX]->getKey(),
+                currentStep: $component->getKey(),
+            );
+
+            throw new Halt;
+        });
     }
 
     protected function officerStep(): Step
@@ -192,24 +267,12 @@ class NewAssessment extends Page
                     $this->nameInput('VictimLastName', 'Last name'),
                 ]),
                 Flex::make([
-                    $this->dateOfBirthInput('VictimDOB', 'Date of birth')
-                        ->required(),
+                    $this->dateOfBirthInput('VictimDOB', 'Date of birth', required: true),
                     $this->sexSelect('VictimSex'),
                 ]),
                 // Required so the organisation can follow up with the victim.
-                // A full 10-digit number, shown as (xxx)xxx-xxxx while typing.
-                TextInput::make('VictimSafePhoneNumber')
-                    ->label('Safe phone number')
-                    ->tel()
-                    ->mask(PhoneNumber::MASK)
-                    ->required()
-                    ->maxLength(20)
-                    ->rule(PhoneNumber::rule())
-                    // A confirmation given for one number never carries over
-                    // to another (see reviewStep()).
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(fn (Set $set) => $set('SafePhoneConfirmed', false))
-                    ->validationMessages(['required' => 'Required']),
+                // Confirmed as safe on the review (reviewStep()).
+                AssessmentInputs::safePhone('Safe phone number'),
             ]);
     }
 
@@ -223,7 +286,7 @@ class NewAssessment extends Page
                     $this->nameInput('OffenderLastName', 'Last name'),
                 ]),
                 Flex::make([
-                    $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth')),
+                    $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth'), required: false),
                     $this->sexSelect('OffenderSex'),
                 ]),
                 // The shared dropdown + "Please specify" for Other.
@@ -253,7 +316,7 @@ class NewAssessment extends Page
                 ...$answers,
                 View::make('filament.pages.new-assessment.questions')
                     ->viewData(fn (): array => [
-                        'questions' => self::QUESTIONS,
+                        'questions' => $this->askedQuestions(),
                         'index' => $this->questionIndex,
                     ]),
             ]);
@@ -266,26 +329,31 @@ class NewAssessment extends Page
                 View::make('filament.pages.new-assessment.review')
                     ->viewData(fn (): array => [
                         'data' => $this->data,
-                        'questions' => self::QUESTIONS,
+                        'questions' => $this->askedQuestions(),
                         'submitError' => $this->submitError,
+                        // Where the Edit and Change buttons go.
+                        'victimStep' => self::VICTIM_STEP_INDEX,
+                        'offenderStep' => self::OFFENDER_STEP_INDEX,
+                        'questionsStep' => self::QUESTIONS_STEP_INDEX,
                     ]),
 
-                /*
-                A second check that the safe number really is safe, required
-                by validation in create(), not only by the disabled button.
-                Unticked whenever the number changes. Never stored: it only
-                makes sure the officer knows the number must be safe to call.
-                The civilian assessment uses the same wording.
-                */
-                Checkbox::make('SafePhoneConfirmed')
-                    ->label(fn (Get $get): string => 'I have confirmed that '
-                        .(filled($get('VictimSafePhoneNumber')) ? $get('VictimSafePhoneNumber') : 'the safe phone number')
-                        .' is safe to use to contact the victim.')
-                    ->accepted()
-                    ->live()
-                    ->dehydrated(false)
-                    ->validationMessages(['accepted' => 'Confirm the safe phone number before submitting.']),
+                // Required by validation in create(), not only by the
+                // disabled button. The civilian assessment makes the same
+                // check in its own wording.
+                AssessmentInputs::safePhoneConfirmation(),
             ]);
+    }
+
+    // The 11 questions as this form asks them (questionText()), keyed by
+    // RiskIndicator number like QUESTIONS. Read on every render, so a changed
+    // offender name shows on the next step.
+    protected function askedQuestions(): array
+    {
+        $first = $this->data['OffenderFirstName'] ?? null;
+
+        return collect(self::QUESTIONS)
+            ->mapWithKeys(fn (string $text, int $id): array => [$id => static::questionText($id, is_string($first) ? $first : null)])
+            ->all();
     }
 
     protected function heading(string $text): View
@@ -294,69 +362,54 @@ class NewAssessment extends Page
             ->viewData(['text' => $text]);
     }
 
+    // The field rules are AssessmentInputs', shared with the Edit pop-up;
+    // only the wizard's look is added here.
     protected function nameInput(string $name, string $label): TextInput
     {
-        return TextInput::make($name)
-            ->label($label)
-            ->required()
-            ->maxLength(50)
-            ->regex(self::NAME_PATTERN)
-            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? trim($state) : $state)
-            ->validationMessages([
-                'required' => 'Required',
-                'regex' => 'Cannot contain numbers or symbols',
-            ]);
+        return AssessmentInputs::name($name, $label);
     }
 
-    protected function dateOfBirthInput(string $name, string | Htmlable $label): DatePicker
+    protected function dateOfBirthInput(string $name, string | Htmlable $label, bool $required): DatePicker
     {
-        return DatePicker::make($name)
-            ->label($label)
-            ->native()
-            ->maxDate(now())
-            ->grow(false)
-            ->validationMessages([
-                'required' => 'Required',
-                'date' => 'Enter a valid date',
-                'before_or_equal' => 'Date cannot be in the future',
-            ]);
+        return AssessmentInputs::dateOfBirth($name, $label, $required)
+            ->grow(false);
     }
 
     protected function sexSelect(string $name): Select
     {
-        return Select::make($name)
-            ->label('Sex')
-            ->native()
+        return AssessmentInputs::sex($name)
             ->placeholder('Select')
             ->selectablePlaceholder()
-            ->options([
-                'M' => 'Male',
-                'F' => 'Female',
-                'O' => 'Other',
-            ])
-            ->required()
             ->grow(false)
-            ->extraAttributes(['class' => 'hs-lap-sex'])
-            ->validationMessages([
-                'required' => 'Select an option',
-                'in' => 'Select an option',
-            ]);
+            ->extraAttributes(['class' => 'hs-lap-sex']);
     }
 
     // Records the current question's answer and moves on. Returns true once
-    // the last question is answered, so the view can advance the wizard.
+    // the last question is answered - or any question once the review has been
+    // reached, since that answer was changed from it - so the view advances the
+    // wizard to Review & Submit.
     public function answerQuestion(bool $answer): bool
     {
         $ids = array_keys(self::QUESTIONS);
         $this->data['RiskIndicator'.$ids[$this->questionIndex]] = $answer;
 
-        if ($this->questionIndex < count($ids) - 1) {
+        if (! $this->reviewReached && $this->questionIndex < count($ids) - 1) {
             $this->questionIndex++;
 
             return false;
         }
 
+        $this->reviewReached = true;
+
         return true;
+    }
+
+    // A Change button on the review: show that one question again.
+    public function editAnswer(int $index): void
+    {
+        if ($index >= 0 && $index < count(self::QUESTIONS)) {
+            $this->questionIndex = $index;
+        }
     }
 
     public function previousQuestion(): void
@@ -364,6 +417,45 @@ class NewAssessment extends Page
         if ($this->questionIndex > 0) {
             $this->questionIndex--;
         }
+    }
+
+    /*
+    Resume: puts a form saved in this browser tab back into the wizard (see
+    App\Support\AssessmentDraft) and returns the step to reopen on, or null
+    when there is nothing to restore. Only the wizard's own fields come back;
+    the safe-phone confirmation is asked for again, and Submit validates
+    everything as usual, so a tampered draft can't skip a rule.
+    */
+    public function restoreDraft(mixed $draft): ?int
+    {
+        abort_unless(static::canAccess(), 403);
+
+        if ($this->submitted || ! is_array($draft)) {
+            return null;
+        }
+
+        $data = AssessmentDraft::cleanData($draft['data'] ?? null);
+
+        if ($data === []) {
+            return null;
+        }
+
+        $this->form->fill($data);
+        $this->submitError = null;
+
+        $step = max(0, min(self::REVIEW_STEP_INDEX, (int) ($draft['step'] ?? 0)));
+        $allAnswered = AssessmentDraft::allAnswered($data);
+
+        // The review only once every question has an answer.
+        if ($step === self::REVIEW_STEP_INDEX && ! $allAnswered) {
+            $step = self::QUESTIONS_STEP_INDEX;
+        }
+
+        $this->reviewReached = $allAnswered
+            && ((bool) ($draft['reviewReached'] ?? false) || $step === self::REVIEW_STEP_INDEX);
+        $this->questionIndex = max(0, min(count(self::QUESTIONS) - 1, (int) ($draft['questionIndex'] ?? 0)));
+
+        return $step;
     }
 
     public function create(): void
@@ -401,7 +493,7 @@ class NewAssessment extends Page
             });
         } catch (Throwable $exception) {
             report($exception);
-            $this->submitError = 'The assessment could not be saved. Please try again.';
+            $this->submitError = 'The assessment could not be submitted. Nothing was saved. Your answers are still here. Please try again.';
 
             return;
         }
@@ -411,6 +503,9 @@ class NewAssessment extends Page
         // officer or their police admin.
         $followUp = app(FollowUps::class)->open(FollowUpKind::LawEnforcementAssessment, $assessment->DocumentID);
         app(SubmissionAlerts::class)->raise(NewSubmission::LawEnforcementAssessment, $followUp);
+
+        // The form saved in this tab (AssessmentDraft) has done its job.
+        $this->dispatch('hs-assessment-draft-clear');
 
         Notification::make()
             ->title('Assessment submitted')
@@ -424,6 +519,7 @@ class NewAssessment extends Page
     {
         $this->form->fill();
         $this->questionIndex = 0;
+        $this->reviewReached = false;
         $this->submitError = null;
         $this->submitted = false;
     }

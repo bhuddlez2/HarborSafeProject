@@ -15,7 +15,7 @@ class OfficerAssessmentAnalytics extends AnalyticsPage
 {
     protected static ?string $slug = 'officer-assessments';
 
-    protected static ?string $title = 'Law-enforcement assessments';
+    protected static ?string $title = 'Law-Enforcement Assessments';
 
     protected static ?int $navigationSort = 1;
 

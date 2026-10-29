@@ -134,7 +134,10 @@ test('nothing is fetched while printing', function () {
     $router = tempnam(sys_get_temp_dir(), 'pdf-router');
     file_put_contents($router, '<?php file_put_contents(getenv("PDF_HITS"), $_SERVER["REQUEST_URI"]."\n", FILE_APPEND); http_response_code(404);');
 
-    $server = proc_open([PHP_BINARY, '-S', $address, $router], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, null, ['PDF_HITS' => $hits]);
+    // NUL on Windows, /dev/null elsewhere; and the rest of the environment
+    // passed through, which Windows needs to start a process at all.
+    $devNull = PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null';
+    $server = proc_open([PHP_BINARY, '-S', $address, $router], [1 => ['file', $devNull, 'w'], 2 => ['file', $devNull, 'w']], $pipes, null, ['PDF_HITS' => $hits] + getenv());
 
     try {
         $deadline = microtime(true) + 5;

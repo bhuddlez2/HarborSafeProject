@@ -5,10 +5,12 @@ namespace App\Filament\Tables;
 use App\Enums\UserRole;
 use App\Models\LawEnforcementAgent;
 use App\Models\LawEnforcementAssessment;
+use App\Support\EncryptedSearch;
 use App\Support\Timezones;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\FiltersResetActionPosition;
 use Filament\Tables\Filters\Filter;
@@ -18,10 +20,11 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /*
-The one filter setup for every law-enforcement assessment table: My Assessments
+The one filter setup for every assessment table: My Assessments
 (LawEnforcementAssessmentResource) and Assessment review
-(AssessmentReviewResource) both call apply() from their table(), so the two
-cannot drift apart. Any future assessment table must use it too.
+(AssessmentReviewResource) both call apply() from their table(), and Civilian
+assessments (CivilianAssessmentResource) calls civilian(), so the three cannot
+drift apart. Any future assessment table must use it too.
 
 Filters only ever narrow a screen's own query, which each resource already
 scopes with LawEnforcementAssessment::visibleTo(). The dropdown options are
@@ -32,7 +35,9 @@ itself (Filament_CMS_Design.md section 5, rule 5).
 The filters, in card order: date submitted (both tables); submitting officer
 and agency (Assessment review only - agency for admins and super admins only, by users.role);
 victim first and last name; offender first and last name (both tables). Names
-are case-insensitive partial matches with LIKE wildcards taken literally. The
+are case-insensitive partial matches. They are encrypted in the database
+(App\Support\SensitiveData), so the name filters decrypt the rows the user may
+see and match them in PHP (App\Support\EncryptedSearch) rather than in SQL. The
 victim's safe phone number is deliberately not filterable.
 
 Layout: a card above the table, folded away behind a Filters button until
@@ -61,7 +66,27 @@ final class AssessmentFilters
     }
 
     /*
-    The helpers below are shared with ChangeLogFilters, so the change log's
+    Civilian assessments: the same card, with the filters both police tables
+    share (date submitted, victim and offender names; no officer or agency,
+    since the public submits these). $extra are the civilian screen's own
+    filters (its high-risk checkbox), on a row of their own after the names.
+    The resource already scopes the query with PrivateAssessment::visibleTo().
+    */
+    public static function civilian(Table $table, array $extra = []): Table
+    {
+        if ($extra !== []) {
+            $extra[0] = $extra[0]->columnStart(1);
+        }
+
+        return self::layout($table, [
+            self::dateRange('date_submitted', 'DateCreated', 'Submitted'),
+            ...self::nameFilters(),
+            ...$extra,
+        ]);
+    }
+
+    /*
+    The helpers below are shared with ChangeLogFilters, so the Logs page's
     card behaves and reads like the assessment tables' rather than copying them.
     */
 
@@ -69,7 +94,7 @@ final class AssessmentFilters
     // until opened (so the top of the page stays uncluttered), three columns,
     // deferred until Apply, Reset beside it, kept in the session. Applied
     // filters still show as chips above the table while the card is closed.
-    // Shared by Assessment review, My Assessments and the Change log.
+    // Shared by Assessment review, My Assessments, Civilian assessments and Logs.
     public static function layout(Table $table, array $filters): Table
     {
         return $table
@@ -88,9 +113,20 @@ final class AssessmentFilters
     public static function dateRange(string $name, string $column, string $verb): Filter
     {
         return Filter::make($name)
+            // The calendars offer no future day, and "until" nothing before
+            // "from" (nor "from" anything after "until"). Filters only narrow
+            // the list, so nothing is refused on Apply; the calendar simply
+            // can't pick a day outside the range.
             ->schema([
-                DatePicker::make('from')->label($verb.' from'),
-                DatePicker::make('until')->label($verb.' until'),
+                DatePicker::make('from')
+                    ->label($verb.' from')
+                    ->maxDate(fn (Get $get): string => filled($get('until')) ? min($get('until'), Timezones::today()) : Timezones::today())
+                    ->live(),
+                DatePicker::make('until')
+                    ->label($verb.' until')
+                    ->minDate(fn (Get $get): ?string => $get('from'))
+                    ->maxDate(fn (): string => Timezones::today())
+                    ->live(),
             ])
             ->columns(2)
             ->columnSpan(2)
@@ -118,15 +154,14 @@ final class AssessmentFilters
     public static function nameFilters(?string $relationship = null): array
     {
         return [
-            self::textContains('victim_first_name', 'VictimFirstName', 'Victim first name', $relationship)->columnStart(1),
-            self::textContains('victim_last_name', 'VictimLastName', 'Victim last name', $relationship),
-            self::textContains('offender_first_name', 'OffenderFirstName', 'Offender first name', $relationship)->columnStart(1),
-            self::textContains('offender_last_name', 'OffenderLastName', 'Offender last name', $relationship),
+            self::encryptedTextContains('victim_first_name', 'VictimFirstName', 'Victim first name', $relationship)->columnStart(1),
+            self::encryptedTextContains('victim_last_name', 'VictimLastName', 'Victim last name', $relationship),
+            self::encryptedTextContains('offender_first_name', 'OffenderFirstName', 'Offender first name', $relationship)->columnStart(1),
+            self::encryptedTextContains('offender_last_name', 'OffenderLastName', 'Offender last name', $relationship),
         ];
     }
 
-    // Agency filters are for active admins and super admins only, by users.role (hasActiveRole)
-    // - not the Shield / spatie super_admin role.
+    // Agency filters are for active admins and super admins only, by users.role (hasActiveRole).
     public static function showsAgency(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
@@ -156,8 +191,8 @@ final class AssessmentFilters
             ->preload();
     }
 
-    // Active admins and super admins only, by users.role (hasActiveRole) - not the Shield /
-    // spatie super_admin role. Police admins never see it, and a hidden filter
+    // Active admins and super admins only, by users.role (hasActiveRole).
+    // Police admins never see it, and a hidden filter
     // is never applied. Options are the agencies of officers with a visible
     // submission; the same closure also scopes the filter's own whereHas.
     private static function agency(): SelectFilter
@@ -179,9 +214,36 @@ final class AssessmentFilters
             ->visible(fn (): bool => self::showsAgency());
     }
 
-    // Case-insensitive (the columns use a _ci collation) partial match, with
-    // the user's % and _ escaped so they match literally. Blank is off.
-    // Public for ChangeLogFilters' Assessment ID filter.
+    // The name filters: a case-insensitive partial match on an encrypted
+    // column, decrypted in PHP over the rows the user may see - the filtered
+    // model's own visibleTo(), or, with $relationship, the related model's
+    // (Logs matches the assessment a row is about). Blank is off.
+    public static function encryptedTextContains(string $name, string $column, string $label, ?string $relationship = null): Filter
+    {
+        return Filter::make($name)
+            ->schema([TextInput::make('value')->label($label)->maxLength(50)])
+            ->query(function (Builder $query, array $data) use ($column, $relationship): void {
+                $value = trim((string) ($data['value'] ?? ''));
+
+                if ($value === '') {
+                    return;
+                }
+
+                $model = $relationship === null
+                    ? $query->getModel()
+                    : $query->getModel()->{$relationship}()->getRelated();
+
+                EncryptedSearch::constrain($query, EncryptedColumnSearch::visible($model::class), [$column], $value, $relationship);
+            })
+            ->indicateUsing(fn (array $data): array => filled(trim((string) ($data['value'] ?? '')))
+                ? [Indicator::make($label.': '.trim($data['value']))->removeField('value')]
+                : []);
+    }
+
+    // Case-insensitive partial match on a plain column, with the user's %
+    // and _ escaped so they match literally. Blank is off. Never for an
+    // encrypted column (use encryptedTextContains()). Public for
+    // ChangeLogFilters' Assessment ID filter.
     public static function textContains(string $name, string $column, string $label, ?string $relationship = null): Filter
     {
         return Filter::make($name)

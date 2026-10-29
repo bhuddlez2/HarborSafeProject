@@ -17,14 +17,13 @@ use App\Filament\Clusters\Submissions\Resources\ResourceRequests\ResourceRequest
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\ServiceFeedbackResource;
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
 use App\Filament\Pages\NewAssessment;
+use App\Filament\Pages\AgencyAnalytics;
 use App\Filament\Pages\Police;
-use App\Filament\Clusters\Logs\LogsCluster;
-use App\Filament\Clusters\Logs\Resources\AccessLog\AccessLogResource;
 use App\Filament\Resources\Agencies\AgencyResource;
 use App\Filament\Resources\AssessmentReview\AssessmentReviewResource;
 use App\Filament\Resources\CivilianAssessments\CivilianAssessmentResource;
 use App\Filament\Resources\LawEnforcementAssessments\LawEnforcementAssessmentResource;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\AssessmentEditResource;
+use App\Filament\Resources\Logs\LogResource;
 use App\Filament\Resources\FollowUps\FollowUpResource;
 use App\Filament\Resources\StaffAccounts\StaffAccountResource;
 use App\Filament\StaffLanding;
@@ -68,14 +67,15 @@ function allStaffComponents(): array
         'police.new-assessment' => NewAssessment::class,
         'police.my-assessments' => LawEnforcementAssessmentResource::class,
         'follow-ups' => FollowUpResource::class,
-        'logs.cluster' => LogsCluster::class,
-        'logs.access' => AccessLogResource::class,
-        'logs.changes' => AssessmentEditResource::class,
+        'logs' => LogResource::class,
         'analytics.cluster' => AnalyticsCluster::class,
         'analytics.officer-assessments' => OfficerAssessmentAnalytics::class,
         'analytics.civilian-assessments' => CivilianAssessmentAnalytics::class,
         'analytics.feedback' => FeedbackAnalytics::class,
         'analytics.follow-ups' => FollowUpAnalytics::class,
+        // Police admins with an agency only (see the test below), so in no
+        // role's row here: staffUser() gives no agency.
+        'police.analytics' => AgencyAnalytics::class,
     ];
 }
 
@@ -111,9 +111,9 @@ dataset('role matrix', [
             'accounts',
             // Follow-up on every assessment and resource request.
             'follow-ups',
-            // Logs: who viewed or downloaded which form, and every edit to an
-            // officer assessment. Every row; read-only.
-            'logs.cluster', 'logs.access', 'logs.changes',
+            // Logs: every view, PDF download and edit, in one list. Every
+            // row; read-only.
+            'logs',
             // Analytics: every tab, every agency together.
             'analytics.cluster', 'analytics.officer-assessments', 'analytics.civilian-assessments',
             'analytics.feedback', 'analytics.follow-ups',
@@ -135,7 +135,7 @@ dataset('role matrix', [
             'accounts',
             'agencies',
             'follow-ups',
-            'logs.cluster', 'logs.access', 'logs.changes',
+            'logs',
             'analytics.cluster', 'analytics.officer-assessments', 'analytics.civilian-assessments',
             'analytics.feedback', 'analytics.follow-ups',
         ],
@@ -143,8 +143,8 @@ dataset('role matrix', [
     // Reviews its own agency's law-enforcement submissions in Assessment
     // review (rule 5), provisions officers, edits nothing. Not My Assessments,
     // which is officers only. No content access at all. staffUser() gives no
-    // agency, so neither Officers nor Logs is here; with an agency both Logs
-    // tabs open (see the test below).
+    // agency, so neither Officers nor Logs is here; with an agency Logs
+    // opens (see the test below).
     'police_admin' => [
         UserRole::PoliceAdmin,
         [
@@ -182,19 +182,24 @@ test('each role can reach exactly its row of the access matrix', function (UserR
     }
 })->with('role matrix');
 
-// Logs and both its tabs need an agency for a police admin, like Officers:
-// each shows only that agency's rows (AssessmentAccessLog::visibleTo(),
-// AssessmentEdit::visibleTo()).
-test('a police admin reaches Logs and both its tabs only with an agency', function () {
+// Logs needs an agency for a police admin, like Officers: it shows only that
+// agency's rows (LogEntry::visibleTo()).
+test('a police admin reaches Logs only with an agency', function () {
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Access agency')));
-    expect(LogsCluster::canAccess())->toBeTrue()
-        ->and(AccessLogResource::canAccess())->toBeTrue()
-        ->and(AssessmentEditResource::canAccess())->toBeTrue();
+    expect(LogResource::canAccess())->toBeTrue();
 
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null));
-    expect(LogsCluster::canAccess())->toBeFalse()
-        ->and(AccessLogResource::canAccess())->toBeFalse()
-        ->and(AssessmentEditResource::canAccess())->toBeFalse();
+    expect(LogResource::canAccess())->toBeFalse();
+});
+
+// Analytics for a police admin's own agency (#67) needs an agency, like Logs.
+test('a police admin reaches their Analytics only with an agency', function () {
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, pestAgency('Analytics agency')));
+    expect(AgencyAnalytics::canAccess())->toBeTrue()
+        ->and(OfficerAssessmentAnalytics::canAccess())->toBeFalse();
+
+    $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null));
+    expect(AgencyAnalytics::canAccess())->toBeFalse();
 });
 
 test('an inactive account is refused everything, whatever its role', function (UserRole $role) {

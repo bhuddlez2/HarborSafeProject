@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FollowUps\Pages;
 
+use App\Filament\Concerns\CapsTableSearch;
 use App\Enums\FollowUpStatus;
 use App\Filament\Resources\FollowUps\FollowUpResource;
 use Filament\Resources\Pages\ListRecords;
@@ -14,7 +15,16 @@ use Illuminate\Database\Eloquent\Builder;
 // requests only.
 class ListFollowUps extends ListRecords
 {
+    use CapsTableSearch;
+
     protected static string $resource = FollowUpResource::class;
+
+    // The sidebar's words. Filament's default, from the model label, would
+    // read "Follow-ups".
+    public function getTitle(): string
+    {
+        return FollowUpResource::getNavigationLabel();
+    }
 
     public function getTabs(): array
     {

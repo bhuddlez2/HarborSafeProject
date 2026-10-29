@@ -10,6 +10,7 @@ import {
   selectClass,
   describedBy,
   SubmitButton,
+  RequiredNote,
   FormMessage,
   FormSection,
 } from "../components/FormControls";
@@ -139,6 +140,7 @@ function ServiceFeedbackForm({ services }) {
         />
       </Field>
 
+      <RequiredNote className="-mb-3" />
       <SubmitButton status={status}>Send feedback</SubmitButton>
     </form>
   );

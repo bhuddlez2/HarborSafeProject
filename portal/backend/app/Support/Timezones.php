@@ -28,6 +28,14 @@ final class Timezones
 {
     public const DISPLAY = 'America/New_York';
 
+    // Today's date (Y-m-d) in the display time zone - the day the person
+    // entering a date is living in. now()->toDateString() is the UTC day,
+    // which is already tomorrow in the Eastern evening.
+    public static function today(): string
+    {
+        return now(self::DISPLAY)->toDateString();
+    }
+
     // The first instant of $date (Y-m-d) in the display time zone, in UTC.
     public static function dayStartUtc(string $date): \Illuminate\Support\Carbon
     {

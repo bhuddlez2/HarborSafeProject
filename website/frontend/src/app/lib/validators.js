@@ -38,7 +38,38 @@ export function formatPhoneInput(value) {
 // limit would drop digits. formatPhoneInput itself stops at 10 digits.
 export const PHONE_INPUT_MAX_LENGTH = 20;
 
-export function isNotFutureDate(value) {
-  if (!value) return true;
-  return value <= new Date().toISOString().slice(0, 10);
+/*
+Dates of birth: no later than today and no earlier than 125 years ago. The
+same rule as the backend's App\Support\DateOfBirth, which checks it again on
+submit; change both together. "Today" is the Eastern day, as on the server,
+whatever the visitor's own time zone.
+*/
+export const DOB_MAX_AGE_YEARS = 125;
+
+const pad = (n) => String(n).padStart(2, "0");
+
+export function dateOfBirthBounds(now = new Date()) {
+  // en-CA formats as YYYY-MM-DD.
+  const latest = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(now);
+
+  const [year, month, day] = latest.split("-").map(Number);
+  const earliestYear = year - DOB_MAX_AGE_YEARS;
+  // 29 February becomes the 28th in a year without one, as on the server.
+  const daysInMonth = new Date(Date.UTC(earliestYear, month, 0)).getUTCDate();
+  const earliest = `${String(earliestYear).padStart(4, "0")}-${pad(month)}-${pad(Math.min(day, daysInMonth))}`;
+
+  return { earliest, latest };
+}
+
+// The message to show, or null when the date is fine (or empty).
+export function dateOfBirthError(value, now = new Date()) {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "Enter a valid date.";
+
+  const { earliest, latest } = dateOfBirthBounds(now);
+  if (value > latest) return "Date of birth can't be in the future.";
+  if (value < earliest) return `Date of birth can't be more than ${DOB_MAX_AGE_YEARS} years ago.`;
+  return null;
 }

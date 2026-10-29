@@ -2,15 +2,15 @@
 
 namespace App\Filament\Resources\CivilianAssessments;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\AssessmentAccess;
-use App\Enums\OffenderRelationship;
 use App\Enums\UserRole;
-use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Models\AssessmentAccessLog;
 use App\Models\PrivateAssessment;
-use App\Support\Timezones;
-use App\Filament\Tables\TableAlignment;
+use App\Support\HighRisk;
+use App\Filament\Tables\AssessmentColumns;
+use App\Filament\Tables\AssessmentFilters;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -19,7 +19,6 @@ use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -60,13 +59,15 @@ TWO THINGS ABOUT THIS DATA THAT ARE NOT OBVIOUS:
 */
 class CivilianAssessmentResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = PrivateAssessment::class;
 
     protected static ?string $slug = 'civilian-assessments';
 
-    protected static ?string $title = 'Civilian assessments';
+    protected static ?string $title = 'Civilian Assessments';
 
-    protected static ?string $navigationLabel = 'Civilian assessments';
+    protected static ?string $navigationLabel = 'Civilian Assessments';
 
     protected static ?string $modelLabel = 'civilian assessment';
 
@@ -80,6 +81,12 @@ class CivilianAssessmentResource extends Resource
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
+    }
+
+    // View only: a danger assessment is a safety record, never edited or deleted.
+    protected static function allowedActions(): array
+    {
+        return ['view'];
     }
 
     // The same rule as the PDF download (CivilianAssessmentPdfController), so
@@ -103,71 +110,16 @@ class CivilianAssessmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('DateCreated')
-                    ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
-
-                TextColumn::make('VictimLastName')
-                    ->label('Victim')
-                    ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
-                        ($record->VictimFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->searchable(['VictimFirstName', 'VictimLastName']),
-
-                TextColumn::make('OffenderLastName')
-                    ->label('Offender')
-                    ->formatStateUsing(fn (?string $state, PrivateAssessment $record): string => trim(
-                        ($record->OffenderFirstName ?? '').' '.($state ?? ''),
-                    ) ?: '-')
-                    ->searchable(['OffenderFirstName', 'OffenderLastName']),
-
-                // As on the law-enforcement tables (AssessmentColumns).
-                TextColumn::make('OffenderVictimRelationship')
-                    ->label('Relationship')
-                    ->formatStateUsing(fn (?string $state, $record): ?string => OffenderRelationship::display($state, $record->OffenderVictimRelationshipOther))
-                    ->placeholder('-'),
-
-                // VictimSafePhoneNumber is deliberately absent - see the class
-                // comment. It is in the detail view only.
-
-                TableAlignment::symbol(TextColumn::make('risk_count')
-                    ->label('Yes')
-                    ->badge()
-                    ->state(fn (PrivateAssessment $record): string => self::yesCount($record).' of 11')
-                    ->color(fn (PrivateAssessment $record): string => match (true) {
-                        self::yesCount($record) >= 4 => 'danger',
-                        self::yesCount($record) >= 1 => 'warning',
-                        default => 'gray',
-                    })),
-            ])
+        return AssessmentFilters::civilian(AssessmentColumns::cards($table)
+            // The law-enforcement tables' columns, without an officer - see
+            // AssessmentColumns. VictimSafePhoneNumber is deliberately absent
+            // (see the class comment); it is in the detail view only.
+            ->columns(AssessmentColumns::civilian())
             ->defaultSort('DateCreated', 'desc')
             // Without this the Yes-answers column would issue a query per row.
             // submitterInfo is deliberately not eager-loaded: nothing in the
             // table reads it, and the detail view loads one record anyway.
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('assessmentAnswers'))
-            ->filters([
-                Filter::make('high_risk')
-                    ->label('Four or more yes answers')
-                    // Counted in SQL here rather than in PHP, because a filter
-                    // has to narrow the query itself, not the loaded page.
-                    ->query(fn (Builder $query): Builder => $query->whereHas(
-                        'assessmentAnswers',
-                        fn (Builder $inner): Builder => $inner->whereRaw(
-                            '('.implode(' + ', array_map(
-                                fn (int $id): string => "COALESCE(RiskIndicator{$id}, 0)",
-                                array_keys(NewAssessment::QUESTIONS),
-                            )).') >= 4',
-                        ),
-                    )),
-
-                Filter::make('named')
-                    ->label('Submitted with contact details')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('SubmissionID')),
-            ])
             // View only - no edit, no delete, no bulk actions. See the class
             // comment. Opening View and downloading the PDF both show the safe
             // phone number, so both are recorded (AssessmentAccessLog).
@@ -187,7 +139,19 @@ class CivilianAssessmentResource extends Resource
                     ]),
             ])
             ->emptyStateHeading('No civilian assessments yet')
-            ->emptyStateDescription('Assessments submitted through the public civilian flow appear here.');
+            ->emptyStateDescription('Assessments submitted through the public civilian flow appear here.'),
+            // The police tables' filter card (date submitted, victim and
+            // offender names), plus this screen's own high-risk checkbox.
+            [
+                Filter::make('high_risk')
+                    ->label('High risk ('.HighRisk::RULE.')')
+                    // Counted in SQL here rather than in PHP, because a filter
+                    // has to narrow the query itself, not the loaded page.
+                    ->query(fn (Builder $query): Builder => $query->whereHas(
+                        'assessmentAnswers',
+                        fn (Builder $inner): Builder => $inner->whereRaw(HighRisk::sql()),
+                    )),
+            ]);
     }
 
     public static function getPages(): array
@@ -195,18 +159,5 @@ class CivilianAssessmentResource extends Resource
         return [
             'index' => ListCivilianAssessments::route('/'),
         ];
-    }
-
-    private static function yesCount(PrivateAssessment $record): int
-    {
-        $answers = $record->assessmentAnswers;
-
-        if (! $answers) {
-            return 0;
-        }
-
-        return collect(array_keys(NewAssessment::QUESTIONS))
-            ->filter(fn (int $id): bool => (bool) $answers->{"RiskIndicator{$id}"})
-            ->count();
     }
 }

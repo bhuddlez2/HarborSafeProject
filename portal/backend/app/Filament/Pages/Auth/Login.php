@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Auth;
 
+use App\Models\User;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
@@ -42,9 +43,13 @@ class Login extends BaseLogin
             ->components([
                 $this->getEmailFormComponent()
                     ->label('Email')
+                    ->maxLength(User::EMAIL_MAX)
                     ->markAsRequired(false),
                 $this->getPasswordFormComponent()
                     ->label('Password')
+                    // No password longer than this can be set anywhere, so
+                    // nobody is locked out by it.
+                    ->maxLength(User::PASSWORD_MAX)
                     ->markAsRequired(false)
                     ->revealable(false),
             ]);

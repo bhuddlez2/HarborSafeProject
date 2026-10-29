@@ -29,7 +29,7 @@ afterEach(function () {
     cleanupStaffData();
 });
 
-function finishedFollowUp(FollowUpKind $kind, $by, FollowUpStatus $status = FollowUpStatus::Reached): FollowUp
+function finishedFollowUp(FollowUpKind $kind, $by, FollowUpStatus $status = FollowUpStatus::Closed): FollowUp
 {
     $followUp = pestFollowUp($kind);
     app(FollowUps::class)->update($followUp, $status, 'Done for now.', $by);
@@ -130,7 +130,7 @@ test('an admin sees where a request came from, both ways', function () {
         ->get($started->url())
         ->assertOk()
         ->assertSee('Started by staff')
-        ->assertSee('From Civilian assessment', false)
+        ->assertSee('From Civilian Assessment', false)
         ->assertSee($from->url(), false);
 
     // And the assessment's own page lists the request started from it.
@@ -161,11 +161,16 @@ test('only a final form offers a new request, and only to those allowed', functi
 
     $waiting = pestFollowUp(FollowUpKind::ResourceRequest);
     $assessment = finishedFollowUp(FollowUpKind::LawEnforcementAssessment, $admin);
+    // Reached isn't final (it can still move on to Closed).
+    $reached = pestFollowUp(FollowUpKind::ResourceRequest);
+    app(FollowUps::class)->update($reached, FollowUpStatus::Reached, 'Sent the list.', $admin);
 
     $this->actingAs($admin);
     Livewire::test(ViewFollowUp::class, ['record' => $waiting->getKey()])->assertActionHidden('new_request');
+    Livewire::test(ViewFollowUp::class, ['record' => $reached->getKey()])->assertActionHidden('new_request');
 
     expect(FollowUps::canStartResourceRequest($waiting, $admin))->toBeFalse()
+        ->and(FollowUps::canStartResourceRequest($reached->refresh(), $admin))->toBeFalse()
         ->and(FollowUps::canStartResourceRequest($assessment, $admin))->toBeTrue()
         // Secretaries work resource requests only, never assessments.
         ->and(FollowUps::canStartResourceRequest($assessment, $secretary))->toBeFalse()

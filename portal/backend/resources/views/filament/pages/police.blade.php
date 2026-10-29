@@ -1,6 +1,13 @@
 @php
     $minutes = $this->getSessionTimeoutMinutes();
     $firstName = \Filament\Facades\Filament::auth()->user()?->first_name;
+
+    // Every card under Start New Lethality Assessment shares one design
+    // (team plan item 5): light purple with a purple outline.
+    $lightCard = 'flex min-h-55 flex-col justify-start gap-4 rounded-[18px] border-2 border-[#5C0F8B] bg-[#EDE3F5] p-6 text-[#5C0F8B]
+                  transition-colors hover:bg-[#E2D3EF]
+                  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
+                  md:min-h-70 md:p-9';
 @endphp
 
 <x-filament-panels::page class="hs-officer-page">
@@ -24,7 +31,7 @@
         @if ($this->canStartAssessment())
             <a
                 href="{{ \App\Filament\Pages\NewAssessment::getUrl() }}"
-                class="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
+                class="flex min-h-55 flex-col justify-start gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
                        transition-colors hover:bg-[#4C0B74]
                        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
                        md:min-h-70 md:p-9"
@@ -36,7 +43,7 @@
                     Start New Lethality Assessment
                 </span>
                 <span class="text-[17px] text-[#EDE3F5]">
-                    Opens a blank LAP screening form
+                    Open a blank LAP screening form
                 </span>
             </a>
         @endif
@@ -44,68 +51,51 @@
         {{-- Police admins: their two jobs, one card each (team plan task 11). --}}
         @if ($this->isPoliceAdmin())
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <a
-                    href="{{ $this->assessmentReviewUrl() }}"
-                    class="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] bg-[#5C0F8B] p-6 text-white
-                           transition-colors hover:bg-[#4C0B74]
-                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
-                           md:min-h-70 md:p-9"
-                >
-                    <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 p-4">
+                <a href="{{ $this->assessmentReviewUrl() }}" class="{{ $lightCard }}">
+                    <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5C0F8B]/10 p-4">
                         <x-officer-icon name="clipboard" :size="32" />
                     </span>
                     <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
-                        View Assessments
+                        Assessment Review
                     </span>
-                    <span class="text-[17px] text-[#EDE3F5]">
-                        Your agency's submitted LAP screenings and their change logs
+                    <span class="text-[17px] text-[#5A5566]">
+                        {{ ucfirst($this->agencyPossessive()) }} submitted LAP screenings and change logs
                     </span>
                 </a>
 
-                <a
-                    href="{{ $this->officersUrl() }}"
-                    class="flex min-h-55 flex-col justify-end gap-4 rounded-[18px] border-2 border-[#5C0F8B] bg-[#EDE3F5] p-6 text-[#5C0F8B]
-                           transition-colors hover:bg-[#E2D3EF]
-                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5C0F8B]
-                           md:min-h-70 md:p-9"
-                >
+                <a href="{{ $this->officersUrl() }}" class="{{ $lightCard }}">
                     <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5C0F8B]/10 p-4">
                         <x-officer-icon name="users" :size="32" />
                     </span>
                     <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
-                        Personnel Management
+                        Staff Management
                     </span>
                     <span class="text-[17px] text-[#5A5566]">
-                        Add and manage your agency's officer accounts
+                        Add and manage {{ $this->agencyPossessive() }} staff accounts
                     </span>
                 </a>
             </div>
+        @endif
+
+        {{-- Officers: their past records, in the same card as the police admin's My Assessments. --}}
+        @if ($this->isOfficer())
+            <a href="{{ $this->pastAssessmentsUrl() }}" class="{{ $lightCard }}">
+                <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5C0F8B]/10 p-4">
+                    <x-officer-icon name="clipboard" :size="32" />
+                </span>
+                <span class="font-montserrat text-[26px] font-bold leading-tight md:text-[30px]">
+                    My Assessments
+                </span>
+                <span class="text-[17px] text-[#5A5566]">
+                    Your submitted LAP screenings. Each view is logged with your name and a timestamp.
+                </span>
+            </a>
         @endif
 
         {{-- Mobile only -- session notice sits below the card stack where it's easy to read --}}
         <span class="md:hidden">
             @include('filament.partials.session-notice', ['minutes' => $minutes])
         </span>
-
-        {{-- Officers: pointer to past records. Police admins reach theirs through View Assessments. --}}
-        @if ($this->isOfficer())
-            <section class="flex flex-col gap-4 rounded-2xl border border-[#DDD7E6] bg-white px-5.5 py-5.5 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h2 class="text-[17px] font-bold">Looking for a past assessment?</h2>
-                    <p class="text-[15px] text-[#5A5566]">
-                        Records are in My Assessments. Each view is logged with your name and a timestamp.
-                    </p>
-                </div>
-                <a
-                    href="{{ $this->pastAssessmentsUrl() }}"
-                    class="flex h-12 shrink-0 items-center justify-center rounded-[10px] border border-[#C9C1D6] px-5 text-[15px] font-bold
-                           transition-colors hover:bg-[#F4F2F7]
-                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#231A33]"
-                >
-                    Go to My Assessments
-                </a>
-            </section>
-        @endif
 
     </div>
 </x-filament-panels::page>

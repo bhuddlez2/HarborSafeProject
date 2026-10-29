@@ -33,15 +33,14 @@ use UnitEnum;
 // nothing is ever deleted; deactivating keeps the assessment history.
 //
 // Authorization lives here rather than in a UserPolicy, because a future
-// admin "Users" screen needs different rules for the same model. Listed in
-// resources.exclude in config/filament-shield.php for the same reason.
+// admin "Users" screen needs different rules for the same model.
 class OfficerAccountResource extends Resource
 {
     protected static ?string $model = User::class;
 
     protected static ?string $slug = 'police/officers';
 
-    protected static ?string $navigationLabel = 'Officers';
+    protected static ?string $navigationLabel = 'Staff Management';
 
     protected static ?string $modelLabel = 'officer';
 

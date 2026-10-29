@@ -34,7 +34,7 @@ class SubmissionsCluster extends Cluster
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedInbox;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content management';
+    protected static string | UnitEnum | null $navigationGroup = 'Content Management';
 
     protected static ?int $navigationSort = 2;
 

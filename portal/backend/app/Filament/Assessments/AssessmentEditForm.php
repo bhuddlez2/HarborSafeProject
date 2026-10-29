@@ -6,18 +6,15 @@ use App\Filament\Forms\RequirementMarkers;
 use App\Filament\Pages\NewAssessment;
 use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
-use App\Support\AssessmentFields;
 use App\Support\PhoneNumber;
 use App\Support\Timezones;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
@@ -61,22 +58,21 @@ final class AssessmentEditForm
                     ->columnSpanFull()
                     ->columns(2)
                     ->schema([
-                        TextInput::make('VictimFirstName')->label('First name')->required()->maxLength(50),
-                        TextInput::make('VictimLastName')->label('Last name')->required()->maxLength(50),
-                        Select::make('VictimSex')
-                            ->label('Sex')
-                            ->native()
-                            ->options(AssessmentFields::SEX_OPTIONS)
-                            ->required(),
-                        DatePicker::make('VictimDOB')->label('Date of birth')->native(),
-                        TextInput::make('VictimSafePhoneNumber')
-                            ->label('Safe contact number')
-                            ->tel()
-                            ->mask(PhoneNumber::MASK)
-                            ->required()
-                            ->maxLength(20)
-                            ->rule(PhoneNumber::rule())
+                        // Every field's rules are the wizard's (AssessmentInputs),
+                        // so an edit is held to the standard of the original
+                        // submission.
+                        AssessmentInputs::name('VictimFirstName', 'First name'),
+                        AssessmentInputs::name('VictimLastName', 'Last name'),
+                        AssessmentInputs::sex('VictimSex'),
+                        AssessmentInputs::dateOfBirth('VictimDOB', 'Date of birth', required: true),
+                        AssessmentInputs::safePhone('Safe contact number')
                             ->helperText('The number the victim said is safe to call. Other numbers may not be.')
+                            ->columnSpanFull(),
+                        // As in the wizard, a new number must be confirmed as
+                        // safe. Only asked when the number is changed.
+                        AssessmentInputs::safePhoneConfirmation()
+                            ->visible(fn (Get $get, ?LawEnforcementAssessment $record): bool => PhoneNumber::format($get('VictimSafePhoneNumber'))
+                                !== PhoneNumber::format($record?->VictimSafePhoneNumber))
                             ->columnSpanFull(),
                     ]),
 
@@ -85,14 +81,10 @@ final class AssessmentEditForm
                     ->columnSpanFull()
                     ->columns(2)
                     ->schema([
-                        TextInput::make('OffenderFirstName')->label('First name')->required()->maxLength(50),
-                        TextInput::make('OffenderLastName')->label('Last name')->required()->maxLength(50),
-                        Select::make('OffenderSex')
-                            ->label('Sex')
-                            ->native()
-                            ->options(AssessmentFields::SEX_OPTIONS)
-                            ->required(),
-                        DatePicker::make('OffenderDOB')->label(RequirementMarkers::optionalLabel('Date of birth'))->native(),
+                        AssessmentInputs::name('OffenderFirstName', 'First name'),
+                        AssessmentInputs::name('OffenderLastName', 'Last name'),
+                        AssessmentInputs::sex('OffenderSex'),
+                        AssessmentInputs::dateOfBirth('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth'), required: false),
                         // Same dropdown + "Please specify" as the wizard.
                         ...RelationshipFields::make(),
                     ]),
@@ -106,6 +98,8 @@ final class AssessmentEditForm
                             ->map(fn (string $question, int $id): ToggleButtons => ToggleButtons::make("RiskIndicator{$id}")
                                 ->label($id.'. '.$question)
                                 ->boolean('Yes', 'No')
+                                // Every question answered, as in the wizard.
+                                ->required()
                                 ->colors([1 => 'danger', 0 => 'gray'])
                                 ->icons([1 => null, 0 => null])
                                 ->inline()

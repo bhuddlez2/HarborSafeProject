@@ -130,8 +130,9 @@ function cleanupPublicFormData(): void
     // Submissions first - resource_request_resource_types cascades off
     // resource_request_form, so deleting the parent clears the junction rows.
     // Their follow-ups (on Portal, no foreign key) go with them.
-    cleanupFollowUps('ResourceRequestFormID', $feedback->table('resource_request_form')->where('FirstName', publicFormsRunToken())->pluck('FormID'));
-    $feedback->table('resource_request_form')->where('FirstName', publicFormsRunToken())->delete();
+    $requests = encryptedRows(App\Models\ResourceRequestForm::class, 'FirstName', publicFormsRunToken())->pluck('FormID');
+    cleanupFollowUps('ResourceRequestFormID', $requests);
+    $feedback->table('resource_request_form')->whereIn('FormID', $requests)->delete();
 
     if ($registry->services !== []) {
         // Paper entries may carry a scan; the feedback row points at it, so
@@ -266,31 +267,43 @@ function cleanupStaffData(): void
     $portal->table('agencies')->where('name', 'like', $token . '%')->delete();
 }
 
+// Rows of $modelClass whose encrypted $column equals $value (or, with
+// $prefix, starts with it). The database holds only ciphertext
+// (App\Support\SensitiveData), so rows are decrypted and compared here;
+// $scope narrows the query first on plain columns.
+function encryptedRows(string $modelClass, string $column, string $value, bool $prefix = false, ?Closure $scope = null): Illuminate\Support\Collection
+{
+    $query = $modelClass::query();
+
+    if ($scope !== null) {
+        $scope($query);
+    }
+
+    return $query->get()
+        ->filter(function ($model) use ($column, $value, $prefix): bool {
+            $stored = $model->getAttribute($column);
+
+            return $prefix ? str_starts_with((string) $stored, $value) : $stored === $value;
+        })
+        ->values();
+}
+
 // Civilian submissions made by the staff tests (pestCivilianAssessment()),
 // tagged on the victim name. Children first: _private_assessment has foreign
 // keys to its answers and submitter, and the access log points at it.
 function cleanupCivilianAssessments(): void
 {
     cleanupAssessmentAccessLog();
-    cleanupFollowUps('PrivateDocumentID', Illuminate\Support\Facades\DB::connection('Portal')->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->pluck('DocumentID'));
+
+    $rows = encryptedRows(App\Models\PrivateAssessment::class, 'VictimFirstName', STAFF_TEST_PREFIX, prefix: true);
+    cleanupFollowUps('PrivateDocumentID', $rows->pluck('DocumentID'));
 
     $portal = Illuminate\Support\Facades\DB::connection('Portal');
-    $docs = $portal->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->pluck('AssessmentDocID', 'SubmissionID');
-
-    $portal->table('_private_assessment')
-        ->where('VictimFirstName', 'like', STAFF_TEST_PREFIX.'%')
-        ->delete();
-
-    foreach ($docs as $assessmentDocId) {
-        $portal->table('_assessment_answers')->where('AssessmentDocID', $assessmentDocId)->delete();
-    }
+    $portal->table('_private_assessment')->whereIn('DocumentID', $rows->pluck('DocumentID'))->delete();
+    $portal->table('_assessment_answers')->whereIn('AssessmentDocID', $rows->pluck('AssessmentDocID'))->delete();
 
     $portal->table('_submitter_info')
-        ->where('SubmitterFirstName', 'like', STAFF_TEST_PREFIX.'%')
+        ->whereIn('SubmissionID', encryptedRows(App\Models\SubmitterInfo::class, 'SubmitterFirstName', STAFF_TEST_PREFIX, prefix: true)->pluck('SubmissionID'))
         ->delete();
 }
 
@@ -341,7 +354,9 @@ function cleanupAssessmentAccessLog(): void
 
 // Creates one civilian submission, the way the public flow does: answers
 // first, then the identity record pointing at it.
-function pestCivilianAssessment(array $yesIndicators = [1], ?App\Models\SubmitterInfo $submitter = null): App\Models\PrivateAssessment
+// $overrides replace the default fields; keep VictimFirstName starting with
+// STAFF_TEST_PREFIX, which is what cleanupCivilianAssessments() sweeps on.
+function pestCivilianAssessment(array $yesIndicators = [1], ?App\Models\SubmitterInfo $submitter = null, array $overrides = []): App\Models\PrivateAssessment
 {
     $answers = App\Models\AssessmentAnswers::create(collect(range(1, 11))
         ->mapWithKeys(fn (int $id): array => ["RiskIndicator{$id}" => in_array($id, $yesIndicators, true)])
@@ -359,6 +374,7 @@ function pestCivilianAssessment(array $yesIndicators = [1], ?App\Models\Submitte
         'OffenderVictimRelationship' => 'spouse',
         'SubmissionID' => $submitter?->getKey(),
         'AssessmentDocID' => $answers->getKey(),
+        ...$overrides,
     ]);
 }
 
@@ -404,6 +420,8 @@ function pestOfficerAssessment(User $officer, string $victim, array $details = [
         'VictimFirstName' => STAFF_TEST_PREFIX.$victim,
         'VictimLastName' => 'Doe',
         'VictimSex' => 'F',
+        // Required by the wizard, so by the Edit pop-up too.
+        'VictimDOB' => '1990-01-01',
         'VictimSafePhoneNumber' => '423-555-0100',
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
@@ -454,4 +472,80 @@ function pestFilterSelect(Livewire\Features\SupportTesting\Testable $list, strin
 function pestApplyFilter(Livewire\Features\SupportTesting\Testable $list, string $filter, mixed $value): Livewire\Features\SupportTesting\Testable
 {
     return $list->set("tableDeferredFilters.{$filter}.value", $value)->call('applyTableFilters');
+}
+
+/*
+A real PNG of the given size, built by hand because GD isn't installed
+(see CLAUDE.md on fake()->image()). One grey 8-bit channel, every pixel
+black, so even a large image compresses to a few hundred bytes. Used for
+the event image's minimum size (DatabaseFileUpload::MIN_IMAGE_WIDTH).
+*/
+function pestPngOfSize(int $width, int $height): string
+{
+    $chunk = fn (string $type, string $data): string => pack('N', strlen($data)).$type.$data.pack('N', crc32($type.$data));
+
+    // Each row starts with filter byte 0, then one byte per pixel.
+    $pixels = str_repeat("\0".str_repeat("\0", $width), $height);
+
+    return "\x89PNG\r\n\x1a\n"
+        .$chunk('IHDR', pack('NNCCCCC', $width, $height, 8, 0, 0, 0, 0))
+        .$chunk('IDAT', gzcompress($pixels))
+        .$chunk('IEND', '');
+}
+
+// A stored newsletter PDF (a content_files row, swept by cleanupStaffData()),
+// for newsletters made directly rather than through the form. The form
+// requires one, and the website leaves out issues without (Burchfield B53).
+function pestStoredPdf(): App\Models\ContentFile
+{
+    $resource = tmpfile();
+    fwrite($resource, '%PDF-1.4'.str_repeat('a', 2000));
+
+    return App\Models\ContentFile::storeUpload(new Illuminate\Http\Testing\File(staffRunToken().'-issue.pdf', $resource));
+}
+
+/*
+Black-and-white PDFs (#44): shared by PdfBlackAndWhiteTest and
+PoliceAdminAnalyticsTest.
+*/
+
+// The colours the panel uses on screen, none of which may reach a PDF.
+const PDF_SCREEN_COLOURS = [
+    '#5c0f8b', '#9068b8', '#cfb7e2', '#eadcf5', '#a77fc6', '#c3a6da', '#ede3f5', '#f5f0fb', '#c9c1d6',
+    '#ebdff4', '#3b2a4d', '#d8cfe3', '#f3f0f7', '#1b1726',
+    '#6b7280', '#374151', '#4b5563', '#9ca3af', '#e5e7eb', '#f3f4f6', '#f9fafb',
+    '#b91c1c', '#fee2e2', '#fef2f2', '#fff5f5', '#b45309', '#fffbeb', '#15803d', '#f0fdf4',
+    '#f59e0b', '#92400e',
+];
+
+// Fails unless $html uses no colour but black and white.
+function expectBlackAndWhite(string $html): void
+{
+    // Hex colours; "&#039;" and the like are escaped characters, not colours.
+    preg_match_all('/(?<![&\w])#([0-9a-fA-F]{3,8})\b/', $html, $hex);
+
+    $others = collect($hex[1])
+        ->map(fn (string $value): string => strtolower($value))
+        ->reject(fn (string $value): bool => in_array($value, ['000', '000000', 'fff', 'ffffff'], true))
+        ->unique()
+        ->values()
+        ->all();
+
+    expect($others)->toBe([], 'Colours other than black and white: #'.implode(', #', $others));
+
+    expect($html)->not->toMatch('/\b(rgba?|hsla?)\s*\(/i');
+
+    // Named colours in the declarations that carry one: color, background,
+    // and border with its sides (not border-collapse, -spacing or -radius).
+    preg_match_all('/(?<![\w-])(?:color|background(?:-color)?|border(?:-(?:top|right|bottom|left))?(?:-color)?)\s*:\s*([^;}"]+)/i', $html, $declarations);
+
+    foreach ($declarations[1] as $value) {
+        $words = preg_replace('/#[0-9a-fA-F]{3,8}\b|[\d.]+(pt|px|mm|em|%)?|\b(solid|none|transparent|black|white|inherit|dashed|dotted)\b/i', '', $value);
+
+        expect(trim($words))->toBe('', "A colour declaration other than black and white: {$value}");
+    }
+
+    foreach (PDF_SCREEN_COLOURS as $colour) {
+        expect(stripos($html, $colour))->toBeFalse("Screen colour {$colour} in a PDF");
+    }
 }

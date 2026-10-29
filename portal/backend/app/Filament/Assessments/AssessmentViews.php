@@ -11,13 +11,18 @@ use Filament\Facades\Filament;
 
 /*
 Every time a law-enforcement assessment's contents open in the panel, one
-'view' row goes into assessment_access_log (team plan task 9). The pop-ups
-that log through log() below:
+row goes into assessment_access_log (team plan task 9). The form itself is a
+'view', through log() below:
 
   - View, on My Assessments and Assessment review (viewAction(), shared)
-  - Edit, on My Assessments (LawEnforcementAssessmentResource)
-  - the per-row Change log (ChangeHistory::action())
-  - the Change log screen's View (AssessmentEditResource)
+  - Edit, on My Assessments and Assessment review (AssessmentEditForm)
+
+Its history is a 'view_log' ("Viewed Log", 2026-10-28), through logHistory(),
+so checking the log doesn't read as opening the form - though it still
+shows names and each edit's old and new values, so it is still recorded:
+
+  - the per-row Log / Change log (ChangeHistory::action())
+  - an edit row's View on the Logs page (LogResource)
 
 Each calls log() from a hook Filament runs once, when the pop-up mounts:
 after the record is found through the table's scoped query
@@ -53,5 +58,12 @@ final class AssessmentViews
     public static function log(LawEnforcementAssessment $record): void
     {
         AssessmentAccessLog::record($record, AssessmentAccess::View, Filament::auth()->user());
+    }
+
+    // One 'view_log' row: the record's history was opened. Fails closed, as
+    // log() does.
+    public static function logHistory(LawEnforcementAssessment $record): void
+    {
+        AssessmentAccessLog::record($record, AssessmentAccess::ViewLog, Filament::auth()->user());
     }
 }

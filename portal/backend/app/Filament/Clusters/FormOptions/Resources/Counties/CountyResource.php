@@ -38,6 +38,16 @@ class CountyResource extends LookupResource
         return $record->requests()->exists();
     }
 
+    // The built-in "Other" (County): always on the form, so never renamed
+    // or deleted. Its buttons stay, greyed out with this on hover. Any other
+    // county follows the shared in-use rule.
+    protected static function recordRefusal(string $action, Model $record): ?string
+    {
+        return $record instanceof County && $record->isOther() && in_array($action, ['update', 'delete'], true)
+            ? 'Built in: "Other" is always offered on the form, so it can\'t be renamed or deleted.'
+            : parent::recordRefusal($action, $record);
+    }
+
     public static function getPages(): array
     {
         return [

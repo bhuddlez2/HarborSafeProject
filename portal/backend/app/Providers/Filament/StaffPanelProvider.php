@@ -15,7 +15,6 @@ use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Facades\Filament;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -51,6 +50,12 @@ class StaffPanelProvider extends PanelProvider
             // user's own name, email and password - never role or is_active.
             // Ours swaps its Name field for first and last name.
             ->profile(EditProfile::class, isSimple: false)
+            // A screen with no rule for an action is an error, not a yes:
+            // without this, Filament allows any action on a model with no
+            // policy. Every screen lists what it allows
+            // (App\Filament\Concerns\AllowsOnlyListedActions, or a policy);
+            // ActionAccessTest pins each one.
+            ->strictAuthorization()
             // Look and feel carried over from the former Next.js officer
             // portal (PortalSidebar/PortalHeader): #5C0F8B primary, Nunito
             // body text, Montserrat headings, a dark full-height sidebar. The
@@ -104,6 +109,14 @@ class StaffPanelProvider extends PanelProvider
                     ? view('filament.partials.idle-logout', ['minutes' => config('session.lifetime')])->render()
                     : '',
             )
+            // An unfinished assessment kept in the tab (AssessmentDraft):
+            // wiped on Sign out, dropped if it is someone else's or too old.
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => Filament::auth()->check()
+                    ? view('filament.partials.assessment-draft-guard')->render()
+                    : '',
+            )
             ->navigationItems([
                 // The original officer sidebar's last link. Scoped to the two
                 // officer-portal roles so the group does not appear for an
@@ -127,7 +140,7 @@ class StaffPanelProvider extends PanelProvider
             // first appearance, which depends on discovery order and so moves
             // when a file is added.
             ->navigationGroups([
-                'Content management',
+                'Content Management',
                 'Assessments',
                 // Analytics (App\Filament\Clusters\Analytics), for admins,
                 // super admins and secretaries.
@@ -156,9 +169,6 @@ class StaffPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])
-            ->plugins([
-                FilamentShieldPlugin::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,

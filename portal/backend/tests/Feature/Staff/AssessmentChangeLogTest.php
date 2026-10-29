@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\AssessmentEditResource;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
+use App\Filament\Resources\Logs\LogResource;
+use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Models\Agency;
@@ -56,6 +56,8 @@ function changeLogAssessment(User $officer): LawEnforcementAssessment
         'VictimFirstName' => 'Test',
         'VictimLastName' => 'Doe',
         'VictimSex' => 'F',
+        // Required by the wizard, so by the Edit pop-up too.
+        'VictimDOB' => '1990-01-01',
         'VictimSafePhoneNumber' => '423-555-0100',
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',
@@ -112,7 +114,7 @@ test('a save that changes nothing records nothing', function () {
     // Same values, an empty string for a null, and true for a stored 1.
     $edit = AssessmentEditor::apply(
         $assessment,
-        ['VictimLastName' => 'Doe', 'VictimDOB' => ''],
+        ['VictimLastName' => 'Doe', 'OffenderDOB' => ''],
         ['RiskIndicator1' => true, 'RiskIndicator2' => false],
         'No real change',
         $officer,
@@ -190,7 +192,7 @@ test('the edit is offered to the submitting officer and their agency\'s police a
         ->and($officer->can('update', $assessment))->toBeTrue();
 });
 
-test('the change log page shows admins every edit and police admins their own agency\'s', function () {
+test('Logs shows admins every edit and police admins their own agency\'s', function () {
     $agencyA = changeLogAgency('A');
     $agencyB = changeLogAgency('B');
     $officerA = changeLogMember(UserRole::LawEnforcement, $agencyA);
@@ -200,20 +202,23 @@ test('the change log page shows admins every edit and police admins their own ag
     $editB = AssessmentEditor::apply(changeLogAssessment($officerB), ['VictimLastName' => 'Bell'], [], 'B edit', $officerB);
 
     $this->actingAs(staffUser(UserRole::Admin));
-    Livewire::test(ListAssessmentEdits::class)->assertCanSeeTableRecords([$editA, $editB]);
+    Livewire::test(ListLogs::class)->assertCanSeeTableRecords([$editA, $editB]);
 
     $policeAdminA = changeLogMember(UserRole::PoliceAdmin, $agencyA);
     $this->actingAs($policeAdminA);
-    Livewire::test(ListAssessmentEdits::class)
+    Livewire::test(ListLogs::class)
         ->assertCanSeeTableRecords([$editA])
         ->assertCanNotSeeTableRecords([$editB]);
 
-    expect(AssessmentEditResource::canView($editB))->toBeFalse()
-        ->and(AssessmentEditResource::canView($editA))->toBeTrue();
+    // The row as the table holds it; an admin's scope finds both.
+    $row = fn (App\Models\AssessmentEdit $edit) => App\Models\LogEntry::visibleTo(staffUser(UserRole::Admin))->find($edit->getKey());
+
+    expect(LogResource::canView($row($editB)))->toBeFalse()
+        ->and(LogResource::canView($row($editA)))->toBeTrue();
 
     foreach ([UserRole::Secretary, UserRole::LawEnforcement] as $role) {
         $this->actingAs(staffUser($role));
-        expect(AssessmentEditResource::canAccess())->toBeFalse("change log for {$role->value}");
+        expect(LogResource::canAccess())->toBeFalse("Logs for {$role->value}");
     }
 });
 
@@ -226,7 +231,8 @@ test('the change log button shows the history with readable labels', function ()
     $this->actingAs($officer);
 
     Livewire::test(ListLawEnforcementAssessments::class)
-        ->assertTableColumnFormattedStateSet('edits_count', 'Amended', $assessment)
+        // Enabled (and purple) because the record has been edited.
+        ->assertActionEnabled(TestAction::make('changeLog')->table($assessment))
         ->mountAction(TestAction::make('changeLog')->table($assessment))
         ->assertMountedActionModalSee([
             'Corrected on review',

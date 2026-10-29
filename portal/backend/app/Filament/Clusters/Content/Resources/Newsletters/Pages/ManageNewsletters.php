@@ -2,14 +2,16 @@
 
 namespace App\Filament\Clusters\Content\Resources\Newsletters\Pages;
 
+use App\Filament\Concerns\CapsTableSearch;
 use App\Filament\Clusters\Content\Resources\Newsletters\NewsletterResource;
 use App\Filament\Concerns\BreadcrumbNamesThePage;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ManageRecords;
 
-// ManageRecords: create and edit open as wizard pop-ups on this page.
+// ManageRecords: create and edit open as wizard pop-ups on this page. Create
+// saves only from the last step (NewsletterResource::createAction()).
 class ManageNewsletters extends ManageRecords
 {
+    use CapsTableSearch;
     use BreadcrumbNamesThePage;
 
     protected static string $resource = NewsletterResource::class;
@@ -17,7 +19,7 @@ class ManageNewsletters extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add an issue'),
+            NewsletterResource::createAction(),
         ];
     }
 }
