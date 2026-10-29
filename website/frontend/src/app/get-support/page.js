@@ -167,12 +167,14 @@ export default function GetSupport() {
                 <a href="tel:911" className="whitespace-nowrap font-semibold text-red-700 hover:underline">call 911</a>.
               </p>
             </div>
-            <a
+            {/* replace, like every internal link, so the site keeps a single history entry for Safe Exit to overwrite */}
+            <Link
+              replace
               href={CIVILIAN_ASSESSMENT_URL}
               className="justify-self-start md:justify-self-end whitespace-nowrap bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all"
             >
               Take the assessment
-            </a>
+            </Link>
           </div>
         </div>
       </section>

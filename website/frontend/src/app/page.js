@@ -7,6 +7,32 @@ import Link from "next/link";
 import Modal from "./components/Modal";
 import CrisisHotlineStrip from "./components/CrisisHotlineStrip";
 
+const TESTIMONIALS = [
+  {
+    heading: "A Survivor’s Story",
+    pullQuote: "I’m a better mom and a better person. Today, I am alive.",
+    author: "Anonymous Survivor",
+    story: [
+      "It was at the point that I was gathering the things I needed for me and my children to live in the car that I reached out to Harbor Safe House. I was just done with the abuse. I was struggling with day to day living and overwhelmed with the constant fear of what was going to happen next. I felt hopeless and numb.",
+      "I’m not sure I would still be around without asking for the help I needed. I did the work, but without the support of Harbor Safe House, I’m not sure I would have been able to do it. They helped me find the right steps into stability and my new and improved life that I am creating. Having a safe place and supportive people helping me and my little ones, while going through the most difficult time in my life, has meant the world to me. I’m a better mom and a better person.",
+      "Today, I am alive. The feeling of waking up every morning having purpose and being happy is new to me. I am confident that I hold a bright future for myself and my family.",
+    ],
+  },
+  {
+    heading: "Finding Safety & Support",
+    pullQuote: "For the first time in a long time I did not feel alone.",
+    author: "C",
+    story: [
+      "I was really struggling and was worried for our safety. I didn’t know where my child and I would stay. I had nothing and I didn’t know where to go for help. I wanted a better and safer life for my family.",
+      "With the help of Harbor Safe House, I was finally in a safe place. My child and I received help with food, basic personal needs, and most importantly safety. The staff were kind and supportive and helped me connect to resources.",
+      "For the first time in a long time I did not feel alone. I needed someone to listen to me and give me hope and this program did that for me.",
+      "I feel hopeful about the future. I feel more stable and confident that I can provide a better life for me and my child.",
+      "To the donors who support Harbor Safe House, your support has given us safety, hope, and the chance for a better future.",
+      "Thank you for making this possible.",
+    ],
+  },
+];
+
 export default function Home() {
   /*
   showHelpModal controls the "Get Help Now" contact list opened from the hero button
@@ -14,9 +40,15 @@ export default function Home() {
   const [showHelpModal, setShowHelpModal] = useState(false);
 
   /*
+  openTestimonial is the testimonial whose full story is showing in the dialog,
+  null when the dialog is closed
+  */
+  const [openTestimonial, setOpenTestimonial] = useState(null);
+
+  /*
   replaceNavigate does a full page load that replaces the current history entry (same
   history behavior as <Link replace>), used by the service cards' "Learn more" links to
-  /get-support/#... anchors. Next's client router mishandles repeat hash navigations in dev, 
+  /get-support/#... anchors. Next's client router mishandles repeat hash navigations in dev,
   so these links bypass it and let the browser scroll to the anchor natively.
   */
   const replaceNavigate = (e) => {
@@ -88,9 +120,23 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
-              <Link href="/get-support" className="font-semibold text-brand hover:underline">Our services →</Link>
-              <Link href="/resources" className="font-semibold text-brand hover:underline">More resources →</Link>
+              <Link replace href="/get-support" className="font-semibold text-brand hover:underline">Our services →</Link>
+              <Link replace href="/resources" className="font-semibold text-brand hover:underline">More resources →</Link>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {openTestimonial && (
+        <Modal
+          title={openTestimonial.heading}
+          subtitle={`— ${openTestimonial.author}`}
+          onClose={() => setOpenTestimonial(null)}
+        >
+          <div className="p-6 space-y-4 text-gray-700 leading-relaxed">
+            {openTestimonial.story.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
           </div>
         </Modal>
       )}
@@ -175,82 +221,61 @@ export default function Home() {
         <section className="py-20 px-4 bg-white">
           <div className="max-w-7xl mx-auto">
 
+            <h1 className="text-center text-brand text-4xl font-semibold mb-12">We Are Here to Help You.</h1>
+
             {/*
-            Two-column row: WeAreHere image left, text content right,
+            Two-column row: WeAreHere image left, testimonial cards right,
             grid md:grid-cols-2 for two columns on medium screens and up,
-            gap-12 for spacing between columns,
-            items-start so both columns align to the top
+            gap-8 lg:gap-12 for spacing between columns,
+            items-stretch makes the image column as tall as the cards
             */}
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-stretch">
 
               {/*
               Left column: WeAreHere image,
-              w-full stretches the image to fill the column width,
-              rounded-lg for rounded corners,
-              shadow-lg for a drop shadow,
-              NOTE: if white padding appears around the image it is baked into the png itself,
-              to fix it the png will need to be cropped or exported without padding
+              aspect-video on phones gives a wide strip above the cards rather than the
+              png's near-square shape, md:aspect-auto then lets the stretched grid row set
+              the height so the image matches the cards beside it,
+              object-cover crops rather than squashes, object-[50%_40%] keeps the hands in
+              frame since they sit a little above the middle of the png,
+              rounded-lg overflow-hidden rounds the cropped corners,
+              shadow-lg for a drop shadow
               */}
-              <div>
+              <div className="relative aspect-video md:aspect-auto rounded-lg overflow-hidden shadow-lg">
                 <Image
                   src="/WeAreHere.png"
                   alt="Supportive hands"
-                  width={0}
-                  height={0}
-                  sizes="100vw"
-                  className="w-full h-auto rounded-lg shadow-lg"
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover object-[50%_40%]"
                 />
               </div>
 
-              {/*
-              Right column: heading, body copy, and hotline info,
-              space-y-6 for consistent vertical spacing between children
-              */}
-              <div className="space-y-6">
-
-                {/* Section heading above the testimonials */}
-                <h1 className="text-center text-brand text-4xl font-semibold">We Are Here to Help You.</h1>
-
-                {/* First testimonial header and block */}
-                <h2 className="text-brand text-xl font-semibold mt-8">A Survivor&apos;s Story</h2>
-                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
-                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
-                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
-                    It was at the point that I was gathering the things I needed for me and my children to live in the car that I reached out to Harbor Safe House.  
-                    I was just done with the abuse. 
-                    I was struggling with day to day living and overwhelmed with the constant fear of what was going to happen next.  
-                    I felt hopeless and numb.
-                    I’m not sure I would still be around without asking for the help I needed.  
-                    I did the work, but without the support of Harbor Safe House, I’m not sure I would have been able to do it.  
-                    They helped me find the right steps into stability and my new and improved life that I am creating. 
-                    Having a safe place and supportive people helping me and my little ones, while going through the most difficult time in my life, has meant the world to me. 
-                    I’m a better mom and a better person.  
-                    Today, I am alive.  
-                    The feeling of waking up every morning having purpose and being happy is new to me. 
-                    I am confident that I hold a bright future for myself and my family.
-                  </p>
-                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
-                </div>
-
-                {/* Second testimonial header and block */}
-                <h2 className="text-brand text-xl font-semibold mt-8">Finding Safety &amp; Support</h2>
-                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
-                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
-                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
-                    It was at the point that I was gathering the things I needed for me and my children to live in the car that I reached out to Harbor Safe House.  
-                    I was just done with the abuse. I was struggling with day to day living and overwhelmed with the constant fear of what was going to happen next.  
-                    I felt hopeless and numb.
-                    I’m not sure I would still be around without asking for the help I needed.  
-                    I did the work, but without the support of Harbor Safe House, I’m not sure I would have been able to do it.  
-                    They helped me find the right steps into stability and my new and improved life that I am creating. Having a safe place and supportive people helping me and my little ones, while going through the most difficult time in my life, has meant the world to me. 
-                    I’m a better mom and a better person.  
-                    Today, I am alive.  The feeling of waking up every morning having purpose and being happy is new to me. 
-                    I am confident that I hold a bright future for myself and my family.
-                  </p>
-                  <p className="text-sm font-semibold text-brand">— C</p>
-                </div>
-
+              {/* Right column: stacked testimonial cards */}
+              <div className="flex flex-col gap-6">
+                {TESTIMONIALS.map((testimonial) => (
+                  <figure
+                    key={testimonial.heading}
+                    className="flex flex-col border-l-4 border-brand pl-6 pr-4 py-5 bg-purple-50 rounded-r-lg"
+                  >
+                    <h2 className="text-brand text-xl font-semibold mb-2">{testimonial.heading}</h2>
+                    <span className="text-5xl text-brand leading-none" aria-hidden="true">&ldquo;</span>
+                    <blockquote className="text-gray-800 text-xl font-medium leading-snug -mt-2 mb-4">
+                      {testimonial.pullQuote}
+                    </blockquote>
+                    <figcaption className="text-sm font-semibold text-brand mb-4">— {testimonial.author}</figcaption>
+                    <button
+                      onClick={() => setOpenTestimonial(testimonial)}
+                      aria-haspopup="dialog"
+                      aria-label={`Read the full story from ${testimonial.author}`}
+                      className="mt-auto self-start font-semibold text-brand hover:underline cursor-pointer"
+                    >
+                      Read full story →
+                    </button>
+                  </figure>
+                ))}
               </div>
+
             </div>
 
             {/*

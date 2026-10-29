@@ -61,7 +61,7 @@ export default function Modal({ title, subtitle, onClose, children, dismissible 
 
         {/* Header: title, optional subtitle, and close button */}
         <div className="flex items-start justify-between p-6 border-b border-gray-100 shrink-0">
-          <div>
+          <div className="min-w-0 wrap-anywhere">
             <h2 className="text-xl font-semibold text-brand leading-snug">{title}</h2>
             {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
           </div>

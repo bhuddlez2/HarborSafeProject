@@ -199,7 +199,7 @@ export default function FeedbackContent() {
       <section className="pb-16 px-4 bg-white">
         <p className="text-center text-gray-700">
           Looking for help instead?{" "}
-          <Link href="/contact" className="text-brand font-semibold hover:underline">
+          <Link replace href="/contact" className="text-brand font-semibold hover:underline">
             Request resources
           </Link>
           .
