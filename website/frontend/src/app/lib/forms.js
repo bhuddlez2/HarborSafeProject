@@ -34,7 +34,6 @@ const FALLBACK_OPTIONS = {
     { id: 5, Name: "Legal Help" },
     { id: 6, Name: "Transportation" },
     { id: 7, Name: "Clothing" },
-    { id: 8, Name: "Something Else" },
   ],
   counties: [
     { id: 1, Name: "Bradley" },
