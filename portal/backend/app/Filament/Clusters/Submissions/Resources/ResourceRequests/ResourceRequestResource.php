@@ -147,6 +147,8 @@ class ResourceRequestResource extends Resource
                     ->label('Interested in')
                     ->badge()
                     ->placeholder('-')
+                    // Filament drops the items past the limit unless the list has line breaks.
+                    ->listWithLineBreaks()
                     ->limitList(2)
                     ->expandableLimitedList()),
 
