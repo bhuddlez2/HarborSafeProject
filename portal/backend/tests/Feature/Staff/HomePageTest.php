@@ -31,7 +31,7 @@ test('a police admin\'s Home offers Start New Lethality Assessment above My Asse
         // The card is called My Assessments but still opens Assessment review,
         // which keeps its name in the sidebar.
         ->assertSee(AssessmentReviewResource::getUrl('index'), escape: false)
-        ->assertSee('Assessment review')
+        ->assertSee('Assessment Review')
         ->assertSee(OfficerAccountResource::getUrl('index'), escape: false)
         // My Assessments the screen stays officer-only; police admins review in Assessment review.
         ->assertDontSee(LawEnforcementAssessmentResource::getUrl('index'), escape: false);
