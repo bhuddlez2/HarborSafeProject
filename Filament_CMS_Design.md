@@ -1107,8 +1107,9 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
   first and last name. An officer's card has three rows, a reviewer's four.
 - **Scoped:** filters only narrow each screen's `visibleTo()` query, and the officer and
   agency dropdowns take their options from the database, limited to rows `visibleTo()`
-  returns (§5 rule 5). The table's search box still searches victim and offender names
-  too. Enforced by `tests/Feature/Staff/AssessmentFiltersTest.php`.
+  returns (§5 rule 5). The card is the only way to search: since 2026-10-29 the
+  assessment tables have no search bar or per-column search (`AssessmentTableSearchTest`).
+  Enforced by `tests/Feature/Staff/AssessmentFiltersTest.php`.
 - **Civilian assessments** uses the same card through `AssessmentFilters::civilian($table, $extra)`
   (2026-10-26, Finishing Touches item 13): date submitted and the four name filters — no
   officer or agency, since the public submits these — then the screen's own High risk

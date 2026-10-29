@@ -15,6 +15,8 @@
 <meta charset="utf-8">
 <title>Service feedback</title>
 <style>
+    /* Black and white only (#44): white page, black text and rules, no
+       fills - as ServiceFeedbackExport draws its headings on later pages. */
     /* The top margin leaves room for the headings drawn on later pages. */
     @page {
         margin: {{ Export::PDF_MARGIN + Export::PDF_HEADING_HEIGHT }}pt {{ Export::PDF_MARGIN }}pt {{ Export::PDF_MARGIN_BOTTOM }}pt {{ Export::PDF_MARGIN }}pt;
@@ -26,13 +28,12 @@
     body {
         font-family: 'DejaVu Sans', sans-serif;
         font-size: 8pt;
-        color: #1b1726;
+        color: #000;
         background: #fff;
     }
 
     .hs-fl-header {
-        background-color: #5c0f8b;
-        color: #fff;
+        border: 1.5pt solid #000;
         border-radius: 7.5pt;
         padding: 10pt 12pt;
         margin-bottom: 10pt;
@@ -42,7 +43,6 @@
         font-weight: bold;
         letter-spacing: 1pt;
         text-transform: uppercase;
-        color: #cfb7e2;
         margin-bottom: 3pt;
     }
     .hs-fl-title {
@@ -58,18 +58,16 @@
     }
     th {
         height: {{ Export::PDF_HEADING_HEIGHT - 10 }}pt;
-        background: #f3f0f7;
-        color: #3b2a4d;
         font-size: 7.5pt;
         font-weight: bold;
         text-align: left;
         text-transform: uppercase;
         padding: 5pt 6pt;
-        border-bottom: 1.5pt solid #d8cfe3;
+        border-bottom: 1.5pt solid #000;
     }
     td {
         padding: 5pt 6pt;
-        border-bottom: 0.75pt solid #e5e7eb;
+        border-bottom: 0.5pt solid #000;
         vertical-align: top;
         word-wrap: break-word;
     }

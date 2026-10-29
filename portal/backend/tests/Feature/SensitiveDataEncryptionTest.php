@@ -165,29 +165,29 @@ test('a follow-up note is encrypted', function () {
     ]);
 });
 
-test('table search finds victims, offenders and requesters by part of their name', function () {
+// The assessment tables have no search bar: their name filters search the
+// encrypted names (AssessmentFilters::encryptedTextContains()). Resource
+// requests keep a search bar over the requester's name and email.
+test('name filters find victims and offenders, and search finds requesters, by part of their name', function () {
     $officer = pestAgencyMember(UserRole::LawEnforcement, pestAgency('Search PD'));
     $mine = pestOfficerAssessment($officer, 'Quintessa', ['OffenderLastName' => 'Brightwater']);
     $other = pestOfficerAssessment($officer, 'Leopold');
 
     $this->actingAs($officer);
-    Livewire::test(ListLawEnforcementAssessments::class)
-        ->searchTable('quintes')
+    pestApplyFilter(Livewire::test(ListLawEnforcementAssessments::class), 'victim_first_name', 'quintes')
         ->assertCanSeeTableRecords([$mine])
-        ->assertCanNotSeeTableRecords([$other])
-        ->searchTable('BRIGHTWAT')
+        ->assertCanNotSeeTableRecords([$other]);
+    pestApplyFilter(Livewire::test(ListLawEnforcementAssessments::class), 'offender_last_name', 'BRIGHTWAT')
         ->assertCanSeeTableRecords([$mine])
         ->assertCountTableRecords(1);
 
     $this->actingAs(staffUser(UserRole::Admin));
-    Livewire::test(ListAssessmentReview::class)
-        ->searchTable(STAFF_TEST_PREFIX.'Leop')
+    pestApplyFilter(Livewire::test(ListAssessmentReview::class), 'victim_first_name', STAFF_TEST_PREFIX.'Leop')
         ->assertCanSeeTableRecords([$other])
         ->assertCountTableRecords(1);
 
     $civilian = pestCivilianAssessment(overrides: ['VictimFirstName' => STAFF_TEST_PREFIX.'Ottoline']);
-    Livewire::test(ListCivilianAssessments::class)
-        ->searchTable('ottoline')
+    pestApplyFilter(Livewire::test(ListCivilianAssessments::class), 'victim_first_name', 'ottoline')
         ->assertCanSeeTableRecords([$civilian])
         ->assertCountTableRecords(1);
 
@@ -205,14 +205,13 @@ test('table search finds victims, offenders and requesters by part of their name
         ->assertCountTableRecords(1);
 });
 
-test('search never reaches rows the viewer may not see', function () {
+test('a name filter never reaches rows the viewer may not see', function () {
     $w = pestTwoAgencies();
     $this->actingAs($w->policeAdminA);
 
     $nameB = LawEnforcementAssessment::find($w->assessmentB->getKey())->VictimFirstName;
 
-    Livewire::test(ListAssessmentReview::class)
-        ->searchTable($nameB)
+    pestApplyFilter(Livewire::test(ListAssessmentReview::class), 'victim_first_name', $nameB)
         ->assertCountTableRecords(0);
 });
 

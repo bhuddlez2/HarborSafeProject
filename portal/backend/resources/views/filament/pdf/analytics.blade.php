@@ -12,6 +12,10 @@
 <meta charset="utf-8">
 <title>{{ $title }}</title>
 <style>
+    /* Black and white only (#44): white page, black text, rules and bars.
+       Nothing depends on colour: each card is one series, every bar has its
+       name on the left and its number printed on the right, and the tables
+       are plain numbers. */
     @page {
         margin: {{ Export::PDF_MARGIN }}pt {{ Export::PDF_MARGIN }}pt {{ Export::PDF_MARGIN_BOTTOM }}pt {{ Export::PDF_MARGIN }}pt;
     }
@@ -22,13 +26,12 @@
     body {
         font-family: 'DejaVu Sans', sans-serif;
         font-size: 8.5pt;
-        color: #1b1726;
+        color: #000;
         background: #fff;
     }
 
     .hs-an-header {
-        background-color: #5c0f8b;
-        color: #fff;
+        border: 1.5pt solid #000;
         border-radius: 7.5pt;
         padding: 10pt 12pt;
         margin-bottom: 12pt;
@@ -38,11 +41,10 @@
         font-weight: bold;
         letter-spacing: 1pt;
         text-transform: uppercase;
-        color: #cfb7e2;
         margin-bottom: 3pt;
     }
     .hs-an-title { font-size: 15pt; font-weight: bold; margin-bottom: 4pt; }
-    .hs-an-line { font-size: 8pt; color: #ebdff4; }
+    .hs-an-line { font-size: 8pt; }
 
     h2 {
         font-size: 12pt;
@@ -55,39 +57,38 @@
     /* The tiles: one row of boxes. */
     .hs-an-tiles { margin-bottom: 10pt; }
     .hs-an-tiles td {
-        border: 0.75pt solid #e5e7eb;
+        border: 0.75pt solid #000;
         padding: 7pt 8pt;
         vertical-align: top;
     }
-    .hs-an-tile-label { font-size: 7.5pt; font-weight: bold; color: #4b5563; }
+    .hs-an-tile-label { font-size: 7.5pt; font-weight: bold; }
     .hs-an-tile-value { font-size: 15pt; font-weight: bold; margin: 2pt 0; }
-    .hs-an-tile-sub { font-size: 7pt; color: #6b7280; }
+    .hs-an-tile-sub { font-size: 7pt; }
 
     .hs-an-card {
-        border: 0.75pt solid #e5e7eb;
+        border: 0.75pt solid #000;
         border-radius: 6pt;
         padding: 8pt 10pt;
         margin-bottom: 10pt;
         page-break-inside: avoid;
     }
     h3 { font-size: 9.5pt; font-weight: bold; }
-    .hs-an-note { font-size: 7.5pt; color: #6b7280; margin-top: 2pt; }
-    .hs-an-footnote { font-size: 7.5pt; color: #6b7280; margin-top: 5pt; }
+    .hs-an-note { font-size: 7.5pt; margin-top: 2pt; }
+    .hs-an-footnote { font-size: 7.5pt; margin-top: 5pt; }
     .hs-an-rows { margin-top: 6pt; }
     .hs-an-rows td {
         padding: 2.5pt 4pt;
-        border-bottom: 0.5pt solid #f3f4f6;
+        border-bottom: 0.25pt solid #000;
         vertical-align: middle;
     }
     .hs-an-rows th {
         padding: 3pt 4pt;
         font-size: 7.5pt;
         font-weight: bold;
-        color: #3b2a4d;
-        border-bottom: 1pt solid #d8cfe3;
+        border-bottom: 1pt solid #000;
     }
     .hs-an-num { text-align: right; white-space: nowrap; }
-    .hs-an-bar { height: 7pt; background-color: #5c0f8b; }
+    .hs-an-bar { height: 7pt; background-color: #000; }
 </style>
 </head>
 <body>

@@ -38,19 +38,23 @@ their column (TableAlignment::buttons()).
 The law-enforcement tables' queries must eager-load assessmentAnswers and
 submitter and ->withCount('edits') (the Change log button reads
 edits_count); the civilian one assessmentAnswers.
+
+No search bar: these tables search only through their filter card
+(AssessmentFilters - dates, victim/offender names, and on Assessment review
+the officer and, for admins, the agency), so no column here is searchable.
 */
 final class AssessmentColumns
 {
     /** The law-enforcement tables. @return list<TextColumn> */
     public static function for(bool $reviewScreen): array
     {
-        return self::columns(LawEnforcementAssessment::class, withOfficer: $reviewScreen);
+        return self::columns(withOfficer: $reviewScreen);
     }
 
     /** Civilian assessments. @return list<TextColumn> */
     public static function civilian(): array
     {
-        return self::columns(PrivateAssessment::class, withOfficer: false);
+        return self::columns(withOfficer: false);
     }
 
     public static function cards(Table $table): Table
@@ -71,11 +75,8 @@ final class AssessmentColumns
             ->count();
     }
 
-    /**
-     * @param  class-string<LawEnforcementAssessment|PrivateAssessment>  $model
-     * @return list<TextColumn>
-     */
-    private static function columns(string $model, bool $withOfficer): array
+    /** @return list<TextColumn> */
+    private static function columns(bool $withOfficer): array
     {
         $fullName = fn (string $first) => fn (?string $state, $record): string => trim(
             ($record->{$first} ?? '').' '.($state ?? ''),
@@ -96,8 +97,7 @@ final class AssessmentColumns
 
             RecordCards::title(TextColumn::make('VictimLastName')
                 ->label('Victim')
-                ->formatStateUsing($fullName('VictimFirstName'))
-                ->searchable(query: EncryptedColumnSearch::query($model, ['VictimFirstName', 'VictimLastName']))),
+                ->formatStateUsing($fullName('VictimFirstName'))),
 
             TextColumn::make('OffenderLastName')
                 ->label('Offender')
@@ -105,8 +105,7 @@ final class AssessmentColumns
                 ->description(fn ($record): ?string => OffenderRelationship::display(
                     $record->OffenderVictimRelationship,
                     $record->OffenderVictimRelationshipOther,
-                ))
-                ->searchable(query: EncryptedColumnSearch::query($model, ['OffenderFirstName', 'OffenderLastName'])),
+                )),
 
             // The screening result the eleven answers add up to: red when
             // high risk (HighRisk, the rule Analytics counts), amber for any
