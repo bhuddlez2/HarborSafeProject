@@ -28,14 +28,11 @@ export default function GetSupport() {
     <main>
       <HashHighlight />
 
-      {/* Hero */}
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      {/* Hero, kept short (B12) so the safety box below reaches the first screen on a phone */}
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">You Are Not Alone</h1>
         <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
-          Free, confidential support is available 24 hours a day for anyone experiencing domestic violence or sexual assault.
+          Free, confidential support, 24 hours a day.
         </p>
       </section>
 
@@ -45,7 +42,8 @@ export default function GetSupport() {
       {/*
       Services
       */}
-      <section className="py-32 px-4 bg-white">
+      {/* pt-12/md:pt-16 rather than py-32's 128px, so the safety box sits close under the hotline strip (B12) */}
+      <section className="pt-12 md:pt-16 pb-16 md:pb-32 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
 
           {/*
@@ -55,8 +53,8 @@ export default function GetSupport() {
           <div className="mb-24 bg-purple-100 border border-purple-200 rounded-2xl p-8 md:p-10">
             {/* max-w-5xl keeps the lines from running too long on wide screens */}
             <div className="max-w-5xl mx-auto flex flex-col items-center text-center">
-              <h2 className="text-xl font-semibold text-brand mb-2">Do you have safety concerns?</h2>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <h2 className="text-2xl font-semibold text-brand mb-2">Do you have safety concerns?</h2>
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                 Our lethality assessment asks 11 yes/no questions that can help show whether a relationship is
                 becoming more dangerous. You can answer for yourself or for someone you&apos;re worried about.
                 Your answers are sent confidentially to Harbor Safe House.{" "}
@@ -94,13 +92,13 @@ export default function GetSupport() {
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-8">
             <div data-highlight="shelter" className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
-                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* home icon, feathericons.com */}
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9,22 9,12 15,12 15,22" />
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Emergency Shelter</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                 Safe, confidential housing for individuals and families escaping dangerous situations. Our advocates can help you plan a safe move and connect you with the support you need while you stay with us.
               </p>
               <RequestLink needs={["Emergency Shelter"]} />
@@ -108,13 +106,13 @@ export default function GetSupport() {
 
             <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
-                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* message-circle icon, feathericons.com */}
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Crisis Counseling</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                 Trauma-informed counseling through our hotline, in-person sessions, and support groups. We help with safety planning, goal-setting, court navigation, and building a future free from abuse.
               </p>
               <RequestLink needs={["Counseling"]} />
@@ -123,13 +121,13 @@ export default function GetSupport() {
             {/* Support Groups */}
             <div className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
-                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* users icon, feathericons.com */}
                   <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Support Groups</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                 Weekly safe, confidential sessions for women and children to learn about domestic violence, build self-esteem, set goals, and create safety plans. Free childcare available with advance notice.
               </p>
               <RequestLink needs={["Support Groups"]} />
@@ -138,13 +136,13 @@ export default function GetSupport() {
             {/* Court Advocacy, highlighted along with Crisis Counseling by the home page's Counseling & Advocacy link */}
             <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
-                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* briefcase icon, feathericons.com */}
                   <rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Court Advocacy</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                 Help with filing for protection orders, preparing for court appearances, and connecting with legal referrals. We walk with you through the process every step of the way.
                 Please note: we do not provide legal advice or representation.
               </p>
@@ -154,13 +152,13 @@ export default function GetSupport() {
             {/* Community Education */}
             <div className="service-card rounded-2xl p-6 w-full md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
-                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* book-open icon, feathericons.com */}
                   <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
                 </svg>
               </div>
               <p className="text-lg font-semibold text-brand mb-4">Community Education</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                 Trauma-informed presentations for schools, clubs, churches, businesses, and organizations to help communities recognize, respond to, and prevent abuse.
               </p>
               <RequestLink needs={["Community Education"]} />
@@ -169,7 +167,7 @@ export default function GetSupport() {
           </div>
 
           {/* The office line, kept from the removed "Ask about any of these services" box: it's nowhere else on the site */}
-          <p className="mt-12 text-center text-sm text-gray-600 leading-relaxed">
+          <p className="mt-12 text-center text-sm md:text-base text-gray-600 leading-relaxed">
             For court advocacy or community education, you can also call or text our office at{" "}
             <PhoneLink number="423-889-1479" className="font-semibold text-brand hover:underline" />.
           </p>
@@ -180,7 +178,8 @@ export default function GetSupport() {
       <div className="w-full h-1 bg-brand"></div>
 
       {/* CTA band */}
-      <section className="py-32 px-4 bg-purple-100 text-center">
+      {/* py-16 on phones, where py-32 left the band mostly empty space (B16) */}
+      <section className="py-16 md:py-32 px-4 bg-purple-100 text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-semibold text-brand mb-4">We&apos;re here when you&apos;re ready.</h2>
           <p className="text-gray-700 leading-relaxed mb-8">
