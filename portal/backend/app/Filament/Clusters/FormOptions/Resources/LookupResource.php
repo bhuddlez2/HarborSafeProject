@@ -32,7 +32,8 @@ than three near-identical files:
      a row propagates to the website and to every existing submission's
      display without breaking anything. Deleting a row that submissions point
      at violates a foreign key. Each subclass says how to detect that, and the
-     delete action hides itself rather than letting the database refuse.
+     delete button is greyed out with the reason on hover (B54) rather than
+     letting the database refuse.
 
   2. ChangeDate IS MAINTAINED HERE. The column exists on all three tables and
      nothing was writing it. It is set on create and on edit, so there is a
@@ -56,6 +57,15 @@ abstract class LookupResource extends Resource
     // True when at least one submission references this row, which makes it
     // undeletable. Each lookup is referenced from a different place.
     abstract protected static function isInUse(Model $record): bool;
+
+    // An option records use can't be deleted (a foreign key would refuse it
+    // anyway): its Delete button stays, greyed out with this on hover (B54).
+    protected static function recordRefusal(string $action, Model $record): ?string
+    {
+        return $action === 'delete' && static::isInUse($record)
+            ? 'Can\'t delete: existing records use this option.'
+            : null;
+    }
 
     public static function canAccess(): bool
     {
@@ -115,11 +125,8 @@ abstract class LookupResource extends Resource
                 // A built-in row (CountyResource's "Other") keeps both
                 // buttons, greyed out with the reason on hover.
                 EditAction::make()->authorizationTooltip(),
-                DeleteAction::make()
-                    ->authorizationTooltip()
-                    // A foreign key would reject this anyway; hiding the
-                    // action explains why far better than a database error.
-                    ->visible(fn (Model $record): bool => filled(static::recordRefusal('delete', $record)) || ! static::isInUse($record)),
+                // Greyed out with the reason on hover while records use it (B54).
+                DeleteAction::make()->authorizationTooltip(),
             ])
             // No bulk delete: a bulk action cannot say which row of the
             // selection was still in use.

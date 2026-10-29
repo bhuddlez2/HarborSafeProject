@@ -27,7 +27,8 @@ use Filament\Tables\Table;
 The lookup behind an event's category badge.
 
 Deleting a category that events point at would violate the foreign key, so the
-delete action is hidden while any event references it. Renaming is always safe
+delete button is greyed out, with the reason on hover, while any event
+references it (B54). Renaming is always safe
 - events hold the id, and the public API serialises Name, so a rename
 propagates to the website on the next request.
 
@@ -69,6 +70,15 @@ class EventCategoryResource extends Resource
         return ['create', 'update', 'delete'];
     }
 
+    // The FK on events.category_id would refuse this anyway; the button stays,
+    // greyed out with this on hover (B54).
+    protected static function recordRefusal(string $action, Model $record): ?string
+    {
+        return $action === 'delete' && $record instanceof EventCategory && $record->events()->exists()
+            ? 'Can\'t delete: existing events use this category.'
+            : null;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -102,10 +112,8 @@ class EventCategoryResource extends Resource
             ->defaultSort('Name')
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
-                    // The FK on events.category_id would reject this anyway;
-                    // hiding it gives a clearer answer than a database error.
-                    ->visible(fn (EventCategory $record): bool => ! $record->events()->exists()),
+                // Greyed out with the reason on hover while events use it (B54).
+                DeleteAction::make()->authorizationTooltip(),
             ])
             ->emptyStateHeading('No categories yet')
             ->emptyStateDescription('Categories are optional. An event without one simply shows no badge.')
