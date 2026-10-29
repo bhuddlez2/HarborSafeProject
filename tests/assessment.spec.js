@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { lethalityQuestions, questionText } from '../website/frontend/src/app/lib/lethality-questions.js';
 
 /*
 The civilian lethality assessment (website/frontend/src/app/assessment), moved here
@@ -467,4 +468,73 @@ test('switching to a named report from the review asks for the name first', asyn
   await page.getByRole('button', { name: 'Submit assessment' }).click();
   await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
   expect(api.submissions[0]).toMatchObject({ ForWhom: 'other', Anonymous: false, SubmitterFirstName: 'Sam' });
+});
+
+// #33: the questions use the names entered, one name at a time; with neither, the
+// generic text exactly. Display only: answers still go by question number.
+test('question text fills in each name on its own, and falls back to the generic text', () => {
+  const q = (id) => lethalityQuestions.find((question) => question.id === id);
+
+  expect(questionText(q(1), { victim: 'Jane', offender: 'John Smith' }))
+    .toBe('Has John Smith ever used a weapon against Jane or threatened Jane with a weapon?');
+  expect(questionText(q(1), { victim: 'Jane', offender: null }))
+    .toBe('Have they ever used a weapon against Jane or threatened Jane with a weapon?');
+  expect(questionText(q(1), { victim: null, offender: 'John Smith' }))
+    .toBe('Has John Smith ever used a weapon against you or threatened you with a weapon?');
+  expect(questionText(q(2), { victim: 'Jane', offender: 'John' }))
+    .toBe("Has John threatened to kill Jane or Jane's children?");
+  expect(questionText(q(5), { offender: 'John Smith' }))
+    .toBe('Is there an active order of protection against John Smith?');
+  expect(questionText(q(7), { offender: 'John Smith' })).toBe(q(7).text);
+
+  for (const question of lethalityQuestions) {
+    // Neither name, or names of only spaces: the generic text, unchanged.
+    expect(questionText(question, {})).toBe(question.text);
+    expect(questionText(question, { victim: '   ', offender: ' ' })).toBe(question.text);
+  }
+});
+
+test('an anonymous report for someone else asks the questions with the names, and says when things are saved', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+
+  const notice = page.getByRole('dialog', { name: 'Confidentiality Notice' });
+  await expect(notice.getByText('Nothing is saved until you submit')).toBeVisible();
+  await expect(notice.getByText(/What you type stays on this page only\./)).toBeVisible();
+  await acceptNotice(page);
+
+  await page.getByRole('button', { name: 'Someone else' }).click();
+  await page.getByRole('button', { name: 'Yes', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fillVictim(page);
+  await fillOffender(page);
+
+  await expect(page.getByText(/Nothing is sent or saved until you press Submit at the end\./)).toBeVisible();
+  await page.getByRole('button', { name: 'Begin assessment' }).click();
+  await expect(page.getByRole('heading', { name: 'Has John Roe ever used a weapon against Jane or threatened Jane with a weapon?' })).toBeVisible();
+  for (let n = 1; n <= 11; n++) {
+    await page.getByRole('button', { name: 'No', exact: true }).first().click();
+  }
+
+  await expect(page.getByText(/Nothing has been sent yet\./)).toBeVisible();
+  await expect(page.getByText('Does Jane have injuries from previous incidents?')).toBeVisible();
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  await expect(page.getByText(/Your assessment has been sent to Harbor Safe\./)).toBeVisible();
+  expect(api.submissions).toHaveLength(1);
+  expect(api.submissions[0].RiskIndicator1).toBe(false);
+});
+
+test('a report for yourself keeps "you" and fills in only the offender', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+  await page.getByRole('button', { name: 'Myself' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fillVictim(page);
+  await fillOffender(page);
+  await page.getByRole('button', { name: 'Begin assessment' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Has John Roe ever used a weapon against you or threatened you with a weapon?' })).toBeVisible();
 });

@@ -53,7 +53,7 @@ class NewAssessment extends Page
         2 => 'Have they threatened to kill you or your children?',
         3 => 'Have they ever tried to choke (strangle) you?',
         4 => 'Do they have a gun or can they get one easily?',
-        5 => 'Do they have an active order or protection against them?',
+        5 => 'Do they have an active order of protection against them?',
         6 => 'Are they a sex offender?',
         7 => 'Do you have injuries from previous incidents?',
         8 => 'Are they a serial abuser?',
