@@ -73,9 +73,9 @@ async function fillVictim(page) {
   await page.getByRole('button', { name: 'Continue' }).click();
 }
 
-async function fillOffender(page) {
+async function fillOffender(page, lastName = 'Roe') {
   await page.getByLabel('First Name').fill('John');
-  await page.getByLabel('Last Name').fill('Roe');
+  await page.getByLabel('Last Name').fill(lastName);
   await page.getByLabel('Sex').selectOption('M');
   await page.getByLabel('Relationship to Victim').selectOption('spouse');
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -131,6 +131,26 @@ test('a submission for yourself sends one request with every answer and no conta
   expect(Object.keys(sent).filter((k) => k.startsWith('Submitter') || k === 'Anonymous')).toEqual([]);
   expect(Object.keys(sent).filter((k) => /ID$/.test(k))).toEqual([]);
   expect(api.strayApiCalls).toEqual([]);
+});
+
+// Burchfield B29: someone reporting for another person may not know the offender's last name.
+test('the offender last name is optional', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+
+  await page.getByRole('button', { name: 'Someone else' }).click();
+  await page.getByRole('button', { name: 'Yes', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fillVictim(page);
+  await expect(page.getByLabel('Last Name')).toHaveAttribute('placeholder', 'Optional');
+  await fillOffender(page, '');
+  await answerAll(page);
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
+  expect(api.submissions[0]).toMatchObject({ OffenderFirstName: 'John', OffenderLastName: '' });
 });
 
 test('an anonymous report for someone else sends no contact details', async ({ page }) => {

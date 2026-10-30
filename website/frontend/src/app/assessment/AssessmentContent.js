@@ -584,9 +584,9 @@ export default function AssessmentContent() {
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
-              <Label htmlFor="offender-last-name" required>Last Name</Label>
+              <Label htmlFor="offender-last-name">Last Name</Label>
               <input id="offender-last-name" type="text" value={offenderLastName} onChange={(e) => setOffenderLastName(e.target.value)}
-                maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
+                placeholder={OPTIONAL_PLACEHOLDER} maxLength={50} autoComplete="off" className={INPUT} />
             </div>
           </div>
 
@@ -649,7 +649,7 @@ export default function AssessmentContent() {
             <button onClick={() => setPhase("victim")} className={SECONDARY}>Back</button>
             <button
               onClick={() => goOn("intro")}
-              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !!offenderDobError
+              disabled={!offenderFirstName.trim() || !offenderSex || !!offenderDobError
                 || !offenderRelationship || (offenderRelationship === "other" && !offenderRelationshipOther.trim())}
               className={PRIMARY}
             >
@@ -740,7 +740,7 @@ export default function AssessmentContent() {
               editLabel="Edit the offender's details"
               onEdit={() => setPhase("offender")}
               fields={[
-                ["Name", `${offenderFirstName.trim()} ${offenderLastName.trim()}`],
+                ["Name", `${offenderFirstName.trim()} ${offenderLastName.trim()}`.trim()],
                 ["Sex", sexLabel(offenderSex)],
                 ["Date of birth", formatDate(offenderDob) ?? "Not given"],
                 ["Relationship to victim", relationshipLabel],

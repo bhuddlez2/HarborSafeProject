@@ -130,6 +130,15 @@ test('the civilian table shows the relationship under the offender too', functio
         ->assertTableColumnHasDescription('OffenderLastName', 'Spouse', $assessment);
 });
 
+test('a civilian offender with no last name shows by first name', function () {
+    $assessment = pestCivilianAssessment(overrides: ['OffenderLastName' => null]);
+
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    Livewire::test(ListCivilianAssessments::class)
+        ->assertTableColumnFormattedStateSet('OffenderLastName', 'Test', $assessment);
+});
+
 test('the civilian table calls the same column "Yes" too', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 

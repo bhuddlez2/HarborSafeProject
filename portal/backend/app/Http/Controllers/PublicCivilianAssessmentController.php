@@ -55,7 +55,7 @@ class PublicCivilianAssessmentController extends Controller
                 'VictimDOB'                       => $input['VictimDOB'] ?? null,
                 'VictimSafePhoneNumber'           => $input['VictimSafePhoneNumber'],
                 'OffenderFirstName'               => $input['OffenderFirstName'],
-                'OffenderLastName'                => $input['OffenderLastName'],
+                'OffenderLastName'                => $input['OffenderLastName'] ?? null,
                 'OffenderSex'                     => $input['OffenderSex'],
                 'OffenderDOB'                     => $input['OffenderDOB'] ?? null,
                 'OffenderVictimRelationship'      => $input['OffenderVictimRelationship'],

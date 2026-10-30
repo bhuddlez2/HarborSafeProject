@@ -99,9 +99,11 @@ final class AssessmentColumns
                 ->label('Victim')
                 ->formatStateUsing($fullName('VictimFirstName'))),
 
+            // Built from the record, not formatted: a civilian offender's last
+            // name may be missing (B29), and Filament skips formatting a null state.
             TextColumn::make('OffenderLastName')
                 ->label('Offender')
-                ->formatStateUsing($fullName('OffenderFirstName'))
+                ->state(fn ($record): string => $fullName('OffenderFirstName')($record->OffenderLastName, $record))
                 ->description(fn ($record): ?string => OffenderRelationship::display(
                     $record->OffenderVictimRelationship,
                     $record->OffenderVictimRelationshipOther,
