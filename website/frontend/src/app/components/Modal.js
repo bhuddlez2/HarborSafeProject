@@ -70,7 +70,7 @@ export default function Modal({ title, subtitle, onClose, children, dismissible 
               ref={closeRef}
               onClick={onClose}
               aria-label="Close"
-              className="ml-4 shrink-0 text-gray-400 hover:text-brand transition-colors"
+              className="tap-target ml-4 shrink-0 text-gray-400 hover:text-brand transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />

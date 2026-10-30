@@ -41,7 +41,7 @@ export default function Footer() {
             hover:text-purple-200 for a lighter purple on hover,
             transition-colors for a smooth color change
             */}
-            <PhoneLink number={CRISIS_CALL} className="flex items-center gap-3 hover:text-purple-200 transition-colors">
+            <PhoneLink number={CRISIS_CALL} className="tap-target flex items-center gap-3 hover:text-purple-200 transition-colors">
               {/* Phone icon */}
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12 19.79 19.79 0 0 1 1.06 3.38 2 2 0 0 1 3.04 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -50,7 +50,7 @@ export default function Footer() {
             </PhoneLink>
 
             {/* Text link, same layout as the phone link, message-square icon from feathericons.com */}
-            <PhoneLink number={CRISIS_TEXT} sms className="flex items-center gap-3 hover:text-purple-200 transition-colors">
+            <PhoneLink number={CRISIS_TEXT} sms className="tap-target flex items-center gap-3 hover:text-purple-200 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
@@ -89,19 +89,19 @@ export default function Footer() {
           */}
           <div className="flex gap-4 md:justify-end">
             {/* Facebook */}
-            <a href="https://www.facebook.com/HarborSafeHouse/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Facebook (opens in new tab)">
+            <a href="https://www.facebook.com/HarborSafeHouse/" target="_blank" rel="noopener noreferrer" className="tap-target hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Facebook (opens in new tab)">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                 <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
               </svg>
             </a>
             {/* TikTok */}
-            <a href="https://www.tiktok.com/@harborsafehouse" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on TikTok (opens in new tab)">
+            <a href="https://www.tiktok.com/@harborsafehouse" target="_blank" rel="noopener noreferrer" className="tap-target hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on TikTok (opens in new tab)">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                 <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
               </svg>
             </a>
             {/* Instagram */}
-            <a href="https://www.instagram.com/harborsafehouse/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Instagram (opens in new tab)">
+            <a href="https://www.instagram.com/harborsafehouse/" target="_blank" rel="noopener noreferrer" className="tap-target hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Instagram (opens in new tab)">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                 <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />

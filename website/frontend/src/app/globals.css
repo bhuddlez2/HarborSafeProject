@@ -105,6 +105,29 @@ at a time.
   50%       { box-shadow: 0 0 0 18px rgba(220, 38, 38, 0); }
 }
 
+/*
+tap-target: grows a small button or link's tappable area to at least 32x32px
+(Burchfield B1) without changing how it looks or moving anything around it.
+An invisible box, centred on the control, catches taps up to 32px across.
+Use it on text-only buttons, icons and standalone links; links inside a
+sentence don't need it. Keep tap-target controls at least 32px apart centre to
+centre so the boxes don't overlap (the carousel dots, which sit closer, are
+real 32px buttons instead).
+*/
+.tap-target {
+  position: relative;
+}
+
+.tap-target::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 2rem);
+  height: max(100%, 2rem);
+  transform: translate(-50%, -50%);
+}
+
 /* Highlight the Get Support service card a home page "Learn more" link jumped to */
 .service-card.is-highlighted {
   animation: target-highlight 3.5s ease-out;

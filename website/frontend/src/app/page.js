@@ -63,7 +63,7 @@ export default function Home() {
               <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 mt-0.5 stroke-red-700 stroke-2 fill-none" aria-hidden="true">
                 <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
+              <a href="tel:911" className="tap-target text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
             </div>
 
             {/*
@@ -107,8 +107,8 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
-              <Link href="/get-support" className="font-semibold text-brand hover:underline">Our services →</Link>
-              <Link href="/resources" className="font-semibold text-brand hover:underline">More resources →</Link>
+              <Link href="/get-support" className="tap-target font-semibold text-brand hover:underline">Our services →</Link>
+              <Link href="/resources" className="tap-target font-semibold text-brand hover:underline">More resources →</Link>
             </div>
           </div>
         </Modal>
@@ -256,7 +256,7 @@ export default function Home() {
                       onClick={() => setOpenTestimonial(testimonial)}
                       aria-haspopup="dialog"
                       aria-label={`Read the full story from ${testimonial.author}`}
-                      className="mt-auto self-start font-semibold text-brand hover:underline cursor-pointer"
+                      className="tap-target mt-auto self-start font-semibold text-brand hover:underline cursor-pointer"
                     >
                       Read full story →
                     </button>
@@ -329,8 +329,8 @@ export default function Home() {
                   <p className="text-sm md:text-base text-gray-600 leading-relaxed">Trained advocates available any time — call or text, day or night, always free.</p>
                   {/* Call and text, matching the card copy and the hotline strip */}
                   <div className="mt-auto pt-6 flex gap-6">
-                    <PhoneLink number={CRISIS_CALL} className="text-sm font-semibold text-brand hover:underline transition-all">Call →</PhoneLink>
-                    <PhoneLink number={CRISIS_TEXT} sms className="text-sm font-semibold text-brand hover:underline transition-all">Text →</PhoneLink>
+                    <PhoneLink number={CRISIS_CALL} className="tap-target text-sm font-semibold text-brand hover:underline transition-all">Call →</PhoneLink>
+                    <PhoneLink number={CRISIS_TEXT} sms className="tap-target text-sm font-semibold text-brand hover:underline transition-all">Text →</PhoneLink>
                   </div>
                 </div>
 

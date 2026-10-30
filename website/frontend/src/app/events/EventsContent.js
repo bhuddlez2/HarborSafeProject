@@ -442,17 +442,22 @@ function EventsCarousel({ events, onOpen }) {
             {ICONS.chevronLeft}
           </button>
 
-          <div className="flex items-center gap-2">
+          {/* Each dot is a 32px button around the small dot it draws, so it's easy to tap (B1) */}
+          <div className="flex items-center">
             {events.map((event, i) => (
               <button
                 key={event.id}
                 onClick={() => jumpTo(i)}
                 aria-label={`Event ${i + 1} of ${count}`}
                 aria-current={i === index}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  i === index ? "bg-brand scale-125" : "bg-purple-200 hover:bg-purple-300"
-                }`}
-              />
+                className="group w-8 h-8 flex items-center justify-center"
+              >
+                <span
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${
+                    i === index ? "bg-brand scale-125" : "bg-purple-200 group-hover:bg-purple-300"
+                  }`}
+                />
+              </button>
             ))}
           </div>
 

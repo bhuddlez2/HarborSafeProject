@@ -120,7 +120,7 @@ function formatDate(typed) {
 }
 
 const EDIT_BUTTON =
-  "text-sm font-semibold text-[#5C0F8B] underline underline-offset-2 rounded px-1 " +
+  "tap-target text-sm font-semibold text-[#5C0F8B] underline underline-offset-2 rounded px-1 " +
   "hover:text-[#4C0B74] focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40";
 
 // One block of the review: a heading, an Edit button, and label/value pairs.
@@ -632,7 +632,7 @@ export default function AssessmentContent() {
                 <button
                   type="button"
                   onClick={loadRelationshipOptions}
-                  className="text-sm font-semibold text-[#5C0F8B] underline focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40 rounded"
+                  className="tap-target text-sm font-semibold text-[#5C0F8B] underline focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40 rounded"
                 >
                   Try again
                 </button>
@@ -853,7 +853,7 @@ export default function AssessmentContent() {
   const answerButtons = (
     <>
       {index > 0 && (
-        <button onClick={handleBack} className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4">
+        <button onClick={handleBack} className="tap-target text-sm text-gray-500 hover:text-gray-900 transition block mb-4">
           ← Previous question
         </button>
       )}

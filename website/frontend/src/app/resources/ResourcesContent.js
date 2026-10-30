@@ -119,7 +119,7 @@ function SubResourceModal({ resource, onClose }) {
                     <p className="text-sm font-medium text-gray-700">{loc.label}</p>
                     {loc.address && <p className="text-xs text-gray-500">{loc.address}</p>}
                     {loc.phone && (
-                      <PhoneLink number={loc.phone} className="text-xs font-semibold text-brand hover:underline" />
+                      <PhoneLink number={loc.phone} className="tap-target text-xs font-semibold text-brand hover:underline" />
                     )}
                   </div>
                 ))}
@@ -128,16 +128,16 @@ function SubResourceModal({ resource, onClose }) {
             <div className="space-y-1">
               <div className="flex flex-wrap gap-4">
                 {sub.phone && (
-                  <PhoneLink number={sub.phone} className="text-xs font-semibold text-brand hover:underline" />
+                  <PhoneLink number={sub.phone} className="tap-target text-xs font-semibold text-brand hover:underline" />
                 )}
                 {sub.phones && sub.phones.map((p, i) => {
                   const { label, number, sms } = splitPhoneLabel(p);
                   return (
-                    <PhoneLink key={i} number={number} sms={sms} prefix={label} className="text-xs font-semibold text-brand hover:underline" />
+                    <PhoneLink key={i} number={number} sms={sms} prefix={label} className="tap-target text-xs font-semibold text-brand hover:underline" />
                   );
                 })}
                 {sub.url && (
-                  <a href={sub.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand hover:underline">
+                  <a href={sub.url} target="_blank" rel="noopener noreferrer" className="tap-target text-xs font-semibold text-brand hover:underline">
                     Visit website →
                   </a>
                 )}
@@ -449,12 +449,12 @@ function ScienceOfHopeContent() {
             phones (iPhone SE) and "Definitely" is wider than one column there
             */}
             <div className="bg-purple-50 rounded-lg py-3">
-              <div className="flex gap-1.5 text-center">
+              <div className="flex gap-1 sm:gap-1.5 text-center">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
                   <strong key={num} className="flex-1 text-brand text-xs">{num}</strong>
                 ))}
               </div>
-              <div className="hidden sm:flex gap-1.5 mt-0.5 text-center text-[9px] leading-tight text-gray-500">
+              <div className="hidden sm:flex gap-1 sm:gap-1.5 mt-0.5 text-center text-[9px] leading-tight text-gray-500">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => {
                   const [first, last] = ANSWER_LABELS[num].split(" ");
                   return (
@@ -480,7 +480,8 @@ function ScienceOfHopeContent() {
                   <p className="mb-2 text-gray-700">
                     <span className="font-semibold text-brand mr-1.5">{q.id}.</span>{q.text}
                   </p>
-                  <div className="flex gap-1.5">
+                  {/* gap-1 on phones keeps each answer at least 32px wide on an iPhone SE (B1); the key above matches */}
+                  <div className="flex gap-1 sm:gap-1.5">
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(val => (
                       <button
                         key={val}
