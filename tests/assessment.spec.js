@@ -67,7 +67,7 @@ async function acceptNotice(page) {
 async function fillVictim(page) {
   await page.getByLabel('First Name').fill('Jane');
   await page.getByLabel('Last Name').fill('Doe');
-  await page.getByLabel('Date of Birth').fill('1990-04-12');
+  await page.getByLabel('Date of Birth').fill('04/12/1990');
   await page.getByLabel('Sex').selectOption('F');
   await page.getByLabel(/phone number/i).fill('(423) 555-0100');
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -180,9 +180,9 @@ test('steps with an asterisk show "* Required", and optional boxes are announced
   await expect(page.getByText(', optional')).toHaveCount(0);
   await fillVictim(page);
 
-  // About the offender: the date of birth shows its own visible "Optional".
+  // About the offender: the date of birth is a typed box, so "Optional" is its ghost text.
   await expect(page.getByText('* Required', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Date of Birth')).toBeVisible();
+  await expect(page.getByLabel('Date of Birth')).toHaveAttribute('placeholder', 'Optional');
   await fillOffender(page);
 
   // The questions intro has no asterisk, so no note.
@@ -301,7 +301,7 @@ test('the safe phone number formats as it is typed and needs all 10 digits', asy
   const phone = page.getByLabel('Safe Phone Number');
   await page.getByLabel('First Name').fill('Jane');
   await page.getByLabel('Last Name').fill('Doe');
-  await page.getByLabel('Date of Birth').fill('1990-04-12');
+  await page.getByLabel('Date of Birth').fill('04/12/1990');
   await page.getByLabel('Sex').selectOption('F');
 
   // Seven digits: formatted, but refused - no area code.
@@ -340,26 +340,56 @@ test('a date of birth must be within the last 125 years', async ({ page }) => {
   await page.getByLabel('Sex').selectOption('F');
   await page.getByLabel('Safe Phone Number').fill('(423) 555-0100');
 
-  // The calendar only offers the range.
   const dob = page.getByLabel('Date of Birth');
-  await expect(dob).toHaveAttribute('min', '1901-10-26');
-  await expect(dob).toHaveAttribute('max', '2026-10-26');
-
   const continueButton = page.getByRole('button', { name: 'Continue' });
 
-  await dob.fill('1901-10-25');
+  await dob.fill('10/25/1901');
   await expect(page.getByText("Date of birth can't be more than 125 years ago.")).toBeVisible();
   await expect(continueButton).toBeDisabled();
 
-  await dob.fill('2026-10-27');
+  await dob.fill('10/27/2026');
   await expect(page.getByText("Date of birth can't be in the future.")).toBeVisible();
   await expect(continueButton).toBeDisabled();
 
   // Both ends are allowed.
-  await dob.fill('1901-10-26');
+  await dob.fill('10/26/1901');
   await expect(continueButton).toBeEnabled();
-  await dob.fill('2026-10-26');
+  await dob.fill('10/26/2026');
   await expect(continueButton).toBeEnabled();
+});
+
+// B28: typed as MM/DD/YYYY, the slashes added while typing; impossible and part-typed dates refused.
+test('a date of birth is typed as MM/DD/YYYY', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+  await page.getByRole('button', { name: 'Myself' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByLabel('First Name').fill('Jane');
+  await page.getByLabel('Last Name').fill('Doe');
+  await page.getByLabel('Sex').selectOption('F');
+  await page.getByLabel('Safe Phone Number').fill('(423) 555-0100');
+
+  const dob = page.getByLabel('Date of Birth');
+  const continueButton = page.getByRole('button', { name: 'Continue' });
+
+  await expect(dob).toHaveAttribute('inputmode', 'numeric');
+  await dob.pressSequentially('03141985');
+  await expect(dob).toHaveValue('03/14/1985');
+  await expect(continueButton).toBeEnabled();
+
+  // A day that doesn't exist.
+  await dob.fill('02/30/1990');
+  await expect(page.getByText('Enter a real date as MM/DD/YYYY.')).toBeVisible();
+  await expect(continueButton).toBeDisabled();
+
+  // Part-typed: no message while typing, one once the box is left.
+  await dob.fill('03/14');
+  await expect(page.getByText('Enter the full date as MM/DD/YYYY.')).toHaveCount(0);
+  await expect(continueButton).toBeDisabled();
+  await page.getByLabel('Last Name').click();
+  await expect(page.getByText('Enter the full date as MM/DD/YYYY.')).toBeVisible();
 });
 
 /*

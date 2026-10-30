@@ -19,7 +19,7 @@ function completedWizardData(array $overrides = []): array
     return [
         'VictimFirstName' => 'Safe',
         'VictimLastName' => 'Check',
-        'VictimDOB' => '1990-01-01',
+        'VictimDOB' => '01/01/1990',
         'VictimSex' => 'F',
         'VictimSafePhoneNumber' => '423-555-0150',
         'OffenderFirstName' => 'Test',
@@ -107,7 +107,7 @@ test('the review screen shows every detail and every answer', function () {
     $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
 
     Livewire::test(NewAssessment::class)
-        ->fillForm(completedWizardData(['OffenderDOB' => '1985-12-25']))
+        ->fillForm(completedWizardData(['OffenderDOB' => '12/25/1985']))
         ->assertSee('Review & Submit')
         ->assertSee(['Safe Check', 'Female', 'Jan 1, 1990', '423-555-0150'])
         ->assertSee(['Test Offender', 'Male', 'Dec 25, 1985', 'Spouse'])
