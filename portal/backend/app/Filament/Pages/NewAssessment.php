@@ -33,6 +33,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Throwable;
 use UnitEnum;
 
@@ -59,6 +60,38 @@ class NewAssessment extends Page
         10 => 'Do they have any involvement in human trafficking?',
         11 => 'Are there children involved who are at risk?',
     ];
+
+    /*
+    The question as the officer reads it aloud: the offender's first name in
+    place of "they", and "you" kept, since the victim is the one listening.
+    Written out per question, word for word the website's wording for a report
+    for oneself (personalTemplates in lethality-questions.js); change both
+    together. A blank first name, or one of only spaces, gives the generic
+    text. Display only: answers are stored by number, and the View pop-up,
+    record views and PDFs keep QUESTIONS. Plain text, printed escaped.
+    */
+    public static function questionText(int $id, ?string $offenderFirstName = null): string
+    {
+        $offender = Str::trim((string) $offenderFirstName);
+
+        if ($offender === '') {
+            return self::QUESTIONS[$id];
+        }
+
+        return match ($id) {
+            1 => "Has {$offender} ever used a weapon against you or threatened you with a weapon?",
+            2 => "Has {$offender} threatened to kill you or your children?",
+            3 => "Has {$offender} ever tried to choke (strangle) you?",
+            4 => "Does {$offender} have a gun or can {$offender} get one easily?",
+            5 => "Is there an active order of protection against {$offender}?",
+            6 => "Is {$offender} a sex offender?",
+            8 => "Is {$offender} a serial abuser?",
+            9 => "Is {$offender} affiliated with gangs or criminal organizations?",
+            10 => "Does {$offender} have any involvement in human trafficking?",
+            // 7 and 11 name no offender.
+            default => self::QUESTIONS[$id],
+        };
+    }
 
     // Wizard step order; the questions step's index is what the view and the
     // theme key off (see resources/css/filament/staff/theme.css). The review's
@@ -283,7 +316,7 @@ class NewAssessment extends Page
                 ...$answers,
                 View::make('filament.pages.new-assessment.questions')
                     ->viewData(fn (): array => [
-                        'questions' => self::QUESTIONS,
+                        'questions' => $this->askedQuestions(),
                         'index' => $this->questionIndex,
                     ]),
             ]);
@@ -296,7 +329,7 @@ class NewAssessment extends Page
                 View::make('filament.pages.new-assessment.review')
                     ->viewData(fn (): array => [
                         'data' => $this->data,
-                        'questions' => self::QUESTIONS,
+                        'questions' => $this->askedQuestions(),
                         'submitError' => $this->submitError,
                         // Where the Edit and Change buttons go.
                         'victimStep' => self::VICTIM_STEP_INDEX,
@@ -309,6 +342,18 @@ class NewAssessment extends Page
                 // check in its own wording.
                 AssessmentInputs::safePhoneConfirmation(),
             ]);
+    }
+
+    // The 11 questions as this form asks them (questionText()), keyed by
+    // RiskIndicator number like QUESTIONS. Read on every render, so a changed
+    // offender name shows on the next step.
+    protected function askedQuestions(): array
+    {
+        $first = $this->data['OffenderFirstName'] ?? null;
+
+        return collect(self::QUESTIONS)
+            ->mapWithKeys(fn (string $text, int $id): array => [$id => static::questionText($id, is_string($first) ? $first : null)])
+            ->all();
     }
 
     protected function heading(string $text): View
@@ -449,7 +494,7 @@ class NewAssessment extends Page
             });
         } catch (Throwable $exception) {
             report($exception);
-            $this->submitError = 'The assessment could not be saved. Please try again.';
+            $this->submitError = 'The assessment could not be submitted. Nothing was saved. Your answers are still here. Please try again.';
 
             return;
         }

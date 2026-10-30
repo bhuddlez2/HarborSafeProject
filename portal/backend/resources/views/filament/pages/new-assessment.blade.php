@@ -14,7 +14,7 @@
                         Assessment submitted
                     </h1>
                     <p class="text-gray-700 text-lg mb-8 leading-relaxed">
-                        The assessment has been saved successfully.
+                        The assessment has been saved to the assessment record.
                     </p>
 
                     <div class="mb-10">

@@ -7,7 +7,7 @@ use Filament\Facades\Filament;
 
 /*
 The police admin's sidebar: one "Police Admin" group holding, in order, Home,
-New assessment, Assessment review, Logs, Officers and Account.
+New assessment, Assessment review, Logs, Analytics, Officers and Account.
 
 Home, New assessment, Assessment review, Logs and Account are shared with
 other roles, which keep their own groups (Officer Portal, Assessments). Those
@@ -33,9 +33,12 @@ final class PoliceAdminNavigation
     // Logs: views, downloads and edits in one list (LogResource).
     public const LOGS = 40;
 
-    public const OFFICERS = 50;
+    // Analytics for the police admin's own agency (App\Filament\Pages\AgencyAnalytics, #67).
+    public const ANALYTICS = 50;
 
-    public const ACCOUNT = 60;
+    public const OFFICERS = 60;
+
+    public const ACCOUNT = 70;
 
     // By users.role, like every other role check in the panel.
     public static function applies(): bool

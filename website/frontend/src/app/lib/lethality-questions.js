@@ -16,9 +16,11 @@ export const lethalityQuestions = [
 
 /*
 The same questions with the victim's first name in place of "you" and the
-offender's name in place of "they" (#33), for the civilian assessment's screens
-only. What is submitted and stored is the answer to each question by number,
-so staff screens, PDFs and the officer wizard keep the wording above.
+offender's first name in place of "they" (#33; first names only, never a last
+name), for the civilian assessment's screens only. What is submitted and stored is the answer to each question by number,
+so staff screens and PDFs keep the wording above. The officer wizard asks with
+the offender's first name only, keeping "you", word for word the "Myself"
+wording here: NewAssessment::questionText(). Change the two together.
 
 Each template is written out in full, with its own words for a missing name,
 so every mix reads correctly: `victim` and `offender` are each a name or null.

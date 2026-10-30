@@ -503,3 +503,49 @@ function pestStoredPdf(): App\Models\ContentFile
 
     return App\Models\ContentFile::storeUpload(new Illuminate\Http\Testing\File(staffRunToken().'-issue.pdf', $resource));
 }
+
+/*
+Black-and-white PDFs (#44): shared by PdfBlackAndWhiteTest and
+PoliceAdminAnalyticsTest.
+*/
+
+// The colours the panel uses on screen, none of which may reach a PDF.
+const PDF_SCREEN_COLOURS = [
+    '#5c0f8b', '#9068b8', '#cfb7e2', '#eadcf5', '#a77fc6', '#c3a6da', '#ede3f5', '#f5f0fb', '#c9c1d6',
+    '#ebdff4', '#3b2a4d', '#d8cfe3', '#f3f0f7', '#1b1726',
+    '#6b7280', '#374151', '#4b5563', '#9ca3af', '#e5e7eb', '#f3f4f6', '#f9fafb',
+    '#b91c1c', '#fee2e2', '#fef2f2', '#fff5f5', '#b45309', '#fffbeb', '#15803d', '#f0fdf4',
+    '#f59e0b', '#92400e',
+];
+
+// Fails unless $html uses no colour but black and white.
+function expectBlackAndWhite(string $html): void
+{
+    // Hex colours; "&#039;" and the like are escaped characters, not colours.
+    preg_match_all('/(?<![&\w])#([0-9a-fA-F]{3,8})\b/', $html, $hex);
+
+    $others = collect($hex[1])
+        ->map(fn (string $value): string => strtolower($value))
+        ->reject(fn (string $value): bool => in_array($value, ['000', '000000', 'fff', 'ffffff'], true))
+        ->unique()
+        ->values()
+        ->all();
+
+    expect($others)->toBe([], 'Colours other than black and white: #'.implode(', #', $others));
+
+    expect($html)->not->toMatch('/\b(rgba?|hsla?)\s*\(/i');
+
+    // Named colours in the declarations that carry one: color, background,
+    // and border with its sides (not border-collapse, -spacing or -radius).
+    preg_match_all('/(?<![\w-])(?:color|background(?:-color)?|border(?:-(?:top|right|bottom|left))?(?:-color)?)\s*:\s*([^;}"]+)/i', $html, $declarations);
+
+    foreach ($declarations[1] as $value) {
+        $words = preg_replace('/#[0-9a-fA-F]{3,8}\b|[\d.]+(pt|px|mm|em|%)?|\b(solid|none|transparent|black|white|inherit|dashed|dotted)\b/i', '', $value);
+
+        expect(trim($words))->toBe('', "A colour declaration other than black and white: {$value}");
+    }
+
+    foreach (PDF_SCREEN_COLOURS as $colour) {
+        expect(stripos($html, $colour))->toBeFalse("Screen colour {$colour} in a PDF");
+    }
+}
