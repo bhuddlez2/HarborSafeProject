@@ -1,6 +1,6 @@
 import { Montserrat, Nunito } from "next/font/google";
 import Navbar from "./components/Navbar";
-import ExitButton from "./components/ExitButton";
+import ExitButton, { SAFE_EXIT_SCRIPT } from "./components/ExitButton";
 import SafetyModal from "./components/SafetyModal";
 import Footer from "./components/Footer";
 import "./globals.css";
@@ -35,10 +35,13 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${montserrat.variable} ${nunito.variable} h-full antialiased light`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SAFE_EXIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         {/*
-        Navbar and ExitButton are client components imported here so layout.js can stay a server component,
-        it renders on every page automatically since layout.js wraps all routes
+        Navbar is a client component imported here so layout.js can stay a server component,
+        it and ExitButton render on every page automatically since layout.js wraps all routes
         */}
         <Navbar />
         <ExitButton />

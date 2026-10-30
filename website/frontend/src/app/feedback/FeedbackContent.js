@@ -173,10 +173,7 @@ export default function FeedbackContent() {
   return (
     <main>
 
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Share Your Feedback</h1>
         <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
           Tell us how one of our services went.
@@ -185,7 +182,7 @@ export default function FeedbackContent() {
 
       <CrisisHotlineStrip />
 
-      <section className="py-16 px-4 bg-white">
+      <section className="pt-12 md:pt-16 pb-16 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
           <p className="text-gray-700 leading-relaxed text-center mb-10">
             If you have used one of our services, we would like to know how it went. All feedback is

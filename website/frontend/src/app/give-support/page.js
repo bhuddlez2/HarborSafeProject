@@ -22,11 +22,8 @@ export default function GiveSupport() {
   return (
     <main>
 
-      {/* Hero */}
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      {/* Hero, trimmed to match Get Support (B18) so more of the page reaches the first screen */}
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Your Kindness Matters</h1>
         <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
           There are many ways to show up for survivors. Thank you for thinking of us.
@@ -37,7 +34,7 @@ export default function GiveSupport() {
       <CrisisHotlineStrip />
 
       {/* Intro, left-aligned on phones where a long centered paragraph is hard to read, centered from sm up */}
-      <section className="py-20 px-4 bg-white">
+      <section className="pt-12 md:pt-16 pb-20 px-4 bg-white">
         <div className="max-w-5xl mx-auto text-left sm:text-center">
           <p className="text-gray-700 leading-relaxed text-lg">
             We are so thankful you want to learn more about HSHAC and the ways you and your family can get involved.
@@ -46,7 +43,7 @@ export default function GiveSupport() {
             strong message to every individual that no one should face domestic abuse or sexual assault alone and
             that they are loved. From the colors we use to the furniture we choose, every aspect conveys that they
             are safe and matter. Due to space constraints at our location, we can only accept items on the list
-            below, monetary gifts or gift cards. Please <Link replace href="/contact" className="text-brand font-semibold hover:underline">contact us</Link> to ask about other donations. Thank you for
+            below, monetary gifts or gift cards. Please <Link href="/contact" className="text-brand font-semibold hover:underline">contact us</Link> to ask about other donations. Thank you for
             thinking of us.
           </p>
         </div>
@@ -80,7 +77,7 @@ export default function GiveSupport() {
                   rel="noopener noreferrer"
                   className="w-full bg-brand text-white text-center py-4 rounded-lg font-semibold text-lg hover:bg-purple-800 transition-all"
                 >
-                  Support Financially
+                  Support Financially<span className="sr-only"> (opens in new tab)</span>
                 </a>
                 <a
                   href="https://www.amazon.com/registries/gl/guest-view/2PIA67RLDWUA5"
@@ -88,7 +85,7 @@ export default function GiveSupport() {
                   rel="noopener noreferrer"
                   className="w-full bg-brand text-white text-center py-4 rounded-lg font-semibold text-lg hover:bg-purple-800 transition-all"
                 >
-                  Amazon Wishlist
+                  Amazon Wishlist<span className="sr-only"> (opens in new tab)</span>
                 </a>
               </div>
 

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Modal from "../components/Modal";
+import PhoneLink, { withPhoneLinks } from "../components/PhoneLink";
+import { CRISIS_CALL, CRISIS_TEXT } from "../lib/phone";
 import { generalCategory } from "./general";
 import { legalCategory } from "./legal";
 import { thingsToKnowCategory } from "./things-to-know";
@@ -60,10 +62,25 @@ const ICONS = {
   ),
   "science-of-hope": (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      {/* heart icon, feathericons.com */}
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   ),
 };
+
+/*
+The resources data writes labelled numbers as one string ("Voice 423-476-3886",
+"Text 423-715-9614", "Intake Line: 423-472-0769"). splitPhoneLabel separates the
+label from the number, says "Call" for "Voice" to match the rest of the site, and
+makes "Text" numbers tap-to-text
+*/
+function splitPhoneLabel(entry) {
+  const firstDigit = entry.search(/\d/);
+  const label = entry.slice(0, firstDigit).trim();
+  const sms = /^text/i.test(label);
+  const shown = /^voice$/i.test(label) ? "Call" : label;
+  return { label: shown ? `${shown} ` : "", number: entry.slice(firstDigit), sms };
+}
 
 // ── Modal variants ────────────────────────────────────────────────────────────
 
@@ -102,9 +119,7 @@ function SubResourceModal({ resource, onClose }) {
                     <p className="text-sm font-medium text-gray-700">{loc.label}</p>
                     {loc.address && <p className="text-xs text-gray-500">{loc.address}</p>}
                     {loc.phone && (
-                      <a href={`tel:${loc.phone.replace(/\D/g, "")}`} className="text-xs font-semibold text-brand hover:underline">
-                        {loc.phone}
-                      </a>
+                      <PhoneLink number={loc.phone} className="text-xs font-semibold text-brand hover:underline" />
                     )}
                   </div>
                 ))}
@@ -113,17 +128,12 @@ function SubResourceModal({ resource, onClose }) {
             <div className="space-y-1">
               <div className="flex flex-wrap gap-4">
                 {sub.phone && (
-                  <a href={`tel:${sub.phone.replace(/\D/g, "")}`} className="text-xs font-semibold text-brand hover:underline">
-                    {sub.phone}
-                  </a>
+                  <PhoneLink number={sub.phone} className="text-xs font-semibold text-brand hover:underline" />
                 )}
                 {sub.phones && sub.phones.map((p, i) => {
-                  const isSms = p.toLowerCase().startsWith("text");
-                  const digits = p.replace(/\D/g, "");
+                  const { label, number, sms } = splitPhoneLabel(p);
                   return (
-                    <a key={i} href={`${isSms ? "sms" : "tel"}:${digits}`} className="text-xs font-semibold text-brand hover:underline">
-                      {p}
-                    </a>
+                    <PhoneLink key={i} number={number} sms={sms} prefix={label} className="text-xs font-semibold text-brand hover:underline" />
                   );
                 })}
                 {sub.url && (
@@ -174,31 +184,32 @@ function InfoModal({ resource, onClose }) {
               {section.subheading && (
                 <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">{section.subheading}</h4>
               )}
+              {/* withPhoneLinks makes any number written in this text tap-to-call */}
               {section.intro && (
-                <p className="text-sm text-gray-700 leading-relaxed mb-2">{section.intro}</p>
+                <p className="text-sm text-gray-700 leading-relaxed mb-2">{withPhoneLinks(section.intro)}</p>
               )}
               {section.paragraphs && section.paragraphs.map((p, j) => (
-                <p key={j} className="text-sm text-gray-700 leading-relaxed mb-2">{p}</p>
+                <p key={j} className="text-sm text-gray-700 leading-relaxed mb-2">{withPhoneLinks(p)}</p>
               ))}
               {section.bullets && section.bullets.length > 0 && (
                 <ul className="space-y-1.5">
                   {section.bullets.map((b, j) => (
                     <li key={j} className="flex items-start gap-1.5 text-sm text-gray-600">
                       <span className="text-brand mt-0.5 shrink-0" aria-hidden="true">•</span>
-                      <span>{b}</span>
+                      <span>{withPhoneLinks(b)}</span>
                     </li>
                   ))}
                 </ul>
               )}
               {section.outro && (
-                <p className="text-sm text-gray-700 leading-relaxed mt-2">{section.outro}</p>
+                <p className="text-sm text-gray-700 leading-relaxed mt-2">{withPhoneLinks(section.outro)}</p>
               )}
             </div>
           );
         })}
         {resource.disclaimer && (
           <div className="px-6 py-5 border-t-2 border-purple-300">
-            <p className="text-xs text-gray-400 leading-relaxed italic">{resource.disclaimer}</p>
+            <p className="text-xs text-gray-400 leading-relaxed italic">{withPhoneLinks(resource.disclaimer, "underline")}</p>
           </div>
         )}
       </div>
@@ -219,7 +230,7 @@ function ImageModal({ resource, onClose }) {
           className="w-full h-auto rounded-lg"
         />
         {resource.disclaimer && (
-          <p className="text-xs text-gray-400 leading-relaxed italic mt-4">{resource.disclaimer}</p>
+          <p className="text-xs text-gray-400 leading-relaxed italic mt-4">{withPhoneLinks(resource.disclaimer, "underline")}</p>
         )}
       </div>
     </Modal>
@@ -282,9 +293,42 @@ function getHopeLevel(score) {
   return              { label: "High Hope",      color: "text-green-600", bg: "bg-green-50 border-green-200" };
 }
 
+/*
+"Take the Hope Test" button, shown above and below the reading (B20); both open
+the same pop-up
+*/
+function HopeTestButton({ onClick }) {
+  return (
+    <div className="text-center">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-haspopup="dialog"
+        className="inline-flex items-center gap-2 bg-brand text-white px-6 py-3 rounded-xl font-semibold text-base hover:bg-purple-800 transition-colors"
+      >
+        Take the Hope Test
+      </button>
+    </div>
+  );
+}
+
 function ScienceOfHopeContent() {
+  /*
+  answers and showResults live here rather than in the pop-up, so closing it
+  partway (X or a click outside) keeps the answers until the visitor leaves the
+  page or presses Retake
+  */
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
+
+  // Brings the results into view inside the pop-up once they're calculated
+  const resultsRef = useRef(null);
+  useEffect(() => {
+    if (!showResults) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resultsRef.current?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "instant" : "smooth" });
+  }, [showResults]);
 
   const answered = Object.keys(answers).length;
   const allAnswered = answered === HOPE_QUESTIONS.length;
@@ -343,6 +387,8 @@ function ScienceOfHopeContent() {
   return (
     <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
 
+      <HopeTestButton onClick={() => setTestOpen(true)} />
+
       {/* Gentle Reminder */}
       <div className="bg-purple-50 border border-purple-100 rounded-xl p-5 text-center">
         <p className="text-xs font-bold text-brand uppercase tracking-wider mb-3">A Gentle Reminder</p>
@@ -373,111 +419,142 @@ function ScienceOfHopeContent() {
 
       <p>When hope feels low you might notice that you feel stuck, tired, overwhelmed, have difficulty making plans, or feel like you want to give up. These are common responses to stress and trauma, not personal failures. Hope grows slowly in small and steady ways. Notice your effort and give yourself credit for trying. Progress, no matter how little, is still progress. You don&apos;t have to build hope alone — borrowing hope by talking with an advocate, counselor, case manager, or trusted person will grow your hope as well.</p>
 
-      <p>You can measure your hope using the Adult Hope Scale below. It can be very helpful in determining if you need help with pathways or willpower to meet your goals.</p>
+      <p>You can measure your hope using the Adult Hope Scale. It can be very helpful in determining if you need help with pathways or willpower to meet your goals.</p>
 
-      {/* Adult Hope Scale */}
-      <div className="border-t-2 border-purple-200 pt-6 space-y-6">
-        <div className="text-center">
-          <p className="text-base font-bold text-brand uppercase tracking-wide">The Adult Hope Scale</p>
-          <p className="text-xs text-gray-500 mt-1">Read each sentence carefully and select the number that best describes you in most situations. There are no right or wrong answers.</p>
-        </div>
-
-        <div className="grid grid-cols-8 gap-1 bg-purple-50 rounded-lg px-3 py-3 text-center">
-          {[
-            [1, "Definitely", "False"],
-            [2, "Mostly",     "False"],
-            [3, "Somewhat",   "False"],
-            [4, "Slightly",   "False"],
-            [5, "Slightly",   "True" ],
-            [6, "Somewhat",   "True" ],
-            [7, "Mostly",     "True" ],
-            [8, "Definitely", "True" ],
-          ].map(([num, line1, line2]) => (
-            <div key={num} className="flex flex-col items-center gap-0.5">
-              <strong className="text-brand text-xs">{num}</strong>
-              <span className="text-[9px] leading-none text-gray-500">{line1}</span>
-              <span className="text-[9px] leading-none text-gray-500">{line2}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-5">
-          {HOPE_QUESTIONS.map((q) => (
-            <div key={q.id}>
-              <p className="mb-2 text-gray-700">
-                <span className="font-semibold text-brand mr-1.5">{q.id}.</span>{q.text}
-              </p>
-              <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map(val => (
-                  <button
-                    key={val}
-                    onClick={() => handleAnswer(q.id, val)}
-                    className={`flex-1 h-9 rounded-lg text-sm font-bold transition-colors ${
-                      answers[q.id] === val
-                        ? "bg-brand text-white shadow-sm"
-                        : "bg-gray-100 text-gray-500 hover:bg-purple-100 hover:text-brand"
-                    }`}
-                  >
-                    {val}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={() => setShowResults(true)}
-          disabled={!allAnswered}
-          className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${
-            allAnswered
-              ? "bg-brand text-white hover:bg-purple-800"
-              : "bg-gray-100 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          {allAnswered ? "Calculate My Score" : `${answered} of 8 answered`}
-        </button>
-
-        {showResults && level && (
-          <div className={`rounded-xl border p-5 space-y-4 ${level.bg}`}>
-            <p className={`text-center text-lg font-bold ${level.color}`}>
-              {level.label} — {total} / 64
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500 mb-0.5">Pathways Score</p>
-                <p className="text-2xl font-bold text-brand">{pathways}</p>
-                <p className="text-[10px] text-gray-400">items 1, 3, 4, 5 — out of 32</p>
-              </div>
-              <div className="bg-white rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500 mb-0.5">Willpower Score</p>
-                <p className="text-2xl font-bold text-brand">{willpower}</p>
-                <p className="text-[10px] text-gray-400">items 2, 6, 7, 8 — out of 32</p>
-              </div>
-            </div>
-            <div className="text-xs text-gray-600 bg-white rounded-lg p-3">
-              <p className="font-semibold text-gray-700 mb-1">Score Ranges</p>
-              <p>Low Hope: 8–16 · Slight Hope: 17–39 · Moderate Hope: 40–55 · High Hope: 56–64</p>
-            </div>
-            <button
-              onClick={printResults}
-              className="w-full py-2 rounded-lg text-xs font-semibold bg-brand text-white hover:bg-purple-800 transition-colors"
-            >
-              Print / Save as PDF
-            </button>
-            <button
-              onClick={() => { setAnswers({}); setShowResults(false); }}
-              className="w-full py-2 rounded-lg text-xs font-semibold text-brand border border-brand/30 hover:bg-brand hover:text-white transition-colors"
-            >
-              Retake Assessment
-            </button>
-          </div>
-        )}
-      </div>
+      <HopeTestButton onClick={() => setTestOpen(true)} />
 
       <p className="text-xs text-gray-400 leading-relaxed italic border-t border-gray-100 pt-4">
         Snyder, C. R., Harris, C., Anderson, J. R., Holeran, S. A., Irving, L. M., Sigmon, S. T., et al. (1991). The will and the ways: Development and validation of an individual-differences measure of hope. <em>Journal of Personality and Social Psychology, 60</em>, 570–585.
       </p>
+
+      {/* Adult Hope Scale, in a pop-up (B20) */}
+      {testOpen && (
+        <Modal
+          title="The Adult Hope Scale"
+          subtitle="Read each sentence carefully and select the number that best describes you in most situations. There are no right or wrong answers."
+          onClose={() => setTestOpen(false)}
+        >
+          <div className="p-6 space-y-6 text-sm text-gray-700 leading-relaxed">
+
+            {/*
+            Key: the numbers 1-8, with words only at the two ends, as the in-between
+            labels overlapped on small phones (iPhone SE); the answer buttons still
+            carry every label for screen readers
+            */}
+            {/*
+            No side padding and the same flex-1/gap-1.5 row as the answer buttons below,
+            so each number sits exactly over its button. From sm up every number has its
+            label stacked under it; below sm only the two ends are labelled, flush left
+            under 1 and flush right under 8, as the in-between labels overlapped on small
+            phones (iPhone SE) and "Definitely" is wider than one column there
+            */}
+            <div className="bg-purple-50 rounded-lg py-3">
+              <div className="flex gap-1.5 text-center">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                  <strong key={num} className="flex-1 text-brand text-xs">{num}</strong>
+                ))}
+              </div>
+              <div className="hidden sm:flex gap-1.5 mt-0.5 text-center text-[9px] leading-tight text-gray-500">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => {
+                  const [first, last] = ANSWER_LABELS[num].split(" ");
+                  return (
+                    <span key={num} className="flex-1">{first}<br />{last}</span>
+                  );
+                })}
+              </div>
+              <div className="flex sm:hidden justify-between mt-1 px-2 text-[10px] leading-tight text-gray-500">
+                {[ANSWER_LABELS[1], ANSWER_LABELS[8]].map((label, i) => {
+                  const [first, last] = label.split(" ");
+                  return (
+                    <span key={label} className={i === 0 ? "text-left" : "text-right"}>
+                      {first}<br />{last}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              {HOPE_QUESTIONS.map((q) => (
+                <div key={q.id}>
+                  <p className="mb-2 text-gray-700">
+                    <span className="font-semibold text-brand mr-1.5">{q.id}.</span>{q.text}
+                  </p>
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(val => (
+                      <button
+                        key={val}
+                        onClick={() => handleAnswer(q.id, val)}
+                        aria-label={`${val}, ${ANSWER_LABELS[val]}`}
+                        aria-pressed={answers[q.id] === val}
+                        className={`flex-1 h-9 rounded-lg text-sm font-bold transition-colors ${
+                          answers[q.id] === val
+                            ? "bg-brand text-white shadow-sm"
+                            : "bg-gray-100 text-gray-500 hover:bg-purple-100 hover:text-brand"
+                        }`}
+                      >
+                        {val}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowResults(true)}
+              disabled={!allAnswered}
+              className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${
+                allAnswered
+                  ? "bg-brand text-white hover:bg-purple-800"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              {allAnswered ? "Calculate My Score" : `${answered} of 8 answered`}
+            </button>
+
+            {showResults && level && (
+              <div ref={resultsRef} className={`rounded-xl border p-5 space-y-4 ${level.bg}`}>
+                <p className={`text-center text-lg font-bold ${level.color}`}>
+                  {level.label} — {total} / 64
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-0.5">Pathways Score</p>
+                    <p className="text-2xl font-bold text-brand">{pathways}</p>
+                    <p className="text-[10px] text-gray-400">items 1, 3, 4, 5 — out of 32</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-0.5">Willpower Score</p>
+                    <p className="text-2xl font-bold text-brand">{willpower}</p>
+                    <p className="text-[10px] text-gray-400">items 2, 6, 7, 8 — out of 32</p>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-600 bg-white rounded-lg p-3">
+                  <p className="font-semibold text-gray-700 mb-1">Score Ranges</p>
+                  <p>Low Hope: 8–16 · Slight Hope: 17–39 · Moderate Hope: 40–55 · High Hope: 56–64</p>
+                </div>
+                <button
+                  onClick={printResults}
+                  className="w-full py-2 rounded-lg text-xs font-semibold bg-brand text-white hover:bg-purple-800 transition-colors"
+                >
+                  Print / Save as PDF
+                </button>
+                <button
+                  onClick={() => { setAnswers({}); setShowResults(false); }}
+                  className="w-full py-2 rounded-lg text-xs font-semibold text-brand border border-brand/30 hover:bg-brand hover:text-white transition-colors"
+                >
+                  Retake Assessment
+                </button>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-400 leading-relaxed italic border-t border-gray-100 pt-4">
+              Snyder, C. R., et al. (1991). The will and the ways: Development and validation of an individual-differences measure of hope. <em>Journal of Personality and Social Psychology, 60</em>, 570–585.
+            </p>
+          </div>
+        </Modal>
+      )}
 
     </div>
   );
@@ -560,9 +637,9 @@ export default function ResourcesContent() {
           <p className="text-gray-600 text-center leading-relaxed mb-12">
             Select a category below to explore available resources. If you need immediate
             assistance, our crisis hotline is available 24 hours a day, 7 days a week: call{" "}
-            <a href="tel:423-476-3886" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 476-3886</a>{" "}
+            <PhoneLink number={CRISIS_CALL} className="font-semibold text-brand hover:underline" />{" "}
             or text{" "}
-            <a href="sms:423-715-9614" className="whitespace-nowrap font-semibold text-brand hover:underline">(423) 715-9614</a>.
+            <PhoneLink number={CRISIS_TEXT} sms className="font-semibold text-brand hover:underline" />.
           </p>
 
           <div className="flex flex-col gap-3">

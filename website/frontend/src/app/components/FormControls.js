@@ -24,6 +24,9 @@ assessment:
     contact/ContactContent.js).
 A form with any asterisk shows RequiredNote just above its submit button.
 */
+import PhoneLink from "./PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
+
 export const OPTIONAL_PLACEHOLDER = "Optional";
 
 export function Field({ id, label, hint, error, requirement = "optional", children }) {
@@ -110,8 +113,8 @@ export function FormSection({ status, children }) {
   if (status === "error") {
     return (
       <FormMessage tone="error">
-        We could not load this form just now. Please call or text our crisis line at
-        (423) 476-3886, or try again in a few minutes.
+        We could not load this form just now. Please call or text our crisis line at{" "}
+        <PhoneLink number={CRISIS_CALL} className="underline" />, or try again in a few minutes.
       </FormMessage>
     );
   }
