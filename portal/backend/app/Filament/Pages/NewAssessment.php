@@ -52,7 +52,7 @@ class NewAssessment extends Page
     public const QUESTIONS = [
         1 => 'Have they ever used a weapon against you or threatened you with a weapon?',
         2 => 'Have they threatened to kill you or your children?',
-        3 => 'Have they ever tried to choke (strangle) you?',
+        3 => 'Have they ever tried to choke or strangle you?',
         4 => 'Do they have a gun or can they get one easily?',
         5 => 'Do they have an active order of protection against them?',
         6 => 'Are they a sex offender?',
@@ -83,7 +83,7 @@ class NewAssessment extends Page
         return match ($id) {
             1 => "Has {$offender} ever used a weapon against you or threatened you with a weapon?",
             2 => "Has {$offender} threatened to kill you or your children?",
-            3 => "Has {$offender} ever tried to choke (strangle) you?",
+            3 => "Has {$offender} ever tried to choke or strangle you?",
             4 => "Does {$offender} have a gun or can {$offender} get one easily?",
             5 => "Is there an active order of protection against {$offender}?",
             6 => "Is {$offender} a sex offender?",
