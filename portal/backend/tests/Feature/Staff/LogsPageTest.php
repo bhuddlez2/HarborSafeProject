@@ -183,8 +183,10 @@ test('the When column shows the row\'s own time, in Eastern', function () {
 
     // 12:00 UTC is 8:00 am Eastern in May.
     Livewire::test(ListLogs::class)
-        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 2, 2026 8:00:00 am', $w->editA)
-        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 1, 2026 8:00:00 am', $w->viewA);
+        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 2, 2026', $w->editA)
+        ->assertTableColumnHasDescription('OccurredAt', '8:00:00 am', $w->editA)
+        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 1, 2026', $w->viewA)
+        ->assertTableColumnHasDescription('OccurredAt', '8:00:00 am', $w->viewA);
 });
 
 test('Show narrows the merged list to the kinds chosen', function (array $show, array $expected) {

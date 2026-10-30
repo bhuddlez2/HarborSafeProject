@@ -12,6 +12,7 @@ use Closure;
 use Illuminate\Support\Carbon;
 use App\Models\Event;
 use App\Models\EventCategory;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -336,18 +337,17 @@ class EventResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        // Cards on a phone, stacked buttons on narrower screens (B37).
+        return RecordCards::apply($table)
             ->columns([
-                TextColumn::make('title')
+                RecordCards::title(TextColumn::make('title')
                     ->searchable()
                     ->limit(40)
-                    ->weight('semibold'),
+                    ->weight('semibold')),
 
-                TextColumn::make('starts_at')
+                RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('starts_at')
                     ->label('Starts')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Event::DISPLAY_TIMEZONE)
-                    ->sortable(),
+                    ->sortable(), timezone: Event::DISPLAY_TIMEZONE)),
 
                 TableAlignment::symbol(TextColumn::make('category.Name')
                     ->label('Category')

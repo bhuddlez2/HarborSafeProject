@@ -194,14 +194,11 @@ class ServiceFeedbackResource extends Resource
         // entered themselves; website forms show nothing.
         return RecordCards::apply($table)
             ->columns([
-                RecordCards::meta(TextColumn::make('SubmissionDate')
+                RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->description(fn (ServiceFeedback $record): ?HtmlString => $record->Source === ServiceFeedback::SOURCE_STAFF
+                    ->sortable(), tag: fn (ServiceFeedback $record): ?HtmlString => $record->Source === ServiceFeedback::SOURCE_STAFF
                         ? RecordCards::staffTag()
-                        : null)
-                    ->sortable()),
+                        : null)),
 
                 RecordCards::title(TextColumn::make('service.Name')
                     ->label('Service')

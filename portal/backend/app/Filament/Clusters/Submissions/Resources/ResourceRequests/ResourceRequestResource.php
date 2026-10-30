@@ -10,7 +10,6 @@ use App\Models\County;
 use App\Models\Resource as ResourceType;
 use App\Models\ResourceRequestForm;
 use App\Support\RecordPdf;
-use App\Support\Timezones;
 use App\Filament\Tables\EncryptedColumnSearch;
 use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
@@ -116,14 +115,11 @@ class ResourceRequestResource extends Resource
         // entered; website forms show nothing.
         return RecordCards::apply($table)
             ->columns([
-                RecordCards::meta(TextColumn::make('SubmissionDate')
+                RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->description(fn (ResourceRequestForm $record): ?HtmlString => $record->Source === ResourceRequestForm::SOURCE_STAFF
+                    ->sortable(), tag: fn (ResourceRequestForm $record): ?HtmlString => $record->Source === ResourceRequestForm::SOURCE_STAFF
                         ? RecordCards::staffTag()
-                        : null)
-                    ->sortable()),
+                        : null)),
 
                 // The email in grey under the name. The search box finds
                 // either.

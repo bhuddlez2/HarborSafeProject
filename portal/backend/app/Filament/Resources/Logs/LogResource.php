@@ -11,6 +11,7 @@ use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Filament\Tables\ChangeLogFilters;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use App\Models\AssessmentAccessLog;
 use App\Models\LawEnforcementAssessment;
@@ -156,11 +157,9 @@ class LogResource extends Resource
     {
         return ChangeLogFilters::apply($table
             ->columns([
-                TextColumn::make('OccurredAt')
+                RecordCards::dateAndTime(TextColumn::make('OccurredAt')
                     ->label('When')
-                    ->dateTime('M j, Y g:i:s a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
+                    ->sortable(), time: 'g:i:s a'),
 
                 // The only searchable column: the person's name, never
                 // anything from the forms or their ids.
