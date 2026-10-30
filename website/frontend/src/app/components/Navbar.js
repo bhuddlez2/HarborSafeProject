@@ -104,12 +104,6 @@ export default function Navbar() {
               <span className={navClass(link.href)}>{link.label}</span>
             </Link>
           ))}
-          {/* Divider between navigation links and language switcher */}
-          <div className="h-8 w-px bg-white mx-2 xl:mx-3"></div>
-          {/* Language switcher */}
-          <a className="text-white text-sm hover:underline transition-all">
-            En Español
-          </a>
         </div>
 
         {/*
@@ -157,12 +151,6 @@ export default function Navbar() {
               <span className={navClass(link.href)}>{link.label}</span>
             </Link>
           ))}
-          {/* Divider */}
-          <div className="h-px bg-purple-700 my-1"></div>
-          {/* Language switcher */}
-          <a className="text-white text-sm hover:underline transition-all">
-            En Español
-          </a>
         </div>
       )}
     </div>
