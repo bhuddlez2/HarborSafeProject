@@ -10,7 +10,8 @@ use App\Support\Analytics\DateRange;
 /*
 The tiles and cards of Analytics' two assessment tabs, from
 AssessmentStats::officer() or ::civilian(). The officer tab adds Edited and
-By agency; the civilian one adds Left contact details. Notes under a card's
+By agency; the civilian one adds Left contact details. A police admin's own
+page (AgencyAnalytics) is the officer tab without By agency ($byAgency). Notes under a card's
 title only where the title alone doesn't say it (AS, 2026-10-21).
 */
 final class AssessmentSections
@@ -33,7 +34,7 @@ final class AssessmentSections
 
     // $filters is AnalyticsPage::filters(): a breakdown chart is left out
     // while its own filter is set, since it would be one bar (FT32).
-    public static function build(array $stats, DateRange $range, bool $isOfficer, array $filters = []): array
+    public static function build(array $stats, DateRange $range, bool $isOfficer, array $filters = [], bool $byAgency = true): array
     {
         $filtered = fn (string $name): bool => ($filters[$name] ?? null) !== null;
 
@@ -70,14 +71,17 @@ final class AssessmentSections
             ]),
         ];
 
-        if ($isOfficer && ! $filtered('agency')) {
+        $agencyChart = $isOfficer && $byAgency && ! $filtered('agency');
+
+        if ($agencyChart) {
             $cards[] = Chart::horizontal('By Agency', Chart::items($stats['agencies']), 'assessments', [
                 'note' => 'Counted by each officer’s current agency.',
             ]);
         }
 
+        // Full width when it would otherwise sit alone in a row.
         if (! $filtered('relationship')) {
-            $cards[] = Chart::horizontal('Relationship to Victim', Chart::items($stats['relationships']), 'assessments', ['wide' => ! $isOfficer]);
+            $cards[] = Chart::horizontal('Relationship to Victim', Chart::items($stats['relationships']), 'assessments', ['wide' => ! $agencyChart]);
         }
 
         if (! $filtered('victimSex')) {

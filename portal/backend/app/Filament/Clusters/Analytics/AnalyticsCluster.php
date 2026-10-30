@@ -21,6 +21,7 @@ sidebar item in its own "Reports" group, its four tabs across the top:
   4. Follow-ups                  (/analytics/follow-ups)           admin, super admin
 
 Officers and police admins never reach it: it counts every agency together.
+Police admins have their own agency's page instead (App\Filament\Pages\AgencyAnalytics).
 Each tab gates itself; /analytics opens the first tab the user may open
 (Cluster::mount()), so a secretary lands on tab 3. The shared date range and
 filter live in App\Filament\Analytics\AnalyticsPage.

@@ -221,13 +221,13 @@ export default function AssessmentContent() {
   const current = lethalityQuestions[index];
   const identified = forWhom === "other" && anonymous === false;
 
-  // The names the questions are asked with (#33): the offender's as entered, and the
-  // victim's first name - except on a report for oneself, where the reader is the
-  // victim and "you" stays. Anonymity only hides the reporter, so it changes nothing
-  // here. Display only: answers are still sent by question number.
+  // The names the questions are asked with (#33): first names only - the offender's,
+  // and the victim's except on a report for oneself, where the reader is the victim
+  // and "you" stays. Anonymity only hides the reporter, so it changes nothing here.
+  // Display only: answers are still sent by question number.
   const questionNames = {
     victim: forWhom === "other" ? victimFirstName : null,
-    offender: [offenderFirstName, offenderLastName].join(" "),
+    offender: offenderFirstName,
   };
 
   // Records the answer and moves on: to the next question, or to the review after the

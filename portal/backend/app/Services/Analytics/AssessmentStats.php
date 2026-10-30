@@ -4,6 +4,8 @@ namespace App\Services\Analytics;
 
 use App\Enums\OffenderRelationship;
 use App\Models\Agency;
+use App\Models\LawEnforcementAssessment;
+use App\Models\User;
 use App\Support\Analytics\Chart;
 use App\Support\Analytics\DateRange;
 use App\Support\HighRisk;
@@ -32,6 +34,13 @@ DocumentIDs; agency (officer assessments) is plain SQL.
 
 High risk is App\Support\HighRisk's rule (a yes to any of Q1-3, or 4 or more
 yes in all), the same one the assessment tables' red badge uses.
+
+officer() with a $viewer counts only the assessments that viewer may see
+(LawEnforcementAssessment::visibleTo()) - a police admin's own agency, for
+their Analytics page (App\Filament\Pages\AgencyAnalytics, #67). The scope is
+applied to the base query, before anything is read or decrypted, so every
+total and chart follows it; "By agency" is left out, since it would name
+other agencies. Harbor Safe's own tab passes no viewer and counts everything.
 */
 final class AssessmentStats
 {
@@ -52,16 +61,21 @@ final class AssessmentStats
         ['55 and over', 55, null],
     ];
 
-    public function officer(DateRange $range, ?string $victimSex = null, ?string $offenderSex = null, ?string $relationship = null, ?int $agency = null): array
+    public function officer(DateRange $range, ?string $victimSex = null, ?string $offenderSex = null, ?string $relationship = null, ?int $agency = null, ?User $viewer = null): array
     {
-        [$base, $people] = $this->base('law_enforcement_assessment', $range, $victimSex, $offenderSex, $relationship, $agency);
+        $scope = $viewer === null ? null : LawEnforcementAssessment::query()
+            ->visibleTo($viewer)
+            ->select('law_enforcement_assessment.DocumentID')
+            ->toBase();
+
+        [$base, $people] = $this->base('law_enforcement_assessment', $range, $victimSex, $offenderSex, $relationship, $agency, $scope);
 
         return [
             ...$this->common($base, $people, $range),
             'edited' => (clone $base)
                 ->whereExists(fn (Builder $q) => $q->selectRaw('1')->from('assessment_edits as e')->whereColumn('e.DocumentID', 'a.DocumentID'))
                 ->count(),
-            'agencies' => $this->agencies($base),
+            'agencies' => $viewer === null ? $this->agencies($base) : [],
         ];
     }
 
@@ -109,7 +123,7 @@ final class AssessmentStats
      *
      * @return array{0: Builder, 1: list<array<string, ?string>>}
      */
-    private function base(string $table, DateRange $range, ?string $victimSex, ?string $offenderSex, ?string $relationship, ?int $agency = null): array
+    private function base(string $table, DateRange $range, ?string $victimSex, ?string $offenderSex, ?string $relationship, ?int $agency = null, ?Builder $scope = null): array
     {
         $base = DB::connection('Portal')->table("{$table} as a")
             ->join('_assessment_answers as x', 'x.AssessmentDocID', '=', 'a.AssessmentDocID')
@@ -117,6 +131,11 @@ final class AssessmentStats
 
         if ($agency !== null) {
             $base->whereIn('a.submitted_by', fn (Builder $q) => $q->select('user_id')->from('law_enforcement_agents')->where('agency_id', $agency));
+        }
+
+        // A viewer's scope (officer() with a $viewer): their visible DocumentIDs.
+        if ($scope !== null) {
+            $base->whereIn('a.DocumentID', $scope);
         }
 
         $people = $this->people($base);

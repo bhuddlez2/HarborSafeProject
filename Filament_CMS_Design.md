@@ -314,9 +314,11 @@ Access log             —       own agency —          view all     view all
   (who opened what)            LE only
 Follow-ups             —       —          resource   assessments, assessments,
                                           requests   requests     requests
-Analytics (totals)     —       —          feedback + all 4 tabs   all 4 tabs
-                                          requests
-                                          tab only
+Analytics (totals)     —       own agency feedback + all 4 tabs   all 4 tabs
+                               LE only,   requests
+                               own page   tab only
+                               (needs an
+                               agency)
 ---------------------------------------------------------------------------
 Manage officers        —       own agency —          NO           any agency
   (create/edit/deactivate)                                        (Accounts)
@@ -973,8 +975,9 @@ Police Admin                                    police_admin - its ONLY group
   New assessment     /police/new-assessment     20  their own; needs an agency
   Assessment review  /assessment-review         30  own agency; Edit
   Logs               /logs                      40  own agency's officer assessments; needs an agency
-  Officers           /police/officers           50  own agency's officers; needs an agency
-  Account            (Filament's profile page)  60
+  Analytics          /police/analytics          50  own agency's LE assessments, no By agency; needs an agency
+  Officers           /police/officers           60  own agency's officers; needs an agency
+  Account            (Filament's profile page)  70
 ```
 
 **The Account page changes only the password and the badge.** `EditProfile` (Filament's
@@ -1005,7 +1008,7 @@ the assessment tables replaces it.
 **Analytics** (`/analytics`, `App\Filament\Clusters\Analytics\AnalyticsCluster`, team plan
 task 28): Harbor Safe's totals and charts, one item in its own **Reports** group, four
 custom pages as tabs (`Clusters/Analytics/Pages/`). Every agency is counted together, so
-officers and police admins never reach it; a secretary sees only the Feedback and
+officers and police admins never reach it (police admins have their own page, below); a secretary sees only the Feedback and
 resource requests tab and lands on it from `/analytics`. Totals only: the stats services
 (`App\Services\Analytics\*`) count in SQL and never select names, phone numbers,
 comments or dates of birth. One date range (presets or custom days, Eastern) and, on the
@@ -1015,6 +1018,19 @@ risk is "yes to Q1–3, or 4 or more yes" (`App\Support\HighRisk`, approved by H
 2026-10-25), the same rule behind the assessment tables' red Yes badge, the record view
 and its PDF, and the Civilian assessments high-risk filter. The pages
 authorize themselves with `canAccess()`. `AnalyticsTest`.
+
+**Police admin Analytics** (#67, team decision, 2026-10-29 — this reverses the earlier
+"police admins get no analytics tab"): `App\Filament\Pages\AgencyAnalytics` at
+`/police/analytics`, in the Police Admin group after Logs, for an active police admin
+**with an agency** (`User::managedAgencyId()`); everyone else gets no item and a 403. It
+is Harbor Safe's Law-Enforcement Assessments tab (same `AnalyticsPage` base, date range,
+sex filter, tiles, charts and Excel/PDF export) with every number scoped to the police
+admin's own agency — `AssessmentStats::officer(..., viewer:)` narrows the base query to
+`LawEnforcementAssessment::visibleTo()` before anything is read or decrypted (§5 rule 5)
+— and **no By agency chart** (`AssessmentSections::build(..., byAgency: false)`), since it
+would name other agencies. Law-enforcement assessments only: no civilian assessments,
+feedback, resource requests or follow-ups. Its export adds an "Agency: …" line. Harbor
+Safe's own Analytics is unchanged. `PoliceAdminAnalyticsTest`.
 
 **Logs** (`/logs`, `App\Filament\Resources\Logs\LogResource`, list page `ListLogs`): one
 sidebar item and **one list** of every view, PDF download and edit of an officer or

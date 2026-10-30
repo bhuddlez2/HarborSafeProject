@@ -120,7 +120,8 @@ test('Change opens one question, and answering it goes straight back', function 
 test('the review has an Edit on each section and a Change on each answer', function () {
     $page = answerEveryQuestion(reviewWizard()->fillForm(VICTIM));
 
-    $page->assertSee('Use Edit or Change to fix anything before you submit.')
+    $page->assertSee('Use Edit or Change to fix anything.')
+        ->assertSee('Nothing is saved to the assessment record until you press Submit assessment.')
         ->assertSeeHtml('aria-label="Edit the victim&#039;s details"')
         ->assertSeeHtml('aria-label="Edit the offender&#039;s details"')
         ->assertSeeHtml('goToStep(getSteps()[1])')

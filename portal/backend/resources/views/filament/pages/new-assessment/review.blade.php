@@ -66,7 +66,8 @@
         Review &amp; Submit
     </h1>
     <p class="text-gray-600 mb-6">
-        Check every detail and answer below. Use Edit or Change to fix anything before you submit.
+        Check every detail and answer below. Use Edit or Change to fix anything.
+        Nothing is saved to the assessment record until you press Submit assessment.
     </p>
 
     <div class="flex flex-col gap-4">
