@@ -325,11 +325,10 @@ export default function AssessmentContent() {
         {/* Confidentiality Notice, shown each time the assessment is opened, before the form begins.
             Not dismissible: "I understand, continue" is the only way on. Safe Exit stays usable above it. */}
         {showSafetyModal && (
-          <Modal title="Confidentiality Notice" subtitle="Before you begin" dismissible={false} onClose={() => setShowSafetyModal(false)}>
+          <Modal title="Confidentiality Notice" dismissible={false} onClose={() => setShowSafetyModal(false)}>
             <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 leading-relaxed mb-5">
-                Information you provide in this assessment is kept confidential. Harbor Safe
-                reviews every assessment and follows up on each one.
+              <p className="text-sm text-gray-600 leading-relaxed mb-5 text-center">
+                Information you provide in this assessment is kept confidential.
               </p>
 
               <div className="space-y-4 mb-5">
@@ -343,10 +342,8 @@ export default function AssessmentContent() {
                   <div>
                     <p className="text-sm font-semibold text-gray-900 mb-0.5">Nothing is saved until you submit</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      What you type stays on this page only. Nothing is sent to Harbor Safe or saved
-                      anywhere until you press Submit at the end. If you close or leave this page
-                      first, everything you entered is gone. After you submit, only Harbor Safe sees
-                      your answers, except where the law requires us to report.
+                      Nothing in this form is saved or sent to Harbor Safe House until you press
+                      Submit at the end. After you submit, only Harbor Safe House sees your answers.
                     </p>
                   </div>
                 </div>
@@ -359,10 +356,26 @@ export default function AssessmentContent() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Harbor Safe will follow up</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Harbor Safe House will follow up</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      A Harbor Safe advocate will contact the victim at the safe phone number you
+                      A Harbor Safe House advocate will contact the victim at the safe phone number you
                       provide, so only give a number that is safe to call.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-gray-700 stroke-2 fill-none" aria-hidden="true">
+                      {/* trash icon, feathericons.com */}
+                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Browse privately</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      If you are concerned about someone monitoring your activity, consider using
+                      a private window and clearing your browser history afterward.
                     </p>
                   </div>
                 </div>
@@ -380,22 +393,6 @@ export default function AssessmentContent() {
                       If information disclosed in this assessment indicates that a minor is being
                       abused or is at risk, we may be legally required to report it to the
                       appropriate authorities.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-gray-700 stroke-2 fill-none" aria-hidden="true">
-                      {/* trash icon, feathericons.com */}
-                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Browse privately</p>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      If you are concerned about someone monitoring your activity, consider using
-                      a private window and clearing your browser history afterward.
                     </p>
                   </div>
                 </div>
@@ -817,8 +814,8 @@ export default function AssessmentContent() {
         <div className={CARD}>
           <h1 className={`${HEADING} mb-6`}>Assessment Submitted</h1>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            Your assessment has been sent to Harbor Safe. Harbor Safe will follow up at the safe
-            phone number you gave. Your answers have been cleared from this page.
+            Your assessment has been sent to Harbor Safe House. Harbor Safe House will follow up
+            at the safe phone number you gave. Your answers have been cleared from this page.
           </p>
           <button onClick={() => { clearEntries(); setPhase("prescreen"); }} className={PRIMARY}>
             Start new assessment

@@ -537,7 +537,7 @@ test('an anonymous report for someone else asks the questions with the names, an
 
   const notice = page.getByRole('dialog', { name: 'Confidentiality Notice' });
   await expect(notice.getByText('Nothing is saved until you submit')).toBeVisible();
-  await expect(notice.getByText(/What you type stays on this page only\./)).toBeVisible();
+  await expect(notice.getByText(/Nothing in this form is saved or sent to Harbor Safe House until you press Submit/)).toBeVisible();
   await acceptNotice(page);
 
   await page.getByRole('button', { name: 'Someone else' }).click();
@@ -561,7 +561,7 @@ test('an anonymous report for someone else asks the questions with the names, an
 
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await expect(page.getByText(/Your assessment has been sent to Harbor Safe\./)).toBeVisible();
+  await expect(page.getByText(/Your assessment has been sent to Harbor Safe House\./)).toBeVisible();
   expect(api.submissions).toHaveLength(1);
   expect(api.submissions[0].RiskIndicator1).toBe(false);
 });
