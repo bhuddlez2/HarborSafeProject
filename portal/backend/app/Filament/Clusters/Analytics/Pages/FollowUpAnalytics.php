@@ -53,14 +53,14 @@ class FollowUpAnalytics extends AnalyticsPage
         ], FollowUpKind::cases());
 
         $cards = [
-            Chart::horizontal('Status now', array_map(fn (FollowUpStatus $status): array => [
+            Chart::horizontal('Status Now', array_map(fn (FollowUpStatus $status): array => [
                 'label' => $status->label(),
                 'value' => $stats['byStatus'][$status->value],
             ], $statuses), 'forms'),
-            Chart::vertical('Time to first contact', Chart::items($stats['contactBands']), 'forms', [
+            Chart::vertical('Time to First Contact', Chart::items($stats['contactBands']), 'forms', [
                 'note' => 'From submission to the first status change.',
             ]),
-            Chart::table('By form type', [
+            Chart::table('By Form Type', [
                 ...array_map(fn (FollowUpStatus $status): string => $status->label(), $statuses),
                 'Total',
             ], $rows, [

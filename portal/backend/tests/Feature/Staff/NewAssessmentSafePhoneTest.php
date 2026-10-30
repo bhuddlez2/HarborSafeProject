@@ -67,7 +67,7 @@ test('the submitted screen lists every hotline as text and as a working link', f
     Livewire::test(NewAssessment::class)
         ->fillForm(completedWizardData(['SafePhoneConfirmed' => true]))
         ->call('create')
-        ->assertSee('Assessment submitted')
+        ->assertSee('Assessment Submitted')
         ->assertDontSeeHtml('href="tel:911"')
         ->assertDontSee('call 911')
         ->assertSee('(423) 476-3886')
@@ -88,7 +88,16 @@ test('the submitted screen has a Back to Home button', function () {
         ->fillForm(completedWizardData(['SafePhoneConfirmed' => true]))
         ->call('create')
         ->assertSeeInOrder(['Start new assessment', 'Back to Home'])
-        ->assertSeeHtml('href="'.e(App\Filament\Pages\Police::getUrl()).'"');
+        ->assertSeeHtml('href="'.e(App\Filament\Pages\Police::getUrl()).'"')
+        // Taken to the top with focus on the heading, like every wizard step.
+        ->assertSeeHtml('x-init="window.scrollTo({ top: 0 }); $el.focus({ preventScroll: true })"');
+});
+
+test('every wizard step change goes to the top and focuses the step heading', function () {
+    $this->actingAs(pestAgencyMember(UserRole::LawEnforcement, pestAgency('Safe Phone PD')));
+
+    Livewire::test(NewAssessment::class)
+        ->assertSeeHtml("\$watch('step', () => \$nextTick(() => { window.scrollTo({ top: 0 });");
 });
 
 test('changing the number clears the confirmation', function () {

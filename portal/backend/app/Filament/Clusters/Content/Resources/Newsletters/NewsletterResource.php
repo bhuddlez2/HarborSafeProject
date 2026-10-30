@@ -351,7 +351,7 @@ class NewsletterResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->modalHeading('Delete Selected Newsletters'),
                 ]),
             ])
             ->emptyStateHeading('No newsletters yet')

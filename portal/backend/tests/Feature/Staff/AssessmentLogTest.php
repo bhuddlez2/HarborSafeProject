@@ -4,10 +4,12 @@ use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
 use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
+use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
 use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Models\AssessmentAccessLog;
 use App\Models\LawEnforcementAssessment;
+use App\Models\PrivateAssessment;
 use App\Services\AssessmentEditor;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +25,10 @@ View on the Logs page stays edits only too, and View stays history-free
 (AssessmentChangeLogTest).
 */
 
-afterEach(fn () => cleanupStaffData());
+afterEach(function () {
+    cleanupCivilianAssessments();
+    cleanupStaffData();
+});
 
 // An officer's assessment with a known history, oldest first:
 //   Sep 1  the officer views it
@@ -53,7 +58,7 @@ function pestLoggedAssessment(): object
 }
 
 // The Log pop-up's content as the button builds it, for checking order.
-function pestLogHtml(LawEnforcementAssessment $record, bool $withAccess): string
+function pestLogHtml(LawEnforcementAssessment | PrivateAssessment $record, bool $withAccess): string
 {
     $action = ChangeHistory::action(withAccess: $withAccess);
     $content = (new ReflectionProperty($action, 'modalContent'))->getValue($action);
@@ -126,4 +131,46 @@ test('an edit row\'s View on the Logs page stays edits only', function () {
         ->mountAction(TestAction::make('view')->table($edit))
         ->assertMountedActionModalSee('Spelling fix')
         ->assertMountedActionModalDontSee(['Downloaded PDF', 'Viewed']);
+});
+
+// A civilian assessment is never edited, so its Log is views and downloads,
+// then the submission, with no name: it came from the public website.
+test('Civilian assessments has the same Log: views and downloads, newest first, then the submission', function () {
+    $civilian = pestCivilianAssessment();
+    $admin = staffUser(UserRole::Admin);
+    $other = staffUser(UserRole::SuperAdmin);
+
+    DB::connection('Portal')->table('assessment_access_log')
+        ->where('AccessID', AssessmentAccessLog::record($civilian, AssessmentAccess::View, $other)->getKey())
+        ->update(['AccessedAt' => '2026-09-01 14:00:00']);
+    DB::connection('Portal')->table('assessment_access_log')
+        ->where('AccessID', AssessmentAccessLog::record($civilian, AssessmentAccess::Download, $other)->getKey())
+        ->update(['AccessedAt' => '2026-09-02 14:00:00']);
+
+    $this->actingAs($admin);
+
+    Livewire::test(ListCivilianAssessments::class)
+        ->assertActionHasLabel(TestAction::make('changeLog')->table($civilian), 'Log')
+        ->assertActionEnabled(TestAction::make('changeLog')->table($civilian))
+        ->mountAction(TestAction::make('changeLog')->table($civilian))
+        ->assertMountedActionModalSee(['Viewed', 'Downloaded PDF', 'Submitted through the website']);
+
+    // Opening it was recorded as Viewed Log, on the civilian assessment.
+    expect(AssessmentAccessLog::query()->where('PrivateDocumentID', $civilian->getKey())
+        ->where('Action', AssessmentAccess::ViewLog->value)->where('AccessedBy', $admin->getKey())->count())->toBe(1);
+
+    $html = pestLogHtml($civilian, withAccess: true);
+
+    expect($html)->toContain('Every view and PDF download, newest first')
+        ->not->toContain('hs-cl-edit');
+
+    $order = [
+        strpos($html, 'Viewed Log</span> by '.$admin->name),
+        strpos($html, 'Downloaded PDF</span> by '.$other->name),
+        strpos($html, 'Viewed</span> by '.$other->name),
+        strpos($html, 'Submitted through the website</span></p>'),
+    ];
+
+    expect($order)->not->toContain(false)
+        ->and($order)->toBe(collect($order)->sort()->values()->all());
 });

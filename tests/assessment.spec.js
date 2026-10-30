@@ -73,9 +73,9 @@ async function fillVictim(page) {
   await page.getByRole('button', { name: 'Continue' }).click();
 }
 
-async function fillOffender(page) {
+async function fillOffender(page, lastName = 'Roe') {
   await page.getByLabel('First Name').fill('John');
-  await page.getByLabel('Last Name').fill('Roe');
+  await page.getByLabel('Last Name').fill(lastName);
   await page.getByLabel('Sex').selectOption('M');
   await page.getByLabel('Relationship to Victim').selectOption('spouse');
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -131,6 +131,26 @@ test('a submission for yourself sends one request with every answer and no conta
   expect(Object.keys(sent).filter((k) => k.startsWith('Submitter') || k === 'Anonymous')).toEqual([]);
   expect(Object.keys(sent).filter((k) => /ID$/.test(k))).toEqual([]);
   expect(api.strayApiCalls).toEqual([]);
+});
+
+// Burchfield B29: someone reporting for another person may not know the offender's last name.
+test('the offender last name is optional', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+
+  await page.getByRole('button', { name: 'Someone else' }).click();
+  await page.getByRole('button', { name: 'Yes', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fillVictim(page);
+  await expect(page.getByLabel('Last Name')).toHaveAttribute('placeholder', 'Optional');
+  await fillOffender(page, '');
+  await answerAll(page);
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
+  expect(api.submissions[0]).toMatchObject({ OffenderFirstName: 'John', OffenderLastName: '' });
 });
 
 test('an anonymous report for someone else sends no contact details', async ({ page }) => {
@@ -239,7 +259,8 @@ test('fields are not remembered by the browser, and the details are cleared afte
   await answerAll(page);
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await page.getByRole('button', { name: 'Start new assessment' }).click();
+  await expect(page.getByRole('link', { name: 'View Resources' })).toHaveAttribute('href', /^\/resources\/?$/);
+  await page.getByRole('button', { name: 'Submit Another Assessment' }).click();
 
   await page.getByRole('button', { name: 'Myself' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -412,7 +433,11 @@ test('the review shows every detail and every answer', async ({ page }) => {
   await stubAssessmentApi(page);
   await reachReview(page);
 
-  for (const text of ['Myself', 'Jane Doe', 'Female', 'Apr 12, 1990', '(423)555-0100', 'John Roe', 'Male', 'Not given', 'Spouse']) {
+  // A report for oneself: no "This report" box, and the victim box is plain "Victim", like "Offender".
+  await expect(page.getByRole('heading', { name: 'This report' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Victim', exact: true })).toBeVisible();
+
+  for (const text of ['Jane Doe', 'Female', 'Apr 12, 1990', '(423)555-0100', 'John Roe', 'Male', 'Not given', 'Spouse']) {
     await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
   }
 
@@ -421,6 +446,29 @@ test('the review shows every detail and every answer', async ({ page }) => {
   await expect(answers.nth(0)).toContainText('NO');
   await expect(answers.nth(1)).toContainText('YES');
   await expect(page.getByRole('button', { name: /^Change answer to question/ })).toHaveCount(11);
+});
+
+test('each new step starts at the top with focus on its heading, Submitted included', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await reachReview(page);
+  await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeFocused();
+
+  // Change an answer from the bottom of the review: the question is at the top, focused.
+  await page.getByRole('button', { name: 'Change answer to question 11', exact: true }).click();
+  await expect(page.getByText('Question 11 of 11')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2 })).toBeFocused();
+  await page.getByRole('button', { name: 'No', exact: true }).first().click();
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  const submitted = page.getByRole('heading', { name: 'Assessment Submitted' });
+  await expect(submitted).toBeFocused();
+  await expect(submitted).toBeInViewport();
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+  // The next Tab goes to the screen's first button, not the site's menu.
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Submit Another Assessment' })).toBeFocused();
 });
 
 test('Submit stays disabled until the safe number is confirmed, and the box is never sent', async ({ page }) => {
@@ -481,7 +529,7 @@ test('switching to a named report from the review asks for the name first', asyn
   const api = await stubAssessmentApi(page);
   await reachReview(page);
 
-  await page.getByRole('button', { name: 'Edit who this report is for' }).click();
+  await page.getByRole('button', { name: 'Change who this report is for' }).click();
   await page.getByRole('button', { name: 'Someone else' }).click();
   await page.getByRole('button', { name: 'No', exact: true }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -493,6 +541,8 @@ test('switching to a named report from the review asks for the name first', asyn
 
   await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
   await expect(page.getByText('Sam Friend')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This report' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Change who this report is for' })).toHaveCount(0);
 
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
@@ -547,7 +597,7 @@ test('an anonymous report for someone else asks the questions with the names, an
 
   const notice = page.getByRole('dialog', { name: 'Confidentiality Notice' });
   await expect(notice.getByText('Nothing is saved until you submit')).toBeVisible();
-  await expect(notice.getByText(/What you type stays on this page only\./)).toBeVisible();
+  await expect(notice.getByText(/Nothing in this form is saved or sent to Harbor Safe House until you press Submit/)).toBeVisible();
   await acceptNotice(page);
 
   await page.getByRole('button', { name: 'Someone else' }).click();
@@ -571,7 +621,7 @@ test('an anonymous report for someone else asks the questions with the names, an
 
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await expect(page.getByText(/Your assessment has been sent to Harbor Safe\./)).toBeVisible();
+  await expect(page.getByText(/Your assessment has been sent to Harbor Safe House\./)).toBeVisible();
   expect(api.submissions).toHaveLength(1);
   expect(api.submissions[0].RiskIndicator1).toBe(false);
 });

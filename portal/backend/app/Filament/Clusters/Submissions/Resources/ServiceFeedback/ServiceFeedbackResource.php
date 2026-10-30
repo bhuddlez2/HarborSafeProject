@@ -264,6 +264,7 @@ class ServiceFeedbackResource extends Resource
             ])
             ->recordActions([
                 ViewAction::make()
+                    ->modalHeading('View Service Feedback')
                     ->extraModalFooterActions(fn (ServiceFeedback $record): array => [
                         Action::make('download_pdf')
                             ->label('Download PDF')
@@ -278,7 +279,7 @@ class ServiceFeedbackResource extends Resource
                 BulkActionGroup::make([
                     // Record by record, never one DELETE query, so each
                     // entry's deleted hook removes its scan.
-                    DeleteBulkAction::make()->fetchSelectedRecords(),
+                    DeleteBulkAction::make()->modalHeading('Delete Selected Service Feedback')->fetchSelectedRecords(),
                 ]),
             ])
             ->emptyStateHeading('No feedback yet')

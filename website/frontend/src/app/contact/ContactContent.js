@@ -84,7 +84,7 @@ function ResourceRequestForm({ resourceTypes, counties, preselected }) {
 
   if (status === "success") {
     return (
-      <FormMessage tone="success">
+      <FormMessage takeFocus tone="success">
         Thank you — your request has been received. If you need help before we reach you,
         our crisis line is answered 24 hours a day at{" "}
         <PhoneLink number={CRISIS_CALL} className="underline" />.
@@ -94,7 +94,7 @@ function ResourceRequestForm({ resourceTypes, counties, preselected }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
-      {status === "error" && <FormMessage tone="error">{message}</FormMessage>}
+      {status === "error" && <FormMessage takeFocus tone="error">{message}</FormMessage>}
 
       <div className="grid md:grid-cols-2 gap-6">
         <Field id="first-name" label="First name" requirement="required" error={errorFor("FirstName")}>

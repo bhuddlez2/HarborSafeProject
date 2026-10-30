@@ -384,6 +384,19 @@ test.describe('Resources Page', () => {
         await expect(page.getByRole('button', { name: /1 of 8 answered/i })).toBeDisabled();
     });
 
+    test('Hope Scale Retake clears the answers and takes focus back to question 1', async ({ page }) => {
+        await page.goto('/resources/');
+        await page.getByRole('button', { name: /science of hope/i }).click();
+        await page.getByRole('button', { name: /take the hope test/i }).first().click();
+        const dialog = page.getByRole('dialog', { name: 'The Adult Hope Scale' });
+        const fives = dialog.getByRole('button', { name: '5, Slightly True' });
+        for (let i = 0; i < 8; i++) await fives.nth(i).click();
+        await dialog.getByRole('button', { name: 'Calculate My Score' }).click();
+        await dialog.getByRole('button', { name: 'Retake Assessment' }).click();
+        await expect(dialog.getByRole('button', { name: '1, Definitely False' }).first()).toBeFocused();
+        await expect(page.getByRole('button', { name: /0 of 8 answered/i })).toBeDisabled();
+    });
+
 });
 
 // ─── GIVE SUPPORT PAGE ───────────────────────────────────────────────────────

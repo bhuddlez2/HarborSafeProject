@@ -13,6 +13,8 @@ class EditStaffAccount extends EditRecord
 {
     protected static string $resource = StaffAccountResource::class;
 
+    protected static ?string $title = 'Edit Account';
+
     // No Delete button: accounts are deactivated, never deleted.
     protected function getHeaderActions(): array
     {

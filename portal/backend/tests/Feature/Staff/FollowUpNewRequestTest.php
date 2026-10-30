@@ -17,8 +17,8 @@ use Livewire\Livewire;
 
 /*
 Follow-up tracking, part 4 (team plan task 16): starting a new resource request
-from a form whose follow-up is final - "New request from this one" on a
-resource request, "New resource request for this victim" (admins only) on an
+from a form whose follow-up is final - "New Request from This One" on a
+resource request, "New Resource Request for This Victim" (admins only) on an
 assessment. Never a new assessment. The new request is marked Staff, raises no
 alert, and opens its own follow-up.
 */
@@ -45,7 +45,7 @@ test('a final resource request starts a new one, filled in from it and editable'
     $this->actingAs($secretary);
     $page = Livewire::test(ViewFollowUp::class, ['record' => $from->getKey()])
         ->assertActionVisible('new_request')
-        ->assertActionHasLabel('new_request', 'New request from this one');
+        ->assertActionHasLabel('new_request', 'New Request from This One');
 
     expect($page->instance()->newRequestDefaults())->toMatchArray([
         'FirstName' => $original->FirstName,
@@ -88,7 +88,7 @@ test('an admin starts a resource request for an assessment\'s victim, with only 
 
     $this->actingAs($admin);
     $page = Livewire::test(ViewFollowUp::class, ['record' => $from->getKey()])
-        ->assertActionHasLabel('new_request', 'New resource request for this victim');
+        ->assertActionHasLabel('new_request', 'New Resource Request for This Victim');
 
     expect($page->instance()->newRequestDefaults())->toBe([
         'FirstName' => STAFF_TEST_PREFIX.'Victim',

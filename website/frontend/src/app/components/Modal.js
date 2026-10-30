@@ -59,9 +59,9 @@ export default function Modal({ title, subtitle, onClose, children, dismissible 
       */}
       <div ref={cardRef} tabIndex={-1} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-full lg:max-h-[80vh] flex flex-col focus:outline-none">
 
-        {/* Header: title, optional subtitle, and close button */}
+        {/* Header: title, optional subtitle, and close button; with no X the title is centred */}
         <div className="flex items-start justify-between p-6 border-b border-gray-100 shrink-0">
-          <div className="min-w-0 wrap-anywhere">
+          <div className={`min-w-0 wrap-anywhere ${dismissible ? "" : "flex-1 text-center"}`}>
             <h2 className="text-xl font-semibold text-brand leading-snug">{title}</h2>
             {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
           </div>

@@ -207,6 +207,7 @@ class ResourceRequestResource extends Resource
                 // The plain form as a PDF, through its own logged route
                 // (ResourceRequestPdfController), as civilian assessments do.
                 ViewAction::make()
+                    ->modalHeading('View Resource Request')
                     ->extraModalFooterActions(fn (ResourceRequestForm $record): array => [
                         Action::make('download_pdf')
                             ->label('Download PDF')
@@ -219,7 +220,7 @@ class ResourceRequestResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->modalHeading('Delete Selected Resource Requests'),
                 ]),
             ])
             ->emptyStateHeading('No requests yet')

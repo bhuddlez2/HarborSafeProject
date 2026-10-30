@@ -1,7 +1,7 @@
 {{-- Info phase: officer identity, read-only, from the signed-in account. --}}
 <div>
     <h1 class="text-3xl font-semibold text-gray-900 mb-2">
-        Submitting officer
+        Submitting Officer
     </h1>
     <p class="text-sm text-gray-500 mb-10">
         This information is pulled from your account and cannot be edited here.

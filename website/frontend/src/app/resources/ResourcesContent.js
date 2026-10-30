@@ -324,6 +324,8 @@ function ScienceOfHopeContent() {
 
   // Brings the results into view inside the pop-up once they're calculated
   const resultsRef = useRef(null);
+  // Retake removes the button that had focus, so focus goes back to question 1
+  const questionsRef = useRef(null);
   useEffect(() => {
     if (!showResults) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -474,7 +476,7 @@ function ScienceOfHopeContent() {
               </div>
             </div>
 
-            <div className="space-y-5">
+            <div ref={questionsRef} className="space-y-5">
               {HOPE_QUESTIONS.map((q) => (
                 <div key={q.id}>
                   <p className="mb-2 text-gray-700">
@@ -542,7 +544,7 @@ function ScienceOfHopeContent() {
                   Print / Save as PDF
                 </button>
                 <button
-                  onClick={() => { setAnswers({}); setShowResults(false); }}
+                  onClick={() => { setAnswers({}); setShowResults(false); questionsRef.current?.querySelector("button")?.focus(); }}
                   className="w-full py-2 rounded-lg text-xs font-semibold text-brand border border-brand/30 hover:bg-brand hover:text-white transition-colors"
                 >
                   Retake Assessment

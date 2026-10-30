@@ -24,20 +24,15 @@ class CivilianAssessmentAnalytics extends AnalyticsPage
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
     }
 
-    public function description(): string
-    {
-        return 'Totals for assessments submitted on the public website. No names or phone numbers are shown.';
-    }
-
-    public function offersSexFilter(): bool
+    public function offersFilters(): bool
     {
         return true;
     }
 
     protected function sections(DateRange $range): array
     {
-        $stats = app(AssessmentStats::class)->civilian($range, ...$this->sexFilter());
+        $stats = app(AssessmentStats::class)->civilian($range, ...$this->filters());
 
-        return AssessmentSections::build($stats, $range, isOfficer: false);
+        return AssessmentSections::build($stats, $range, isOfficer: false, filters: $this->filters());
     }
 }

@@ -21,7 +21,7 @@ the whole form on the left, its follow-up history on the right.
 
         <aside class="hs-fu-side">
             <div class="hs-fu-card">
-                <h2 class="hs-fu-card-title">Follow-up</h2>
+                <h2 class="hs-fu-card-title">Follow-Up</h2>
                 <dl class="hs-fu-facts">
                     <div><dt>Status</dt><dd>{{ $followUp->Status->label() }}</dd></div>
                     @if ($started = $this->startedFrom())

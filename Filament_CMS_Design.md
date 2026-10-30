@@ -1024,7 +1024,7 @@ authorize themselves with `canAccess()`. `AnalyticsTest`.
 `/police/analytics`, in the Police Admin group after Logs, for an active police admin
 **with an agency** (`User::managedAgencyId()`); everyone else gets no item and a 403. It
 is Harbor Safe's Law-Enforcement Assessments tab (same `AnalyticsPage` base, date range,
-sex filter, tiles, charts and Excel/PDF export) with every number scoped to the police
+victim/offender sex and relationship filters but never agency, tiles, charts and Excel/PDF export) with every number scoped to the police
 admin's own agency — `AssessmentStats::officer(..., viewer:)` narrows the base query to
 `LawEnforcementAssessment::visibleTo()` before anything is read or decrypted (§5 rule 5)
 — and **no By agency chart** (`AssessmentSections::build(..., byAgency: false)`), since it
@@ -1060,7 +1060,7 @@ never another agency's. Everyone else, and a police admin
 with **no** agency, gets no Logs item and a 403 (`LogResource::canOpenLogs()`).
 
 **Columns:** When (Eastern) · Who · Action (badge: Viewed / Downloaded PDF / Edited) ·
-Record (the kind of form, with "Submitted … · first 8 characters of its id" under it) ·
+Record (the kind of form, with "Submitted … · last 8 characters of its id" under it) ·
 Changes (fields changed, edit rows only). **No personal details are shown** — no victim,
 offender or requester names, no phone numbers, no edit reason; the forms are loaded with
 just their id and submitted time. The old Change log's names and Reason columns went for
@@ -1069,7 +1069,11 @@ that reason; both still show in an edit's View pop-up.
 **Actions:** an edit row has **View**, the same one-edit card each record's Change log
 pop-up uses (`ChangeHistory::entry()`), and opening it logs a view of the assessment
 (`AssessmentViews::log()`, before the pop-up is sent, so a failed write stops it opening).
-It has no Download PDF. Access rows have no actions. No create, edit, delete or bulk
+It has no Download PDF. **Every row's Record cell is clickable** (Finishing Touches item
+35, 2026-10-29), with no new button: it opens the assessment's own View pop-up on the Logs
+page, with Download PDF, looked up again through `LawEnforcementAssessment::visibleTo()` /
+`PrivateAssessment::visibleTo()` and logged as a plain view before it is sent; it isn't
+clickable when the form is gone (`LogResource::openAssessmentAction()`). No create, edit, delete or bulk
 actions (`LogResource::allowedActions()` / `allowsRecord()`). Opening the page is not
 itself logged.
 

@@ -54,12 +54,12 @@ function ServiceFeedbackForm({ services }) {
   const errorFor = (name) => fieldErrors[name]?.[0];
 
   if (status === "success") {
-    return <FormMessage tone="success">Thank you — your feedback has been received.</FormMessage>;
+    return <FormMessage takeFocus tone="success">Thank you — your feedback has been received.</FormMessage>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
-      {status === "error" && <FormMessage tone="error">{message}</FormMessage>}
+      {status === "error" && <FormMessage takeFocus tone="error">{message}</FormMessage>}
 
       <Field id="service" label="Which service is this about?" requirement="required" error={errorFor("ServiceID")}>
         <select

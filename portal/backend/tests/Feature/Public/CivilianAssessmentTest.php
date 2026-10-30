@@ -198,6 +198,15 @@ test('blank optional fields are stored as null, and names are trimmed', function
         ->and($row->OffenderDOB)->toBeNull();
 });
 
+test('the offender last name may be left out: someone reporting may not know it', function (array $overrides) {
+    $this->postJson('/api/public/civilian-assessments', civilianPayload($overrides))->assertCreated();
+
+    expect(civilianStoredRow()->OffenderLastName)->toBeNull();
+})->with([
+    'blank' => [['OffenderLastName' => '  ']],
+    'null' => [['OffenderLastName' => null]],
+]);
+
 test('the 11th submission in a minute is throttled', function () {
     foreach (range(1, 10) as $i) {
         $this->postJson('/api/public/civilian-assessments', civilianPayload(['VictimFirstName' => CIVILIAN_TEST_VICTIM.$i]))

@@ -70,10 +70,10 @@ final class Chart
         ], array_keys($buckets), $buckets);
     }
 
-    // The title for a perPeriod() chart: "Submissions per month", and so on.
+    // The title for a perPeriod() chart: "Submissions per Month", and so on.
     public static function perPeriodTitle(string $what, DateRange $range): string
     {
-        return "{$what} per {$range->unit()}";
+        return "{$what} per ".ucfirst($range->unit());
     }
 
     // [label => n] as chart items.

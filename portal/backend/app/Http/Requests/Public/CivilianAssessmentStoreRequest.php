@@ -96,7 +96,9 @@ class CivilianAssessmentStoreRequest extends FormRequest
             'VictimSafePhoneNumber' => ['required', ...$phone],
 
             'OffenderFirstName'     => ['required', 'string', 'max:50'],
-            'OffenderLastName'      => ['required', 'string', 'max:50'],
+            // Optional: someone reporting for another person may not know it
+            // (Burchfield B29). Still required in the officer wizard.
+            'OffenderLastName'      => ['nullable', 'string', 'max:50'],
             'OffenderSex'           => ['required', Rule::in(self::SEXES)],
             'OffenderDOB'           => $optionalDate,
             ...OffenderRelationship::validationRules(),

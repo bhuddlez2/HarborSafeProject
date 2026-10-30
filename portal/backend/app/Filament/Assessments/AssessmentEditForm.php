@@ -89,7 +89,7 @@ final class AssessmentEditForm
                     ]),
 
                 // Numbered rows with Yes / No, like the View pop-up's checklist.
-                Section::make('Risk indicators')
+                Section::make('Risk Indicators')
                     ->extraAttributes(['class' => 'hs-edit-card hs-edit-risk'])
                     ->columnSpanFull()
                     ->schema(
@@ -108,7 +108,7 @@ final class AssessmentEditForm
                             ->all(),
                     ),
 
-                Section::make('Reason for change')
+                Section::make('Reason for Change')
                     ->extraAttributes(['class' => 'hs-edit-card hs-edit-reason'])
                     ->columnSpanFull()
                     ->schema([
@@ -130,7 +130,7 @@ final class AssessmentEditForm
             // the submitting officer, or a police admin of the submitter's
             // agency. Hidden and refused for everyone else, admins included.
             ->authorize(fn (LawEnforcementAssessment $record): bool => Gate::allows('update', $record))
-            ->modalHeading('Edit assessment')
+            ->modalHeading('Edit Assessment')
             // The pop-up shows the whole record, so opening it is a view.
             ->afterFormFilled(fn (LawEnforcementAssessment $record) => AssessmentViews::log($record))
             // A panel from the side rather than a centred pop-up: full-height

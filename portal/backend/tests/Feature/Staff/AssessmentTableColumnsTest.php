@@ -101,6 +101,12 @@ test('Assessment review has the same buttons, Edit last', function () {
     expect(recordActionsOf(ListAssessmentReview::class))->toBe(['changeLog', 'view', 'edit']);
 });
 
+// Civilian assessments are never edited: Log and View only.
+test('Civilian assessments has Log, then View', function () {
+    $this->actingAs(staffUser(UserRole::Admin));
+    expect(recordActionsOf(ListCivilianAssessments::class))->toBe(['changeLog', 'view']);
+});
+
 test('an admin sees no Edit on Assessment review', function () {
     $w = pestTwoAgencies();
     $this->actingAs(staffUser(UserRole::Admin));
@@ -128,6 +134,15 @@ test('the civilian table shows the relationship under the offender too', functio
 
     Livewire::test(ListCivilianAssessments::class)
         ->assertTableColumnHasDescription('OffenderLastName', 'Spouse', $assessment);
+});
+
+test('a civilian offender with no last name shows by first name', function () {
+    $assessment = pestCivilianAssessment(overrides: ['OffenderLastName' => null]);
+
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    Livewire::test(ListCivilianAssessments::class)
+        ->assertTableColumnFormattedStateSet('OffenderLastName', 'Test', $assessment);
 });
 
 test('the civilian table calls the same column "Yes" too', function () {

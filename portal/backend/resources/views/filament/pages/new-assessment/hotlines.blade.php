@@ -29,7 +29,7 @@
 
 <section aria-labelledby="hs-hotlines-heading" class="flex flex-col gap-3">
     <h2 id="hs-hotlines-heading" class="text-lg font-semibold text-gray-900">
-        Numbers to share with the victim
+        Numbers to Share with the Victim
     </h2>
 
     <div class="rounded-xl bg-[#F5F0FB] p-4">

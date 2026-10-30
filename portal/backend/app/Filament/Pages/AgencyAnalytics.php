@@ -18,7 +18,7 @@ assessments of their own agency, and nothing else - no civilian assessments,
 service feedback, resource requests or follow-ups.
 
 The same page as Harbor Safe's Law-Enforcement Assessments tab
-(OfficerAssessmentAnalytics) - date range, sex filter, tiles, charts and the
+(OfficerAssessmentAnalytics) - date range, filters (no agency), tiles, charts and the
 Excel/PDF export all come from AnalyticsPage, AssessmentStats and
 AssessmentSections - but every number goes through
 LawEnforcementAssessment::visibleTo() (AssessmentStats::officer() with a
@@ -54,7 +54,8 @@ class AgencyAnalytics extends AnalyticsPage
         return ucfirst(self::agencyPossessive()).' law-enforcement assessments only. No names or phone numbers are shown.';
     }
 
-    public function offersSexFilter(): bool
+    // Sex and relationship, never agency (FT32's filters; the scope is theirs).
+    public function offersFilters(): bool
     {
         return true;
     }
@@ -67,10 +68,9 @@ class AgencyAnalytics extends AnalyticsPage
 
     protected function sections(DateRange $range): array
     {
-        [$victimSex, $offenderSex] = $this->sexFilter();
-        $stats = app(AssessmentStats::class)->officer($range, $victimSex, $offenderSex, viewer: Filament::auth()->user());
+        $stats = app(AssessmentStats::class)->officer($range, ...$this->filters(), viewer: Filament::auth()->user());
 
-        return AssessmentSections::build($stats, $range, isOfficer: true, byAgency: false);
+        return AssessmentSections::build($stats, $range, isOfficer: true, filters: $this->filters(), byAgency: false);
     }
 
     private static function agencyName(): ?string
