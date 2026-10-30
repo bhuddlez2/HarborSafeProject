@@ -57,6 +57,21 @@ final class EncryptedSearch
         return $keys;
     }
 
+    /** @return list<string|int> keys of the $scope rows whose "First Last" contains $search, so a full name matches too */
+    public static function fullNameKeys(Builder $scope, string $first, string $last, string $search): array
+    {
+        $search = trim($search);
+        $model = $scope->getModel();
+
+        return (clone $scope)
+            ->select(array_map(fn (string $column): string => $model->qualifyColumn($column), [$model->getKeyName(), $first, $last]))
+            ->cursor()
+            ->filter(fn ($row): bool => self::contains($row->getAttribute($first).' '.$row->getAttribute($last), $search))
+            ->map(fn ($row) => $row->getKey())
+            ->values()
+            ->all();
+    }
+
     public static function contains(?string $value, string $search): bool
     {
         return $search === '' || ($value !== null && mb_stripos($value, $search) !== false);

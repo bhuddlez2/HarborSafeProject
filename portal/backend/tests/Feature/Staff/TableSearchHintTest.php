@@ -10,6 +10,7 @@ use App\Filament\Clusters\FormOptions\Resources\Services\Pages\ManageServices;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
 use App\Filament\Resources\Agencies\Pages\ManageAgencies;
+use App\Filament\Resources\FollowUps\Pages\ListFollowUps;
 use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
 use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
@@ -41,6 +42,7 @@ test('each search box says what it searches', function (string $page, string $hi
     'Resource requests' => [ListResourceRequests::class, 'Search by Name or Email'],
     'Agencies' => [ManageAgencies::class, 'Search by Name'],
     'Logs' => [ListLogs::class, 'Search by Name'],
+    'Follow-ups' => [ListFollowUps::class, 'Search by Name'],
     'Accounts' => [ListStaffAccounts::class, 'Search by Name or Email'],
     'Officers' => [ListOfficerAccounts::class, 'Search by Name, Email or Badge Number', UserRole::PoliceAdmin],
 ]);
