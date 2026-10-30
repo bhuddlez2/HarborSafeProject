@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Modal from "../components/Modal";
 import {
@@ -12,6 +12,7 @@ import {
   formatIssueDate,
   formatFileSize,
 } from "../lib/content";
+import { downloadIcs, googleCalendarUrl, office365CalendarUrl } from "../lib/calendar";
 import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
 import PhoneLink from "../components/PhoneLink";
 import { CRISIS_CALL } from "../lib/phone";
@@ -279,8 +280,92 @@ function EventModal({ event, onClose }) {
             </p>
           </div>
         )}
+
+        {/* Add to Calendar (B22), only while the event is still ahead and going ahead */}
+        {!event.isCancelled && !event.isPast && <AddToCalendar event={event} />}
       </div>
     </Modal>
+  );
+}
+
+/*
+AddToCalendar: a button that opens the calendar choices inline below it rather
+than as a floating menu, so nothing is clipped by the dialog's scroll area.
+No Esc handling on purpose: Esc is the site's Safe Exit.
+*/
+function AddToCalendar({ event }) {
+  const [open, setOpen] = useState(false);
+  const optionsRef = useRef(null);
+  const pageUrl = `${window.location.origin}/events/`;
+
+  // Scrolls the dialog just far enough to show the whole list once it opens
+  useEffect(() => {
+    if (!open) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    optionsRef.current?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "instant" : "smooth" });
+  }, [open]);
+
+  /*
+  No Outlook.com link: tried and dropped, as signed in or not it opened an empty
+  calendar instead of the prefilled event, so personal Outlook users get the .ics
+  file, which every version of Outlook opens. Office 365 (work and school) works.
+  */
+  const webCalendars = [
+    { name: "Google Calendar", href: googleCalendarUrl(event, { pageUrl }) },
+    { name: "Office 365", href: office365CalendarUrl(event, { pageUrl }) },
+  ];
+
+  const itemClass =
+    "w-full flex items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-brand hover:bg-purple-50 transition-all";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        aria-expanded={open}
+        aria-controls="add-to-calendar-options"
+        className="w-full border-2 border-brand text-brand py-3 rounded-lg font-semibold hover:bg-brand hover:text-white transition-all
+        flex items-center justify-center gap-2"
+      >
+        <span className="[&>svg]:w-5 [&>svg]:h-5" aria-hidden="true">{ICONS.calendar}</span>
+        Add to Calendar
+        <span className={`transition-transform ${open ? "-rotate-90" : "rotate-90"}`} aria-hidden="true">
+          {ICONS.chevronRight}
+        </span>
+      </button>
+
+      {open && (
+        <div id="add-to-calendar-options" ref={optionsRef}>
+          <ul className="border border-gray-200 rounded-lg divide-y divide-gray-100 overflow-hidden">
+            {webCalendars.map(({ name, href }) => (
+              <li key={name}>
+                <a href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className={itemClass}>
+                  {name}<span className="sr-only"> (opens in new tab)</span>
+                  <span aria-hidden="true">{ICONS.external}</span>
+                </a>
+              </li>
+            ))}
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  downloadIcs(event);
+                  setOpen(false);
+                }}
+                className={itemClass}
+              >
+                Apple or other (.ics file)
+                <span className="[&>svg]:w-3.5 [&>svg]:h-3.5" aria-hidden="true">{ICONS.download}</span>
+              </button>
+            </li>
+          </ul>
+          <p className="mt-2 text-xs text-gray-500 text-center">
+            Google Calendar and Office 365 open in a new tab; the file opens in Apple Calendar and most other calendar apps.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
