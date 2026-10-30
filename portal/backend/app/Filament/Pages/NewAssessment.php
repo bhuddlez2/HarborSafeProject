@@ -197,6 +197,13 @@ class NewAssessment extends Page
                         // the root's own bindings, hence the guard.
                         'x-bind:class' => '($refs.stepsData ? getStepIndex(step) : 0) === '.self::QUESTIONS_STEP_INDEX
                             ." ? 'hs-lap-questions pt-8 pb-36 md:pt-10 md:pb-14' : 'py-8 md:py-14'",
+                        // Each new step starts at the top with focus on its heading, so the next
+                        // Tab starts on that step (Filament scrolls to its step bar, hidden here).
+                        'x-init' => "\$watch('step', () => \$nextTick(() => {"
+                            ." window.scrollTo({ top: 0 });"
+                            ." const heading = \$refs['step-' + step]?.querySelector('h1, h2');"
+                            ." if (heading) { heading.tabIndex = -1; heading.style.outline = 'none'; heading.focus({ preventScroll: true }); }"
+                            .' }))',
                     ])
                     ->previousAction(fn (Action $action): Action => $action
                         ->label('Back')

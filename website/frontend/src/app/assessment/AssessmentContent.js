@@ -22,10 +22,10 @@ storage, autofill is turned off on every field so a shared device doesn't rememb
 names typed here, and the state is cleared as soon as the submission is accepted.
 */
 
-import { useState, useEffect, startTransition } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import Link from "next/link";
 import Modal from "../components/Modal";
-import { OPTIONAL_PLACEHOLDER, RequiredNote } from "../components/FormControls";
+import { OPTIONAL_PLACEHOLDER, RequiredNote, focusPageHeading } from "../components/FormControls";
 import { lethalityQuestions, questionText } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
 import { isValidEmail, isValidPhone, dateOfBirthBounds, dateOfBirthError, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
@@ -153,6 +153,18 @@ export default function AssessmentContent() {
 
   // phase: "prescreen", "info", "victim", "offender", "intro", "questions", "complete", "submitted"
   const [phase, setPhase] = useState("prescreen");
+
+  // Each new step starts at the top, with focus on its heading, so the next Tab
+  // goes to the step's first control and a screen reader reads the new heading.
+  // Skipped on first load, where the Confidentiality Notice takes focus.
+  const firstPhase = useRef(true);
+  useEffect(() => {
+    if (firstPhase.current) {
+      firstPhase.current = false;
+      return;
+    }
+    focusPageHeading();
+  }, [phase]);
   // index: which question is displayed
   const [index, setIndex] = useState(0);
   // answers: { questionId: boolean }

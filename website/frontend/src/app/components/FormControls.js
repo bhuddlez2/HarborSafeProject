@@ -24,8 +24,20 @@ assessment:
     contact/ContactContent.js).
 A form with any asterisk shows RequiredNote just above its submit button.
 */
+import { useEffect, useRef } from "react";
 import PhoneLink from "./PhoneLink";
 import { CRISIS_CALL } from "../lib/phone";
+
+// Moves to a new step of a form: back to the top, with focus on the step's first
+// heading (made focusable, without an outline), so the next Tab starts on that step.
+export function focusPageHeading() {
+  window.scrollTo({ top: 0 });
+  const heading = document.querySelector("main h1, main h2");
+  if (!heading) return;
+  heading.tabIndex = -1;
+  heading.classList.add("outline-none");
+  heading.focus({ preventScroll: true });
+}
 
 export const OPTIONAL_PLACEHOLDER = "Optional";
 
@@ -92,14 +104,29 @@ export function SubmitButton({ status, children }) {
   );
 }
 
-export function FormMessage({ tone, children }) {
+// takeFocus: for a message that replaces a form or answers its Submit, so the
+// visitor is taken to it (centred, clear of the fixed navbar) instead of being
+// left where the button was.
+export function FormMessage({ tone, children, takeFocus = false }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!takeFocus) return;
+    ref.current?.focus({ preventScroll: true });
+    ref.current?.scrollIntoView({ block: "center" });
+  }, [takeFocus]);
+
   const styles =
     tone === "success"
       ? "bg-purple-50 border-purple-200 text-brand"
       : "bg-red-50 border-red-200 text-red-800";
 
   return (
-    <p role="alert" className={`border rounded-lg px-4 py-3 font-semibold ${styles}`}>
+    <p
+      ref={ref}
+      role="alert"
+      tabIndex={takeFocus ? -1 : undefined}
+      className={`border rounded-lg px-4 py-3 font-semibold outline-none ${styles}`}
+    >
       {children}
     </p>
   );

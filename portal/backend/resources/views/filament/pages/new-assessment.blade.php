@@ -10,7 +10,14 @@
             @if ($submitted)
                 {{-- Submitted phase --}}
                 <div class="bg-white rounded-2xl shadow-lg w-full px-5 py-8 md:px-12 md:py-14">
-                    <h1 class="text-3xl font-semibold text-gray-900 mb-6">
+                    {{-- Taken to the top with focus here, like each wizard step (NewAssessment::form()). --}}
+                    <h1
+                        class="text-3xl font-semibold text-gray-900 mb-6"
+                        style="outline: none"
+                        tabindex="-1"
+                        x-data
+                        x-init="window.scrollTo({ top: 0 }); $el.focus({ preventScroll: true })"
+                    >
                         Assessment Submitted
                     </h1>
                     <p class="text-gray-700 text-lg mb-8 leading-relaxed">

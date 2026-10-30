@@ -418,6 +418,29 @@ test('the review shows every detail and every answer', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^Change answer to question/ })).toHaveCount(11);
 });
 
+test('each new step starts at the top with focus on its heading, Submitted included', async ({ page }) => {
+  await stubAssessmentApi(page);
+  await reachReview(page);
+  await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeFocused();
+
+  // Change an answer from the bottom of the review: the question is at the top, focused.
+  await page.getByRole('button', { name: 'Change answer to question 11', exact: true }).click();
+  await expect(page.getByText('Question 11 of 11')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2 })).toBeFocused();
+  await page.getByRole('button', { name: 'No', exact: true }).first().click();
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit assessment' }).click();
+  const submitted = page.getByRole('heading', { name: 'Assessment Submitted' });
+  await expect(submitted).toBeFocused();
+  await expect(submitted).toBeInViewport();
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+  // The next Tab goes to the screen's first button, not the site's menu.
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Submit Another Assessment' })).toBeFocused();
+});
+
 test('Submit stays disabled until the safe number is confirmed, and the box is never sent', async ({ page }) => {
   const api = await stubAssessmentApi(page);
   await reachReview(page);
