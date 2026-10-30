@@ -6,6 +6,8 @@ use App\Enums\UserRole;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Models\ResourceRequestForm;
 use App\Services\FollowUps;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 
@@ -54,3 +56,26 @@ test('a request with no follow-up shows none and no button', function () {
         ->assertTableColumnStateNotSet('follow_up_status', 'Needs Follow-Up', $request)
         ->assertActionHidden(TestAction::make('follow_up')->table($request));
 });
+
+// Burchfield B56 (AS 2026-10-30): requests are kept; only admins and super
+// admins may delete one (spam), row or bulk; secretaries can't.
+test('only admins and super admins can delete a request', function (UserRole $role, bool $canDelete) {
+    $followUp = pestFollowUp(FollowUpKind::ResourceRequest);
+    $request = ResourceRequestForm::findOrFail($followUp->ResourceRequestFormID);
+
+    $this->actingAs(staffUser($role));
+
+    $page = Livewire::test(ListResourceRequests::class);
+
+    if ($canDelete) {
+        $page->assertActionVisible(TestAction::make(DeleteAction::class)->table($request))
+            ->assertActionVisible(TestAction::make(DeleteBulkAction::class)->table()->bulk());
+    } else {
+        $page->assertActionHidden(TestAction::make(DeleteAction::class)->table($request))
+            ->assertActionHidden(TestAction::make(DeleteBulkAction::class)->table()->bulk());
+    }
+})->with([
+    'secretary' => [UserRole::Secretary, false],
+    'admin' => [UserRole::Admin, true],
+    'super admin' => [UserRole::SuperAdmin, true],
+]);

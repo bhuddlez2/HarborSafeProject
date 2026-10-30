@@ -1496,6 +1496,24 @@ button.fi-ta-col:is(:hover, :focus-visible) .hs-record-link .fi-ta-text-item {
     text-decoration: none !important;
 }
 
+/* A row's main button, filled purple (View on Service feedback, B56) */
+.fi-ta-row .fi-ta-actions .fi-link.hs-row-primary,
+.fi-ta-record .fi-ta-actions .fi-link.hs-row-primary {
+    background-color: #5c0f8b;
+    color: #fff;
+}
+
+.fi-ta-row .fi-ta-actions .fi-link.hs-row-primary:hover,
+.fi-ta-record .fi-ta-actions .fi-link.hs-row-primary:hover {
+    background-color: #45096a !important;
+    border-color: #45096a !important;
+    color: #fff !important;
+}
+
+.fi-ta-actions .fi-link.hs-row-primary .fi-icon {
+    color: inherit;
+}
+
 .fi-ta-row .fi-ta-actions .fi-link:focus-visible,
 .fi-ta-record .fi-ta-actions .fi-link:focus-visible {
     box-shadow: 0 0 0 3px rgb(92 15 139 / 0.3);

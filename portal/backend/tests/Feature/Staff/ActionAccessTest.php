@@ -58,7 +58,8 @@ function screenActions(): array
         ResourceTypeResource::class => ['viewAny', 'create', 'update', 'delete'],
         CountyResource::class => ['viewAny', 'create', 'update', 'delete'],
         // Statements from the public: never edited. Delete is for spam (and a
-        // mistyped staff entry); create is staff typing in a feedback form.
+        // mistyped staff entry; resource requests admins and super admins only, see
+        // adminOnlyActions()); create is staff typing in a feedback form.
         ResourceRequestResource::class => ['viewAny', 'view', 'delete', 'deleteAny'],
         ServiceFeedbackResource::class => ['viewAny', 'view', 'create', 'delete', 'deleteAny'],
         // A safety record: view only.
@@ -76,6 +77,13 @@ function screenActions(): array
         AssessmentReviewResource::class => ['viewAny', 'view', 'update'],
         LawEnforcementAssessmentResource::class => ['viewAny', 'view', 'update'],
     ];
+}
+
+// Actions within a screen's list that only admins and super admins get (Burchfield
+// B56: resource requests are kept).
+function adminOnlyActions(): array
+{
+    return [ResourceRequestResource::class => ['delete', 'deleteAny']];
 }
 
 // Screens whose rules never depend on the row, so an unsaved record shows
@@ -180,6 +188,14 @@ test('someone who can open a screen gets what it lists', function () {
 
                 if ($isRowAction && ! in_array($screen, rowIndependentScreens(), true)) {
                     continue; // checked on real rows in each screen's own tests
+                }
+
+                if (! in_array($roleName, ['admin', 'super_admin'], true) && in_array($action, adminOnlyActions()[$screen] ?? [], true)) {
+                    expect(screenAllows($screen, $action))->toBeFalse(
+                        sprintf('%s lets %s %s (admins and super admins only)', class_basename($screen), $roleName, $action),
+                    );
+
+                    continue;
                 }
 
                 expect(screenAllows($screen, $action))->toBeTrue(

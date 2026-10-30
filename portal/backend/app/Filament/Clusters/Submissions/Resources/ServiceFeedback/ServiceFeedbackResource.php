@@ -261,7 +261,9 @@ class ServiceFeedbackResource extends Resource
                         ->where('Comment', '!=', '')),
             ])
             ->recordActions([
+                // Filled purple, so View outweighs Delete beside it (Burchfield B56).
                 ViewAction::make()
+                    ->extraAttributes(['class' => 'hs-row-primary'])
                     ->modalHeading('View Service Feedback')
                     ->extraModalFooterActions(fn (ServiceFeedback $record): array => [
                         Action::make('download_pdf')

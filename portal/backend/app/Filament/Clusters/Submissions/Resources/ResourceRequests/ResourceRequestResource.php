@@ -85,7 +85,11 @@ class ResourceRequestResource extends Resource
     // Never edited: a request is a statement from the public. Delete is for spam. Staff-started requests come from a follow-up page, never a Create button here.
     protected static function allowedActions(): array
     {
-        return ['view', 'delete', 'deleteAny'];
+        // Requests are kept: only admins and super admins may delete one (spam), and its
+        // follow-up and history go with it (Burchfield B56).
+        return Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin)
+            ? ['view', 'delete', 'deleteAny']
+            : ['view'];
     }
 
     public static function getNavigationBadge(): ?string
