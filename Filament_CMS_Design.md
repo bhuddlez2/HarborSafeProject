@@ -431,9 +431,10 @@ text, e.g. "Annually in September"), `location_name`, `location_address`,
 `file_size_bytes` (nullable), `file_pages` (nullable), `is_published` (bool).
 
 `issue_date` is labelled **Publish Date** in the panel. New or changed dates run from the
-1st of the month six months back to today, or, with the form's **Schedule post** box
-ticked, to the end of the month six months ahead; a published issue stays off the website
-(PDF included) until that day. Schedule post is not a column.
+1st of the month six months back to the end of the month six months ahead. A future date
+schedules the issue: a published issue stays off the website (PDF included) until that
+day, and the form shows a Scheduled notice under the date (Burchfield B52 removed the
+Schedule post box).
 
 ### 6.4 Conventions you must follow
 
