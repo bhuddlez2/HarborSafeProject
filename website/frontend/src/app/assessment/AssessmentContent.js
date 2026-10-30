@@ -23,6 +23,7 @@ names typed here, and the state is cleared as soon as the submission is accepted
 */
 
 import { useState, useEffect, startTransition } from "react";
+import Link from "next/link";
 import Modal from "../components/Modal";
 import { OPTIONAL_PLACEHOLDER, RequiredNote } from "../components/FormControls";
 import { lethalityQuestions, questionText } from "../lib/lethality-questions";
@@ -262,7 +263,7 @@ export default function AssessmentContent() {
   };
 
   // Clears everything that was entered. Run as soon as a submission is accepted, so
-  // the details don't stay in the page, and again for "Start new assessment".
+  // the details don't stay in the page, and again for "Submit Another Assessment".
   const clearEntries = () => {
     setAnswers({});
     setIndex(0);
@@ -690,22 +691,31 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-2`}>Review &amp; Submit</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className={`${HEADING} mb-2 text-center`}>Review &amp; Submit</h1>
+          <p className="text-gray-600 mb-6 text-center">
             Check every detail and answer below. Use Edit or Change to fix anything. Nothing has
             been sent yet. It is sent only when you press Submit assessment.
           </p>
 
           <div className="flex flex-col gap-4">
-            <ReviewSection
-              title="This report"
-              editLabel="Edit who this report is for"
-              onEdit={() => setPhase("prescreen")}
-              fields={[
-                ["Report for", forSelf ? "Myself" : "Someone else"],
-                ...(forSelf ? [] : [["Anonymous", anonymous ? "Yes" : "No"]]),
-              ]}
-            />
+            {/* A report for oneself has nothing to show here, but keeps the way back to "Who is this report for?". */}
+            {forSelf ? (
+              <p>
+                <button type="button" onClick={() => setPhase("prescreen")} className={EDIT_BUTTON}>
+                  Change who this report is for
+                </button>
+              </p>
+            ) : (
+              <ReviewSection
+                title="This report"
+                editLabel="Edit who this report is for"
+                onEdit={() => setPhase("prescreen")}
+                fields={[
+                  ["Report for", "Someone else"],
+                  ["Anonymous", anonymous ? "Yes" : "No"],
+                ]}
+              />
+            )}
 
             {identified && (
               <ReviewSection
@@ -721,7 +731,7 @@ export default function AssessmentContent() {
             )}
 
             <ReviewSection
-              title={forSelf ? "You (the victim)" : "Victim"}
+              title="Victim"
               editLabel="Edit the victim's details"
               onEdit={() => setPhase("victim")}
               fields={[
@@ -811,15 +821,18 @@ export default function AssessmentContent() {
   if (phase === "submitted") {
     return (
       <main className={PAGE}>
-        <div className={CARD}>
+        <div className={`${CARD} text-center`}>
           <h1 className={`${HEADING} mb-6`}>Assessment Submitted</h1>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
             Your assessment has been sent to Harbor Safe House. Harbor Safe House will follow up
             at the safe phone number you gave. Your answers have been cleared from this page.
           </p>
-          <button onClick={() => { clearEntries(); setPhase("prescreen"); }} className={PRIMARY}>
-            Start new assessment
-          </button>
+          <div className="flex flex-wrap justify-center gap-4">
+            <button onClick={() => { clearEntries(); setPhase("prescreen"); }} className={SECONDARY}>
+              Submit Another Assessment
+            </button>
+            <Link href="/resources" className={PRIMARY}>View Resources</Link>
+          </div>
         </div>
       </main>
     );

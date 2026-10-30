@@ -259,7 +259,8 @@ test('fields are not remembered by the browser, and the details are cleared afte
   await answerAll(page);
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await page.getByRole('button', { name: 'Start new assessment' }).click();
+  await expect(page.getByRole('link', { name: 'View Resources' })).toHaveAttribute('href', /^\/resources\/?$/);
+  await page.getByRole('button', { name: 'Submit Another Assessment' }).click();
 
   await page.getByRole('button', { name: 'Myself' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -402,7 +403,11 @@ test('the review shows every detail and every answer', async ({ page }) => {
   await stubAssessmentApi(page);
   await reachReview(page);
 
-  for (const text of ['Myself', 'Jane Doe', 'Female', 'Apr 12, 1990', '(423)555-0100', 'John Roe', 'Male', 'Not given', 'Spouse']) {
+  // A report for oneself: no "This report" box, and the victim box is plain "Victim", like "Offender".
+  await expect(page.getByRole('heading', { name: 'This report' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Victim', exact: true })).toBeVisible();
+
+  for (const text of ['Jane Doe', 'Female', 'Apr 12, 1990', '(423)555-0100', 'John Roe', 'Male', 'Not given', 'Spouse']) {
     await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
   }
 
@@ -471,7 +476,7 @@ test('switching to a named report from the review asks for the name first', asyn
   const api = await stubAssessmentApi(page);
   await reachReview(page);
 
-  await page.getByRole('button', { name: 'Edit who this report is for' }).click();
+  await page.getByRole('button', { name: 'Change who this report is for' }).click();
   await page.getByRole('button', { name: 'Someone else' }).click();
   await page.getByRole('button', { name: 'No', exact: true }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -483,6 +488,8 @@ test('switching to a named report from the review asks for the name first', asyn
 
   await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
   await expect(page.getByText('Sam Friend')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This report' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Change who this report is for' })).toHaveCount(0);
 
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
