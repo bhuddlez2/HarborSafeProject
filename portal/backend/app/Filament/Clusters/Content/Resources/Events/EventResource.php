@@ -10,11 +10,13 @@ use App\Filament\Forms\Components\DatabaseFileUpload;
 use App\Filament\Forms\DateWindow;
 use Closure;
 use Illuminate\Support\Carbon;
+use App\Models\ContentFile;
 use App\Models\Event;
 use App\Models\EventCategory;
 use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -34,7 +36,9 @@ use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\HtmlString;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -92,247 +96,240 @@ class EventResource extends Resource
         return ['create', 'update', 'delete', 'deleteAny'];
     }
 
+    // The Edit pop-up. Create gives the same steps as action steps instead
+    // (createAction()).
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Wizard::make([
-                    Step::make('Details')
-                        ->icon('heroicon-o-document-text')
-                        ->schema([
-                            TextInput::make('title')
-                                ->required()
-                                ->maxLength(200)
-                                ->columnSpanFull(),
-
-                            TextInput::make('summary')
-                                ->maxLength(500)
-                                ->helperText('One or two lines, shown in the event list.')
-                                ->columnSpanFull(),
-
-                            Textarea::make('description')
-                                ->rows(6)
-                                // Counts the whole box, blank lines between
-                                // paragraphs included.
-                                ->maxLength(500)
-                                ->columnSpanFull()
-                                ->helperText('Leave a blank line between paragraphs. Each paragraph is rendered separately on the website.')
-                                // The column is a json array of paragraphs; the
-                                // textarea is a single string. Convert both ways.
-                                ->afterStateHydrated(fn (Textarea $component, mixed $state) => $component->state(
-                                    is_array($state) ? implode("\n\n", $state) : (string) ($state ?? ''),
-                                ))
-                                ->dehydrateStateUsing(fn (?string $state): ?array => self::toParagraphs($state)),
-
-                            Select::make('category_id')
-                                ->label('Category')
-                                // Not ->relationship(): the relation crosses to the
-                                // Content connection and Filament would resolve the
-                                // option query on the default one.
-                                ->options(fn (): array => EventCategory::query()
-                                    ->orderBy('Name')
-                                    ->pluck('Name', 'id')
-                                    ->all())
-                                ->searchable()
-                                ->helperText('Leave empty for no category.'),
-
-                            // Optional fields keep their box for the "Optional"
-                            // ghost text (App\Filament\Forms\RequirementMarkers),
-                            // so examples go in the helper text instead.
-                            TextInput::make('recurrence')
-                                ->maxLength(120)
-                                ->helperText('e.g. Annually in September. Free text, shown as-is. Leave empty for a one-off event.'),
-                        ])
-                        ->columns(2),
-
-                    Step::make('Date & Time')
-                        ->icon('heroicon-o-calendar')
-                        ->schema([
-                            // Set first: it decides whether Starts and Ends ask for a time.
-                            Toggle::make('all_day')
-                                ->label('All-day event')
-                                ->live()
-                                // Re-enter Starts in its new shape (date only, or the
-                                // date at midnight), keeping the Eastern day; $get and
-                                // $set use the saved UTC form. Ends is cleared.
-                                ->afterStateUpdated(function (Get $get, Set $set): void {
-                                    if (filled($value = $get('starts_at'))) {
-                                        $set('starts_at', Carbon::parse($value)->timezone(Event::DISPLAY_TIMEZONE)->startOfDay());
-                                    }
-                                    $set('ends_at', null);
-                                    $set('multiple_days', false);
-                                })
-                                ->columnSpanFull(),
-
-                            // Not stored: an all-day event with an end runs over
-                            // several days, so Edit turns it on from the saved end.
-                            Toggle::make('multiple_days')
-                                ->label('Multiple days')
-                                ->live()
-                                ->dehydrated(false)
-                                ->visible(fn (Get $get): bool => (bool) $get('all_day'))
-                                ->afterStateHydrated(fn (Toggle $component, ?Event $record) => $component->state($record?->all_day && $record->ends_at !== null))
-                                ->afterStateUpdated(fn (Set $set) => $set('ends_at', null))
-                                ->columnSpanFull(),
-
-                            self::eventDateTime('starts_at', 'Starts')
-                                ->required(),
-
-                            // A one-day all-day event has no end: Ends is greyed out
-                            // with the reason on hover, like a refused Delete button,
-                            // and saved empty (a greyed-out field otherwise isn't
-                            // saved, which would keep an old end).
-                            self::eventDateTime('ends_at', 'Ends')
-                                ->after('starts_at')
-                                ->helperText('Optional.')
-                                ->disabled(fn (Get $get): bool => self::isOneDay($get))
-                                ->dehydrated()
-                                ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => self::isOneDay($get) ? null : $state)
-                                ->extraAttributes(fn (Get $get): array => self::isOneDay($get)
-                                    ? ['x-tooltip' => "{ content: 'All-day event', theme: \$store.theme }"]
-                                    : []),
-
-                            Toggle::make('location_is_virtual')
-                                ->label('Virtual event')
-                                ->live(),
-
-                            TextInput::make('location_name')
-                                ->label('Venue name')
-                                ->maxLength(150)
-                                ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
-
-                            TextInput::make('location_address')
-                                ->label('Address')
-                                ->maxLength(255)
-                                ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
-
-                            TextInput::make('location_virtual_note')
-                                ->label('Joining note')
-                                ->maxLength(255)
-                                ->helperText('e.g. A link will be emailed to registrants')
-                                ->visible(fn (callable $get): bool => (bool) $get('location_is_virtual'))
-                                ->columnSpanFull(),
-                        ])
-                        ->columns(2),
-
-                    Step::make('Image')
-                        ->icon('heroicon-o-photo')
-                        ->schema([
-                            DatabaseFileUpload::forImage('image_file_id')
-                                ->label('Event image')
-                                ->columnSpanFull(),
-
-                            TextInput::make('image_alt')
-                                ->label('Image description')
-                                ->maxLength(255)
-                                ->helperText('Describes the image for screen readers. Required whenever an image is set.')
-                                ->required(fn (callable $get): bool => filled($get('image_file_id')))
-                                ->columnSpanFull(),
-                        ]),
-
-                    Step::make('Registration & Visibility')
-                        ->icon('heroicon-o-eye')
-                        ->schema([
-                            TextInput::make('registration_url')
-                                ->label('Registration link')
-                                ->url()
-                                ->maxLength(255),
-
-                            TextInput::make('registration_label')
-                                ->label('Button text')
-                                ->maxLength(100)
-                                ->helperText('e.g. Register now'),
-
-                            Toggle::make('is_published')
-                                ->label('Published')
-                                ->helperText('Visible on the website.')
-                                ->columnSpanFull(),
-
-                            Toggle::make('is_cancelled')
-                                ->label('Cancelled')
-                                ->columnSpanFull(),
-                        ])
-                        ->columns(2),
-
-                    Step::make('Preview')
-                        ->icon('heroicon-o-sparkles')
-                        ->schema([
-                            /*
-                            Placeholder renders arbitrary HTML inside a form step.
-                            The ->content() closure runs when the step is first
-                            displayed and receives $get, a callable that reads any
-                            field's current value from the Livewire form state —
-                            so all the earlier steps' input is accessible here
-                            without the form needing to be saved first.
-                            */
-                            Placeholder::make('event_preview')
-                                ->label('')
-                                ->content(function (Get $get): HtmlString {
-                                    // category_id is an integer FK; look up the
-                                    // display name so the preview can show the badge.
-                                    $categoryName = null;
-                                    if ($categoryId = $get('category_id')) {
-                                        $categoryName = EventCategory::find($categoryId)?->Name;
-                                    }
-
-                                    // The DateTimePicker stores times in UTC internally.
-                                    // Carbon::parse() turns the raw string into a Carbon
-                                    // object, and ->timezone() converts it to Eastern so
-                                    // the preview shows the same wall-clock time the
-                                    // website will display.
-                                    $startsAt = filled($get('starts_at'))
-                                        ? \Carbon\Carbon::parse($get('starts_at'))->timezone(Event::DISPLAY_TIMEZONE)
-                                        : null;
-                                    $endsAt = filled($get('ends_at'))
-                                        ? \Carbon\Carbon::parse($get('ends_at'))->timezone(Event::DISPLAY_TIMEZONE)
-                                        : null;
-
-                                    // image_file_id holds two different things depending
-                                    // on context:
-                                    //   - Editing a saved event: a ContentFile UUID that
-                                    //     already exists in the database, so we can build
-                                    //     a real image URL for the preview.
-                                    //   - Creating a new event: a Livewire temporary file
-                                    //     path that hasn't been written to content_files
-                                    //     yet, so ContentFile::find() returns null and we
-                                    //     fall back to the "Image attached" placeholder.
-                                    $imageUrl = null;
-                                    if ($fileId = $get('image_file_id')) {
-                                        if (\App\Models\ContentFile::find($fileId)) {
-                                            $imageUrl = route('staff.content-files.show', ['file' => $fileId]);
-                                        }
-                                    }
-
-                                    // Render the Blade template with all the form values
-                                    // and wrap the resulting HTML in HtmlString so
-                                    // Filament doesn't escape it as plain text.
-                                    return new HtmlString(view('filament.forms.event-preview', [
-                                        'title'               => $get('title'),
-                                        'summary'             => $get('summary'),
-                                        'description'         => $get('description'),
-                                        'categoryName'        => $categoryName,
-                                        'startsAt'            => $startsAt,
-                                        'endsAt'              => $endsAt,
-                                        'allDay'              => (bool) $get('all_day'),
-                                        'locationIsVirtual'   => (bool) $get('location_is_virtual'),
-                                        'locationName'        => $get('location_name'),
-                                        'locationAddress'     => $get('location_address'),
-                                        'locationVirtualNote' => $get('location_virtual_note'),
-                                        'registrationUrl'     => $get('registration_url'),
-                                        'registrationLabel'   => $get('registration_label'),
-                                        'hasImage'            => filled($get('image_file_id')),
-                                        'imageUrl'            => $imageUrl,
-                                        'imageAlt'            => $get('image_alt'),
-                                        'recurrence'          => $get('recurrence'),
-                                        'isPublished'         => (bool) $get('is_published'),
-                                        'isCancelled'         => (bool) $get('is_cancelled'),
-                                    ])->render());
-                                })
-                                ->columnSpanFull(),
-                        ]),
-                ])
-                ->columnSpanFull(),
+                Wizard::make(self::steps())->columnSpanFull(),
             ]);
+    }
+
+    /** @return list<Step> */
+    public static function steps(): array
+    {
+        return [
+            Step::make('Details')
+                ->icon('heroicon-o-document-text')
+                ->schema([
+                    TextInput::make('title')
+                        ->required()
+                        ->maxLength(200)
+                        ->columnSpanFull(),
+
+                    TextInput::make('summary')
+                        ->maxLength(500)
+                        ->helperText('One or two lines, shown in the event list.')
+                        ->columnSpanFull(),
+
+                    Textarea::make('description')
+                        ->rows(6)
+                        // Counts the whole box, blank lines between
+                        // paragraphs included.
+                        ->maxLength(500)
+                        ->columnSpanFull()
+                        ->helperText('Leave a blank line between paragraphs. Each paragraph is rendered separately on the website.')
+                        // The column is a json array of paragraphs; the
+                        // textarea is a single string. Convert both ways.
+                        ->afterStateHydrated(fn (Textarea $component, mixed $state) => $component->state(
+                            is_array($state) ? implode("\n\n", $state) : (string) ($state ?? ''),
+                        ))
+                        ->dehydrateStateUsing(fn (?string $state): ?array => self::toParagraphs($state)),
+
+                    Select::make('category_id')
+                        ->label('Category')
+                        // Not ->relationship(): the relation crosses to the
+                        // Content connection and Filament would resolve the
+                        // option query on the default one.
+                        ->options(fn (): array => EventCategory::query()
+                            ->orderBy('Name')
+                            ->pluck('Name', 'id')
+                            ->all())
+                        ->searchable()
+                        ->helperText('Leave empty for no category.'),
+
+                    // Optional fields keep their box for the "Optional"
+                    // ghost text (App\Filament\Forms\RequirementMarkers),
+                    // so examples go in the helper text instead.
+                    TextInput::make('recurrence')
+                        ->maxLength(120)
+                        ->helperText('e.g. Annually in September. Free text, shown as-is. Leave empty for a one-off event.'),
+                ])
+                ->columns(2),
+
+            Step::make('Date & Time')
+                ->icon('heroicon-o-calendar')
+                ->schema([
+                    // Set first: it decides whether Starts and Ends ask for a time.
+                    Toggle::make('all_day')
+                        ->label('All-day event')
+                        ->live()
+                        // Re-enter Starts in its new shape (date only, or the
+                        // date at midnight), keeping the Eastern day; $get and
+                        // $set use the saved UTC form. Ends is cleared.
+                        ->afterStateUpdated(function (Get $get, Set $set): void {
+                            if (filled($value = $get('starts_at'))) {
+                                $set('starts_at', Carbon::parse($value)->timezone(Event::DISPLAY_TIMEZONE)->startOfDay());
+                            }
+                            $set('ends_at', null);
+                            $set('multiple_days', false);
+                        })
+                        ->columnSpanFull(),
+
+                    // Not stored: an all-day event with an end runs over
+                    // several days, so Edit turns it on from the saved end.
+                    Toggle::make('multiple_days')
+                        ->label('Multiple days')
+                        ->live()
+                        ->dehydrated(false)
+                        ->visible(fn (Get $get): bool => (bool) $get('all_day'))
+                        ->afterStateHydrated(fn (Toggle $component, ?Event $record) => $component->state($record?->all_day && $record->ends_at !== null))
+                        ->afterStateUpdated(fn (Set $set) => $set('ends_at', null))
+                        ->columnSpanFull(),
+
+                    self::eventDateTime('starts_at', 'Starts')
+                        ->required(),
+
+                    // A one-day all-day event has no end: Ends is greyed out
+                    // with the reason on hover, like a refused Delete button,
+                    // and saved empty (a greyed-out field otherwise isn't
+                    // saved, which would keep an old end).
+                    self::eventDateTime('ends_at', 'Ends')
+                        ->after('starts_at')
+                        ->helperText('Optional.')
+                        ->disabled(fn (Get $get): bool => self::isOneDay($get))
+                        ->dehydrated()
+                        ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => self::isOneDay($get) ? null : $state)
+                        ->extraAttributes(fn (Get $get): array => self::isOneDay($get)
+                            ? ['x-tooltip' => "{ content: 'All-day event', theme: \$store.theme }"]
+                            : []),
+
+                    Toggle::make('location_is_virtual')
+                        ->label('Virtual event')
+                        ->live(),
+
+                    TextInput::make('location_name')
+                        ->label('Venue name')
+                        ->maxLength(150)
+                        ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
+
+                    TextInput::make('location_address')
+                        ->label('Address')
+                        ->maxLength(255)
+                        ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
+
+                    TextInput::make('location_virtual_note')
+                        ->label('Joining note')
+                        ->maxLength(255)
+                        ->helperText('e.g. A link will be emailed to registrants')
+                        ->visible(fn (callable $get): bool => (bool) $get('location_is_virtual'))
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
+
+            Step::make('Image')
+                ->icon('heroicon-o-photo')
+                ->schema([
+                    DatabaseFileUpload::forImage('image_file_id')
+                        ->label('Event image')
+                        ->columnSpanFull(),
+
+                    TextInput::make('image_alt')
+                        ->label('Image description')
+                        ->maxLength(255)
+                        ->helperText('Describes the image for screen readers. Required whenever an image is set.')
+                        ->required(fn (callable $get): bool => filled($get('image_file_id')))
+                        ->columnSpanFull(),
+                ]),
+
+            Step::make('Registration & Visibility')
+                ->icon('heroicon-o-eye')
+                ->schema([
+                    TextInput::make('registration_url')
+                        ->label('Registration link')
+                        ->url()
+                        ->maxLength(255),
+
+                    TextInput::make('registration_label')
+                        ->label('Button text')
+                        ->maxLength(100)
+                        ->helperText('e.g. Register now'),
+
+                    Toggle::make('is_published')
+                        ->label('Published')
+                        ->helperText('Visible on the website.')
+                        ->columnSpanFull(),
+
+                    Toggle::make('is_cancelled')
+                        ->label('Cancelled')
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
+
+            Step::make('Preview')
+                ->icon('heroicon-o-sparkles')
+                ->schema([
+                    /*
+                    Placeholder renders arbitrary HTML inside a form step.
+                    The ->content() closure runs when the step is first
+                    displayed and receives $get, a callable that reads any
+                    field's current value from the Livewire form state —
+                    so all the earlier steps' input is accessible here
+                    without the form needing to be saved first.
+                    */
+                    Placeholder::make('event_preview')
+                        ->label('')
+                        ->content(function (Get $get): HtmlString {
+                            // category_id is an integer FK; look up the
+                            // display name so the preview can show the badge.
+                            $categoryName = null;
+                            if ($categoryId = $get('category_id')) {
+                                $categoryName = EventCategory::find($categoryId)?->Name;
+                            }
+
+                            // The DateTimePicker stores times in UTC internally.
+                            // Carbon::parse() turns the raw string into a Carbon
+                            // object, and ->timezone() converts it to Eastern so
+                            // the preview shows the same wall-clock time the
+                            // website will display.
+                            $startsAt = filled($get('starts_at'))
+                                ? \Carbon\Carbon::parse($get('starts_at'))->timezone(Event::DISPLAY_TIMEZONE)
+                                : null;
+                            $endsAt = filled($get('ends_at'))
+                                ? \Carbon\Carbon::parse($get('ends_at'))->timezone(Event::DISPLAY_TIMEZONE)
+                                : null;
+
+                            $imageUrl = self::previewImageUrl($get('image_file_id'));
+
+                            // Render the Blade template with all the form values
+                            // and wrap the resulting HTML in HtmlString so
+                            // Filament doesn't escape it as plain text.
+                            return new HtmlString(view('filament.forms.event-preview', [
+                                'title'               => $get('title'),
+                                'summary'             => $get('summary'),
+                                'description'         => $get('description'),
+                                'categoryName'        => $categoryName,
+                                'startsAt'            => $startsAt,
+                                'endsAt'              => $endsAt,
+                                'allDay'              => (bool) $get('all_day'),
+                                'locationIsVirtual'   => (bool) $get('location_is_virtual'),
+                                'locationName'        => $get('location_name'),
+                                'locationAddress'     => $get('location_address'),
+                                'locationVirtualNote' => $get('location_virtual_note'),
+                                'registrationUrl'     => $get('registration_url'),
+                                'registrationLabel'   => $get('registration_label'),
+                                'hasImage'            => filled($get('image_file_id')),
+                                'imageUrl'            => $imageUrl,
+                                'imageAlt'            => $get('image_alt'),
+                                'recurrence'          => $get('recurrence'),
+                                'isPublished'         => (bool) $get('is_published'),
+                                'isCancelled'         => (bool) $get('is_cancelled'),
+                            ])->render());
+                        })
+                        ->columnSpanFull(),
+                ]),
+        ];
     }
 
     public static function table(Table $table): Table
@@ -390,7 +387,7 @@ class EventResource extends Resource
             ->emptyStateHeading('No events yet')
             ->emptyStateDescription('Events created here appear on the website once published.')
             ->emptyStateActions([
-                CreateAction::make()->label('Add an Event'),
+                self::createAction()->label('Add an Event'),
             ]);
     }
 
@@ -405,6 +402,48 @@ class EventResource extends Resource
     public const YEARS_BACK = 1;
 
     public const YEARS_AHEAD = 2;
+
+    /*
+    The Create pop-up, used by the page header and the table's empty state.
+    Given as action steps rather than the resource form, like newsletters, so
+    both Create buttons show only on the last step (Preview): Filament drops
+    the footer in steps mode and puts the submit button in the wizard, and
+    Create & Create Another Event is added beside it here. Filament draws an
+    action's wizard uncontained; contained() keeps the Edit pop-up's look.
+    */
+    public static function createAction(): CreateAction
+    {
+        return CreateAction::make()
+            ->steps(self::steps())
+            ->createAnotherAction(fn (Action $action): Action => $action->label('Create & Create Another Event'))
+            ->modifyWizardUsing(fn (Wizard $wizard, CreateAction $action): Wizard => $wizard
+                ->contained()
+                ->submitAction(new HtmlString(
+                    '<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem;">'
+                    .$action->getModalSubmitAction()?->toHtml()
+                    .collect($action->getExtraModalFooterActions())->map->toHtml()->implode('')
+                    .'</div>',
+                )));
+    }
+
+    /*
+    The image as the Preview step can show it. A file picked in this pop-up is
+    still a Livewire temporary upload with no content_files row, so it goes
+    through Livewire's own signed preview link; a saved one (Edit) through the
+    staff file route. The field holds [uuid => file] while the form is open.
+    */
+    private static function previewImageUrl(mixed $state): ?string
+    {
+        $file = is_array($state) ? Arr::first($state) : $state;
+
+        if ($file instanceof TemporaryUploadedFile) {
+            return $file->isPreviewable() ? $file->temporaryUrl() : null;
+        }
+
+        return is_string($file) && ContentFile::whereKey($file)->exists()
+            ? route('staff.content-files.show', ['file' => $file])
+            : null;
+    }
 
     public static function earliestDay(): string
     {
