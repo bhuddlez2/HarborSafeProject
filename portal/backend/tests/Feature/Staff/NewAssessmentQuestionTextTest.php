@@ -47,7 +47,7 @@ function questionTextFullForm(array $overrides = []): array
     return [
         'VictimFirstName' => 'Review',
         'VictimLastName' => 'Check',
-        'VictimDOB' => '1990-01-01',
+        'VictimDOB' => '01/01/1990',
         'VictimSex' => 'F',
         'VictimSafePhoneNumber' => '423-555-0150',
         'OffenderFirstName' => 'John',
