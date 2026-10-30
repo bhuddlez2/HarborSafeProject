@@ -18,9 +18,9 @@ export default function CrisisHotlineStrip() {
     <div className="sticky top-22.5 z-40 flex items-center justify-center gap-x-8 gap-y-2 px-4 sm:px-8 py-3 sm:py-4 bg-purple-50 border-b border-purple-100 flex-wrap text-center">
       <span className="hidden sm:inline text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
       <div className="flex flex-row items-center gap-3 sm:gap-5">
-        <PhoneLink number={CRISIS_CALL} prefix="Call " className="whitespace-nowrap text-sm sm:text-lg font-semibold text-brand hover:underline transition-all" />
+        <PhoneLink number={CRISIS_CALL} prefix="Call " className="tap-target whitespace-nowrap text-sm sm:text-lg font-semibold text-brand hover:underline transition-all" />
         <span className="text-purple-300" aria-hidden="true">|</span>
-        <PhoneLink number={CRISIS_TEXT} sms prefix="Text " className="whitespace-nowrap text-sm sm:text-lg font-semibold text-brand hover:underline transition-all" />
+        <PhoneLink number={CRISIS_TEXT} sms prefix="Text " className="tap-target whitespace-nowrap text-sm sm:text-lg font-semibold text-brand hover:underline transition-all" />
       </div>
       <span className="hidden sm:inline text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
     </div>

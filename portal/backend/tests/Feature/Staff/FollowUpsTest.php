@@ -58,7 +58,7 @@ test('every new assessment and resource request opens a follow-up in Needs follo
     Livewire::test(NewAssessment::class)
         ->fillForm([
             ...collect(range(1, 11))->mapWithKeys(fn (int $n): array => ["RiskIndicator{$n}" => false])->all(),
-            'VictimFirstName' => 'Test', 'VictimLastName' => 'Victim', 'VictimDOB' => '1990-01-01', 'VictimSex' => 'F',
+            'VictimFirstName' => 'Test', 'VictimLastName' => 'Victim', 'VictimDOB' => '01/01/1990', 'VictimSex' => 'F',
             'VictimSafePhoneNumber' => '(423)555-0100',
             'OffenderFirstName' => 'Test', 'OffenderLastName' => 'Offender', 'OffenderSex' => 'M',
             'OffenderVictimRelationship' => 'spouse',

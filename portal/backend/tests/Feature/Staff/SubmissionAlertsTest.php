@@ -133,7 +133,7 @@ test('an officer\'s assessment alerts admins only, not the officer or their poli
             ...collect(range(1, 11))->mapWithKeys(fn (int $n): array => ["RiskIndicator{$n}" => $n === 1])->all(),
             'VictimFirstName' => 'Test',
             'VictimLastName' => 'Victim',
-            'VictimDOB' => '1990-01-01',
+            'VictimDOB' => '01/01/1990',
             'VictimSex' => 'F',
             'VictimSafePhoneNumber' => '(423)555-0100',
             'OffenderFirstName' => 'Test',

@@ -28,7 +28,10 @@ import Modal from "../components/Modal";
 import { OPTIONAL_PLACEHOLDER, RequiredNote, focusPageHeading } from "../components/FormControls";
 import { lethalityQuestions, questionText } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
-import { isValidEmail, isValidPhone, dateOfBirthBounds, dateOfBirthError, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
+import {
+  isValidEmail, isValidPhone, dateOfBirthError, formatDateInput, typedDateToIso, DOB_INPUT_MAX_LENGTH,
+  formatPhoneInput, PHONE_INPUT_MAX_LENGTH,
+} from "../lib/validators";
 
 // pt-22.5 on the layout already clears the fixed navbar (5.625rem), so the grey
 // backdrop fills the rest of the viewport.
@@ -109,14 +112,16 @@ function SexSelect({ id, value, onChange }) {
 
 // "1990-04-12" as "Apr 12, 1990". Built from the parts, so the time zone can't move it
 // to the day before.
-function formatDate(value) {
+// A typed MM/DD/YYYY date of birth as "Mar 14, 1985" for the review
+function formatDate(typed) {
+  const value = typedDateToIso(typed);
   if (!value) return null;
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 const EDIT_BUTTON =
-  "text-sm font-semibold text-[#5C0F8B] underline underline-offset-2 rounded px-1 " +
+  "tap-target text-sm font-semibold text-[#5C0F8B] underline underline-offset-2 rounded px-1 " +
   "hover:text-[#4C0B74] focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40";
 
 // One block of the review: a heading, an Edit button, and label/value pairs.
@@ -183,7 +188,9 @@ export default function AssessmentContent() {
   // victim phase
   const [victimFirstName, setVictimFirstName] = useState("");
   const [victimLastName, setVictimLastName] = useState("");
+  // Dates of birth are held as typed (MM/DD/YYYY) and turned into YYYY-MM-DD on submit
   const [victimDob, setVictimDob] = useState("");
+  const [victimDobLeft, setVictimDobLeft] = useState(false);
   const [victimSex, setVictimSex] = useState("");
   const [victimPhone, setVictimPhone] = useState("");
 
@@ -192,6 +199,7 @@ export default function AssessmentContent() {
   const [offenderFirstName, setOffenderFirstName] = useState("");
   const [offenderLastName, setOffenderLastName] = useState("");
   const [offenderDob, setOffenderDob] = useState("");
+  const [offenderDobLeft, setOffenderDobLeft] = useState(false);
   const [offenderSex, setOffenderSex] = useState("");
   const [offenderRelationship, setOffenderRelationship] = useState("");
   const [offenderRelationshipOther, setOffenderRelationshipOther] = useState("");
@@ -231,8 +239,12 @@ export default function AssessmentContent() {
   const victimDobError = dateOfBirthError(victimDob);
   const victimPhoneError = victimPhone.trim() && !isValidPhone(victimPhone.trim()) ? PHONE_ERROR : null;
   const offenderDobError = dateOfBirthError(offenderDob);
-  // The date boxes' calendars only offer days in this range.
-  const dob = dateOfBirthBounds();
+  /*
+  A date of birth's message shows once all ten characters are in or the box has
+  been left, never mid-typing; Continue is held back by the error either way
+  */
+  const victimDobShownError = victimDob.length === DOB_INPUT_MAX_LENGTH || victimDobLeft ? victimDobError : null;
+  const offenderDobShownError = offenderDob.length === DOB_INPUT_MAX_LENGTH || offenderDobLeft ? offenderDobError : null;
 
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -282,8 +294,8 @@ export default function AssessmentContent() {
     setForWhom(null);
     setAnonymous(null);
     setFirstName(""); setLastName(""); setEmail(""); setPhone("");
-    setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimSex(""); setVictimPhone("");
-    setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderSex("");
+    setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimDobLeft(false); setVictimSex(""); setVictimPhone("");
+    setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderDobLeft(false); setOffenderSex("");
     setOffenderRelationship(""); setOffenderRelationshipOther("");
     setSubmitError(null);
     setReviewReached(false);
@@ -302,11 +314,11 @@ export default function AssessmentContent() {
         forWhom,
         anonymous,
         submitter: { firstName, lastName, email, phone },
-        victim: { firstName: victimFirstName, lastName: victimLastName, dob: victimDob, sex: victimSex, phone: victimPhone },
+        victim: { firstName: victimFirstName, lastName: victimLastName, dob: typedDateToIso(victimDob), sex: victimSex, phone: victimPhone },
         offender: {
           firstName: offenderFirstName,
           lastName: offenderLastName,
-          dob: offenderDob,
+          dob: typedDateToIso(offenderDob),
           sex: offenderSex,
           relationship: offenderRelationship,
           relationshipOther: offenderRelationshipOther,
@@ -543,11 +555,14 @@ export default function AssessmentContent() {
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
               <Label htmlFor="victim-dob" required>Date of Birth</Label>
-              <input id="victim-dob" type="date" value={victimDob} onChange={(e) => setVictimDob(e.target.value)}
-                min={dob.earliest} max={dob.latest} autoComplete="off" aria-required="true"
-                aria-invalid={!!victimDobError} aria-describedby={victimDobError ? "victim-dob-error" : undefined}
-                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#5C0F8B] transition" />
-              <FieldError id="victim-dob-error">{victimDobError}</FieldError>
+              <input id="victim-dob" type="text" inputMode="numeric" value={victimDob}
+                onChange={(e) => setVictimDob(formatDateInput(e.target.value))} onBlur={() => setVictimDobLeft(true)}
+                maxLength={DOB_INPUT_MAX_LENGTH} autoComplete="off" aria-required="true"
+                aria-invalid={!!victimDobShownError}
+                aria-describedby={victimDobShownError ? "victim-dob-hint victim-dob-error" : "victim-dob-hint"}
+                className={`w-40 ${INPUT}`} />
+              <p id="victim-dob-hint" className="text-xs text-gray-500 mt-1">MM/DD/YYYY</p>
+              <FieldError id="victim-dob-error">{victimDobShownError}</FieldError>
             </div>
             <div>
               <Label htmlFor="victim-sex" required>Sex</Label>
@@ -603,12 +618,16 @@ export default function AssessmentContent() {
 
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
-              <Label htmlFor="offender-dob" optional>Date of Birth</Label>
-              <input id="offender-dob" type="date" value={offenderDob} onChange={(e) => setOffenderDob(e.target.value)}
-                min={dob.earliest} max={dob.latest} autoComplete="off"
-                aria-invalid={!!offenderDobError} aria-describedby={offenderDobError ? "offender-dob-error" : undefined}
-                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#5C0F8B] transition" />
-              <FieldError id="offender-dob-error">{offenderDobError}</FieldError>
+              {/* Now a box that can hold ghost text, so "Optional" goes inside it like every other optional box */}
+              <Label htmlFor="offender-dob">Date of Birth</Label>
+              <input id="offender-dob" type="text" inputMode="numeric" value={offenderDob}
+                onChange={(e) => setOffenderDob(formatDateInput(e.target.value))} onBlur={() => setOffenderDobLeft(true)}
+                placeholder={OPTIONAL_PLACEHOLDER} maxLength={DOB_INPUT_MAX_LENGTH} autoComplete="off"
+                aria-invalid={!!offenderDobShownError}
+                aria-describedby={offenderDobShownError ? "offender-dob-hint offender-dob-error" : "offender-dob-hint"}
+                className={`w-40 ${INPUT}`} />
+              <p id="offender-dob-hint" className="text-xs text-gray-500 mt-1">MM/DD/YYYY</p>
+              <FieldError id="offender-dob-error">{offenderDobShownError}</FieldError>
             </div>
             <div>
               <Label htmlFor="offender-sex" required>Sex</Label>
@@ -624,7 +643,7 @@ export default function AssessmentContent() {
                 <button
                   type="button"
                   onClick={loadRelationshipOptions}
-                  className="text-sm font-semibold text-[#5C0F8B] underline focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40 rounded"
+                  className="tap-target text-sm font-semibold text-[#5C0F8B] underline focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40 rounded"
                 >
                   Try again
                 </button>
@@ -859,7 +878,7 @@ export default function AssessmentContent() {
   const answerButtons = (
     <>
       {index > 0 && (
-        <button onClick={handleBack} className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4">
+        <button onClick={handleBack} className="tap-target text-sm text-gray-500 hover:text-gray-900 transition block mb-4">
           ← Previous question
         </button>
       )}

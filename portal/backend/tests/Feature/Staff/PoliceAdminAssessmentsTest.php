@@ -43,7 +43,7 @@ function pa7WizardData(array $overrides = []): array
     return [
         'VictimFirstName' => 'Task',
         'VictimLastName' => 'Seven',
-        'VictimDOB' => '1990-01-01',
+        'VictimDOB' => '01/01/1990',
         'VictimSex' => 'F',
         'VictimSafePhoneNumber' => '423-555-0150',
         'OffenderFirstName' => 'Task',

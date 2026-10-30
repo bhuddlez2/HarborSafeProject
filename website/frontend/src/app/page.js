@@ -63,7 +63,7 @@ export default function Home() {
               <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 mt-0.5 stroke-red-700 stroke-2 fill-none" aria-hidden="true">
                 <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
+              <a href="tel:911" className="tap-target text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
             </div>
 
             {/*
@@ -107,8 +107,8 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
-              <Link href="/get-support" className="font-semibold text-brand hover:underline">Our services →</Link>
-              <Link href="/resources" className="font-semibold text-brand hover:underline">More resources →</Link>
+              <Link href="/get-support" className="tap-target font-semibold text-brand hover:underline">Our services →</Link>
+              <Link href="/resources" className="tap-target font-semibold text-brand hover:underline">More resources →</Link>
             </div>
           </div>
         </Modal>
@@ -256,7 +256,7 @@ export default function Home() {
                       onClick={() => setOpenTestimonial(testimonial)}
                       aria-haspopup="dialog"
                       aria-label={`Read the full story from ${testimonial.author}`}
-                      className="mt-auto self-start font-semibold text-brand hover:underline cursor-pointer"
+                      className="tap-target mt-auto self-start font-semibold text-brand hover:underline cursor-pointer"
                     >
                       Read full story →
                     </button>
@@ -285,7 +285,7 @@ export default function Home() {
               grid-cols-1 on mobile, md:grid-cols-3 on medium screens and up,
               gap-5 for spacing between cards,
               each card is sized like the Get Support service cards (B8): 80px round icon,
-              text-lg title, body text-base from md up, centered, with the links pinned to
+              text-lg title, body text-base from md up, centered, with the buttons pinned to
               the bottom (mt-auto) so all three line up whatever the text length
               */}
               <div className="grid md:grid-cols-3 gap-5">
@@ -301,7 +301,9 @@ export default function Home() {
                   </div>
                   <p className="text-lg md:text-xl font-semibold text-brand mb-3">Emergency Shelter</p>
                   <p className="text-sm md:text-base text-gray-600 leading-relaxed">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
-                  <a href="/get-support/#shelter" className="mt-auto pt-6 text-sm font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <div className="mt-auto pt-6">
+                    <a href="/get-support/#shelter" className="inline-block bg-brand text-white px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">Learn more →</a>
+                  </div>
                 </div>
 
                 {/* Counseling & Advocacy card */}
@@ -314,7 +316,9 @@ export default function Home() {
                   </div>
                   <p className="text-lg md:text-xl font-semibold text-brand mb-3">Counseling &amp; Advocacy</p>
                   <p className="text-sm md:text-base text-gray-600 leading-relaxed">Individual and group counseling, legal advocacy, and court support for survivors.</p>
-                  <a href="/get-support/#counseling" className="mt-auto pt-6 text-sm font-semibold text-brand hover:underline transition-all">Learn more →</a>
+                  <div className="mt-auto pt-6">
+                    <a href="/get-support/#counseling" className="inline-block bg-brand text-white px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">Learn more →</a>
+                  </div>
                 </div>
 
                 {/* 24/7 Crisis Line card */}
@@ -328,9 +332,9 @@ export default function Home() {
                   <p className="text-lg md:text-xl font-semibold text-brand mb-3">24/7 Crisis Line</p>
                   <p className="text-sm md:text-base text-gray-600 leading-relaxed">Trained advocates available any time — call or text, day or night, always free.</p>
                   {/* Call and text, matching the card copy and the hotline strip */}
-                  <div className="mt-auto pt-6 flex gap-6">
-                    <PhoneLink number={CRISIS_CALL} className="text-sm font-semibold text-brand hover:underline transition-all">Call →</PhoneLink>
-                    <PhoneLink number={CRISIS_TEXT} sms className="text-sm font-semibold text-brand hover:underline transition-all">Text →</PhoneLink>
+                  <div className="mt-auto pt-6 grid grid-cols-2 gap-3">
+                    <PhoneLink number={CRISIS_CALL} className="block text-center bg-brand text-white px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">Call</PhoneLink>
+                    <PhoneLink number={CRISIS_TEXT} sms className="block text-center bg-white text-brand px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">Text</PhoneLink>
                   </div>
                 </div>
 

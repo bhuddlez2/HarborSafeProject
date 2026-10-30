@@ -18,8 +18,11 @@
 
     $sex = fn (?string $code): string => AssessmentFields::SEX_OPTIONS[$code] ?? '—';
 
-    // Date-only values: shown as entered, never time-zone converted.
-    $date = fn (?string $value): string => filled($value) ? \Carbon\Carbon::parse($value)->format('M j, Y') : '—';
+    // Date-only values: shown as entered, never time-zone converted. The wizard's
+    // boxes hold MM/DD/YYYY (App\Filament\Forms\DateOfBirthInput).
+    $date = fn (?string $value): string => filled($value)
+        ? \Carbon\Carbon::parse(\App\Support\DateOfBirth::toIso($value))->format('M j, Y')
+        : '—';
 
     $name = fn (string $who): string => trim(($data[$who.'FirstName'] ?? '').' '.($data[$who.'LastName'] ?? '')) ?: '—';
 

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Assessments;
 
-use App\Filament\Forms\RequirementMarkers;
 use App\Filament\Pages\NewAssessment;
 use App\Models\LawEnforcementAssessment;
 use App\Services\AssessmentEditor;
@@ -84,7 +83,7 @@ final class AssessmentEditForm
                         AssessmentInputs::name('OffenderFirstName', 'First name'),
                         AssessmentInputs::name('OffenderLastName', 'Last name'),
                         AssessmentInputs::sex('OffenderSex'),
-                        AssessmentInputs::dateOfBirth('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth'), required: false),
+                        AssessmentInputs::dateOfBirth('OffenderDOB', 'Date of birth', required: false),
                         // Same dropdown + "Please specify" as the wizard.
                         ...RelationshipFields::make(),
                     ]),
