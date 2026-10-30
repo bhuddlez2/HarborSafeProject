@@ -60,10 +60,10 @@ class LocalAssessmentSeeder extends Seeder
             $officerId = $officers[$email]->getKey();
 
             foreach ($records as $suffix => $answers) {
-                $exists = LawEnforcementAssessment::where('submitted_by', $officerId)
-                    ->where('VictimFirstName', 'Test')
-                    ->where('VictimLastName', "Victim {$suffix}")
-                    ->exists();
+                // Names are encrypted, so matched after decrypting.
+                $exists = LawEnforcementAssessment::where('submitted_by', $officerId)->get()
+                    ->contains(fn (LawEnforcementAssessment $a): bool => $a->VictimFirstName === 'Test'
+                        && $a->VictimLastName === "Victim {$suffix}");
 
                 if ($exists) {
                     continue;

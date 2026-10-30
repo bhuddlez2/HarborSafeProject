@@ -112,6 +112,8 @@ test('a civilian assessment from the website alerts admins only', function () {
         'VictimFirstName' => STAFF_TEST_PREFIX.'Victim',
         'VictimLastName' => 'Doe',
         'VictimSex' => 'F',
+        // Required, as on the website.
+        'VictimDOB' => '1990-04-12',
         'VictimSafePhoneNumber' => '(423)555-0100',
         'OffenderFirstName' => 'Test',
         'OffenderLastName' => 'Offender',

@@ -2,10 +2,14 @@
 
 namespace App\Filament\Clusters\Content\Resources\Events;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
 use App\Filament\Forms\Components\DatabaseFileUpload;
+use App\Filament\Forms\DateWindow;
+use Closure;
+use Illuminate\Support\Carbon;
 use App\Models\Event;
 use App\Models\EventCategory;
 use App\Filament\Tables\TableAlignment;
@@ -57,6 +61,8 @@ carelessly:
 */
 class EventResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = Event::class;
 
     protected static ?string $cluster = ContentCluster::class;
@@ -76,6 +82,12 @@ class EventResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Add, edit and delete events, one or several at a time. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete', 'deleteAny'];
     }
 
     public static function form(Schema $schema): Schema
@@ -98,6 +110,9 @@ class EventResource extends Resource
 
                             Textarea::make('description')
                                 ->rows(6)
+                                // Counts the whole box, blank lines between
+                                // paragraphs included.
+                                ->maxLength(500)
                                 ->columnSpanFull()
                                 ->helperText('Leave a blank line between paragraphs. Each paragraph is rendered separately on the website.')
                                 // The column is a json array of paragraphs; the
@@ -132,16 +147,10 @@ class EventResource extends Resource
                         ->icon('heroicon-o-calendar')
                         ->description('Times are Eastern. Stored as UTC, displayed in Eastern on the website.')
                         ->schema([
-                            DateTimePicker::make('starts_at')
-                                ->label('Starts')
-                                ->required()
-                                ->seconds(false)
-                                ->timezone(Event::DISPLAY_TIMEZONE),
+                            self::eventDateTime('starts_at', 'Starts')
+                                ->required(),
 
-                            DateTimePicker::make('ends_at')
-                                ->label('Ends')
-                                ->seconds(false)
-                                ->timezone(Event::DISPLAY_TIMEZONE)
+                            self::eventDateTime('ends_at', 'Ends')
                                 ->after('starts_at')
                                 ->helperText('Optional.'),
 
@@ -214,7 +223,6 @@ class EventResource extends Resource
 
                     Step::make('Preview')
                         ->icon('heroicon-o-sparkles')
-                        ->description('How your event will appear on the website.')
                         ->schema([
                             /*
                             Placeholder renders arbitrary HTML inside a form step.
@@ -281,6 +289,8 @@ class EventResource extends Resource
                                         'registrationLabel'   => $get('registration_label'),
                                         'hasImage'            => filled($get('image_file_id')),
                                         'imageUrl'            => $imageUrl,
+                                        'imageAlt'            => $get('image_alt'),
+                                        'recurrence'          => $get('recurrence'),
                                         'isPublished'         => (bool) $get('is_published'),
                                         'isCancelled'         => (bool) $get('is_cancelled'),
                                     ])->render());
@@ -347,7 +357,7 @@ class EventResource extends Resource
             ->emptyStateHeading('No events yet')
             ->emptyStateDescription('Events created here appear on the website once published.')
             ->emptyStateActions([
-                CreateAction::make()->label('Add an event'),
+                CreateAction::make()->label('Add an Event'),
             ]);
     }
 
@@ -356,6 +366,54 @@ class EventResource extends Resource
         return [
             'index' => ManageEvents::route('/'),
         ];
+    }
+
+    // How far back and ahead an event's start or end may be.
+    public const YEARS_BACK = 1;
+
+    public const YEARS_AHEAD = 2;
+
+    public static function earliestDay(): string
+    {
+        return now(Event::DISPLAY_TIMEZONE)->subYearsNoOverflow(self::YEARS_BACK)->toDateString();
+    }
+
+    public static function latestDay(): string
+    {
+        return now(Event::DISPLAY_TIMEZONE)->addYearsNoOverflow(self::YEARS_AHEAD)->toDateString();
+    }
+
+    /*
+    Starts and Ends: from a year ago to two years ahead, in Eastern days
+    (App\Filament\Forms\DateWindow). A new event's calendar offers only that
+    range; an existing event keeps its saved dates even once they are older,
+    and only a changed date is checked.
+    */
+    private static function eventDateTime(string $name, string $label): DateTimePicker
+    {
+        $tooEarly = "Can't be more than a year ago.";
+        $tooLate = "Can't be more than 2 years from now.";
+
+        return DateTimePicker::make($name)
+            ->label($label)
+            ->seconds(false)
+            ->timezone(Event::DISPLAY_TIMEZONE)
+            // Calendar limits for a new event only. Written as Eastern clock
+            // time, because Filament compares them with the value as typed.
+            ->minDate(fn (?Event $record): ?string => $record ? null : self::earliestDay().' 00:00:00')
+            ->maxDate(fn (?Event $record): ?string => $record ? null : self::latestDay().' 23:59:59')
+            ->rule(fn (?Event $record): Closure => DateWindow::rule(
+                self::earliestDay(...),
+                self::latestDay(...),
+                $tooEarly,
+                $tooLate,
+                fn (Carbon $picked): bool => $record?->{$name} !== null
+                    && $picked->format('Y-m-d H:i') === $record->{$name}->copy()->timezone(Event::DISPLAY_TIMEZONE)->format('Y-m-d H:i'),
+            ))
+            ->validationMessages([
+                'after_or_equal' => $tooEarly,
+                'before_or_equal' => $tooLate,
+            ]);
     }
 
     /*

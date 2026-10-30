@@ -76,12 +76,11 @@ class LawEnforcementAssessmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return AssessmentFilters::apply($table
-            // Shared with the other assessment table - see AssessmentColumns.
+        return AssessmentFilters::apply(AssessmentColumns::cards($table)
+            // Shared with the other assessment tables - see AssessmentColumns.
             ->columns(AssessmentColumns::for(reviewScreen: false))
             ->defaultSort('DateCreated', 'desc')
             ->modifyQueryUsing(fn ($query) => $query->with(['assessmentAnswers', 'submitter'])->withCount('edits'))
-            ->stackedOnMobile()
             ->emptyStateHeading('No assessments yet')
             ->emptyStateDescription('Completed LAP screenings will appear here. Use the home page to start one.')
             ->recordActions([

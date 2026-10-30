@@ -18,6 +18,7 @@ use App\Services\FollowUps;
 use App\Support\PhoneNumber;
 use App\Support\Timezones;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
@@ -86,7 +87,7 @@ class ViewFollowUp extends Page
 
     public function getBreadcrumbs(): array
     {
-        return [FollowUpResource::getUrl() => 'Follow-ups', 'Follow-up'];
+        return [FollowUpResource::getUrl() => FollowUpResource::getNavigationLabel(), 'Follow-Up'];
     }
 
     protected function getHeaderActions(): array
@@ -95,7 +96,8 @@ class ViewFollowUp extends Page
             $this->updateAction(),
             $this->newRequestAction(),
 
-            // The plain form as a PDF: no follow-up or log information.
+            // The plain form as a PDF: no follow-up or log information. The
+            // usual choice, so a full button, first.
             Action::make('download_pdf')
                 ->label('Download PDF')
                 ->icon(Heroicon::OutlinedArrowDownTray)
@@ -103,33 +105,63 @@ class ViewFollowUp extends Page
                 ->url(fn (): ?string => $this->pdfUrl())
                 ->openUrlInNewTab()
                 ->visible(fn (): bool => $this->pdfUrl() !== null),
+
+            // The form plus this Log (Burchfield B43), for when Harbor Safe
+            // has to provide it: in a menu on the small arrow right beside
+            // Download PDF, so the form-only PDF stays the one-click choice
+            // and the log version a deliberate second step.
+            // FollowUpPdfController.
+            ActionGroup::make([
+                Action::make('download_pdf_with_log')
+                    ->label('Download PDF with log')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->url(fn (): string => route('staff.follow-ups.pdf-with-log', $this->followUp()->getKey()))
+                    ->openUrlInNewTab(),
+            ])
+                ->label('More download options')
+                ->hiddenLabel()
+                ->icon(Heroicon::ChevronDown)
+                ->button()
+                ->color('gray')
+                ->dropdownPlacement('bottom-end')
+                ->extraAttributes(['class' => 'hs-download-more'])
+                ->visible(fn (): bool => $this->pdfUrl() !== null),
         ];
     }
 
     private function updateAction(): Action
     {
         return Action::make('update')
-            ->label('Update follow-up')
+            ->label('Update Follow-Up')
             ->icon(Heroicon::OutlinedPencilSquare)
-            ->modalHeading('Update follow-up')
-            ->modalDescription(fn (): string => 'Now: '.$this->followUp()->Status->label().'. Every update is kept with your name and the time.')
+            // Its own row on a phone, so Download PDF and its arrow stay
+            // together on the next (theme.css, "Follow-up page header").
+            ->extraAttributes(['class' => 'hs-fu-update'])
+            ->modalHeading('Update Follow-Up')
+            ->modalDescription(fn (): string => $this->currentStatusLine())
             ->schema([
+                // Greyed out on a final form, which can't change status: the
+                // update is then a note on its own.
                 Select::make('status')
                     ->label('Status')
                     ->options(fn (): array => $this->updateStatusOptions())
                     ->default('keep')
                     ->selectablePlaceholder(false)
+                    ->disabled(fn (): bool => $this->followUp()->Status->isFinal())
                     ->required(),
                 Textarea::make('note')
                     ->label('Note')
-                    ->helperText('Required for every update. New notes are added to the history; earlier ones are never changed.')
+                    // Required, so the asterisk says so; the box gives the limit.
+                    ->placeholder(number_format(FollowUps::NOTE_MAX).' Character Limit')
                     ->rows(4)
                     ->maxLength(FollowUps::NOTE_MAX)
                     ->required(),
             ])
             ->modalSubmitActionLabel('Save update')
             ->action(function (array $data, Action $action): void {
-                $status = $data['status'] === 'keep' ? null : FollowUpStatus::from($data['status']);
+                // A disabled dropdown sends nothing, so a missing status is "keep".
+                $choice = $data['status'] ?? 'keep';
+                $status = $choice === 'keep' ? null : FollowUpStatus::from($choice);
 
                 try {
                     app(FollowUps::class)->update($this->followUp(), $status, $data['note'], Filament::auth()->user());
@@ -153,7 +185,7 @@ class ViewFollowUp extends Page
 
     /*
     On a final form: a new resource request filled in from this one, every
-    field editable (a new safe number, say), starting in Needs follow-up.
+    field editable (a new safe number, say), starting in Needs Follow-Up.
     From a resource request everything carries over; from an assessment
     (admins only) just the victim's name and safe phone - never offender
     details, answers or history. FollowUps::startResourceRequest() decides
@@ -171,7 +203,7 @@ class ViewFollowUp extends Page
             ->color('gray')
             ->visible(fn (): bool => FollowUps::canStartResourceRequest($this->followUp(), Filament::auth()->user()))
             ->modalHeading($label)
-            ->modalDescription('A new resource request, filled in from this form. Change anything that is different now. It starts in Needs follow-up.')
+            ->modalDescription('A new resource request, filled in from this form. Change anything that is different now. It starts in Needs Follow-Up.')
             ->fillForm(fn (): array => $this->newRequestDefaults())
             ->schema([
                 Grid::make(2)->schema([
@@ -195,7 +227,7 @@ class ViewFollowUp extends Page
                 ]),
                 Select::make('CountyID')
                     ->label('County')
-                    ->options(fn (): array => County::query()->orderBy('Name')->pluck('Name', 'id')->all()),
+                    ->options(fn (): array => County::query()->otherLast()->orderBy('Name')->pluck('Name', 'id')->all()),
                 CheckboxList::make('ResourceTypeIDs')
                     ->label('Resources of interest')
                     ->options(fn (): array => ResourceType::query()->orderBy('Name')->pluck('Name', 'id')->all())
@@ -289,14 +321,22 @@ class ViewFollowUp extends Page
             ->all();
     }
 
-    // "No change" keeps the status and adds a note; the rest are the moves
-    // this form may make from where it is (FollowUpStatus::nextFor()).
-    public function updateStatusOptions(): array
+    // The line under the Update pop-up's heading.
+    public function currentStatusLine(): string
     {
         $followUp = $this->followUp();
 
-        return ['keep' => "No change (stays {$followUp->Status->label()})"]
-            + collect($followUp->Status->nextFor($followUp->Kind))
+        return "Current Status: {$followUp->Status->label()} · Current Days in Status: {$followUp->timeInStatus()}";
+    }
+
+    // "Keep Current Status" adds a note on its own; the rest are the moves this
+    // form may make from where it is (FollowUpStatus::next()).
+    public function updateStatusOptions(): array
+    {
+        $status = $this->followUp()->Status;
+
+        return ['keep' => "Keep Current Status ({$status->label()})"]
+            + collect($status->next())
                 ->mapWithKeys(fn (FollowUpStatus $status): array => [$status->value => $status->label()])
                 ->all();
     }

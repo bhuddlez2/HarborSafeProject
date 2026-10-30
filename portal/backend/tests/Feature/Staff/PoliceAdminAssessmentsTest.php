@@ -2,11 +2,11 @@
 
 use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Pages\Police;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Models\AssessmentAccessLog;
 use App\Models\AssessmentEdit;
 use App\Models\FollowUp;
@@ -138,15 +138,17 @@ test('a tampered submitted_by is ignored', function () {
         ->call('create')
         ->assertSet('submitted', true);
 
-    expect(LawEnforcementAssessment::where('VictimLastName', 'Seven')->where('submitted_by', $w->officerA->getKey())->exists())->toBeFalse()
-        ->and(LawEnforcementAssessment::where('VictimLastName', 'Seven')->where('submitted_by', $w->policeAdminA->getKey())->count())->toBe(1);
+    $submittedBy = fn (User $user): Closure => fn ($query) => $query->where('submitted_by', $user->getKey());
+
+    expect(encryptedRows(LawEnforcementAssessment::class, 'VictimLastName', 'Seven', scope: $submittedBy($w->officerA)))->toBeEmpty()
+        ->and(encryptedRows(LawEnforcementAssessment::class, 'VictimLastName', 'Seven', scope: $submittedBy($w->policeAdminA)))->toHaveCount(1);
 });
 
 test('a police admin with no agency can\'t open New assessment, and it isn\'t offered', function () {
     $this->actingAs(pestAgencyMember(UserRole::PoliceAdmin, null));
 
     expect(NewAssessment::canAccess())->toBeFalse()
-        ->and(pa7SidebarItems())->not->toContain('New assessment');
+        ->and(pa7SidebarItems())->not->toContain('New Assessment');
 
     $this->get(NewAssessment::getUrl())->assertForbidden();
 
@@ -245,10 +247,11 @@ test('a police admin edits their officer\'s assessment and their own, recorded a
         ->and($edit->detailChanges()->pluck('ChangedBy')->unique()->values()->all())->toBe([$w->policeAdminA->getKey()])
         ->and($record->refresh()->VictimLastName)->toBe('Amended');
 
-    // Listed under their name on Logs -> Change log.
-    Livewire::test(ListAssessmentEdits::class)
+    // Listed under their name on Logs, as Edited.
+    Livewire::test(ListLogs::class)
         ->assertCanSeeTableRecords([$edit])
-        ->assertTableColumnStateSet('editor.name', $w->policeAdminA->name, $edit);
+        ->assertTableColumnStateSet('user.name', $w->policeAdminA->name, $edit)
+        ->assertTableColumnFormattedStateSet('Action', 'Edited', $edit);
 })->with(['officer\'s', 'own']);
 
 test('if the view can\'t be logged, a police admin\'s Edit pop-up doesn\'t open', function () {

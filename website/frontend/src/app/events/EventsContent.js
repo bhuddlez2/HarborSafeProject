@@ -560,10 +560,7 @@ export default function EventsContent() {
             <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-8 text-center">Upcoming Events</h2>
 
             {upcoming.length === 0 ? (
-              <EmptyState heading="No upcoming events right now">
-                Check back soon; our 24/7 crisis line is always available at{" "}
-                <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>.
-              </EmptyState>
+              <EmptyState heading="No upcoming events right now">Check back soon.</EmptyState>
             ) : (
               <EventsCarousel events={upcoming} onOpen={setSelectedEvent} />
             )}

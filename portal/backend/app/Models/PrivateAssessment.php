@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-use App\Support\PhoneNumber;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Enums\UserRole;
+use App\Models\Concerns\EncryptsSensitiveFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -16,7 +15,7 @@ use App\Models\SubmitterInfo;
 class PrivateAssessment extends BaseModel
 {
     //automatically create the UUID for the form
-    use HasUuids;
+    use EncryptsSensitiveFields, HasUuids;
 
     //DB Connection
     protected $connection = 'Portal';
@@ -48,11 +47,16 @@ class PrivateAssessment extends BaseModel
         'AssessmentDocID'        
     ];
 
+    // Every victim and offender detail, encrypted under DATA_ENCRYPTION_KEY
+    // (App\Support\SensitiveData) - the same columns as the officer
+    // assessment. Searching these goes through App\Support\EncryptedSearch.
+    public const ENCRYPTED = LawEnforcementAssessment::PERSON_FIELDS;
+
     // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
     // App\Support\PhoneNumber, which also validates it.
-    protected function victimSafePhoneNumber(): Attribute
+    protected function phoneNumberFields(): array
     {
-        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+        return ['VictimSafePhoneNumber'];
     }
 
     public function uniqueIds(): array

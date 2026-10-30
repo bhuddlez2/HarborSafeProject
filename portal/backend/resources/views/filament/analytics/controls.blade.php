@@ -94,7 +94,8 @@
                             @enderror
                         </div>
 
-                        <div class="flex gap-2">
+                        @include('filament.partials.required-note')
+                        <div class="-mt-2 flex gap-2">
                             <x-filament::button type="submit">Apply</x-filament::button>
                             <x-filament::button type="button" color="gray" wire:click="resetSexFilter">Reset</x-filament::button>
                         </div>
@@ -111,7 +112,7 @@
             <div class="flex flex-col gap-1">
                 <label for="analytics-from" class="text-sm font-semibold text-gray-700">From<sup class="fi-fo-field-label-required-mark font-medium text-danger-600">*</sup></label>
                 <x-filament::input.wrapper :valid="! $errors->has('customFrom')">
-                    <x-filament::input type="date" id="analytics-from" wire:model="customFrom" required />
+                    <x-filament::input type="date" id="analytics-from" wire:model="customFrom" :max="\App\Support\Timezones::today()" required />
                 </x-filament::input.wrapper>
                 @error('customFrom')
                     <p class="text-sm text-danger-600">{{ $message }}</p>
@@ -120,13 +121,14 @@
             <div class="flex flex-col gap-1">
                 <label for="analytics-to" class="text-sm font-semibold text-gray-700">To<sup class="fi-fo-field-label-required-mark font-medium text-danger-600">*</sup></label>
                 <x-filament::input.wrapper :valid="! $errors->has('customTo')">
-                    <x-filament::input type="date" id="analytics-to" wire:model="customTo" required />
+                    <x-filament::input type="date" id="analytics-to" wire:model="customTo" :max="\App\Support\Timezones::today()" required />
                 </x-filament::input.wrapper>
                 @error('customTo')
                     <p class="text-sm text-danger-600">{{ $message }}</p>
                 @enderror
             </div>
-            <x-filament::button type="submit" class="mt-6">Apply</x-filament::button>
+            <div class="basis-full">@include('filament.partials.required-note')</div>
+            <x-filament::button type="submit" class="-mt-1">Apply</x-filament::button>
         </form>
     @endif
 

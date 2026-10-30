@@ -56,11 +56,10 @@ final class AssessmentEditor
         $answerRow->fill(array_intersect_key($answers, array_flip(self::answerFields())));
 
         // Normalise so "" and null, or 1 and true, do not register as changes.
-        self::discardNonChanges($record);
-        self::discardNonChanges($answerRow);
-
-        $detailChanges = $record->getDirty();
-        $answerChanges = $answerRow->getDirty();
+        // Values, not getDirty()'s raw attributes: the details are encrypted
+        // (App\Support\SensitiveData), so a raw attribute is ciphertext.
+        $detailChanges = self::changes($record);
+        $answerChanges = self::changes($answerRow);
 
         if ($detailChanges === [] && $answerChanges === []) {
             return null;
@@ -117,12 +116,18 @@ final class AssessmentEditor
         return array_map(fn (int $n): string => "RiskIndicator{$n}", range(1, 11));
     }
 
-    // Resets any attribute whose new value means the same as the original -
-    // a blank field that was null, a 1 that was true - so it is not logged.
-    private static function discardNonChanges(\Illuminate\Database\Eloquent\Model $model): void
+    // The fields that really changed, with their new (decrypted) values.
+    // Any attribute whose new value means the same as the original - a blank
+    // field that was null, a 1 that was true - is reset and left out, so it is
+    // not logged.
+    /** @return array<string, mixed> */
+    private static function changes(\Illuminate\Database\Eloquent\Model $model): array
     {
-        foreach ($model->getDirty() as $field => $new) {
+        $changes = [];
+
+        foreach (array_keys($model->getDirty()) as $field) {
             $old = $model->getOriginal($field);
+            $new = $model->getAttribute($field);
 
             $same = str_starts_with($field, 'RiskIndicator')
                 ? (bool) $old === (bool) $new
@@ -130,7 +135,11 @@ final class AssessmentEditor
 
             if ($same) {
                 $model->setAttribute($field, $old);
+            } else {
+                $changes[$field] = $new;
             }
         }
+
+        return $changes;
     }
 }

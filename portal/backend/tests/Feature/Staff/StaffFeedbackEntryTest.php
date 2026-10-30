@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
+use App\Filament\Tables\RecordCards;
 use App\Models\FeedbackScan;
 use App\Models\ServiceFeedback;
 use App\Support\Timezones;
@@ -14,7 +15,7 @@ use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
 /*
-Service-feedback forms filled in by an admin or secretary ("New feedback form"
+Service-feedback forms filled in by an admin or secretary ("New Feedback Form"
 on the Service feedback tab) - typically ones that arrived on paper, though
 nothing on screen says so. Phase M's gate, as tests: admins and secretaries
 can add one, marked Source = staff with its date and time and who entered it;
@@ -22,6 +23,10 @@ the website's own rules reject the same bad input here; scans are stored
 beside the feedback and opened only by admins and secretaries; online
 feedback still has no edit; resource requests still have no create action.
 */
+
+// The dates typed below must sit inside the form's range (up to two years
+// back) whenever the suite runs, so "now" is fixed.
+beforeEach(fn () => $this->travelTo(Carbon::parse('2026-10-26 12:00', 'America/New_York')));
 
 afterEach(function () {
     cleanupPublicFormData();
@@ -59,7 +64,7 @@ test('admins and secretaries can fill in a feedback form, marked as staff', func
 
     Livewire::test(ListServiceFeedback::class)
         // Just a feedback form to the person entering it - no mention of paper.
-        ->assertActionHasLabel('create', 'New feedback form')
+        ->assertActionHasLabel('create', 'New Feedback Form')
         ->callAction('create', data: [
             'ServiceID' => $serviceId,
             'Rating' => 2,
@@ -80,10 +85,12 @@ test('admins and secretaries can fill in a feedback form, marked as staff', func
         ->and($feedback->ScanFileID)->toBeNull();
 
     // Shown back in Eastern with a time stamp, like online feedback, and a
-    // Staff badge.
-    Livewire::test(ListServiceFeedback::class)
+    // Staff tag under it. Filtered to this test's own service: the table shows
+    // 10 rows a page, newest first, so newer local feedback would otherwise
+    // push this September form off page 1.
+    pestApplyFilter(Livewire::test(ListServiceFeedback::class), 'ServiceID', $serviceId)
         ->assertCanSeeTableRecords([$feedback])
-        ->assertTableColumnFormattedStateSet('Source', 'Staff', $feedback)
+        ->assertTableColumnHasDescription('SubmissionDate', RecordCards::staffTag(), $feedback)
         ->assertTableColumnFormattedStateSet('SubmissionDate', 'Sep 15, 2026 2:30 pm', $feedback);
 })->with([UserRole::Admin, UserRole::Secretary]);
 

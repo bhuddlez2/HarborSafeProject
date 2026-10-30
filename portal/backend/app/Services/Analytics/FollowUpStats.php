@@ -15,7 +15,7 @@ never service feedback.
 
 "First contact" is a form's first status change (the first follow_up_entries
 row with a FromStatus): a note on its own doesn't count. Forms not yet moved
-from Needs follow-up have no first contact and are left out of those numbers.
+from Needs Follow-Up have no first contact and are left out of those numbers.
 */
 final class FollowUpStats
 {

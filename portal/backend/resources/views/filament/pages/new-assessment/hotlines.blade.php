@@ -1,9 +1,12 @@
 {{--
     Hotline numbers on the "Assessment submitted" screen (team plan task 12),
-    for the officer to share with the victim. Same numbers and layout as the
-    public website's crisis box (website/frontend/src/app/page.js) - change
-    them there too. Every number is shown as text and is a working call or
-    text link on a phone.
+    for the officer to share with the victim. Same numbers as the public
+    website's crisis box (website/frontend/src/app/page.js) - change them there
+    too. The website's "call 911" line is left out here on purpose: the people
+    using this screen are the police (team plan item 7). Each line is a card
+    laid out like Harbor Safe's - name, note, full-width Call and Text buttons -
+    with Harbor Safe's alone filled purple so it stays first. Every number is
+    shown as text and is a working call or text link on a phone.
 --}}
 @php
     $others = [
@@ -29,16 +32,6 @@
         Numbers to share with the victim
     </h2>
 
-    <a
-        href="tel:911"
-        class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:underline"
-    >
-        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-none stroke-red-700 stroke-2" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        In immediate danger, call 911
-    </a>
-
     <div class="rounded-xl bg-[#F5F0FB] p-4">
         <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-[#5C0F8B]">24/7 Crisis Line</p>
         <p class="mb-3 text-sm font-semibold text-[#5C0F8B]">Harbor Safe House &amp; Advocacy Center</p>
@@ -58,28 +51,24 @@
         </div>
     </div>
 
-    <div class="divide-y divide-gray-100 rounded-xl border border-gray-200">
-        @foreach ($others as $line)
-            <div class="flex flex-col items-start gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <div>
-                    <p class="text-sm font-semibold text-[#5C0F8B]">{{ $line['name'] }}</p>
-                    <p class="text-xs text-gray-600">{{ $line['note'] }}</p>
-                </div>
-                <div class="flex shrink-0 gap-2">
-                    <a
-                        href="tel:{{ $line['tel'] }}"
-                        class="whitespace-nowrap rounded-full border border-[#5C0F8B] px-3 py-1 text-sm font-semibold text-[#5C0F8B] transition hover:bg-[#5C0F8B] hover:text-white"
-                    >
-                        Call {{ $line['phone'] }}
-                    </a>
-                    <a
-                        href="{{ $line['sms']['href'] }}"
-                        class="whitespace-nowrap rounded-full border border-gray-300 px-3 py-1 text-sm font-semibold text-gray-700 transition hover:border-[#5C0F8B] hover:text-[#5C0F8B]"
-                    >
-                        {{ $line['sms']['label'] }}
-                    </a>
-                </div>
+    @foreach ($others as $line)
+        <div class="rounded-xl border border-gray-200 bg-white p-4">
+            <p class="text-sm font-semibold text-[#5C0F8B]">{{ $line['name'] }}</p>
+            <p class="mb-3 text-xs text-gray-600">{{ $line['note'] }}</p>
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <a
+                    href="tel:{{ $line['tel'] }}"
+                    class="rounded-lg border-2 border-[#5C0F8B] bg-white py-2.5 text-center text-sm font-semibold text-[#5C0F8B] transition hover:bg-[#5C0F8B] hover:text-white"
+                >
+                    Call {{ $line['phone'] }}
+                </a>
+                <a
+                    href="{{ $line['sms']['href'] }}"
+                    class="rounded-lg border-2 border-gray-300 bg-white py-2.5 text-center text-sm font-semibold text-gray-700 transition hover:border-[#5C0F8B] hover:text-[#5C0F8B]"
+                >
+                    {{ $line['sms']['label'] }}
+                </a>
             </div>
-        @endforeach
-    </div>
+        </div>
+    @endforeach
 </section>

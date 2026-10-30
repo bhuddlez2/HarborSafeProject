@@ -9,11 +9,10 @@ use App\Filament\Clusters\FormOptions\Resources\Resources\Pages\ManageResourceTy
 use App\Filament\Clusters\FormOptions\Resources\Services\Pages\ManageServices;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\Resources\ServiceFeedback\Pages\ListServiceFeedback;
-use App\Filament\Clusters\Logs\Resources\AccessLog\Pages\ListAccessLog;
-use App\Filament\Clusters\Logs\Resources\AssessmentEdits\Pages\ListAssessmentEdits;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\CivilianAssessments\Pages\ListCivilianAssessments;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
+use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
 use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
 use App\Filament\Tables\TableAlignment;
@@ -73,13 +72,32 @@ test('text columns sit left and symbol columns sit centred', function (string $p
     'Civilian assessments' => ListCivilianAssessments::class,
     'Accounts' => ListStaffAccounts::class,
     'Assessment review' => ListAssessmentReview::class,
-    'Change log' => ListAssessmentEdits::class,
-    'Access log' => ListAccessLog::class,
+    'Logs' => ListLogs::class,
     'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
     'Officers' => [ListOfficerAccounts::class, UserRole::PoliceAdmin],
 ]);
 
-test('Civilian assessments has a Relationship column after Offender', function () {
+// Tracker items 62 and 72: the row buttons are centred in their column, and
+// the table carries the class theme.css uses to give every button the same
+// height, side by side (TableAlignment::buttons(), through
+// AssessmentColumns::cards()).
+test('the assessment tables centre their row buttons', function (string $page, UserRole $role) {
+    $this->actingAs($role === UserRole::Admin
+        ? staffUser($role)
+        : pestAgencyMember($role, pestAgency('Alignment PD')));
+
+    $table = Livewire::test($page)->instance()->getTable();
+
+    expect($table->getRecordActionsAlignment())->toBe(Alignment::Center->value)
+        ->and((string) ($table->getExtraAttributes()['class'] ?? ''))->toContain(TableAlignment::BUTTONS_CLASS);
+})->with([
+    'My Assessments' => [ListLawEnforcementAssessments::class, UserRole::LawEnforcement],
+    'Assessment review, admin' => [ListAssessmentReview::class, UserRole::Admin],
+    'Assessment review, police admin' => [ListAssessmentReview::class, UserRole::PoliceAdmin],
+    'Civilian assessments' => [ListCivilianAssessments::class, UserRole::Admin],
+]);
+
+test('Civilian assessments has the shared assessment columns', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
     $labels = collect(Livewire::test(ListCivilianAssessments::class)->instance()->getTable()->getColumns())
@@ -87,7 +105,7 @@ test('Civilian assessments has a Relationship column after Offender', function (
         ->values()
         ->all();
 
-    expect($labels)->toBe(['Submitted', 'Victim', 'Offender', 'Relationship', 'Yes']);
+    expect($labels)->toBe(['Submitted', 'Victim', 'Offender', 'Yes']);
 });
 
 test('an account\'s Created date is the Eastern day it happened on', function () {

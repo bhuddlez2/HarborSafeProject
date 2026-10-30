@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Agencies;
 use App\Enums\UserRole;
 use App\Filament\Resources\Agencies\Pages\ManageAgencies;
 use App\Models\Agency;
+use App\Rules\DistinctListName;
+use App\Support\ListNames;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
@@ -30,9 +32,8 @@ is scoped by one (LawEnforcementAssessment::visibleTo()). Renaming is safe -
 everything stores the id. To stop an agency's people signing in, deactivate
 their accounts.
 
-Authorization lives here, like the account screens, and the resource is in
-resources.exclude in config/filament-shield.php so shield:generate never gives
-it a permission-based policy.
+Authorization lives here, like the account screens: getAuthorizationResponse()
+below allows only what it lists.
 */
 class AgencyResource extends Resource
 {
@@ -50,7 +51,7 @@ class AgencyResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Content management';
+    protected static string | UnitEnum | null $navigationGroup = 'Content Management';
 
     // Straight after Accounts.
     protected static ?int $navigationSort = 5;
@@ -115,8 +116,9 @@ class AgencyResource extends Resource
                     ->label('Agency name')
                     ->required()
                     ->maxLength(255)
-                    ->unique(ignoreRecord: true)
-                    ->dehydrateStateUsing(fn (string $state): string => trim($state))
+                    // No duplicates or sound-alikes on the list (B55/B60).
+                    ->rule(fn (?Model $record): DistinctListName => new DistinctListName(Agency::class, 'name', $record))
+                    ->dehydrateStateUsing(fn (?string $state): ?string => ListNames::tidy($state))
                     ->columnSpanFull(),
             ]);
     }

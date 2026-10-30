@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Submissions\Resources\ResourceRequests;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Submissions\Resources\ResourceRequests\Pages\ListResourceRequests;
 use App\Filament\Clusters\Submissions\SubmissionsCluster;
@@ -10,6 +11,8 @@ use App\Models\Resource as ResourceType;
 use App\Models\ResourceRequestForm;
 use App\Support\RecordPdf;
 use App\Support\Timezones;
+use App\Filament\Tables\EncryptedColumnSearch;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -26,6 +29,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 /*
 Resource requests submitted through the public website's form.
@@ -52,15 +56,17 @@ many-to-many and is rendered as a list rather than one value.
 */
 class ResourceRequestResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $model = ResourceRequestForm::class;
 
     protected static ?string $cluster = SubmissionsCluster::class;
 
     protected static ?string $slug = 'resource-requests';
 
-    protected static ?string $title = 'Resource requests';
+    protected static ?string $title = 'Resource Requests';
 
-    protected static ?string $navigationLabel = 'Resource requests';
+    protected static ?string $navigationLabel = 'Resource Requests';
 
     protected static ?string $modelLabel = 'resource request';
 
@@ -75,6 +81,12 @@ class ResourceRequestResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Never edited: a request is a statement from the public. Delete is for spam. Staff-started requests come from a follow-up page, never a Create button here.
+    protected static function allowedActions(): array
+    {
+        return ['view', 'delete', 'deleteAny'];
     }
 
     public static function getNavigationBadge(): ?string
@@ -96,44 +108,37 @@ class ResourceRequestResource extends Resource
             ]);
     }
 
-    private static function sourceLabel(?string $source): string
-    {
-        return $source === ResourceRequestForm::SOURCE_STAFF ? 'Staff' : 'Online';
-    }
-
     public static function table(Table $table): Table
     {
-        return $table
+        // Four columns, and a card on a phone (RecordCards): name and email
+        // on top, county and resources, then the date. Where a form came from
+        // is a small "Staff" tag under the date, shown only on forms staff
+        // entered; website forms show nothing.
+        return RecordCards::apply($table)
             ->columns([
-                TextColumn::make('SubmissionDate')
+                RecordCards::meta(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
+                    ->description(fn (ResourceRequestForm $record): ?HtmlString => $record->Source === ResourceRequestForm::SOURCE_STAFF
+                        ? RecordCards::staffTag()
+                        : null)
+                    ->sortable()),
 
-                TableAlignment::symbol(TextColumn::make('Source')
-                    ->label('Source')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
-                    ->color(fn (?string $state): string => $state === ResourceRequestForm::SOURCE_STAFF ? 'info' : 'gray')),
-
-                TextColumn::make('FirstName')
+                // The email in grey under the name. The search box finds
+                // either.
+                RecordCards::title(TextColumn::make('FirstName')
                     ->label('Name')
-                    ->searchable(['FirstName', 'LastName'])
+                    ->searchable(query: EncryptedColumnSearch::query(ResourceRequestForm::class, ['FirstName', 'LastName', 'EmailAddress']))
                     ->formatStateUsing(fn (?string $state, ResourceRequestForm $record): string => trim(
                         ($state ?? '').' '.($record->LastName ?? ''),
-                    ) ?: '-'),
+                    ) ?: '-')
+                    ->description(fn (ResourceRequestForm $record): ?HtmlString => RecordCards::email($record->EmailAddress))),
 
                 TextColumn::make('county.Name')
                     ->label('County')
                     ->placeholder('-')
                     ->sortable(),
-
-                TextColumn::make('EmailAddress')
-                    ->label('Email')
-                    ->placeholder('-')
-                    ->searchable()
-                    ->copyable(),
 
                 // SafePhoneNumber is deliberately absent - see the class
                 // comment. It lives in the detail view only.
@@ -142,8 +147,19 @@ class ResourceRequestResource extends Resource
                     ->label('Interested in')
                     ->badge()
                     ->placeholder('-')
+                    // Filament drops the items past the limit unless the list has line breaks.
+                    ->listWithLineBreaks()
                     ->limitList(2)
                     ->expandableLimitedList()),
+
+                // Where the request's follow-up stands (Burchfield B58). It is
+                // updated on its follow-up page, through the Follow-Up button.
+                RecordCards::corner(TableAlignment::symbol(TextColumn::make('follow_up_status')
+                    ->label('Follow-Up')
+                    ->badge()
+                    ->color('gray')
+                    ->state(fn (ResourceRequestForm $record, ListResourceRequests $livewire): ?string => $livewire->followUpFor($record)?->Status->label())
+                    ->placeholder('-'))),
             ])
             ->defaultSort('SubmissionDate', 'desc')
             ->filters([
@@ -178,6 +194,16 @@ class ResourceRequestResource extends Resource
                         )),
             ])
             ->recordActions([
+                // The request's follow-up page, where Update Follow-Up is
+                // (Burchfield B58). Only while this user may work it:
+                // followUpFor() is scoped by FollowUp::visibleTo().
+                Action::make('follow_up')
+                    ->label('Follow-Up')
+                    ->icon(Heroicon::OutlinedClipboardDocumentCheck)
+                    ->color('gray')
+                    ->url(fn (ResourceRequestForm $record, ListResourceRequests $livewire): ?string => $livewire->followUpFor($record)?->url())
+                    ->visible(fn (ResourceRequestForm $record, ListResourceRequests $livewire): bool => $livewire->followUpFor($record) !== null),
+
                 // The plain form as a PDF, through its own logged route
                 // (ResourceRequestPdfController), as civilian assessments do.
                 ViewAction::make()

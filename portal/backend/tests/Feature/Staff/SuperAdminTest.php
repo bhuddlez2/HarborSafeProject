@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\CreateSuperAdmin;
 use App\Enums\FollowUpKind;
 use App\Enums\UserRole;
 use App\Filament\Resources\Agencies\AgencyResource;
@@ -43,7 +44,7 @@ afterEach(fn () => cleanupStaffData());
 // The password rule checks Have I Been Pwned; never call it from a test.
 beforeEach(fn () => Http::fake(['api.pwnedpasswords.com/*' => Http::response('')]));
 
-const SUPER_ADMIN_TEST_PASSWORD = 'a-long-enough-test-passphrase';
+const SUPER_ADMIN_TEST_PASSWORD = 'A-long-enough-test-passphrase-7';
 
 function superAdminAccountForm(UserRole $role, array $overrides = []): array
 {
@@ -156,7 +157,7 @@ test('an admin still creates only secretaries: the role shows greyed out, with n
     expect(StaffAccountResource::choosesRole())->toBeFalse();
 
     Livewire::test(CreateStaffAccount::class)
-        ->assertFormSet(['role_label' => 'Secretary'])
+        ->assertFormSet(['role_label' => 'Staff'])
         ->assertFormFieldDisabled('role_label')
         ->assertFormFieldHidden('role')
         ->assertFormFieldHidden('agency_id')
@@ -290,7 +291,7 @@ test('a super admin adds and renames agencies, never with a duplicate name, and 
 
     Livewire::test(ManageAgencies::class)
         ->callAction(CreateAction::class, ['name' => $existing->name])
-        ->assertHasFormErrors(['name' => 'unique']);
+        ->assertHasFormErrors(['name' => "\"{$existing->name}\" is already on the list."]);
 
     Livewire::test(ManageAgencies::class)
         ->callAction(TestAction::make(EditAction::class)->table($agency), ['name' => staffRunToken().' Renamed PD'])
@@ -315,7 +316,7 @@ test('the command creates an active super admin and never touches an existing ac
     $email = staffRunToken().'-cli@pest.test';
 
     $this->artisan('staff:create-super-admin', ['email' => $email, '--first-name' => 'Casey', '--last-name' => 'Lee'])
-        ->expectsQuestion('Password (at least 15 characters)', SUPER_ADMIN_TEST_PASSWORD)
+        ->expectsQuestion(CreateSuperAdmin::PASSWORD_PROMPT, SUPER_ADMIN_TEST_PASSWORD)
         ->expectsQuestion('Password again', SUPER_ADMIN_TEST_PASSWORD)
         ->assertSuccessful();
 
@@ -328,14 +329,14 @@ test('the command creates an active super admin and never touches an existing ac
     $secretary = staffUser(UserRole::Secretary);
 
     $this->artisan('staff:create-super-admin', ['email' => $secretary->email, '--first-name' => 'Casey', '--last-name' => 'Lee'])
-        ->expectsQuestion('Password (at least 15 characters)', SUPER_ADMIN_TEST_PASSWORD)
+        ->expectsQuestion(CreateSuperAdmin::PASSWORD_PROMPT, SUPER_ADMIN_TEST_PASSWORD)
         ->expectsQuestion('Password again', SUPER_ADMIN_TEST_PASSWORD)
         ->assertFailed();
 
     expect($secretary->refresh()->role)->toBe(UserRole::Secretary);
 
     $this->artisan('staff:create-super-admin', ['email' => staffRunToken().'-short@pest.test', '--first-name' => 'Casey', '--last-name' => 'Lee'])
-        ->expectsQuestion('Password (at least 15 characters)', 'short')
+        ->expectsQuestion(CreateSuperAdmin::PASSWORD_PROMPT, 'short')
         ->expectsQuestion('Password again', 'short')
         ->assertFailed();
 

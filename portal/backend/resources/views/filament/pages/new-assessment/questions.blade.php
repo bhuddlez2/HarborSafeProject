@@ -1,6 +1,9 @@
 {{--
     Questions phase: one question per screen, Yes/No moves straight on, and
-    answering the last one advances the wizard to Review & submit.
+    answering the last one advances the wizard to Review & submit. Once the
+    review has been reached, any answer goes straight back to it (a Change
+    button there opens one question). The first question has a Back to the
+    intro, since the wizard's own Back row is hidden here.
     requestNextStep() belongs to Filament's wizard Alpine component, which
     also validates that every RiskIndicator has an answer.
 --}}
@@ -50,6 +53,16 @@
                         class="text-sm text-gray-500 hover:text-[#5C0F8B] transition block mb-4"
                     >
                         Previous question
+                    </button>
+                @else
+                    {{-- The wizard's own Back row is hidden on this step, so the
+                         first question carries the way back to the steps before. --}}
+                    <button
+                        type="button"
+                        x-on:click="goToPreviousStep()"
+                        class="text-sm text-gray-500 hover:text-[#5C0F8B] transition block mb-4"
+                    >
+                        Back
                     </button>
                 @endif
                 <div class="flex gap-4">

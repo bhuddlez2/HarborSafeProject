@@ -96,12 +96,17 @@ final class Chart
     {
         $max = $options['max'] ?? max([1, ...array_map(fn (array $item): float => (float) $item['value'], $items)]);
 
-        $bars = array_map(function (array $item) use ($max, $noun): array {
+        $bars = array_map(function (array $item) use ($max, $noun, $type): array {
             $display = $item['display'] ?? number_format((float) $item['value']);
             $value = (float) $item['value'];
 
             return [
                 'label' => $item['label'],
+                // For the export (AnalyticsExport): the number itself, and the
+                // full name where the axis label is shortened (vertical bars:
+                // "Oct" is "October 2026", "3" is "3 yes").
+                'value' => $value,
+                'name' => $type === 'vertical' ? ($item['tip'] ?? $item['label']) : $item['label'],
                 'display' => $display,
                 // At least a sliver for any non-zero value, so it doesn't read as none.
                 'pct' => $value > 0 ? max(1, (int) round($value / $max * 100)) : 0,
@@ -112,6 +117,7 @@ final class Chart
         return [
             'type' => $type,
             'title' => $title,
+            'noun' => $noun,
             'note' => $options['note'] ?? null,
             'wide' => $options['wide'] ?? false,
             'footnote' => $options['footnote'] ?? null,

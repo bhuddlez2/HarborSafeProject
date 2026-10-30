@@ -52,7 +52,7 @@ test('the seeded lookup rows the contact form relies on are present', function (
         ->toContain('Emergency Shelter', 'Crisis Counseling', '24/7 Crisis Line');
 
     expect(collect($this->getJson('/api/public/resources')->json())->pluck('Name'))
-        ->toContain('Safety Planning', 'Orders of Protection', 'Something Else');
+        ->toContain('Safety Planning', 'Orders of Protection', 'Support Groups');
 
     expect(collect($this->getJson('/api/public/counties')->json())->pluck('Name'))
         ->toContain('Bradley', 'Polk');

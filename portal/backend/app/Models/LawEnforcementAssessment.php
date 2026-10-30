@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use App\Support\PhoneNumber;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Enums\UserRole;
 use App\Models\Concerns\EditedOnlyThroughAssessmentEditor;
+use App\Models\Concerns\EncryptsSensitiveFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class LawEnforcementAssessment extends BaseModel
 {
     // Changes only through App\Services\AssessmentEditor, so every edit is logged.
-    use EditedOnlyThroughAssessmentEditor, HasUuids;
+    use EditedOnlyThroughAssessmentEditor, EncryptsSensitiveFields, HasUuids;
 
     protected $connection = 'Portal';
 
@@ -40,11 +39,31 @@ class LawEnforcementAssessment extends BaseModel
         'AssessmentDocID',
     ];
 
+    // Every victim and offender detail, encrypted under DATA_ENCRYPTION_KEY
+    // (App\Support\SensitiveData). The answers live in _assessment_answers,
+    // plain. Searching these goes through App\Support\EncryptedSearch.
+    public const ENCRYPTED = self::PERSON_FIELDS;
+
+    // Shared with PrivateAssessment, whose columns are the same.
+    public const PERSON_FIELDS = [
+        'OffenderFirstName',
+        'OffenderLastName',
+        'OffenderSex',
+        'OffenderDOB',
+        'OffenderVictimRelationship',
+        'OffenderVictimRelationshipOther',
+        'VictimFirstName',
+        'VictimLastName',
+        'VictimSex',
+        'VictimDOB',
+        'VictimSafePhoneNumber',
+    ];
+
     // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
     // App\Support\PhoneNumber, which also validates it.
-    protected function victimSafePhoneNumber(): Attribute
+    protected function phoneNumberFields(): array
     {
-        return Attribute::set(fn (?string $value): ?string => PhoneNumber::format($value));
+        return ['VictimSafePhoneNumber'];
     }
 
     public function uniqueIds(): array

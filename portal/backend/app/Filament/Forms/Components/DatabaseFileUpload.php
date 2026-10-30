@@ -5,6 +5,7 @@ namespace App\Filament\Forms\Components;
 use App\Models\ContentFile;
 use App\Models\FeedbackScan;
 use Filament\Forms\Components\FileUpload;
+use Illuminate\Validation\Rule;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /*
@@ -67,6 +68,16 @@ class DatabaseFileUpload extends FileUpload
     public const MAX_DOCUMENT_KB = 8192;
 
     /*
+    The smallest event image accepted, in pixels (Burchfield B48, 2026-10-28).
+    The website crops every event image to a 16:9 frame, the largest about
+    768 wide, so 1200 x 675 stays sharp on high-resolution screens too.
+    Checked on new uploads only: an older event keeps its image on edit.
+    */
+    public const MIN_IMAGE_WIDTH = 1200;
+
+    public const MIN_IMAGE_HEIGHT = 675;
+
+    /*
     Where the bytes go and which route previews them. Content files by
     default; storedAs() points an upload elsewhere - a paper feedback scan
     goes to FeedbackScan and its own admin/secretary-only route. The model
@@ -126,18 +137,26 @@ class DatabaseFileUpload extends FileUpload
     The accepted types are the allow-list the streaming controller later hands
     straight back as Content-Type, so keep them narrow - svg is excluded on
     purpose, since it can carry script.
+
+    The minimum size is read from the file's header by PHP's getimagesize(),
+    so it needs no image library (the server has none to rely on). Filament
+    runs it on newly uploaded files only, never on one already saved.
     */
     public static function forImage(string $name): static
     {
         $limit = self::effectiveLimitKb(self::MAX_IMAGE_KB);
+        $minimum = sprintf('%d × %d pixels', self::MIN_IMAGE_WIDTH, self::MIN_IMAGE_HEIGHT);
 
         return static::make($name)
             ->image()
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
             ->maxSize($limit)
+            ->rule(Rule::dimensions()->minWidth(self::MIN_IMAGE_WIDTH)->minHeight(self::MIN_IMAGE_HEIGHT))
+            ->validationMessages(['dimensions' => "The image must be at least {$minimum}."])
             ->imagePreviewHeight('150')
             ->helperText(sprintf(
-                'JPEG, PNG or WebP, up to %s. Stored in the database.',
+                'JPEG, PNG or WebP, at least %s, up to %s. Stored in the database.',
+                $minimum,
                 self::describeKb($limit),
             ));
     }

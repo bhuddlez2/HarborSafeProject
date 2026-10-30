@@ -138,6 +138,73 @@ test('a resource request with nothing optional filled in still renders', functio
 });
 
 /*
+The email opens the computer's own email app (Finishing Touches #22), with the
+address in To and nothing else: no subject, since subject lines show in inbox
+previews someone else may see. The same partial is the View pop-up and the
+follow-up page, so this covers both.
+*/
+test('on screen, the email opens an email to that address and nothing more', function () {
+    $request = resourceRequest();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request))
+        ->toContain('href="mailto:'.$request->EmailAddress.'"')
+        ->not->toContain('subject=')
+        ->not->toContain('?body=');
+});
+
+test('the PDF keeps the email as plain text', function () {
+    $request = resourceRequest();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request, isPdf: true))
+        ->toContain($request->EmailAddress)
+        ->not->toContain('mailto:');
+});
+
+test('no link without an email, or for one that is not a valid address', function (?string $email, string $shown) {
+    $request = resourceRequest(['EmailAddress' => $email]);
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request))
+        ->toContain($shown)
+        ->not->toContain('mailto:');
+})->with([
+    'phone only' => [null, '—'],
+    'not an address' => ['not an address', 'not an address'],
+    // Would add a second recipient if it were ever linked.
+    'extra recipient smuggled in' => ['pest@example.com?cc=other@example.com', 'pest@example.com?cc=other@example.com'],
+]);
+
+/*
+The safe phone is a call link on screen too (Burchfield B57), to the ten
+digits only, and plain text in the PDF. Stored as (xxx)xxx-xxxx and shown that
+way; anything that isn't a valid number is shown as it is, never linked.
+*/
+test('on screen, the safe phone is a call link to its ten digits', function () {
+    $request = resourceRequest();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request))
+        ->toContain('href="tel:+14235550177"')
+        ->toContain('>(423)555-0177</a>');
+});
+
+test('the PDF keeps the safe phone as plain text', function () {
+    $request = resourceRequest();
+
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, $request, isPdf: true))
+        ->toContain('(423)555-0177')
+        ->not->toContain('tel:');
+});
+
+test('no call link without a safe phone, or for one that is not a valid number', function () {
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, resourceRequest(['SafePhoneNumber' => null])))
+        ->not->toContain('tel:');
+
+    // Saved past validation somehow (the model formats valid numbers only).
+    expect(renderRecord(RecordPdf::RESOURCE_REQUEST, resourceRequest(['SafePhoneNumber' => '555-0177'])))
+        ->toContain('555-0177')
+        ->not->toContain('tel:');
+});
+
+/*
 The routes sit outside the panel, so the resources' canAccess() does not guard
 them. Admins and secretaries only: SubmissionPdfController checks the role
 (403); ResourceRequestPdfController looks the request up through

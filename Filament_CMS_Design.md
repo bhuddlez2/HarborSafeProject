@@ -6,8 +6,9 @@ content API and website cutover), 11 (officer screens and wizard in Filament) an
 
 **The CMS is end to end as of 2026-10-01.** Staff publish an event in the panel and it
 appears on the public website without a deploy, image included. What remains is admin
-user management (§11 phase 8; police admins already provision their own officers), the change-log observer (§8), Shield permissions and policies
-(§11 phase 7).
+user management (§11 phase 8; police admins already provision their own officers) and the
+change-log observer (§8). Phase 7's permissions were settled on 2026-10-24 without Shield:
+it was removed unused, and every screen lists the actions it allows (§4, Authorization).
 
 The content side of the panel is now built and under test: events, newsletters,
 categories, the two public-form submission lists and the three form-option lookups, plus
@@ -50,7 +51,8 @@ Confirmed by running a real `composer require --dry-run` against this project's 
 
 The full dependency tree resolves cleanly against the existing Sanctum 4 / Pest 4 /
 Tinker 3 setup with no conflicts. `bezhansalleh/filament-shield` 4.3.1 supports Filament
-`^4.0|^5.0` on Laravel `^13`, so Shield does not constrain the version choice.
+`^4.0|^5.0` on Laravel `^13`, so Shield does not constrain the version choice. (Shield
+was removed on 2026-10-24, unused; see §3.3.)
 
 One thing not to be alarmed by: `composer audit` reports 34 advisories across 10
 packages. That was verified against the **current** lock file, before Filament. It is
@@ -75,8 +77,8 @@ On Fedora/Debian it is a separate package (`php-intl`). On Windows it is a `php.
 line — the DLL ships in PHP's `ext/` directory, commented out as `;extension=intl`.
 
 **Related, and worse on Windows: XAMPP cannot run this project at all.** XAMPP for
-Windows ships PHP 8.2.12 at most, and `laravel/framework` v13 requires `^8.3` (as do
-`spatie/laravel-permission` 8.3.0 and Pest 4), so there is no version to lower to. PHP
+Windows ships PHP 8.2.12 at most, and `laravel/framework` v13 requires `^8.3` (as does
+Pest 4), so there is no version to lower to. PHP
 has to be installed separately from XAMPP, which is then useful only for MariaDB. A
 standalone Windows PHP also ships **no `php.ini` at all** and has every optional
 extension off, so `intl` is one of eight lines to uncomment rather than one — the others
@@ -128,57 +130,22 @@ it, because a blob that squeezes in can still fail to read back out.
 assumes it, and `PORTAL_SETUP.md` lists it — but nothing in this feature depends on it
 any more.
 
-### 3.3 spatie/laravel-permission will silently target the wrong database
+### 3.3 spatie/laravel-permission's default connection — no longer applies (removed)
 
-**This is the single most likely thing to go wrong in the whole install.**
+Filament Shield and spatie/laravel-permission were installed in Phase 3 and **removed on
+2026-10-24 without ever being used**: no role or permission was ever created or assigned,
+and every screen already decided access on `users.role`. Migration
+`2026_10_24_120000_drop_permission_tables` dropped their five empty tables (`roles`,
+`permissions` and the three pivots); the migration that created them stays, rewritten to
+no longer read the deleted `config/permission.php` so a fresh database still migrates.
 
-spatie/laravel-permission has no documented setting for choosing a database connection.
-Its published migration and its `Role`/`Permission` models use the application's
-**default** connection.
-
-In this project the default connection is `mariadb`, and per `CLAUDE.md` that connection
-is effectively unreachable — every real table, `users` included, lives on `Portal`. If
-you publish spatie's migration and run it without intervening, the permission tables
-either fail to create or get created somewhere nothing else can see them, and every
-permission check queries a database that isn't there.
-
-Before running spatie's migration:
-
-- Edit the published migration to target `Portal` explicitly (`protected $connection =
-  'Portal';` and `Schema::connection('Portal')->...`), matching how every other
-  migration in `database/migrations/` already does it.
-- Extend spatie's `Role` and `Permission` models with local subclasses that declare
-  `protected $connection = 'Portal';`, and point `config/permission.php` at your
-  subclasses.
-- Run it with `--database=Portal` like everything else (§6.4).
-
-**Do not run `shield:setup` in this project.** It publishes spatie's migration and then
-immediately calls a bare `migrate` — default connection, before you can edit anything —
-and with `--fresh` it also runs `DROP TABLE` statements through the default connection.
-Publish by hand instead:
-
-```
-php artisan vendor:publish --tag=filament-shield-config
-php artisan vendor:publish --tag=permission-config
-php artisan vendor:publish --tag=permission-migrations
-```
-
-Then edit the migration and models as above, migrate, and only *then* run
-`php artisan shield:install staff`. `shield:install` registers the plugin on the panel
-but also quietly runs `shield:generate --resource=RoleResource`, which writes a
-`super_admin` role and its permissions — so the tables must already exist on `Portal`.
-
-As implemented: Shield 4.3.1 resolved spatie/laravel-permission **8.3.0**, which still has
-no connection setting. The subclasses are `App\Models\Role` and `App\Models\Permission`
-(extending spatie's models, not `BaseModel`, so they declare `$connection` manually like
-`User`), and `User` uses `HasRoles`. spatie's cache (`store => 'default'`) needs no
-change — `CACHE_STORE=database` with `DB_CACHE_CONNECTION=Portal` already puts it on
-Portal. When probing in tinker, query through `App\Models\Role`, not
-`Spatie\Permission\Models\Role`.
-
-Verify before moving on: `php artisan migrate:status --database=Portal` lists the
-permission tables, and a `php artisan tinker` role lookup returns without a connection
-error.
+The trap this section used to describe was real while they were installed: spatie has no
+connection setting, so its migration and models used the unreachable default `mariadb`
+connection, and `shield:setup` ran a bare `migrate` (and, with `--fresh`, `DROP TABLE`)
+through it. It was worked around with a Portal-pinned migration and local `Role` /
+`Permission` subclasses. All of that is gone. If permissions are ever wanted again,
+re-read this history first — but see §4: access is changed by developers in code on
+purpose, never from a screen.
 
 ## 4. Settled decisions
 
@@ -215,15 +182,39 @@ no dark mode. The session lifetime is 15 idle minutes for every role
 (`SESSION_LIFETIME`) and ends when the browser quits (`SESSION_EXPIRE_ON_CLOSE`); the
 officer home tells officers their session logs out after that long. See §12.
 
-**Authorization: Filament Shield + spatie/laravel-permission.**
+**Authorization: `users.role`, in code, and nothing else.** *(Settled 2026-10-24; this
+replaced the original plan of Filament Shield + spatie/laravel-permission, which were
+installed but never used, and then removed — §3.3.)* One source of truth, the
+`users.role` column (`App\Enums\UserRole`), decides everything, in two layers:
 
-**Role storage: both systems, deliberately.** `users.role` stays as the coarse identity
-— it is what `canAccessPanel()` and navigation switch on. spatie handles fine-grained
-per-resource permissions on top. Be honest that this means two things describe access
-and they can drift; keep `role` authoritative for "which dashboard is this person" and
-spatie authoritative for "may they perform this action on this resource."
+1. **Who may open a screen**: each screen's `canAccess()`, on `users.role` (plus the police
+   admin's agency where it matters). Pinned role by role in `PanelAccessTest` (§5).
+2. **What they may do there**: each screen lists its actions and refuses the rest. This
+   is separate because Filament asks a screen before every built-in button (Create,
+   View, Edit, Delete, bulk delete, restore, replicate, reorder) through one method,
+   `getAuthorizationResponse()`, and when the model has no policy it answers *allowed*.
+   Before this was settled, read-only screens such as Civilian assessments were
+   read-only only because no Edit or Delete button had been added. Now every screen
+   answers explicitly — `App\Filament\Concerns\AllowsOnlyListedActions`
+   (`allowedActions()`, plus an optional per-row `allowsRecord()`), or the same rule
+   written out by hand (Accounts, Officers, Agencies), or the assessment policy below —
+   and the panel runs in Filament's **strict mode** (`->strictAuthorization()`), so a new
+   screen without rules throws instead of allowing. Overriding `canDelete()` and friends
+   alone is not enough; the buttons skip them. `ActionAccessTest` lists every screen's
+   actions and fails on anything extra, anything missing, or an unlisted screen. Custom
+   actions (`Action::make(...)`) are outside this, and check permission themselves.
 
-**Exception: law-enforcement assessments are not governed by spatie.** Access to
+Why not Shield: its permissions can say "may view assessments" but not "only this
+agency's" or "only their own", which are the rules that protect victim information, so
+those would have stayed hand-written anyway; it would have added a second description of
+roles that could drift from `users.role`; it came with traps (`shield:setup` migrating
+the unreachable connection, `shield:generate` overwriting hand-written policies, a
+spatie `super_admin` role that skips every check); and its Roles screen would let
+whoever runs the system widen access from inside the panel. This project will be handed
+over and maintained by others, so **access changes are a developer's code change,
+reviewed and tested, never a screen**.
+
+**Law-enforcement assessments: a hand-written policy.** Access to
 `LawEnforcementAssessment` is enforced by the hand-written
 `App\Policies\LawEnforcementAssessmentPolicy`, registered with `Gate::policy()` in
 `AppServiceProvider`. It decides on `users.role` (through `User::hasActiveRole()`) plus
@@ -247,17 +238,9 @@ review** (`AssessmentReviewResource`) is admin (all agencies, view-only) and pol
 (own agency, view and edit), and its Officer filter only offers officers whose submissions
 the user can see.
 
-`LawEnforcementAssessmentResource` is therefore listed in `resources.exclude` in
-`config/filament-shield.php`, which keeps it out of both `shield:generate` and the role
-editor. Do not remove it and do not generate a policy for this model: Shield would
-overwrite the file with one that checks `View:LawEnforcementAssessment`-style
-permissions and drops the ownership and agency rules. `OfficerAccountResource` is in the
-same list, because it authorizes itself rather than through a `UserPolicy` (§11, Phase 8).
-
-**Leave `super_admin.define_via_gate` at `false`.** Set to `true`, Shield registers a
-`Gate::before` that answers `true` for anyone holding the `super_admin` role before any
-policy runs, so that role would bypass this policy entirely — including the `update()`
-rule and the `false` on delete (§5 rule 1).
+**Never add a `Gate::before`** that answers yes for some role: it runs before every
+policy, so that role would bypass this one entirely — including the `update()` rule and
+the `false` on delete (§5 rule 1). Super admin is granted screen by screen instead (§5).
 
 **New role: `police_admin`.** `App\Enums\UserRole` goes from three cases to four. The
 column is already a string, so this is an enum change, not a migration.
@@ -331,9 +314,11 @@ Access log             —       own agency —          view all     view all
   (who opened what)            LE only
 Follow-ups             —       —          resource   assessments, assessments,
                                           requests   requests     requests
-Analytics (totals)     —       —          feedback + all 4 tabs   all 4 tabs
-                                          requests
-                                          tab only
+Analytics (totals)     —       own agency feedback + all 4 tabs   all 4 tabs
+                               LE only,   requests
+                               own page   tab only
+                               (needs an
+                               agency)
 ---------------------------------------------------------------------------
 Manage officers        —       own agency —          NO           any agency
   (create/edit/deactivate)                                        (Accounts)
@@ -354,8 +339,8 @@ admins by other super admins (never themselves; the first by
 and last name as separate fields, 50 characters each.
 
 **Super admin is the one superset of admin, and only of admin.** It is granted screen by
-screen (`UserRole::SuperAdmin` in each `hasActiveRole()` list), never by `Gate::before`
-or Shield's spatie `super_admin` role, which would skip the `false` on assessment edits.
+screen (`UserRole::SuperAdmin` in each `hasActiveRole()` list), never by a `Gate::before`,
+which would skip the `false` on assessment edits.
 It has no Officer Portal and is view-only on assessments, like admin. An account's role
 and agency never change after creation: `LawEnforcementAssessment::visibleTo()` follows
 the submitter's *current* agency, so moving a person would hand their old assessments to
@@ -445,6 +430,11 @@ text, e.g. "Annually in September"), `location_name`, `location_address`,
 `NewsletterID` (uuid PK), `title`, `issue_date`, `summary` (nullable), `file_path`,
 `file_size_bytes` (nullable), `file_pages` (nullable), `is_published` (bool).
 
+`issue_date` is labelled **Publish Date** in the panel. New or changed dates run from the
+1st of the month six months back to today, or, with the form's **Schedule post** box
+ticked, to the end of the month six months ahead; a published issue stays off the website
+(PDF included) until that day. Schedule post is not a column.
+
 ### 6.4 Conventions you must follow
 
 These come from `CLAUDE.md` and are the things an agent unfamiliar with this repo gets
@@ -533,7 +523,7 @@ Serving them is two routes, with two different authorization rules:
 
 | Route | For | Rule |
 |---|---|---|
-| `GET /api/public/content-files/{file}` | the public site | served only while a **published** event or newsletter points at the file |
+| `GET /api/public/content-files/{file}` | the public site | served only while a **published** event, or a published newsletter whose publish date has arrived, points at the file |
 | `GET /files/{file}` | the panel | any signed-in staff member who passes `canAccessPanel()` |
 
 The public rule is phrased that way because `content_files` has no owner and no published
@@ -557,7 +547,9 @@ in a scheduled command that checks both referencing columns, not in a form hook.
 ## 7. Public content API — built
 
 `GET /api/public/events` and `GET /api/public/newsletters`. Published records only, read
-through `ContentPublic`, in the existing `Route::prefix('public')` group.
+through `ContentPublic`, in the existing `Route::prefix('public')` group. A newsletter also
+waits for its publish date (`issue_date`, an Eastern day; `Newsletter::scopeOnWebsite()`),
+so staff can schedule an issue ahead (Finishing Touches item 26).
 `App\Http\Resources\PublicEventResource` and `PublicNewsletterResource` reconstruct the
 nested `location` / `image` / `registration` / `file` objects from the flattened columns.
 
@@ -629,8 +621,8 @@ updates and deletes.
   export with history mixed in, or one that looks as though something was left out, is
   exactly what this avoids.
 - Each list shows an **Amended** badge.
-- The **Change log** tab of Logs (`/logs/changes`, §13) lists every edit for admins
-  and police admins with an agency.
+- **Logs** (`/logs`, §13) lists every edit, one row per save, alongside views and PDF
+  downloads, for admins, super admins and police admins with an agency.
 
 All of these come from `App\Filament\Assessments\ChangeHistory` and one Blade view.
 
@@ -706,11 +698,7 @@ uploads are database rows now (§3.2, §4).
 *Gate:* a panel provider appears in `portal/backend/bootstrap/providers.php`, which
 currently lists only `AppServiceProvider`.
 
-**3 — Shield + spatie.** *(Done.)* Install, publish config, and **point the migration and
-models at `Portal`** — re-read §3.3 before running anything, especially the
-`shield:setup` warning.
-*Gate:* `php artisan migrate:status --database=Portal` lists the permission tables, and a
-tinker role lookup returns without a connection error.
+**3 — Shield + spatie.** *(Done, then undone: both removed unused on 2026-10-24 — §3.3, §4.)*
 
 **4 — Add `police_admin`** to `App\Enums\UserRole`. *(Done.)*
 *Gate:* all four cases resolve and cast correctly on `User`.
@@ -723,7 +711,7 @@ vars, grants from §6.5.
 *Gate:* `php artisan migrate:status --database=Portal`.
 
 **7 — Auth and access.** Filament login, `User implements FilamentUser` with
-`canAccessPanel()`, Shield permissions encoding the §5 matrix, Shield super-admin plus a
+`canAccessPanel()`, the §5 matrix enforced on every screen, a super admin, plus a
 seeder creating one user per role for local development.
 *(Partly done: `canAccessPanel()` — `is_active` plus a valid role — and the local-only
 `LocalStaffUserSeeder` exist, with two placeholder pages (`/content`,
@@ -734,8 +722,9 @@ officer two assessments. The law-enforcement assessment row of the matrix is enf
 (§4), agency-scoped for police admins through `User::agencyId()` (§5 rule 5). The seeder
 has since gained a second agency, "Second Test PD", with its own police admin
 (`police-admin2@`) and officer (`officer3@`), and gives both police admins a
-`law_enforcement_agents` row. Shield permissions for everything else and the super-admin
-are still to do.)*
+`law_enforcement_agents` row. Super admin was added in team plan task 15, and on 2026-10-24
+every screen was given an explicit list of allowed actions in place of Shield permissions
+(§4).)*
 *Gate:* each of the four roles sees exactly its matrix row; admin is refused when
 creating an officer; `police_admin` has no edit action on assessments.
 
@@ -762,7 +751,7 @@ creating an officer; `police_admin` has no edit action on assessments.
   badge (display only — the stored `badge_number` is never written). Their submissions
   fall inside `visibleTo()` for their agency, so they appear in their Assessment review and
   never in an officer's My Assessments. The police admin Home shows the officer's purple
-  **Start New Lethality Assessment** card above View Assessments and Personnel Management
+  **Start New Lethality Assessment** card above Assessment Review and Staff Management
   (`Police::canStartAssessment()`, which is `NewAssessment::canAccess()`).
 - **Civilian assessments** — submissions from the public civilian flow, view-only, for
   admin alone (§5). Each record's View pop-up has **Download PDF**
@@ -775,17 +764,18 @@ creating an officer; `police_admin` has no edit action on assessments.
   recorded. Police admins and admins are kept
   out by the resource's `canAccess()`, while `LawEnforcementAssessmentPolicy` still grants
   them record view (admin all, police admin own agency), because `Assessment review`
-  authorizes through the same policy. The officer Home page's "past assessment" link
-  (`Police::pastAssessmentsUrl()`) sends police admins to Assessment review instead.
+  authorizes through the same policy. On the officer Home page, an officer's
+  **My Assessments** card (`Police::pastAssessmentsUrl()`) opens My Assessments; a
+  police admin's card has the same name but opens Assessment review instead.
 - **Officers** — `App\Filament\Resources\OfficerAccounts` (on `User`), at
   `/police/officers` in a "Police Admin" navigation group: officer provisioning,
   list, create and edit, no delete. Police admins with an agency only, and only that
   agency's `law_enforcement` accounts (§5 rule 5). It authorizes itself on the resource
   (`getAuthorizationResponse()` and the `can*()` methods) rather than through a
   `UserPolicy`, because the future admin "Users" screen needs different rules for the
-  same model, and is in `resources.exclude` in `config/filament-shield.php`. Create and
+  same model. Create and
   edit write `users` and `law_enforcement_agents` in one `Portal` transaction, with role
-  and agency forced server-side; passwords are 15–64 characters and checked against
+  and agency forced server-side; passwords are 15–64 characters, with a capital, a lowercase letter, a number and a symbol, keyboard characters only (`KeyboardCharactersOnly`), and checked against
   breached passwords (`Password::uncompromised()`). First and last name are separate
   fields, as on Accounts below.
 
@@ -803,8 +793,8 @@ that was never built. A matrix line with no resource behind it fails silently.
   manages which roles is `StaffAccountResource::manageableRoles()`; the role is forced on
   save, nothing is deleted, and nobody edits their own account here.
 
-First and last name (50 characters each) are separate fields on both account screens and
-on the Account (profile) page. They are the source of truth; `users.name` is kept, rebuilt
+First and last name (50 characters each) are separate fields on both account screens, and
+are shown read-only on the Account (profile) page (§13). They are the source of truth; `users.name` is kept, rebuilt
 as "First Last" on every save, because tables search and sort on it.
 
 **Still to build: the super admin role**, which creates police admins, admins and
@@ -896,9 +886,9 @@ Two notes for whoever extends this:
 Still undecided:
 
 - Nothing at present. View logging, once listed here, was built 2026-10-20: every
-  law-enforcement View, Edit and Change log pop-up, the Change log screen's View, every
+  law-enforcement View, Edit and Change log pop-up, an edit row's View on Logs, every
   civilian View, every follow-up page and every PDF download writes a row in
-  `assessment_access_log`, readable on Logs → Access log (§13). The officer Home's
+  `assessment_access_log`, readable on Logs (§13). The officer Home's
   "Each view is logged with your name and a timestamp" is now true.
 
 ### Notes for the database architect
@@ -965,9 +955,7 @@ Content management                              roles
 Assessments                                     admin
   Assessment review      /assessment-review     all agencies
   Civilian assessments   /civilian-assessments
-  Logs                   /logs                  tabs across the top; all rows
-    Access log           /logs/access
-    Change log           /logs/changes
+  Logs                   /logs                  one list: views, downloads, edits; all rows
 
 Reports                                         admin, super admin, secretary
   Analytics              /analytics             tabs across the top; totals only
@@ -987,17 +975,27 @@ Police Admin                                    police_admin - its ONLY group
   New assessment     /police/new-assessment     20  their own; needs an agency
   Assessment review  /assessment-review         30  own agency; Edit
   Logs               /logs                      40  own agency's officer assessments; needs an agency
-    Access log       /logs/access
-    Change log       /logs/changes
-  Officers           /police/officers           50  own agency's officers; needs an agency
-  Account            (Filament's profile page)  60
+  Analytics          /police/analytics          50  own agency's LE assessments, no By agency; needs an agency
+  Officers           /police/officers           60  own agency's officers; needs an agency
+  Account            (Filament's profile page)  70
 ```
+
+**The Account page changes only the password and the badge.** `EditProfile` (Filament's
+profile page) lets every role change their own password, under the same rule as account
+creation (`AccountFormSections::passwordRule()`: 15–64 characters, a capital, a lowercase letter, a number and a symbol, keyboard characters only, not in a known breach),
+and active officers their own badge number. First name, last name and email are shown
+greyed out and never saved; the save is a whitelist (password, plus the officer's own
+`law_enforcement_agents.badge_number`), so a tampered request changes nothing else. Name
+and email are changed by whoever manages the account: an officer's by their agency's
+police admin (Officers) or a super admin; a secretary's by an admin or super admin; a
+police admin's or admin's by a super admin (Accounts); a super admin's by another super
+admin. A lone super admin therefore can't change their own name or email in the panel.
 
 **A police admin sees one group.** Home, New assessment, Assessment review, Logs and
 Account are shared with other roles, which keep their own groups above. Each of those
 items picks its group and position by role: `getNavigationGroup()` /
 `getNavigationSort()` overrides on `Police`, `NewAssessment`, `AssessmentReviewResource`
-and `LogsCluster`, and closures on the
+and `LogResource`, and closures on the
 Account `NavigationItem` in `StaffPanelProvider` (`group()` and `sort()` take closures in
 v5). All of them read `App\Filament\PoliceAdminNavigation`, the one place the police
 admin's group name and order are declared; sorts step by 10 so items can slot in.
@@ -1010,57 +1008,85 @@ the assessment tables replaces it.
 **Analytics** (`/analytics`, `App\Filament\Clusters\Analytics\AnalyticsCluster`, team plan
 task 28): Harbor Safe's totals and charts, one item in its own **Reports** group, four
 custom pages as tabs (`Clusters/Analytics/Pages/`). Every agency is counted together, so
-officers and police admins never reach it; a secretary sees only the Feedback and
+officers and police admins never reach it (police admins have their own page, below); a secretary sees only the Feedback and
 resource requests tab and lands on it from `/analytics`. Totals only: the stats services
 (`App\Services\Analytics\*`) count in SQL and never select names, phone numbers,
 comments or dates of birth. One date range (presets or custom days, Eastern) and, on the
 two assessment tabs, a filter by victim sex (required) and offender sex (optional), are
 shared by the tabs through the session (`App\Filament\Analytics\AnalyticsPage`). High
-risk is "yes to Q1–3, or 4 or more yes" (`AssessmentStats::HIGH_RISK_RULE`). The pages
-authorize themselves with `canAccess()`; they are pages, not resources, so Shield's
-resource generation never touches them. `AnalyticsTest`.
+risk is "yes to Q1–3, or 4 or more yes" (`App\Support\HighRisk`, approved by Harbor Safe
+2026-10-25), the same rule behind the assessment tables' red Yes badge, the record view
+and its PDF, and the Civilian assessments high-risk filter. The pages
+authorize themselves with `canAccess()`. `AnalyticsTest`.
 
-**Logs** (`/logs`, `App\Filament\Clusters\Logs\LogsCluster`): one sidebar item whose two
-resources show as **tabs across the top** (`SubNavigationPosition::Top`, the Content
-cluster's pattern), in this order:
+**Police admin Analytics** (#67, team decision, 2026-10-29 — this reverses the earlier
+"police admins get no analytics tab"): `App\Filament\Pages\AgencyAnalytics` at
+`/police/analytics`, in the Police Admin group after Logs, for an active police admin
+**with an agency** (`User::managedAgencyId()`); everyone else gets no item and a 403. It
+is Harbor Safe's Law-Enforcement Assessments tab (same `AnalyticsPage` base, date range,
+sex filter, tiles, charts and Excel/PDF export) with every number scoped to the police
+admin's own agency — `AssessmentStats::officer(..., viewer:)` narrows the base query to
+`LawEnforcementAssessment::visibleTo()` before anything is read or decrypted (§5 rule 5)
+— and **no By agency chart** (`AssessmentSections::build(..., byAgency: false)`), since it
+would name other agencies. Law-enforcement assessments only: no civilian assessments,
+feedback, resource requests or follow-ups. Its export adds an "Agency: …" line. Harbor
+Safe's own Analytics is unchanged. `PoliceAdminAnalyticsTest`.
 
-1. **Access log** (`/logs/access`, `Clusters/Logs/Resources/AccessLog/AccessLogResource`)
-2. **Change log** (`/logs/changes`, `Clusters/Logs/Resources/AssessmentEdits/AssessmentEditResource`)
+**Logs** (`/logs`, `App\Filament\Resources\Logs\LogResource`, list page `ListLogs`): one
+sidebar item and **one list** of every view, PDF download and edit of an officer or
+civilian assessment, newest first. Decided 2026-10-26; resource request rows dropped
+2026-10-27 (Finishing Touches item 28: they are still recorded in `assessment_access_log`,
+just not listed); it replaces the two tabs (Access log at `/logs/access`, Change log at
+`/logs/changes`) and **the plan's "Change log page stays edits only"**.
 
-Who sees what is the same on both tabs: **admins** see every row; **police admins with an
-agency** see only rows about their own agency's officers' assessments — never a civilian
-assessment or resource request, never another agency's (`AssessmentAccessLog::visibleTo()`
-and `AssessmentEdit::visibleTo()`, both built on `LawEnforcementAssessment::visibleTo()`,
-§5 rule 5). Everyone else, and a police admin with **no** agency, gets no Logs item and a
-403 on every address. The cluster and both tabs share one rule,
-`LogsCluster::canOpenLogs()` (since the move, a police admin with no agency is refused
-the Change log too, where before they were let in to an empty list). `/logs` opens the
-first tab the user can open (`Cluster::mount()`), and the cluster hides itself when both
-refuse (`Cluster::shouldRegisterNavigation()`). Both tabs stay in `resources.exclude` in
-`config/filament-shield.php`. The old addresses redirect, keeping any sub-path and query
-string (`routes/web.php`): `/access-log` → `/logs/access`, `/assessment-changes` →
-`/logs/changes`. `LogsClusterTest`.
+**How the list is built.** The rows are `App\Models\LogEntry`, a read-only model with no
+table of its own and **no database view**. `LogEntry::visibleTo($user)` UNIONs
+`assessment_access_log` (views and downloads) and `assessment_edits` (one row per save) in
+a subquery named `log_entries`, with common columns `EntryID` (the `AccessID` or
+`EditID`), `OccurredAt`, `UserID`, `Action` (`App\Enums\LogAction`: view / download /
+edit), the two assessment pointers, and `EditID` on edit rows (the access half leaves out
+resource request rows with `whereNull('ResourceRequestFormID')` before the union); an edit's assessment sits in
+`LawEnforcementDocumentID`, like an access row about an officer assessment. **Each half is
+scoped before the union** by its own scope — `AssessmentAccessLog::visibleTo()` and
+`AssessmentEdit::visibleTo()`, both built on `LawEnforcementAssessment::visibleTo()` (§5
+rule 5) — so pagination, sorting, search, filters and Show, which all act on the outer
+query, can only narrow it. A bare `LogEntry::query()` reads a missing table and fails, and
+the model refuses writes.
 
-**Access log tab:** who viewed or downloaded which form, and when — the rows of
-`assessment_access_log`, both actions. Read-only: a list, with no create, edit, delete,
-view or bulk actions. Columns: when (Eastern), who, Viewed / Downloaded PDF, record type,
-and the record named only by its submitted time and the first 8 characters of its id.
-**No personal details are shown** — the forms are loaded with just those two columns.
-**No table filters**, so there is no Filters button, menu or card. Instead the page has
-one plain **Show** dropdown above the table — All / Viewed / Downloaded PDF, default All,
-applied as soon as it changes. It is a Filament `Select` in the list page's own layout
-(`ListAccessLog::content()`, bound to `ListAccessLog::$show`), not a table filter: a table
-filter can't be drawn without Filament's "Filters" heading and Reset link. It only adds a
-`where` on `Action` to the scoped query, and an unknown value means All. Its options come
-from one place, `ListAccessLog::showOptions()`: All, then one per `AssessmentAccess` case
-labelled by the enum, so a future action (say "Exported") is a new enum case and appears
-there. A search box searches **only** the Who column, the name of the person who opened
-the record (partial match, any case), within the viewer's scoped rows — never record ids
-or anything in the forms. Opening the tab is not itself logged. `AccessLogScreenTest`.
+**Who sees what** (unchanged): **admins and super admins** see every row — officer and
+civilian assessments, edits; **police admins with an agency** see only rows about their
+own agency's officers' assessments, whoever made them — never a civilian assessment,
+never another agency's. Everyone else, and a police admin
+with **no** agency, gets no Logs item and a 403 (`LogResource::canOpenLogs()`).
 
-**Change log tab:** unchanged apart from its address — the same columns, the View pop-up
-(which logs a view, like every assessment pop-up) and its `ChangeLogFilters` card; see
-"Change log filters" below.
+**Columns:** When (Eastern) · Who · Action (badge: Viewed / Downloaded PDF / Edited) ·
+Record (the kind of form, with "Submitted … · first 8 characters of its id" under it) ·
+Changes (fields changed, edit rows only). **No personal details are shown** — no victim,
+offender or requester names, no phone numbers, no edit reason; the forms are loaded with
+just their id and submitted time. The old Change log's names and Reason columns went for
+that reason; both still show in an edit's View pop-up.
+
+**Actions:** an edit row has **View**, the same one-edit card each record's Change log
+pop-up uses (`ChangeHistory::entry()`), and opening it logs a view of the assessment
+(`AssessmentViews::log()`, before the pop-up is sent, so a failed write stops it opening).
+It has no Download PDF. Access rows have no actions. No create, edit, delete or bulk
+actions (`LogResource::allowedActions()` / `allowsRecord()`). Opening the page is not
+itself logged.
+
+**Above the table:** one plain **Show** dropdown — All / Viewed / Downloaded PDF / Edited,
+default All, applied as soon as it changes. It is a Filament `Select` in the list page's
+own layout (`ListLogs::content()`, bound to `ListLogs::$show`), not a table filter, so it
+sits outside the Filters card. It only adds a `where` on `Action` to the scoped query, and
+an unknown value means All. Its options come from one place, `ListLogs::showOptions()`:
+All, then one per `LogAction` case, whose view and download labels come from
+`AssessmentAccess`, so a future action is a new enum case. The **search box** searches
+**only** the Who column — the name of the person who viewed, downloaded or edited (partial
+match, any case) — within the viewer's scoped rows, never record ids or anything in the
+forms. **Behind the Filters button:** the card below ("Logs filters").
+
+The old addresses redirect to `/logs`, keeping the query string (`routes/web.php`):
+`/logs/access`, `/logs/changes`, `/access-log` and `/assessment-changes`, each with any
+sub-path. `LogsPageTest`, `AccessLogScreenTest`.
 
 ### Assessment table filters
 
@@ -1084,54 +1110,68 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
   | Offender first name, offender last name | yes | admin, police admin |
 
   Agency is shown to active admins only, decided by `users.role` through
-  `User::hasActiveRole(UserRole::Admin)` — not by the Shield/spatie `super_admin` role. A
+  `User::hasActiveRole(UserRole::Admin)`. A
   hidden filter is neither rendered nor applied, so forcing its state does nothing. The
   four name filters are typed text: a case-insensitive partial match, with `%` and `_` in
-  the input matched literally; blank turns a filter off, and each active filter shows a
+  the input matched literally. Since 2026-10-27 the names are encrypted (Finishing
+  Touches item 14), so the match runs in PHP on the decrypted names of the viewer's own
+  `visibleTo()` rows (`AssessmentFilters::encryptedTextContains()`,
+  `App\Support\EncryptedSearch`), never in SQL; blank turns a filter off, and each active filter shows a
   chip. There is deliberately no filter on the victim's safe phone number.
 - **Layout:** `filtersFormColumns(3)`, one row per group, each opened with
   `columnStart(1)`: dates; officer and agency; victim first and last name; offender
   first and last name. An officer's card has three rows, a reviewer's four.
 - **Scoped:** filters only narrow each screen's `visibleTo()` query, and the officer and
   agency dropdowns take their options from the database, limited to rows `visibleTo()`
-  returns (§5 rule 5). The table's search box still searches victim and offender names
-  too. Enforced by `tests/Feature/Staff/AssessmentFiltersTest.php`.
+  returns (§5 rule 5). The card is the only way to search: since 2026-10-29 the
+  assessment tables have no search bar or per-column search (`AssessmentTableSearchTest`).
+  Enforced by `tests/Feature/Staff/AssessmentFiltersTest.php`.
+- **Civilian assessments** uses the same card through `AssessmentFilters::civilian($table, $extra)`
+  (2026-10-26, Finishing Touches item 13): date submitted and the four name filters — no
+  officer or agency, since the public submits these — then the screen's own High risk
+  checkbox on a row of its own (its old Submitted with contact details filter was dropped).
+  `CivilianAssessmentFiltersTest`.
 
-### Change log filters
+### Logs filters
 
-The Change log (Logs → Change log, `/logs/changes`, `AssessmentEditResource`) gets its filters from
+The Logs page (`/logs`, `LogResource`) gets its filters from
 `App\Filament\Tables\ChangeLogFilters::apply($table)`, built from `AssessmentFilters`'
-public helpers (`layout()`, `dateRange()`, `nameFilters()`, `visibleAssessments()`,
-`showsAgency()`), so the card is the same one: above the table, three columns, deferred
-until **Apply**, **Reset** beside it, persisted in the session.
+public helpers (`layout()`, `dateRange()`, `textContains()`, `nameFilters()`,
+`visibleAssessments()`, `showsAgency()`), so the card is the same one: behind the Filters
+button, three columns, deferred until **Apply**, **Reset** beside it, persisted in the
+session. (The class keeps its name from when it served the edits-only Change log.)
 
-The page lists `assessment_edits` rows — one per save — and both field-level tables
-(`assessment_change_log`, `assessment_answer_change_log`) hang off an edit by `EditID`,
-so every filter covers detail and answer changes alike.
+The list mixes views, downloads and edits (`LogEntry`). An edit row is one save; both
+field-level tables (`assessment_change_log`, `assessment_answer_change_log`) hang off it by
+`EditID`, so the filters cover detail and answer changes alike.
 
-| Filter | Admin | Police admin |
-|---|---|---|
-| Changed by — `assessment_edits.ChangedBy` | yes | yes, own agency's people only |
-| Original submitter — the edited assessment's `submitted_by` | yes | yes, own agency's officers only |
-| Date changed — from/to on `assessment_edits.EditedAt` | yes | yes |
-| Agency — via `assessment.submitter.lawEnforcementAgent.agency` | yes | **no** |
-| Victim first/last name, offender first/last name | yes | yes |
+| Filter | Rows it applies to | Admin / super admin | Police admin |
+|---|---|---|---|
+| Who — the person on the row (`UserID`) | every row | yes | yes, own agency's rows' people only |
+| Date — from/to on the row's own time (`OccurredAt`) | every row | yes | yes |
+| Original submitter — the officer assessment's `submitted_by` | officer-assessment rows | yes | yes, own agency's officers only |
+| Assessment ID — any part of the officer assessment's `DocumentID` | officer-assessment rows | yes | yes |
+| Agency — via `lawEnforcementAssessment.submitter.lawEnforcementAgent.agency` | officer-assessment rows | yes | **no** |
+| Victim first/last name, offender first/last name | officer-assessment rows | yes | yes |
 
-- Rows: changed by and original submitter; date changed and agency; victim names;
+- Rows: who, original submitter and assessment ID; date and agency; victim names;
   offender names.
-- **Date** is the save's own `EditedAt` (the table's "When" column), not the child rows'
-  `TimeStamp`, which is written in the same transaction.
-- **Agency** follows the same rule as Assessment review: active admins only by
-  `users.role` (`hasActiveRole(UserRole::Admin)`), never Shield's `super_admin`; hidden
-  from police admins, and a hidden filter is never applied.
-- **Names** match the edited assessment's current name columns — case-insensitive,
-  partial, `%` and `_` literal. **The logged `PreviousValue` / `NewValue` are deliberately
-  not searchable or filterable**: the log is read per record, not mined for values.
-- **Scoped:** the table's query is `AssessmentEdit::visibleTo()`, which is
-  `LawEnforcementAssessment::visibleTo()` on the edited assessment (§5 rule 5), and every
-  dropdown's options come from the same scope, so a police admin is never offered another
-  agency's officers or the agency. Enforced by
-  `tests/Feature/Staff/ChangeLogFiltersTest.php`.
+- **Officer-assessment filters** match through the row's `lawEnforcementAssessment`, so
+  setting one hides civilian assessment and resource request rows, which have none.
+- **Date** is an edit's own `EditedAt` or an access row's `AccessedAt` (the table's "When"
+  column), not the child rows' `TimeStamp`, which is written in the same transaction.
+- **Agency** follows the same rule as Assessment review: active admins and super admins
+  only, by `users.role` (`AssessmentFilters::showsAgency()`); hidden from police admins,
+  and a hidden filter is never applied.
+- **Names** match the officer assessment's current name columns — case-insensitive,
+  partial, `%` and `_` literal, decrypted and matched in PHP like the assessment tables'
+  name filters (the names are encrypted). **An edit's logged `PreviousValue` / `NewValue` are
+  deliberately not searchable or filterable**: the log is read per record, not mined for
+  values.
+- **Scoped:** the table's query is `LogEntry::visibleTo()` (each half scoped before the
+  union, above), and every dropdown's options come from the same scoped rows, so a police
+  admin is never offered another agency's people or the agency. Enforced by
+  `ChangeLogFiltersTest` (edit rows) and `LogsPageTest` (the kinds mixed).
 
 ### Why clusters
 
@@ -1213,4 +1253,20 @@ empty page attached. The `/content` address it held is now the Content cluster's
      through `localStorage`. Caveats: quitting the *browser* ends the session, not
      closing a tab, and a browser set to restore its last session can bring the cookie
      back, which the 15-minute limit still covers. No password confirmation per page.
-     Covered by `SessionTimeoutTest`.
+     **Added 2026-10-24:** a warning two minutes before the deadline (half the lifetime
+     if that is shorter) — Filament's own pop-up, closed only by its buttons: **Stay
+     signed in** posts once to `POST /session/keep-alive` (`KeepSessionAliveController`,
+     a 204 that restarts the clock; an already-expired session gets the sign-in
+     redirect and the page reloads), **Sign out now** submits Filament's logout. Only
+     that button extends the session, never a timer, so an unattended screen still
+     signs out. Officers mid-assessment no longer lose a form to a logout they didn't
+     see coming. Covered by `SessionTimeoutTest`.
+     **Added 2026-10-25:** an unfinished officer assessment survives the logout itself,
+     in the browser tab only (settled with Harbor Safe 2026-10-24: never a drafts
+     table, and a police admin can't finish an officer's form). The wizard saves to
+     the tab's `sessionStorage`, AES-GCM-encrypted in the browser under the person's
+     own key (`App\Support\AssessmentDraft`), and the idle logout waits for that save
+     before reloading. Signing back in, New assessment offers **Resume** or **Discard
+     it**; Submit, Discard and Sign out wipe it, and it is dropped after 2 hours or when
+     someone else signs in to the tab. Officers and police admins alike. Needs https.
+     Covered by `AssessmentDraftTest`.

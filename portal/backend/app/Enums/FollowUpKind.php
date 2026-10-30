@@ -17,12 +17,14 @@ enum FollowUpKind: string
     case CivilianAssessment = 'civilian_assessment';
     case ResourceRequest = 'resource_request';
 
+    // A title, so title case (Finishing Touches item 29): the Log pop-up, the
+    // queue's Type column, the follow-up page. Lowercase it inside a sentence.
     public function label(): string
     {
         return match ($this) {
-            self::LawEnforcementAssessment => 'Officer assessment',
-            self::CivilianAssessment => 'Civilian assessment',
-            self::ResourceRequest => 'Resource request',
+            self::LawEnforcementAssessment => 'Officer Assessment',
+            self::CivilianAssessment => 'Civilian Assessment',
+            self::ResourceRequest => 'Resource Request',
         };
     }
 
@@ -49,13 +51,6 @@ enum FollowUpKind: string
     public function workedBy(): array
     {
         return $this->submission()->alertedRoles();
-    }
-
-    // Assessments can be moved between the final statuses; a resource request
-    // is locked once final, and a new request is started instead.
-    public function finalsAreMovable(): bool
-    {
-        return $this !== self::ResourceRequest;
     }
 
     public function isAssessment(): bool

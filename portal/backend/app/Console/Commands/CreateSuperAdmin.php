@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\UserRole;
+use App\Filament\Forms\AccountFormSections;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
@@ -31,13 +32,15 @@ class CreateSuperAdmin extends Command
 
     protected $description = 'Create a Harbor Safe super admin account (for the first one; after that, use Accounts)';
 
+    public const PASSWORD_PROMPT = 'Password ('.AccountFormSections::PASSWORD_HINT.')';
+
     public function handle(): int
     {
         $data = [
             'email' => (string) $this->argument('email'),
             'first_name' => $this->option('first-name') ?: $this->ask('First name'),
             'last_name' => $this->option('last-name') ?: $this->ask('Last name'),
-            'password' => $this->secret('Password (at least 15 characters)'),
+            'password' => $this->secret(self::PASSWORD_PROMPT),
             'password_confirmation' => $this->secret('Password again'),
         ];
 
@@ -45,7 +48,7 @@ class CreateSuperAdmin extends Command
             'email' => ['required', 'email', 'max:255', 'unique:Portal.users,email'],
             'first_name' => ['required', 'string', 'max:'.User::NAME_PART_MAX],
             'last_name' => ['required', 'string', 'max:'.User::NAME_PART_MAX],
-            'password' => ['required', 'confirmed', Password::min(15)->max(64)->uncompromised()],
+            'password' => ['required', 'confirmed', Password::default()],
         ]);
 
         if ($validator->fails()) {

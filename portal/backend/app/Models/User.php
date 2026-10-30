@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
 
 //FOR DB ERRORS
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +23,7 @@ use RuntimeException;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, Notifiable;
 
     // The users table physically lives on the Portal connection (migrations
     // were run with --database=Portal), not the default mariadb connection
@@ -32,6 +31,16 @@ class User extends Authenticatable implements FilamentUser
     protected $connection = 'Portal';
 
     public const NAME_PART_MAX = 50;
+
+    // The longest password anyone may set or type at sign-in. Every password
+    // box (account forms, Account page, sign-in, staff:create-super-admin)
+    // uses it, so a password that could be set can always be typed back in.
+    public const PASSWORD_MAX = 64;
+
+    // The shortest new password (Password::defaults() in AppServiceProvider).
+    public const PASSWORD_MIN = 15;
+
+    public const EMAIL_MAX = 255;
 
     /*
     first_name and last_name are the source of truth for a person's name;

@@ -3,12 +3,18 @@
 namespace App\Filament\Analytics;
 
 use App\Filament\Clusters\Analytics\AnalyticsCluster;
+use App\Services\Analytics\AnalyticsExport;
 use App\Services\Analytics\AssessmentStats;
 use App\Support\Analytics\DateRange;
+use App\Support\Timezones;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /*
 One tab of Analytics (App\Filament\Clusters\Analytics, team plan task 28). Each
@@ -22,6 +28,9 @@ optional ("Any"); Reset removes it. Stored codes only (AssessmentStats::SEXES).
 
 Everything a tab shows is a total. No names, phone numbers, comments or dates
 of birth ever reach the page - the stats services don't select them.
+
+Export (Burchfield B68) downloads the tab as Excel or PDF, with the applied
+range and filter, through App\Services\Analytics\AnalyticsExport. Not logged.
 */
 abstract class AnalyticsPage extends Page
 {
@@ -96,6 +105,72 @@ abstract class AnalyticsPage extends Page
         $this->draftOffenderSex = $this->offenderSex;
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            ActionGroup::make([
+                Action::make('exportExcel')
+                    ->label('Excel (.xlsx)')
+                    ->icon('heroicon-o-table-cells')
+                    ->authorize(fn (): bool => static::canAccess())
+                    ->action(fn (AnalyticsExport $export): StreamedResponse => $this->download(
+                        'xlsx',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        $export->xlsx(...),
+                    )),
+                Action::make('exportPdf')
+                    ->label('PDF')
+                    ->icon('heroicon-o-document-text')
+                    ->authorize(fn (): bool => static::canAccess())
+                    ->action(fn (AnalyticsExport $export): StreamedResponse => $this->download(
+                        'pdf',
+                        'application/pdf',
+                        $export->pdf(...),
+                    )),
+            ])
+                ->label('Export')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('gray')
+                ->button(),
+        ];
+    }
+
+    // What the export prints under the tab's name: the range, the filter on
+    // the assessment tabs ("None" when off) and the day it was exported.
+    public function exportLines(): array
+    {
+        $range = $this->dateRange();
+        $preset = $this->range === DateRange::CUSTOM ? null : (DateRange::PRESETS[$this->range] ?? DateRange::PRESETS[DateRange::DEFAULT]);
+
+        $lines = ['Date range: '.($preset === null ? $range->label() : "{$preset} ({$range->label()})").', Eastern time'];
+
+        if ($this->offersSexFilter()) {
+            $lines[] = 'Filter: '.($this->sexFilterLabel() ?? 'None');
+        }
+
+        $lines[] = 'Exported '.now(Timezones::DISPLAY)->format('M j, Y');
+
+        return $lines;
+    }
+
+    // The tab as a file, from the same sections() the page draws.
+    private function download(string $extension, string $contentType, \Closure $render): StreamedResponse
+    {
+        abort_unless(static::canAccess(), 403);
+
+        $title = (string) $this->getTitle();
+        $bytes = $render($title, $this->exportLines(), $this->sections($this->dateRange()));
+        $name = 'analytics-'.Str::slug($title).'-'.now(Timezones::DISPLAY)->format('Y-m-d').'.'.$extension;
+
+        return response()->streamDownload(
+            function () use ($bytes): void {
+                echo $bytes;
+            },
+            $name,
+            ['Content-Type' => $contentType],
+        );
+    }
+
     public function getHeading(): string | Htmlable
     {
         return 'Analytics';
@@ -127,11 +202,16 @@ abstract class AnalyticsPage extends Page
 
     public function applyCustomRange(): void
     {
+        // Neither end in the future (the Eastern day, as the inputs' max).
+        $today = Timezones::today();
+
         $this->validate([
-            'customFrom' => ['required', 'date_format:Y-m-d'],
-            'customTo' => ['required', 'date_format:Y-m-d', 'after_or_equal:customFrom'],
+            'customFrom' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.$today],
+            'customTo' => ['required', 'date_format:Y-m-d', 'after_or_equal:customFrom', 'before_or_equal:'.$today],
         ], [
             'customTo.after_or_equal' => 'The end date must be on or after the start date.',
+            'customFrom.before_or_equal' => "The start date can't be in the future.",
+            'customTo.before_or_equal' => "The end date can't be in the future.",
         ], [
             'customFrom' => 'start date',
             'customTo' => 'end date',

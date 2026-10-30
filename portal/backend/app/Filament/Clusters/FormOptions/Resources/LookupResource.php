@@ -2,6 +2,9 @@
 
 namespace App\Filament\Clusters\FormOptions\Resources;
 
+use App\Filament\Concerns\AllowsOnlyListedActions;
+use App\Rules\DistinctListName;
+use App\Support\ListNames;
 use App\Enums\UserRole;
 use App\Filament\Clusters\FormOptions\FormOptionsCluster;
 use App\Support\Timezones;
@@ -29,7 +32,8 @@ than three near-identical files:
      a row propagates to the website and to every existing submission's
      display without breaking anything. Deleting a row that submissions point
      at violates a foreign key. Each subclass says how to detect that, and the
-     delete action hides itself rather than letting the database refuse.
+     delete button is greyed out with the reason on hover (B54) rather than
+     letting the database refuse.
 
   2. ChangeDate IS MAINTAINED HERE. The column exists on all three tables and
      nothing was writing it. It is set on create and on edit, so there is a
@@ -41,6 +45,8 @@ next request with no deploy. That is the point of the page.
 */
 abstract class LookupResource extends Resource
 {
+    use AllowsOnlyListedActions;
+
     protected static ?string $cluster = FormOptionsCluster::class;
 
     protected static ?string $recordTitleAttribute = 'Name';
@@ -52,6 +58,15 @@ abstract class LookupResource extends Resource
     // undeletable. Each lookup is referenced from a different place.
     abstract protected static function isInUse(Model $record): bool;
 
+    // An option records use can't be deleted (a foreign key would refuse it
+    // anyway): its Delete button stays, greyed out with this on hover (B54).
+    protected static function recordRefusal(string $action, Model $record): ?string
+    {
+        return $action === 'delete' && static::isInUse($record)
+            ? 'Can\'t delete: existing records use this option.'
+            : null;
+    }
+
     public static function canAccess(): bool
     {
         return (bool) Filament::auth()->user()?->hasActiveRole(
@@ -59,6 +74,12 @@ abstract class LookupResource extends Resource
             UserRole::SuperAdmin,
             UserRole::Secretary,
         );
+    }
+
+    // Add, rename, and delete an option nothing uses - one at a time, never in bulk. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete'];
     }
 
     public static function form(Schema $schema): Schema
@@ -69,6 +90,9 @@ abstract class LookupResource extends Resource
                     ->label('Option name')
                     ->required()
                     ->maxLength(250)
+                    // No duplicates or sound-alikes on the list (B55/B60).
+                    ->rule(fn (?Model $record): DistinctListName => new DistinctListName(static::$model, 'Name', $record))
+                    ->dehydrateStateUsing(fn (?string $state): ?string => ListNames::tidy($state))
                     ->helperText('This is the wording the public sees in the dropdown.')
                     ->columnSpanFull(),
 
@@ -98,18 +122,18 @@ abstract class LookupResource extends Resource
             ])
             ->defaultSort('Name')
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make()
-                    // A foreign key would reject this anyway; hiding the
-                    // action explains why far better than a database error.
-                    ->visible(fn (Model $record): bool => ! static::isInUse($record)),
+                // A built-in row (CountyResource's "Other") keeps both
+                // buttons, greyed out with the reason on hover.
+                EditAction::make()->authorizationTooltip(),
+                // Greyed out with the reason on hover while records use it (B54).
+                DeleteAction::make()->authorizationTooltip(),
             ])
             // No bulk delete: a bulk action cannot say which row of the
             // selection was still in use.
             ->emptyStateHeading('No options yet')
             ->emptyStateDescription(static::formDescription())
             ->emptyStateActions([
-                CreateAction::make()->label('Add an option'),
+                CreateAction::make()->label('Add an Option'),
             ]);
     }
 }

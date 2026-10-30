@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SensitiveData;
 use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
 use App\Enums\UserRole;
@@ -51,7 +52,9 @@ function analyticsBackdate(string $connection, string $table, string $key, strin
 // An officer assessment in March 2003 with exactly the given questions answered yes.
 function analyticsOfficerAssessment($officer, string $victim, array $yes, string $createdUtc, array $details = []): LawEnforcementAssessment
 {
-    $assessment = pestOfficerAssessment($officer, $victim, $details);
+    // No birth date unless given, so the age chart's "Not given" is tested
+    // (pestOfficerAssessment() fills one in by default).
+    $assessment = pestOfficerAssessment($officer, $victim, ['VictimDOB' => null, ...$details]);
 
     DB::connection('Portal')->table('_assessment_answers')
         ->where('AssessmentDocID', $assessment->AssessmentDocID)
@@ -167,8 +170,9 @@ test('service feedback and resource requests are counted per service, county and
     $withCounty = (string) Str::uuid();
 
     foreach ([[$withCounty, $county, 'online'], [(string) Str::uuid(), null, 'staff']] as [$id, $countyId, $source]) {
+        // Encrypted by hand, as the model would (App\Support\SensitiveData).
         $feedback->table('resource_request_form')->insert([
-            'FormID' => $id, 'FirstName' => publicFormsRunToken(), 'LastName' => 'Requester',
+            'FormID' => $id, 'FirstName' => SensitiveData::encrypt(publicFormsRunToken()), 'LastName' => SensitiveData::encrypt('Requester'),
             'CountyID' => $countyId, 'Source' => $source, 'SubmissionDate' => '2003-03-08 15:00:00',
         ]);
     }
@@ -265,7 +269,7 @@ test('a secretary gets only the feedback tab', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
 
     $this->get(AnalyticsCluster::getUrl())->assertRedirect(FeedbackAnalytics::getUrl());
-    $this->get(FeedbackAnalytics::getUrl())->assertOk()->assertDontSee('Law-enforcement assessments');
+    $this->get(FeedbackAnalytics::getUrl())->assertOk()->assertDontSee('Law-Enforcement Assessments');
     $this->get(OfficerAssessmentAnalytics::getUrl())->assertForbidden();
     $this->get(CivilianAssessmentAnalytics::getUrl())->assertForbidden();
     $this->get(FollowUpAnalytics::getUrl())->assertForbidden();
