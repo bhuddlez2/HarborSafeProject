@@ -172,7 +172,7 @@ test('views, downloads and edits are one list, newest first, each with its actio
         ->assertTableColumnFormattedStateSet('Action', 'Viewed', $w->viewA)
         // An edit is about its officer assessment, like the access rows.
         ->assertTableColumnStateSet('record', 'Officer Assessment', $w->editA)
-        ->assertTableColumnHasDescription('record', 'Submitted '.Illuminate\Support\Carbon::parse($w->assessmentA->DateCreated)->setTimezone('America/New_York')->format('M j, Y g:i a').' · '.substr($w->assessmentA->getKey(), 0, 8), $w->editA)
+        ->assertTableColumnHasDescription('record', 'Submitted '.Illuminate\Support\Carbon::parse($w->assessmentA->DateCreated)->setTimezone('America/New_York')->format('M j, Y g:i a').' · '.substr($w->assessmentA->getKey(), -8), $w->editA)
         ->assertTableColumnFormattedStateSet('changes_count', '1 field', $w->editA)
         ->assertTableColumnStateSet('changes_count', null, $w->viewA);
 });
@@ -183,8 +183,10 @@ test('the When column shows the row\'s own time, in Eastern', function () {
 
     // 12:00 UTC is 8:00 am Eastern in May.
     Livewire::test(ListLogs::class)
-        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 2, 2026 8:00:00 am', $w->editA)
-        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 1, 2026 8:00:00 am', $w->viewA);
+        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 2, 2026', $w->editA)
+        ->assertTableColumnHasDescription('OccurredAt', '8:00:00 am', $w->editA)
+        ->assertTableColumnFormattedStateSet('OccurredAt', 'May 1, 2026', $w->viewA)
+        ->assertTableColumnHasDescription('OccurredAt', '8:00:00 am', $w->viewA);
 });
 
 test('Show narrows the merged list to the kinds chosen', function (array $show, array $expected) {
@@ -303,7 +305,7 @@ test('officer-assessment filters leave only officer-assessment rows', function (
 })->with([
     'original submitter' => ['submitted_by', fn (object $w) => $w->officerA->getKey()],
     'agency' => ['agency', fn (object $w) => $w->officerA->agencyId()],
-    'assessment ID' => ['assessment_id', fn (object $w) => substr($w->assessmentA->getKey(), 0, 8)],
+    'assessment ID' => ['assessment_id', fn (object $w) => substr($w->assessmentA->getKey(), -8)],
     'victim first name' => ['victim_first_name', fn (object $w) => $w->assessmentA->VictimFirstName],
 ]);
 

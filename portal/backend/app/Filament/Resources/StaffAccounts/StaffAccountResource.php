@@ -265,6 +265,7 @@ class StaffAccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Search by Name or Email')
             ->columns([
                 TextColumn::make('first_name')
                     ->label('First name')

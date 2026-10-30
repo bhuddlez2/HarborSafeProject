@@ -162,6 +162,7 @@ class OfficerAccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Search by Name, Email or Badge Number')
             ->columns([
                 TextColumn::make('first_name')
                     ->label('First name')

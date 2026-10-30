@@ -36,9 +36,9 @@ class FollowUpPdfController extends Controller
         AssessmentAccessLog::record($form, AssessmentAccess::DownloadWithLog, $request->user());
 
         $name = match (true) {
-            $form instanceof LawEnforcementAssessment => 'assessment-'.substr($form->DocumentID, 0, 8),
-            $form instanceof PrivateAssessment => 'civilian-assessment-'.substr($form->DocumentID, 0, 8),
-            default => 'resource-request-'.substr($form->FormID, 0, 8),
+            $form instanceof LawEnforcementAssessment => 'assessment-'.substr($form->DocumentID, -8),
+            $form instanceof PrivateAssessment => 'civilian-assessment-'.substr($form->DocumentID, -8),
+            default => 'resource-request-'.substr($form->FormID, -8),
         };
 
         return response($bytes, 200, [

@@ -22,12 +22,16 @@ storage, autofill is turned off on every field so a shared device doesn't rememb
 names typed here, and the state is cleared as soon as the submission is accepted.
 */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
+import Link from "next/link";
 import Modal from "../components/Modal";
-import { OPTIONAL_PLACEHOLDER, RequiredNote } from "../components/FormControls";
+import { OPTIONAL_PLACEHOLDER, RequiredNote, focusPageHeading } from "../components/FormControls";
 import { lethalityQuestions, questionText } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
-import { isValidEmail, isValidPhone, dateOfBirthBounds, dateOfBirthError, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
+import {
+  isValidEmail, isValidPhone, dateOfBirthError, formatDateInput, typedDateToIso, DOB_INPUT_MAX_LENGTH,
+  formatPhoneInput, PHONE_INPUT_MAX_LENGTH,
+} from "../lib/validators";
 
 // pt-22.5 on the layout already clears the fixed navbar (5.625rem), so the grey
 // backdrop fills the rest of the viewport.
@@ -108,14 +112,16 @@ function SexSelect({ id, value, onChange }) {
 
 // "1990-04-12" as "Apr 12, 1990". Built from the parts, so the time zone can't move it
 // to the day before.
-function formatDate(value) {
+// A typed MM/DD/YYYY date of birth as "Mar 14, 1985" for the review
+function formatDate(typed) {
+  const value = typedDateToIso(typed);
   if (!value) return null;
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 const EDIT_BUTTON =
-  "text-sm font-semibold text-[#5C0F8B] underline underline-offset-2 rounded px-1 " +
+  "tap-target text-sm font-semibold text-[#5C0F8B] underline underline-offset-2 rounded px-1 " +
   "hover:text-[#4C0B74] focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40";
 
 // One block of the review: a heading, an Edit button, and label/value pairs.
@@ -144,10 +150,26 @@ const RELATIONSHIP_LOAD_ERROR = "We couldn't load this list. Please try again.";
 const PHONE_ERROR = "Enter a 10-digit phone number, starting with the area code.";
 
 export default function AssessmentContent() {
-  const [showSafetyModal, setShowSafetyModal] = useState(true);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+  useEffect(() => {
+    startTransition(() => setShowSafetyModal(true));
+  }, []);
 
   // phase: "prescreen", "info", "victim", "offender", "intro", "questions", "complete", "submitted"
   const [phase, setPhase] = useState("prescreen");
+
+  // Each new step starts at the top, with focus on its heading, so the next Tab
+  // goes to the step's first control and a screen reader reads the new heading.
+  // Skipped on first load, where the Confidentiality Notice takes focus.
+  const firstPhase = useRef(true);
+  useEffect(() => {
+    if (firstPhase.current) {
+      firstPhase.current = false;
+      return;
+    }
+    focusPageHeading();
+  }, [phase]);
   // index: which question is displayed
   const [index, setIndex] = useState(0);
   // answers: { questionId: boolean }
@@ -166,7 +188,9 @@ export default function AssessmentContent() {
   // victim phase
   const [victimFirstName, setVictimFirstName] = useState("");
   const [victimLastName, setVictimLastName] = useState("");
+  // Dates of birth are held as typed (MM/DD/YYYY) and turned into YYYY-MM-DD on submit
   const [victimDob, setVictimDob] = useState("");
+  const [victimDobLeft, setVictimDobLeft] = useState(false);
   const [victimSex, setVictimSex] = useState("");
   const [victimPhone, setVictimPhone] = useState("");
 
@@ -175,6 +199,7 @@ export default function AssessmentContent() {
   const [offenderFirstName, setOffenderFirstName] = useState("");
   const [offenderLastName, setOffenderLastName] = useState("");
   const [offenderDob, setOffenderDob] = useState("");
+  const [offenderDobLeft, setOffenderDobLeft] = useState(false);
   const [offenderSex, setOffenderSex] = useState("");
   const [offenderRelationship, setOffenderRelationship] = useState("");
   const [offenderRelationshipOther, setOffenderRelationshipOther] = useState("");
@@ -214,8 +239,12 @@ export default function AssessmentContent() {
   const victimDobError = dateOfBirthError(victimDob);
   const victimPhoneError = victimPhone.trim() && !isValidPhone(victimPhone.trim()) ? PHONE_ERROR : null;
   const offenderDobError = dateOfBirthError(offenderDob);
-  // The date boxes' calendars only offer days in this range.
-  const dob = dateOfBirthBounds();
+  /*
+  A date of birth's message shows once all ten characters are in or the box has
+  been left, never mid-typing; Continue is held back by the error either way
+  */
+  const victimDobShownError = victimDob.length === DOB_INPUT_MAX_LENGTH || victimDobLeft ? victimDobError : null;
+  const offenderDobShownError = offenderDob.length === DOB_INPUT_MAX_LENGTH || offenderDobLeft ? offenderDobError : null;
 
   const total = lethalityQuestions.length;
   const current = lethalityQuestions[index];
@@ -258,15 +287,15 @@ export default function AssessmentContent() {
   };
 
   // Clears everything that was entered. Run as soon as a submission is accepted, so
-  // the details don't stay in the page, and again for "Start new assessment".
+  // the details don't stay in the page, and again for "Submit Another Assessment".
   const clearEntries = () => {
     setAnswers({});
     setIndex(0);
     setForWhom(null);
     setAnonymous(null);
     setFirstName(""); setLastName(""); setEmail(""); setPhone("");
-    setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimSex(""); setVictimPhone("");
-    setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderSex("");
+    setVictimFirstName(""); setVictimLastName(""); setVictimDob(""); setVictimDobLeft(false); setVictimSex(""); setVictimPhone("");
+    setOffenderFirstName(""); setOffenderLastName(""); setOffenderDob(""); setOffenderDobLeft(false); setOffenderSex("");
     setOffenderRelationship(""); setOffenderRelationshipOther("");
     setSubmitError(null);
     setReviewReached(false);
@@ -285,11 +314,11 @@ export default function AssessmentContent() {
         forWhom,
         anonymous,
         submitter: { firstName, lastName, email, phone },
-        victim: { firstName: victimFirstName, lastName: victimLastName, dob: victimDob, sex: victimSex, phone: victimPhone },
+        victim: { firstName: victimFirstName, lastName: victimLastName, dob: typedDateToIso(victimDob), sex: victimSex, phone: victimPhone },
         offender: {
           firstName: offenderFirstName,
           lastName: offenderLastName,
-          dob: offenderDob,
+          dob: typedDateToIso(offenderDob),
           sex: offenderSex,
           relationship: offenderRelationship,
           relationshipOther: offenderRelationshipOther,
@@ -301,7 +330,7 @@ export default function AssessmentContent() {
       setPhase("submitted");
     } catch (error) {
       if (error.status === 429) {
-        setSubmitError("Too many submissions just now. Nothing was saved. Please wait a minute and try again. Your answers are still here.");
+        setSubmitError("Too many submissions were received in a short time. Nothing was saved. Please wait a minute and try again. Your answers remain on this page.");
       } else if (error instanceof TypeError) {
         // fetch rejects with a TypeError when the server can't be reached at all
         setSubmitError("We couldn't reach the server. Please check your connection and try again.");
@@ -321,11 +350,10 @@ export default function AssessmentContent() {
         {/* Confidentiality Notice, shown each time the assessment is opened, before the form begins.
             Not dismissible: "I understand, continue" is the only way on. Safe Exit stays usable above it. */}
         {showSafetyModal && (
-          <Modal title="Confidentiality Notice" subtitle="Before you begin" dismissible={false} onClose={() => setShowSafetyModal(false)}>
+          <Modal title="Confidentiality Notice" dismissible={false} onClose={() => setShowSafetyModal(false)}>
             <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 leading-relaxed mb-5">
-                Information you provide in this assessment is kept confidential. Harbor Safe
-                reviews every assessment and follows up on each one.
+              <p className="text-sm text-gray-600 leading-relaxed mb-5 text-center">
+                Information you provide in this assessment is kept confidential.
               </p>
 
               <div className="space-y-4 mb-5">
@@ -337,12 +365,11 @@ export default function AssessmentContent() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Nothing is saved until you submit</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">No information is saved until you submit</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      What you type stays on this page only. Nothing is sent to Harbor Safe or saved
-                      anywhere until you press Submit at the end. If you close or leave this page
-                      first, everything you entered is gone. After you submit, only Harbor Safe sees
-                      your answers, except where the law requires us to report.
+                      Information entered in this form is not saved or sent to Harbor Safe House until
+                      you select Submit assessment at the end. Once submitted, your answers are seen
+                      only by Harbor Safe House.
                     </p>
                   </div>
                 </div>
@@ -355,10 +382,26 @@ export default function AssessmentContent() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Harbor Safe will follow up</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Harbor Safe House will follow up</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      A Harbor Safe advocate will contact the victim at the safe phone number you
+                      A Harbor Safe House advocate will contact the victim at the safe phone number you
                       provide, so only give a number that is safe to call.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-gray-700 stroke-2 fill-none" aria-hidden="true">
+                      {/* trash icon, feathericons.com */}
+                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Browse privately</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      If you are concerned about someone monitoring your activity, consider using
+                      a private window and clearing your browser history afterward.
                     </p>
                   </div>
                 </div>
@@ -376,22 +419,6 @@ export default function AssessmentContent() {
                       If information disclosed in this assessment indicates that a minor is being
                       abused or is at risk, we may be legally required to report it to the
                       appropriate authorities.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-gray-700 stroke-2 fill-none" aria-hidden="true">
-                      {/* trash icon, feathericons.com */}
-                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Browse privately</p>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      If you are concerned about someone monitoring your activity, consider using
-                      a private window and clearing your browser history afterward.
                     </p>
                   </div>
                 </div>
@@ -528,11 +555,14 @@ export default function AssessmentContent() {
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
               <Label htmlFor="victim-dob" required>Date of Birth</Label>
-              <input id="victim-dob" type="date" value={victimDob} onChange={(e) => setVictimDob(e.target.value)}
-                min={dob.earliest} max={dob.latest} autoComplete="off" aria-required="true"
-                aria-invalid={!!victimDobError} aria-describedby={victimDobError ? "victim-dob-error" : undefined}
-                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#5C0F8B] transition" />
-              <FieldError id="victim-dob-error">{victimDobError}</FieldError>
+              <input id="victim-dob" type="text" inputMode="numeric" value={victimDob}
+                onChange={(e) => setVictimDob(formatDateInput(e.target.value))} onBlur={() => setVictimDobLeft(true)}
+                maxLength={DOB_INPUT_MAX_LENGTH} autoComplete="off" aria-required="true"
+                aria-invalid={!!victimDobShownError}
+                aria-describedby={victimDobShownError ? "victim-dob-hint victim-dob-error" : "victim-dob-hint"}
+                className={`w-40 ${INPUT}`} />
+              <p id="victim-dob-hint" className="text-xs text-gray-500 mt-1">MM/DD/YYYY</p>
+              <FieldError id="victim-dob-error">{victimDobShownError}</FieldError>
             </div>
             <div>
               <Label htmlFor="victim-sex" required>Sex</Label>
@@ -580,20 +610,24 @@ export default function AssessmentContent() {
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
-              <Label htmlFor="offender-last-name" required>Last Name</Label>
+              <Label htmlFor="offender-last-name">Last Name</Label>
               <input id="offender-last-name" type="text" value={offenderLastName} onChange={(e) => setOffenderLastName(e.target.value)}
-                maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
+                placeholder={OPTIONAL_PLACEHOLDER} maxLength={50} autoComplete="off" className={INPUT} />
             </div>
           </div>
 
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
-              <Label htmlFor="offender-dob" optional>Date of Birth</Label>
-              <input id="offender-dob" type="date" value={offenderDob} onChange={(e) => setOffenderDob(e.target.value)}
-                min={dob.earliest} max={dob.latest} autoComplete="off"
-                aria-invalid={!!offenderDobError} aria-describedby={offenderDobError ? "offender-dob-error" : undefined}
-                className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#5C0F8B] transition" />
-              <FieldError id="offender-dob-error">{offenderDobError}</FieldError>
+              {/* Now a box that can hold ghost text, so "Optional" goes inside it like every other optional box */}
+              <Label htmlFor="offender-dob">Date of Birth</Label>
+              <input id="offender-dob" type="text" inputMode="numeric" value={offenderDob}
+                onChange={(e) => setOffenderDob(formatDateInput(e.target.value))} onBlur={() => setOffenderDobLeft(true)}
+                placeholder={OPTIONAL_PLACEHOLDER} maxLength={DOB_INPUT_MAX_LENGTH} autoComplete="off"
+                aria-invalid={!!offenderDobShownError}
+                aria-describedby={offenderDobShownError ? "offender-dob-hint offender-dob-error" : "offender-dob-hint"}
+                className={`w-40 ${INPUT}`} />
+              <p id="offender-dob-hint" className="text-xs text-gray-500 mt-1">MM/DD/YYYY</p>
+              <FieldError id="offender-dob-error">{offenderDobShownError}</FieldError>
             </div>
             <div>
               <Label htmlFor="offender-sex" required>Sex</Label>
@@ -609,7 +643,7 @@ export default function AssessmentContent() {
                 <button
                   type="button"
                   onClick={loadRelationshipOptions}
-                  className="text-sm font-semibold text-[#5C0F8B] underline focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40 rounded"
+                  className="tap-target text-sm font-semibold text-[#5C0F8B] underline focus:outline-none focus:ring-2 focus:ring-[#5C0F8B]/40 rounded"
                 >
                   Try again
                 </button>
@@ -645,7 +679,7 @@ export default function AssessmentContent() {
             <button onClick={() => setPhase("victim")} className={SECONDARY}>Back</button>
             <button
               onClick={() => goOn("intro")}
-              disabled={!offenderFirstName.trim() || !offenderLastName.trim() || !offenderSex || !!offenderDobError
+              disabled={!offenderFirstName.trim() || !offenderSex || !!offenderDobError
                 || !offenderRelationship || (offenderRelationship === "other" && !offenderRelationshipOther.trim())}
               className={PRIMARY}
             >
@@ -667,8 +701,9 @@ export default function AssessmentContent() {
             This screen contains {total} yes/no questions. Ask each question exactly as written.
           </p>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            Nothing is sent or saved until you press Submit at the end. If you close or leave
-            this page before then, your answers are gone.
+            Your answers are not sent or saved until you select Submit assessment at the end. If
+            you close this tab or move to another page on this site before then, your answers will
+            be lost.
           </p>
           <button onClick={() => setPhase("questions")} className={PRIMARY}>Begin assessment</button>
         </div>
@@ -689,22 +724,32 @@ export default function AssessmentContent() {
     return (
       <main className={PAGE}>
         <div className={CARD}>
-          <h1 className={`${HEADING} mb-2`}>Review &amp; Submit</h1>
-          <p className="text-gray-600 mb-6">
-            Check every detail and answer below. Use Edit or Change to fix anything. Nothing has
-            been sent yet. It is sent only when you press Submit assessment.
+          <h1 className={`${HEADING} mb-2 text-center`}>Review &amp; Submit</h1>
+          <p className="text-gray-600 mb-6 text-center">
+            Please review each detail and answer below, and use Edit or Change to make any
+            corrections. Nothing has been sent yet. Your assessment will be sent only when you
+            select Submit assessment.
           </p>
 
           <div className="flex flex-col gap-4">
-            <ReviewSection
-              title="This report"
-              editLabel="Edit who this report is for"
-              onEdit={() => setPhase("prescreen")}
-              fields={[
-                ["Report for", forSelf ? "Myself" : "Someone else"],
-                ...(forSelf ? [] : [["Anonymous", anonymous ? "Yes" : "No"]]),
-              ]}
-            />
+            {/* A report for oneself has nothing to show here, but keeps the way back to "Who is this report for?". */}
+            {forSelf ? (
+              <p>
+                <button type="button" onClick={() => setPhase("prescreen")} className={EDIT_BUTTON}>
+                  Change who this report is for
+                </button>
+              </p>
+            ) : (
+              <ReviewSection
+                title="This report"
+                editLabel="Edit who this report is for"
+                onEdit={() => setPhase("prescreen")}
+                fields={[
+                  ["Report for", "Someone else"],
+                  ["Anonymous", anonymous ? "Yes" : "No"],
+                ]}
+              />
+            )}
 
             {identified && (
               <ReviewSection
@@ -720,7 +765,7 @@ export default function AssessmentContent() {
             )}
 
             <ReviewSection
-              title={forSelf ? "You (the victim)" : "Victim"}
+              title="Victim"
               editLabel="Edit the victim's details"
               onEdit={() => setPhase("victim")}
               fields={[
@@ -736,7 +781,7 @@ export default function AssessmentContent() {
               editLabel="Edit the offender's details"
               onEdit={() => setPhase("offender")}
               fields={[
-                ["Name", `${offenderFirstName.trim()} ${offenderLastName.trim()}`],
+                ["Name", `${offenderFirstName.trim()} ${offenderLastName.trim()}`.trim()],
                 ["Sex", sexLabel(offenderSex)],
                 ["Date of birth", formatDate(offenderDob) ?? "Not given"],
                 ["Relationship to victim", relationshipLabel],
@@ -810,15 +855,18 @@ export default function AssessmentContent() {
   if (phase === "submitted") {
     return (
       <main className={PAGE}>
-        <div className={CARD}>
+        <div className={`${CARD} text-center`}>
           <h1 className={`${HEADING} mb-6`}>Assessment Submitted</h1>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            Your assessment has been sent to Harbor Safe. Harbor Safe will follow up at the safe
-            phone number you gave. Your answers have been cleared from this page.
+            Your assessment has been sent to Harbor Safe House. Harbor Safe House will follow up
+            at the safe phone number you provided. Your answers have been cleared from this page.
           </p>
-          <button onClick={() => { clearEntries(); setPhase("prescreen"); }} className={PRIMARY}>
-            Start new assessment
-          </button>
+          <div className="flex flex-wrap justify-center gap-4">
+            <button onClick={() => { clearEntries(); setPhase("prescreen"); }} className={SECONDARY}>
+              Submit Another Assessment
+            </button>
+            <Link href="/resources" className={PRIMARY}>View Resources</Link>
+          </div>
         </div>
       </main>
     );
@@ -830,7 +878,7 @@ export default function AssessmentContent() {
   const answerButtons = (
     <>
       {index > 0 && (
-        <button onClick={handleBack} className="text-sm text-gray-500 hover:text-gray-900 transition block mb-4">
+        <button onClick={handleBack} className="tap-target text-sm text-gray-500 hover:text-gray-900 transition block mb-4">
           ← Previous question
         </button>
       )}

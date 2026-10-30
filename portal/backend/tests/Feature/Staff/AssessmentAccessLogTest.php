@@ -59,7 +59,7 @@ test('an admin downloads a civilian assessment, and the download is logged', fun
         ->get(route('staff.civilian-assessments.pdf', $assessment->DocumentID))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/pdf')
-        ->assertHeader('Content-Disposition', 'attachment; filename="civilian-assessment-'.substr($assessment->DocumentID, 0, 8).'.pdf"');
+        ->assertHeader('Content-Disposition', 'attachment; filename="civilian-assessment-'.substr($assessment->DocumentID, -8).'.pdf"');
 
     $rows = accessRows($assessment);
 

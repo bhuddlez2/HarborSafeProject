@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AssessmentAccess;
 use App\Enums\FollowUpKind;
 use App\Enums\LogAction;
 use App\Enums\UserRole;
@@ -121,6 +122,14 @@ dataset('assessment paths', [
         ->mountAction(TestAction::make('changeLog')->table($w->assessmentA))],
     'Logs: an edit row\'s View' => ['admin', LogAction::ViewLog, 'officer', fn (object $w) => $w->edit = coverageEdit($w->assessmentA, $w->officerA), fn (object $w) => Livewire::test(ListLogs::class)
         ->mountAction(TestAction::make('view')->table($w->edit))],
+    // Finishing Touches item 35: any row's Record cell opens the assessment.
+    // The row clicked is someone else's, made in set-up.
+    'Logs: Record cell (admin)' => ['admin', LogAction::View, 'officer', fn (object $w) => $w->entry = AssessmentAccessLog::record($w->assessmentA, AssessmentAccess::View, $w->officerA), fn (object $w) => Livewire::test(ListLogs::class)
+        ->mountAction(TestAction::make('openAssessment')->table($w->entry))
+        ->assertActionMounted(TestAction::make('openAssessment')->table($w->entry))],
+    'Logs: Record cell (police admin)' => ['policeAdminA', LogAction::View, 'officer', fn (object $w) => $w->entry = AssessmentAccessLog::record($w->assessmentA, AssessmentAccess::View, $w->officerA), fn (object $w) => Livewire::test(ListLogs::class)
+        ->mountAction(TestAction::make('openAssessment')->table($w->entry))
+        ->assertActionMounted(TestAction::make('openAssessment')->table($w->entry))],
     'Follow-up page (officer assessment)' => ['admin', LogAction::View, 'officer', null, fn (object $w) => coverageFollowUpPage($w->officerFollowUp, $w->admin)],
     'Follow-ups queue: Log (officer assessment)' => ['admin', LogAction::View, 'officer', null, fn (object $w) => coverageQueue()
         ->mountAction(TestAction::make('log')->table($w->officerFollowUp))
@@ -143,6 +152,12 @@ dataset('assessment paths', [
     // Civilian assessments.
     'Civilian assessments: View' => ['admin', LogAction::View, 'civilian', null, fn (object $w) => Livewire::test(ListCivilianAssessments::class)
         ->mountAction(TestAction::make('view')->table($w->civilian))],
+    'Civilian assessments: Log' => ['admin', LogAction::ViewLog, 'civilian', null, fn (object $w) => Livewire::test(ListCivilianAssessments::class)
+        ->mountAction(TestAction::make('changeLog')->table($w->civilian))
+        ->assertActionMounted(TestAction::make('changeLog')->table($w->civilian))],
+    'Logs: Record cell (civilian assessment)' => ['admin', LogAction::View, 'civilian', fn (object $w) => $w->entry = AssessmentAccessLog::record($w->civilian, AssessmentAccess::View, $w->officerA), fn (object $w) => Livewire::test(ListLogs::class)
+        ->mountAction(TestAction::make('openAssessment')->table($w->entry))
+        ->assertActionMounted(TestAction::make('openAssessment')->table($w->entry))],
     'Follow-up page (civilian assessment)' => ['admin', LogAction::View, 'civilian', null, fn (object $w) => coverageFollowUpPage($w->civilianFollowUp, $w->admin)],
     'Follow-ups queue: Log (civilian assessment)' => ['admin', LogAction::View, 'civilian', null, fn (object $w) => coverageQueue()
         ->mountAction(TestAction::make('log')->table($w->civilianFollowUp))
@@ -244,6 +259,16 @@ test('every Download PDF button on an assessment uses the logged PDF route', fun
         ->mountAction(TestAction::make('view')->table($w->civilian))
         ->assertActionHasUrl(TestAction::make('download_pdf')->table($w->civilian), $civilianPdf);
 
+    $officerEntry = AssessmentAccessLog::record($w->assessmentA, AssessmentAccess::View, $w->officerA);
+    $civilianEntry = AssessmentAccessLog::record($w->civilian, AssessmentAccess::View, $w->admin);
+    Livewire::test(ListLogs::class)
+        ->mountAction(TestAction::make('openAssessment')->table($officerEntry))
+        ->assertActionHasUrl(TestAction::make('download_pdf')->table($officerEntry), $officerPdf)
+        ->assertMountedActionModalSee(['View Assessment', $w->assessmentA->VictimFirstName]);
+    Livewire::test(ListLogs::class)
+        ->mountAction(TestAction::make('openAssessment')->table($civilianEntry))
+        ->assertActionHasUrl(TestAction::make('download_pdf')->table($civilianEntry), $civilianPdf);
+
     $this->get(FollowUpResource::getUrl('view', ['record' => $w->officerFollowUp]))->assertOk()->assertSee($officerPdf, false);
     $this->get(FollowUpResource::getUrl('view', ['record' => $w->civilianFollowUp]))->assertOk()->assertSee($civilianPdf, false);
 });
@@ -282,4 +307,18 @@ test('opening a resource request\'s Log on the queue is recorded, not listed, an
     }
 
     expect($rows())->toHaveCount(1);
+});
+
+// The Record cell's pop-up fails closed like the others: if its view can't be
+// recorded, it doesn't open.
+test('the Logs Record cell does not open when its view cannot be recorded', function () {
+    $w = coverageWorld();
+    $entry = AssessmentAccessLog::record($w->assessmentA, AssessmentAccess::View, $w->officerA);
+    $this->actingAs($w->admin);
+    $logs = Livewire::test(ListLogs::class);
+
+    AssessmentAccessLog::creating(fn () => throw new RuntimeException('access log unavailable'));
+
+    expect(fn () => $logs->mountAction(TestAction::make('openAssessment')->table($entry)))
+        ->toThrow(RuntimeException::class, 'access log unavailable');
 });

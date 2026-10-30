@@ -107,6 +107,7 @@ abstract class LookupResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Search by Name')
             ->columns([
                 TextColumn::make('Name')
                     ->label('Option')

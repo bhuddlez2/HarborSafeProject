@@ -97,3 +97,25 @@ test('Share Feedback: Comments is announced as optional, and "* Required" sits a
   const buttonBox = await button.boundingBox();
   expect(noteBox.y + noteBox.height).toBeLessThanOrEqual(buttonBox.y);
 });
+
+test('Share Feedback: after Send feedback, the visitor is taken to the thank-you or the error message', async ({ page }) => {
+  let reply = { status: 201, body: '{"message":"ok"}' };
+  await page.route('**/api/public/service-feedback', (route) =>
+    route.fulfill({ status: reply.status, contentType: 'application/json', body: reply.body }));
+  await page.goto('/feedback/');
+  await page.getByLabel('Which service is this about?').selectOption('1');
+  await page.getByLabel('5', { exact: true }).check({ force: true });
+
+  // Too many submissions: the error appears above the form and takes focus.
+  reply = { status: 429, body: '{"message":"Too many"}' };
+  await page.getByRole('button', { name: 'Send feedback' }).click();
+  const error = page.getByRole('alert').filter({ hasText: 'Too many submissions' });
+  await expect(error).toBeFocused();
+  await expect(error).toBeInViewport();
+
+  reply = { status: 201, body: '{"message":"ok"}' };
+  await page.getByRole('button', { name: 'Send feedback' }).click();
+  const thanks = page.getByRole('alert').filter({ hasText: 'your feedback has been received' });
+  await expect(thanks).toBeFocused();
+  await expect(thanks).toBeInViewport();
+});

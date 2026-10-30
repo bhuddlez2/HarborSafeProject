@@ -5,7 +5,6 @@ namespace App\Filament\Clusters\Content\Resources\Events\Pages;
 use App\Filament\Concerns\CapsTableSearch;
 use App\Filament\Clusters\Content\Resources\Events\EventResource;
 use App\Filament\Concerns\BreadcrumbNamesThePage;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ManageRecords;
 
 class ManageEvents extends ManageRecords
@@ -18,7 +17,7 @@ class ManageEvents extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('New Event'),
+            EventResource::createAction()->label('New Event'),
         ];
     }
 }

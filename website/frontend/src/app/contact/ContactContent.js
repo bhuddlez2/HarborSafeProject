@@ -16,6 +16,8 @@ import {
   FormSection,
 } from "../components/FormControls";
 import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+import PhoneLink from "../components/PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 
 const EMPTY_REQUEST = {
   FirstName: "",
@@ -82,16 +84,17 @@ function ResourceRequestForm({ resourceTypes, counties, preselected }) {
 
   if (status === "success") {
     return (
-      <FormMessage tone="success">
+      <FormMessage takeFocus tone="success">
         Thank you — your request has been received. If you need help before we reach you,
-        our crisis line is answered 24 hours a day at (423) 476-3886.
+        our crisis line is answered 24 hours a day at{" "}
+        <PhoneLink number={CRISIS_CALL} className="underline" />.
       </FormMessage>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
-      {status === "error" && <FormMessage tone="error">{message}</FormMessage>}
+      {status === "error" && <FormMessage takeFocus tone="error">{message}</FormMessage>}
 
       <div className="grid md:grid-cols-2 gap-6">
         <Field id="first-name" label="First name" requirement="required" error={errorFor("FirstName")}>
@@ -293,10 +296,7 @@ export default function ContactContent() {
   return (
     <main>
 
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Contact Us</h1>
         <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
           Tell us what you need and an advocate will get back to you.
@@ -305,7 +305,7 @@ export default function ContactContent() {
 
       <CrisisHotlineStrip />
 
-      <section className="py-16 px-4 bg-white">
+      <section className="pt-12 md:pt-16 pb-16 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
           <p className="text-gray-700 leading-relaxed text-center mb-10">
             If you need help right now, please call or text our crisis hotline — it is answered

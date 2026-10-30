@@ -90,8 +90,8 @@ test('admins and secretaries can fill in a feedback form, marked as staff', func
     // push this September form off page 1.
     pestApplyFilter(Livewire::test(ListServiceFeedback::class), 'ServiceID', $serviceId)
         ->assertCanSeeTableRecords([$feedback])
-        ->assertTableColumnHasDescription('SubmissionDate', RecordCards::staffTag(), $feedback)
-        ->assertTableColumnFormattedStateSet('SubmissionDate', 'Sep 15, 2026 2:30 pm', $feedback);
+        ->assertTableColumnHasDescription('SubmissionDate', '2:30 pm '.RecordCards::staffTag(), $feedback)
+        ->assertTableColumnFormattedStateSet('SubmissionDate', 'Sep 15, 2026', $feedback);
 })->with([UserRole::Admin, UserRole::Secretary]);
 
 test('the form defaults to now, shown in Eastern', function () {

@@ -156,10 +156,10 @@ test('the PDF carries the applied range and filter, and no names or phone number
         ->not->toContain('555-0100');
 
     $livewire->set('draftVictimSex', 'F')
-        ->call('applySexFilter')
+        ->call('applyFilters')
         ->callAction('exportPdf');
 
-    expect(app(AnalyticsExport::class)::$html)->toContain('Filter: Victim: Female · Offender: Any');
+    expect(app(AnalyticsExport::class)::$html)->toContain('Filter: Victim Sex: Female');
 });
 
 test('a preset range is named with its dates', function () {

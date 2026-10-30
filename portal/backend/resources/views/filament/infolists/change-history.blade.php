@@ -1,5 +1,5 @@
 {{--
-    History of a law-enforcement assessment: a header naming the record, then
+    History of an assessment (officer, or civilian on its Log): a header naming the record, then
     newest first either
       - one card per edit ($edits: the "Change log" button on My Assessments,
         and the Change log page's View via $getState()), or
@@ -48,7 +48,9 @@
         </div>
         <p class="hs-cl-notice">
             {{ $isTimeline
-                ? 'Every view, PDF download and edit, newest first. None can be changed or removed.'
+                ? (! empty($header['civilian'])
+                    ? 'Every view and PDF download, newest first. None can be changed or removed.'
+                    : 'Every view, PDF download and edit, newest first. None can be changed or removed.')
                 : 'Edits are listed newest first and cannot be changed or removed.' }}
         </p>
     @endif
@@ -112,7 +114,7 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                         @endswitch
                     </span>
-                    <p class="hs-cl-event-text"><span class="hs-cl-event-label">{{ $event['label'] }}</span> by {{ $event['who'] }}</p>
+                    <p class="hs-cl-event-text"><span class="hs-cl-event-label">{{ $event['label'] }}</span>@if ($event['who'] !== null) by {{ $event['who'] }}@endif</p>
                     <p class="hs-cl-when">{{ $event['when'] }}</p>
                 </div>
             @endif

@@ -193,15 +193,13 @@ class ServiceFeedbackResource extends Resource
         // a small "Staff" tag under the date, shown only on forms staff
         // entered themselves; website forms show nothing.
         return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Comment')
             ->columns([
-                RecordCards::meta(TextColumn::make('SubmissionDate')
+                RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->description(fn (ServiceFeedback $record): ?HtmlString => $record->Source === ServiceFeedback::SOURCE_STAFF
+                    ->sortable(), tag: fn (ServiceFeedback $record): ?HtmlString => $record->Source === ServiceFeedback::SOURCE_STAFF
                         ? RecordCards::staffTag()
-                        : null)
-                    ->sortable()),
+                        : null)),
 
                 RecordCards::title(TextColumn::make('service.Name')
                     ->label('Service')
@@ -263,7 +261,10 @@ class ServiceFeedbackResource extends Resource
                         ->where('Comment', '!=', '')),
             ])
             ->recordActions([
+                // Filled purple, so View outweighs Delete beside it (Burchfield B56).
                 ViewAction::make()
+                    ->extraAttributes(['class' => 'hs-row-primary'])
+                    ->modalHeading('View Service Feedback')
                     ->extraModalFooterActions(fn (ServiceFeedback $record): array => [
                         Action::make('download_pdf')
                             ->label('Download PDF')
@@ -278,7 +279,7 @@ class ServiceFeedbackResource extends Resource
                 BulkActionGroup::make([
                     // Record by record, never one DELETE query, so each
                     // entry's deleted hook removes its scan.
-                    DeleteBulkAction::make()->fetchSelectedRecords(),
+                    DeleteBulkAction::make()->modalHeading('Delete Selected Service Feedback')->fetchSelectedRecords(),
                 ]),
             ])
             ->emptyStateHeading('No feedback yet')

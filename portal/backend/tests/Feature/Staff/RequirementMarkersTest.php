@@ -67,9 +67,10 @@ test('the New Assessment wizard marks its required fields', function () use ($re
         $wizard->assertSchemaComponentExists($field, checkComponentUsing: $required);
     }
 
-    // A date can't hold ghost text, so the offender's date of birth says
-    // "Optional" after its label instead.
-    $wizard->assertSchemaComponentExists('OffenderDOB', checkComponentUsing: fn (Field $field): bool => str_contains((string) $field->getLabel(), RequirementMarkers::OPTIONAL)
+    // The offender's date of birth is a typed box (B28), so "Optional" is its
+    // ghost text like any other optional box, not a label-side marker.
+    $wizard->assertSchemaComponentExists('OffenderDOB', checkComponentUsing: fn (TextInput $field): bool => $field->getPlaceholder() === RequirementMarkers::OPTIONAL
+        && ! str_contains((string) $field->getLabel(), RequirementMarkers::OPTIONAL)
         && ! $field->isMarkedAsRequired());
 });
 
@@ -81,7 +82,7 @@ test('the officer edit pop-up flags the offender\'s date of birth as optional', 
 
     Livewire::test(ListLawEnforcementAssessments::class)
         ->mountAction(TestAction::make(EditAction::class)->table($assessment))
-        ->assertSchemaComponentExists('OffenderDOB', checkComponentUsing: fn (Field $field): bool => str_contains((string) $field->getLabel(), RequirementMarkers::OPTIONAL)
+        ->assertSchemaComponentExists('OffenderDOB', checkComponentUsing: fn (TextInput $field): bool => $field->getPlaceholder() === RequirementMarkers::OPTIONAL
             && ! $field->isMarkedAsRequired());
 });
 

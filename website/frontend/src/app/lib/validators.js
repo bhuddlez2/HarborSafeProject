@@ -63,10 +63,46 @@ export function dateOfBirthBounds(now = new Date()) {
   return { earliest, latest };
 }
 
-// The message to show, or null when the date is fine (or empty).
-export function dateOfBirthError(value, now = new Date()) {
-  if (!value) return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "Enter a valid date.";
+/*
+Dates of birth are typed as MM/DD/YYYY (B28): a plain box with the number keypad,
+quicker on a phone than scrolling a date picker back decades. The slashes are
+added as the digits are typed, and only once the next digit arrives, so
+backspace never gets stuck on one. The backend's NewAssessment wizard and
+officer Edit pop-up take the same format.
+*/
+export const DOB_INPUT_MAX_LENGTH = 10;
+
+export function formatDateInput(value) {
+  const digits = String(value ?? "").replace(/\D/g, "").slice(0, 8);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+// "03/14/1985" -> "1985-03-14"; null when incomplete or not a real day (02/30)
+export function typedDateToIso(text) {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text ?? "");
+  if (!match) return null;
+
+  const [, month, day, year] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const real = date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+
+  return real ? `${match[3]}-${match[1]}-${match[2]}` : null;
+}
+
+/*
+The message for a typed date of birth, or null when it's fine (or empty).
+A part-typed date gets a message too, so Continue stays disabled, but the
+form only shows it once the box is left (see AssessmentContent).
+*/
+export function dateOfBirthError(text, now = new Date()) {
+  if (!text) return null;
+  if (text.length < DOB_INPUT_MAX_LENGTH) return "Enter the full date as MM/DD/YYYY.";
+
+  const value = typedDateToIso(text);
+  if (!value) return "Enter a real date as MM/DD/YYYY.";
 
   const { earliest, latest } = dateOfBirthBounds(now);
   if (value > latest) return "Date of birth can't be in the future.";

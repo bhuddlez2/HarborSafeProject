@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Logs;
 
+use App\Enums\AssessmentAccess;
 use App\Enums\LogAction;
 use App\Enums\UserRole;
 use App\Filament\Assessments\AssessmentViews;
@@ -10,10 +11,15 @@ use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\Logs\Pages\ListLogs;
 use App\Filament\Tables\ChangeLogFilters;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
+use App\Models\AssessmentAccessLog;
+use App\Models\LawEnforcementAssessment;
 use App\Models\LogEntry;
+use App\Models\PrivateAssessment;
 use App\Support\Timezones;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
@@ -46,14 +52,17 @@ Above the table, the page's Show dropdown (ListLogs) and the search box, which
 searches only the Who column (the person's name). Behind the Filters button,
 ChangeLogFilters. All three only narrow the scoped rows.
 
-A row names its form only by kind, submitted time and the start of its id -
+A row names its form only by kind, submitted time and the end of its id -
 no victim, offender or requester names, no phone numbers, no edit reason. The
 forms are loaded with just those columns.
 
 Read-only: no create, edit, delete or bulk action. Edit rows have a View
 pop-up showing the edit's changes, which records a "Viewed Log" of the
 assessment (AssessmentViews::logHistory, before the pop-up is sent, so a
-failed write stops it opening). Access rows have no actions. Opening the page is not itself logged.
+failed write stops it opening). On every row, clicking the Record cell opens
+the assessment itself, as its own View pop-up does (Finishing Touches item
+35): looked up again through its own visibleTo(), logged as a view, and not
+clickable once the form is gone. Opening the page is not itself logged.
 */
 class LogResource extends Resource
 {
@@ -147,12 +156,11 @@ class LogResource extends Resource
     public static function table(Table $table): Table
     {
         return ChangeLogFilters::apply($table
+            ->searchPlaceholder('Search by Name')
             ->columns([
-                TextColumn::make('OccurredAt')
+                RecordCards::dateAndTime(TextColumn::make('OccurredAt')
                     ->label('When')
-                    ->dateTime('M j, Y g:i:s a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
+                    ->sortable(), time: 'g:i:s a'),
 
                 // The only searchable column: the person's name, never
                 // anything from the forms or their ids.
@@ -169,10 +177,17 @@ class LogResource extends Resource
                     ->formatStateUsing(fn (LogAction $state): string => $state->shownTo(Filament::auth()->user())->label())
                     ->color(fn (LogAction $state): string => $state->shownTo(Filament::auth()->user())->color())),
 
+                // Clickable, like a link, to open the assessment - see
+                // openAssessmentAction().
                 TextColumn::make('record')
                     ->label('Record')
                     ->state(fn (LogEntry $record): string => self::KINDS[self::pointer($record)])
-                    ->description(fn (LogEntry $record): string => self::recordLabel($record)),
+                    ->description(fn (LogEntry $record): string => self::recordLabel($record))
+                    ->color(fn (LogEntry $record): ?string => self::loadedForm($record) ? 'primary' : null)
+                    ->tooltip(fn (LogEntry $record): ?string => self::loadedForm($record) ? 'Open this assessment' : null)
+                    ->extraAttributes(['class' => 'hs-record-link'])
+                    ->disabledClick(fn (LogEntry $record): bool => self::loadedForm($record) === null)
+                    ->action(self::openAssessmentAction()),
 
                 TableAlignment::symbol(TextColumn::make('changes_count')
                     ->label('Changes')
@@ -200,7 +215,7 @@ class LogResource extends Resource
                 // recorded, as a look at the assessment's history ("Viewed
                 // Log") - see App\Filament\Assessments\AssessmentViews.
                 ViewAction::make()
-                    ->modalHeading('View edit')
+                    ->modalHeading('View Edit')
                     ->visible(fn (LogEntry $record): bool => $record->isEdit())
                     ->afterFormFilled(fn (LogEntry $record) => AssessmentViews::logHistory($record->edit->assessment)),
             ])
@@ -213,6 +228,66 @@ class LogResource extends Resource
         return [
             'index' => ListLogs::route('/'),
         ];
+    }
+
+    /*
+    The assessment's own View, from the Record cell: the same record view,
+    Download PDF route and "view" row as the View pop-ups on Assessment review
+    and Civilian assessments. The form is looked up again through its own
+    visibleTo(), never taken from the row, so it opens only for someone who
+    may see it. Logged in mountUsing (no schema, so no afterFormFilled; see
+    AssessmentViews), before the pop-up is sent, so a failed write stops it.
+    */
+    private static function openAssessmentAction(): Action
+    {
+        return Action::make('openAssessment')
+            ->visible(fn (LogEntry $record): bool => self::openable($record) !== null)
+            ->modalHeading(fn (LogEntry $record): string => self::pointer($record) === 'PrivateDocumentID'
+                ? 'View Civilian Assessment'
+                : 'View Assessment')
+            ->mountUsing(fn (LogEntry $record) => AssessmentAccessLog::record(
+                self::openable($record),
+                AssessmentAccess::View,
+                Filament::auth()->user(),
+            ))
+            ->modalContent(fn (LogEntry $record) => view('filament.infolists.components.assessment-record', [
+                'getRecord' => fn () => self::openable($record),
+            ]))
+            ->extraModalFooterActions(fn (LogEntry $record): array => [
+                Action::make('download_pdf')
+                    ->label('Download PDF')
+                    ->url(self::pointer($record) === 'PrivateDocumentID'
+                        ? route('staff.civilian-assessments.pdf', $record->PrivateDocumentID)
+                        : route('staff.assessments.pdf', $record->LawEnforcementDocumentID))
+                    ->openUrlInNewTab(),
+            ])
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Close');
+    }
+
+    // The row's assessment, fetched in full through its own scope; null when
+    // it is gone or not the viewer's to see.
+    private static function openable(LogEntry $record): LawEnforcementAssessment | PrivateAssessment | null
+    {
+        $user = Filament::auth()->user();
+
+        return match (self::pointer($record)) {
+            'LawEnforcementDocumentID' => LawEnforcementAssessment::visibleTo($user)
+                ->with('assessmentAnswers')
+                ->find($record->LawEnforcementDocumentID),
+            'PrivateDocumentID' => PrivateAssessment::visibleTo($user)
+                ->with(['assessmentAnswers', 'submitterInfo'])
+                ->find($record->PrivateDocumentID),
+        };
+    }
+
+    // The row's eager-loaded form (two columns only), or null if it is gone.
+    private static function loadedForm(LogEntry $record): ?Model
+    {
+        return match (self::pointer($record)) {
+            'LawEnforcementDocumentID' => $record->lawEnforcementAssessment,
+            'PrivateDocumentID' => $record->privateAssessment,
+        };
     }
 
     private static function pointer(LogEntry $record): string
@@ -232,13 +307,9 @@ class LogResource extends Resource
     private static function recordLabel(LogEntry $record): string
     {
         $column = self::pointer($record);
+        $form = self::loadedForm($record);
 
-        $form = match ($column) {
-            'LawEnforcementDocumentID' => $record->lawEnforcementAssessment,
-            'PrivateDocumentID' => $record->privateAssessment,
-        };
-
-        $id = substr((string) $record->{$column}, 0, 8);
+        $id = substr((string) $record->{$column}, -8);
 
         if ($form === null) {
             return "Removed · {$id}";

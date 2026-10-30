@@ -27,9 +27,10 @@ full-access Portal connection (the page is for Harbor Safe staff, who may open
 every record anyway). Sex, dates of birth and relationship are encrypted
 (App\Support\SensitiveData), so the database can't group or filter on them:
 people() reads them for the date range, decrypts them here, and they are
-counted in PHP. Every count narrows to the date range on DateCreated and, when
-the page's filter is set, to the victim's sex and optionally the offender's -
-matched in PHP, then applied to the SQL counts as a list of DocumentIDs.
+counted in PHP. Every count narrows to the date range on DateCreated and to
+whichever of the page's filters are set: victim sex, offender sex and
+relationship are matched in PHP, then applied to the SQL counts as a list of
+DocumentIDs; agency (officer assessments) is plain SQL.
 
 High risk is App\Support\HighRisk's rule (a yes to any of Q1-3, or 4 or more
 yes in all), the same one the assessment tables' red badge uses.
@@ -60,14 +61,14 @@ final class AssessmentStats
         ['55 and over', 55, null],
     ];
 
-    public function officer(DateRange $range, ?string $victimSex = null, ?string $offenderSex = null, ?User $viewer = null): array
+    public function officer(DateRange $range, ?string $victimSex = null, ?string $offenderSex = null, ?string $relationship = null, ?int $agency = null, ?User $viewer = null): array
     {
         $scope = $viewer === null ? null : LawEnforcementAssessment::query()
             ->visibleTo($viewer)
             ->select('law_enforcement_assessment.DocumentID')
             ->toBase();
 
-        [$base, $people] = $this->base('law_enforcement_assessment', $range, $victimSex, $offenderSex, $scope);
+        [$base, $people] = $this->base('law_enforcement_assessment', $range, $victimSex, $offenderSex, $relationship, $agency, $scope);
 
         return [
             ...$this->common($base, $people, $range),
@@ -78,9 +79,9 @@ final class AssessmentStats
         ];
     }
 
-    public function civilian(DateRange $range, ?string $victimSex = null, ?string $offenderSex = null): array
+    public function civilian(DateRange $range, ?string $victimSex = null, ?string $offenderSex = null, ?string $relationship = null): array
     {
-        [$base, $people] = $this->base('_private_assessment', $range, $victimSex, $offenderSex);
+        [$base, $people] = $this->base('_private_assessment', $range, $victimSex, $offenderSex, $relationship);
 
         return [
             ...$this->common($base, $people, $range),
@@ -104,17 +105,33 @@ final class AssessmentStats
         return HighRisk::sql('x');
     }
 
+    // The relationship list as Analytics names it: "Other" without the
+    // form's "(Please Specify)". Code => label, in list order.
+    /** @return array<string, string> */
+    public static function relationshipOptions(): array
+    {
+        return collect(OffenderRelationship::cases())
+            ->mapWithKeys(fn (OffenderRelationship $case): array => [$case->value => $case === OffenderRelationship::Other ? 'Other' : $case->label()])
+            ->all();
+    }
+
     /**
      * The SQL base for the answer counts, and the decrypted people columns of
-     * the same rows, both narrowed to the sex filter.
+     * the same rows, both narrowed to the filters. Agency (officer
+     * assessments only) is the submitter's current agency, in SQL; the rest
+     * are encrypted, so they are matched in PHP.
      *
      * @return array{0: Builder, 1: list<array<string, ?string>>}
      */
-    private function base(string $table, DateRange $range, ?string $victimSex, ?string $offenderSex, ?Builder $scope = null): array
+    private function base(string $table, DateRange $range, ?string $victimSex, ?string $offenderSex, ?string $relationship, ?int $agency = null, ?Builder $scope = null): array
     {
         $base = DB::connection('Portal')->table("{$table} as a")
             ->join('_assessment_answers as x', 'x.AssessmentDocID', '=', 'a.AssessmentDocID')
             ->whereBetween('a.DateCreated', $range->between());
+
+        if ($agency !== null) {
+            $base->whereIn('a.submitted_by', fn (Builder $q) => $q->select('user_id')->from('law_enforcement_agents')->where('agency_id', $agency));
+        }
 
         // A viewer's scope (officer() with a $viewer): their visible DocumentIDs.
         if ($scope !== null) {
@@ -123,9 +140,10 @@ final class AssessmentStats
 
         $people = $this->people($base);
 
-        if ($victimSex !== null || $offenderSex !== null) {
+        if ($victimSex !== null || $offenderSex !== null || $relationship !== null) {
             $people = array_values(array_filter($people, fn (array $row): bool => ($victimSex === null || $row['VictimSex'] === $victimSex)
-                && ($offenderSex === null || $row['OffenderSex'] === $offenderSex)));
+                && ($offenderSex === null || $row['OffenderSex'] === $offenderSex)
+                && ($relationship === null || $row['OffenderVictimRelationship'] === $relationship)));
 
             $base->whereIn('a.DocumentID', array_column($people, 'DocumentID'));
         }
@@ -200,8 +218,8 @@ final class AssessmentStats
 
         $result = [];
 
-        foreach (OffenderRelationship::cases() as $case) {
-            $result[$case === OffenderRelationship::Other ? 'Other' : $case->label()] = (int) ($counts[$case->value] ?? 0);
+        foreach (self::relationshipOptions() as $code => $label) {
+            $result[$label] = (int) ($counts[$code] ?? 0);
         }
 
         $unlisted = $counts->filter(fn ($n, $code): bool => OffenderRelationship::tryFrom((string) $code) === null)->sum();

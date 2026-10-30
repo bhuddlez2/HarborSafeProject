@@ -26,7 +26,8 @@ test('theme.css draws the note for pop-ups, steps and page forms', function () {
 
     expect($css)
         ->toContain(".fi-modal-content:not(:has(.fi-sc-wizard)){$marks}::after")
-        ->toContain(".fi-sc-wizard-step.fi-active{$marks}::after")
+        ->toContain(".hs-lap-wizard .fi-sc-wizard-step.fi-active{$marks}::after")
+        ->toContain('.fi-sc-wizard:not(.hs-lap-wizard):has(.fi-sc-wizard-step.fi-active :is(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)) .fi-sc-wizard-footer::before')
         ->toContain(".fi-sc-form:not(:has(.fi-sc-wizard)){$marks} .fi-sc-actions[id\$=\"form-actions\"]::before")
         ->toContain('content: "* Required" / "";')
         ->toContain('.hs-required-note');
@@ -44,6 +45,8 @@ test('the Filament markup the rules depend on is still there', function () {
         ->and(file_get_contents("{$vendor}/schemas/src/Components/Wizard/Step.php"))
         ->toContain("'fi-sc-wizard-step'")
         ->toContain("'fi-active'")
+        ->and(file_get_contents("{$vendor}/schemas/src/Components/Wizard.php"))
+        ->toContain('class="fi-sc-wizard-footer"')
         ->and(file_get_contents("{$vendor}/schemas/src/Components/Form.php"))
         ->toContain("'fi-sc-form'");
 });
@@ -56,12 +59,14 @@ test('a page form puts its buttons where the rule looks for them', function () {
         ->assertSeeHtml('form-actions" class="fi-sc-actions"');
 });
 
-test('the Analytics filters, which draw their own asterisks, show the note', function () {
+test('the Analytics custom range, which draws its own asterisks, shows the note', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
-    // Victim sex is required in the sex filter (assessment tabs only).
+    // Every filter is optional (FT32), so the Filters panel has none.
     Livewire::test(OfficerAssessmentAnalytics::class)
-        ->assertSeeHtml('<p class="hs-required-note" aria-hidden="true">* Required</p>');
+        ->assertSeeHtml('aria-controls="analytics-filters"')
+        ->assertDontSeeHtml('hs-required-note')
+        ->assertDontSeeHtml('fi-fo-field-label-required-mark');
 
     // From and To are required on the custom range.
     Livewire::test(FeedbackAnalytics::class)

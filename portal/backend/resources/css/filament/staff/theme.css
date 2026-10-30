@@ -228,6 +228,19 @@
     width: 8rem;
 }
 
+/*
+Date of birth beside Sex: the typed MM/DD/YYYY box (B28) at a set width that
+fits the date and its "Optional" ghost text, and a row that wraps, so on a
+narrow phone Sex drops underneath instead of running off the side.
+*/
+.hs-lap-wizard .hs-lap-dob {
+    width: 10rem;
+}
+
+.hs-lap-wizard .hs-lap-dob-sex {
+    flex-wrap: wrap;
+}
+
 .hs-lap-wizard .hs-lap-sex select.fi-select-input {
     height: 3rem;
     background-image: none;
@@ -1261,6 +1274,17 @@
         flex-wrap: wrap;
         row-gap: 0.375rem;
     }
+
+    /* Resource requests has the most columns and three buttons: its
+       "Interested in" and "Follow-Up" headings and badges ("Orders of
+       Protection", "Needs Follow-Up") may wrap too, or the buttons ran off
+       the table on a laptop (Burchfield B37). Only these two: elsewhere a
+       badge such as "6 of 11" must stay whole. The "Follow-Up" heading
+       stays whole too, as it could only break at its hyphen. */
+    .fi-ta-row.hs-card :is(.fi-ta-cell-resource-types\.-name, .fi-ta-cell-follow-up-status) *,
+    .fi-ta-table:has(> tbody > tr.hs-card) > thead .fi-ta-header-cell-resource-types\.-name {
+        white-space: normal;
+    }
 }
 
 /* A long email address (Resource requests) breaks only when it can't fit:
@@ -1276,19 +1300,21 @@
     }
 }
 
+/* Logs' Record cell opens the assessment (LogResource): its purple kind
+   underlines on hover and keyboard focus, like a link. */
+button.fi-ta-col:is(:hover, :focus-visible) .hs-record-link .fi-ta-text-item {
+    text-decoration: underline;
+}
+
 /* Row buttons on tables using TableAlignment::buttons() (the assessment
-   tables): icon beside label, every button the same height, side by side
-   and centred in the row. The pill rule further down makes them
-   inline-block, which puts the icon on a line of its own above the label.
-   Before the block below, which still stacks them from 640 to 1280px. */
+   tables): every button the same height, side by side and centred in the
+   row. The icon beside its label is the pill rule further down, for every
+   table. Before the block below, which still stacks them from 640 to 1280px. */
 .hs-row-buttons .fi-ta-row .fi-ta-actions {
     align-items: center;
 }
 
 .hs-row-buttons .fi-ta-row .fi-ta-actions .fi-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
     line-height: 1.25rem;
     white-space: nowrap;
 }
@@ -1445,10 +1471,13 @@
     font-size: 0.8125rem;
 }
 
-/* Row action links: outlined pill buttons, fill purple on hover */
+/* Row action links: outlined pill buttons, fill purple on hover, icon
+   beside the label and centred with it on every table (Burchfield B37) */
 .fi-ta-row .fi-ta-actions .fi-link,
 .fi-ta-record .fi-ta-actions .fi-link {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
     border: 1.5px solid #5c0f8b;
     border-radius: 10px;
     padding: 0.3125rem 0.875rem;
@@ -1465,6 +1494,24 @@
     border-color: #5c0f8b !important;
     color: #f4f2f7 !important;
     text-decoration: none !important;
+}
+
+/* A row's main button, filled purple (View on Service feedback, B56) */
+.fi-ta-row .fi-ta-actions .fi-link.hs-row-primary,
+.fi-ta-record .fi-ta-actions .fi-link.hs-row-primary {
+    background-color: #5c0f8b;
+    color: #fff;
+}
+
+.fi-ta-row .fi-ta-actions .fi-link.hs-row-primary:hover,
+.fi-ta-record .fi-ta-actions .fi-link.hs-row-primary:hover {
+    background-color: #45096a !important;
+    border-color: #45096a !important;
+    color: #fff !important;
+}
+
+.fi-ta-actions .fi-link.hs-row-primary .fi-icon {
+    color: inherit;
 }
 
 .fi-ta-row .fi-ta-actions .fi-link:focus-visible,
@@ -1504,8 +1551,11 @@
  * Drawn here rather than form by form, so every form gets it, new ones too, and
  * only while an asterisk is on screen:
  *   - a pop-up without steps: at the bottom of its content, above its buttons;
- *   - a form with steps (pop-up or page): at the bottom of the current step,
- *     when that step has an asterisk;
+ *   - a form with steps (the event and newsletter pop-ups): in the button row,
+ *     just right of Back, when the current step has an asterisk - at the
+ *     bottom of the step it read as belonging to the last field;
+ *   - the officer wizard (.hs-lap-wizard), whose Back and Continue sit
+ *     together on the left: at the bottom of the current step;
  *   - a page form (Create/Edit pages, Account): above its Save buttons;
  *   - hand-built forms (Analytics): the .hs-required-note partial,
  *     filament/partials/required-note.blade.php.
@@ -1518,7 +1568,8 @@
  * RequiredNoteTest pins these selectors.
  */
 .fi-modal-content:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
-.fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.hs-lap-wizard .fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.fi-sc-wizard:not(.hs-lap-wizard):has(.fi-sc-wizard-step.fi-active :is(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)) .fi-sc-wizard-footer::before,
 .fi-sc-form:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark) .fi-sc-actions[id$="form-actions"]::before {
     content: "* Required" / "";
     display: block;
@@ -1527,7 +1578,8 @@
 }
 
 .fi-modal-content:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
-.fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.hs-lap-wizard .fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after,
+.fi-sc-wizard:not(.hs-lap-wizard):has(.fi-sc-wizard-step.fi-active :is(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)) .fi-sc-wizard-footer::before,
 .fi-sc-form:not(:has(.fi-sc-wizard)):has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark) .fi-sc-actions[id$="form-actions"]::before,
 .hs-required-note {
     width: fit-content;
@@ -1544,7 +1596,17 @@
     margin-bottom: 0.75rem;
 }
 
+/* Right of Back (order -1), with the free space after it so Next stays right. */
+.fi-sc-wizard-footer > :first-child {
+    order: -1;
+}
+
+.fi-sc-wizard:not(.hs-lap-wizard):has(.fi-sc-wizard-step.fi-active :is(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)) .fi-sc-wizard-footer::before {
+    flex-basis: auto;
+    margin-right: auto;
+}
+
 /* The officer wizard lays its steps out without gaps between rows. */
-.fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after {
+.hs-lap-wizard .fi-sc-wizard-step.fi-active:has(.fi-fo-field-label-required-mark, .fi-fieldset-label-required-mark)::after {
     margin-top: 0.75rem;
 }
