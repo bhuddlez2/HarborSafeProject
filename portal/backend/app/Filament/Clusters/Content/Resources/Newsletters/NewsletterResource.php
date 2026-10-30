@@ -253,7 +253,7 @@ class NewsletterResource extends Resource
 
                     Toggle::make('is_published')
                         ->label('Published')
-                        ->helperText('Off keeps it off the website, and makes its PDF unreachable.')
+                        ->helperText('Visible on the website.')
                         ->columnSpanFull(),
                 ])
                 ->columns(2),

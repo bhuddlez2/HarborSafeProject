@@ -20,7 +20,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\DateTimePicker;
+use App\Filament\Forms\EventDateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
@@ -28,6 +28,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
@@ -145,18 +146,50 @@ class EventResource extends Resource
 
                     Step::make('Date & Time')
                         ->icon('heroicon-o-calendar')
-                        ->description('Times are Eastern. Stored as UTC, displayed in Eastern on the website.')
                         ->schema([
+                            // Set first: it decides whether Starts and Ends ask for a time.
+                            Toggle::make('all_day')
+                                ->label('All-day event')
+                                ->live()
+                                // Re-enter Starts in its new shape (date only, or the
+                                // date at midnight), keeping the Eastern day; $get and
+                                // $set use the saved UTC form. Ends is cleared.
+                                ->afterStateUpdated(function (Get $get, Set $set): void {
+                                    if (filled($value = $get('starts_at'))) {
+                                        $set('starts_at', Carbon::parse($value)->timezone(Event::DISPLAY_TIMEZONE)->startOfDay());
+                                    }
+                                    $set('ends_at', null);
+                                    $set('multiple_days', false);
+                                })
+                                ->columnSpanFull(),
+
+                            // Not stored: an all-day event with an end runs over
+                            // several days, so Edit turns it on from the saved end.
+                            Toggle::make('multiple_days')
+                                ->label('Multiple days')
+                                ->live()
+                                ->dehydrated(false)
+                                ->visible(fn (Get $get): bool => (bool) $get('all_day'))
+                                ->afterStateHydrated(fn (Toggle $component, ?Event $record) => $component->state($record?->all_day && $record->ends_at !== null))
+                                ->afterStateUpdated(fn (Set $set) => $set('ends_at', null))
+                                ->columnSpanFull(),
+
                             self::eventDateTime('starts_at', 'Starts')
                                 ->required(),
 
+                            // A one-day all-day event has no end: Ends is greyed out
+                            // with the reason on hover, like a refused Delete button,
+                            // and saved empty (a greyed-out field otherwise isn't
+                            // saved, which would keep an old end).
                             self::eventDateTime('ends_at', 'Ends')
                                 ->after('starts_at')
-                                ->helperText('Optional.'),
-
-                            Toggle::make('all_day')
-                                ->label('All-day event')
-                                ->helperText('The website hides the times and shows only the date.'),
+                                ->helperText('Optional.')
+                                ->disabled(fn (Get $get): bool => self::isOneDay($get))
+                                ->dehydrated()
+                                ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => self::isOneDay($get) ? null : $state)
+                                ->extraAttributes(fn (Get $get): array => self::isOneDay($get)
+                                    ? ['x-tooltip' => "{ content: 'All-day event', theme: \$store.theme }"]
+                                    : []),
 
                             Toggle::make('location_is_virtual')
                                 ->label('Virtual event')
@@ -211,12 +244,11 @@ class EventResource extends Resource
 
                             Toggle::make('is_published')
                                 ->label('Published')
-                                ->helperText('Off keeps it off the website entirely. Its image is unreachable too.')
+                                ->helperText('Visible on the website.')
                                 ->columnSpanFull(),
 
                             Toggle::make('is_cancelled')
                                 ->label('Cancelled')
-                                ->helperText('Shown with a cancelled badge and no registration link. Independent of Published.')
                                 ->columnSpanFull(),
                         ])
                         ->columns(2),
@@ -389,31 +421,41 @@ class EventResource extends Resource
     range; an existing event keeps its saved dates even once they are older,
     and only a changed date is checked.
     */
-    private static function eventDateTime(string $name, string $label): DateTimePicker
+    private static function eventDateTime(string $name, string $label): EventDateTimePicker
     {
         $tooEarly = "Can't be more than a year ago.";
         $tooLate = "Can't be more than 2 years from now.";
 
-        return DateTimePicker::make($name)
+        return EventDateTimePicker::make($name)
             ->label($label)
             ->seconds(false)
+            // Date only for an all-day event, saved at midnight Eastern.
+            ->time(fn (Get $get): bool => ! $get('all_day'))
+            ->format('Y-m-d H:i:s')
             ->timezone(Event::DISPLAY_TIMEZONE)
             // Calendar limits for a new event only. Written as Eastern clock
             // time, because Filament compares them with the value as typed.
             ->minDate(fn (?Event $record): ?string => $record ? null : self::earliestDay().' 00:00:00')
             ->maxDate(fn (?Event $record): ?string => $record ? null : self::latestDay().' 23:59:59')
-            ->rule(fn (?Event $record): Closure => DateWindow::rule(
+            ->rule(fn (?Event $record, Get $get): Closure => DateWindow::rule(
                 self::earliestDay(...),
                 self::latestDay(...),
                 $tooEarly,
                 $tooLate,
+                // An all-day event's picker has no time, so its day alone is compared.
                 fn (Carbon $picked): bool => $record?->{$name} !== null
-                    && $picked->format('Y-m-d H:i') === $record->{$name}->copy()->timezone(Event::DISPLAY_TIMEZONE)->format('Y-m-d H:i'),
+                    && $picked->format($get('all_day') ? 'Y-m-d' : 'Y-m-d H:i') === $record->{$name}->copy()->timezone(Event::DISPLAY_TIMEZONE)->format($get('all_day') ? 'Y-m-d' : 'Y-m-d H:i'),
             ))
             ->validationMessages([
                 'after_or_equal' => $tooEarly,
                 'before_or_equal' => $tooLate,
             ]);
+    }
+
+    // An all-day event on a single day: no end.
+    private static function isOneDay(Get $get): bool
+    {
+        return $get('all_day') && ! $get('multiple_days');
     }
 
     /*
