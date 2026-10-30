@@ -101,6 +101,12 @@ test('Assessment review has the same buttons, Edit last', function () {
     expect(recordActionsOf(ListAssessmentReview::class))->toBe(['changeLog', 'view', 'edit']);
 });
 
+// Civilian assessments are never edited: Log and View only.
+test('Civilian assessments has Log, then View', function () {
+    $this->actingAs(staffUser(UserRole::Admin));
+    expect(recordActionsOf(ListCivilianAssessments::class))->toBe(['changeLog', 'view']);
+});
+
 test('an admin sees no Edit on Assessment review', function () {
     $w = pestTwoAgencies();
     $this->actingAs(staffUser(UserRole::Admin));

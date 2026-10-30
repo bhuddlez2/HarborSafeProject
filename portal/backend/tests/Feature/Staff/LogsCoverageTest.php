@@ -152,6 +152,9 @@ dataset('assessment paths', [
     // Civilian assessments.
     'Civilian assessments: View' => ['admin', LogAction::View, 'civilian', null, fn (object $w) => Livewire::test(ListCivilianAssessments::class)
         ->mountAction(TestAction::make('view')->table($w->civilian))],
+    'Civilian assessments: Log' => ['admin', LogAction::ViewLog, 'civilian', null, fn (object $w) => Livewire::test(ListCivilianAssessments::class)
+        ->mountAction(TestAction::make('changeLog')->table($w->civilian))
+        ->assertActionMounted(TestAction::make('changeLog')->table($w->civilian))],
     'Logs: Record cell (civilian assessment)' => ['admin', LogAction::View, 'civilian', fn (object $w) => $w->entry = AssessmentAccessLog::record($w->civilian, AssessmentAccess::View, $w->officerA), fn (object $w) => Livewire::test(ListLogs::class)
         ->mountAction(TestAction::make('openAssessment')->table($w->entry))
         ->assertActionMounted(TestAction::make('openAssessment')->table($w->entry))],

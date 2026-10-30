@@ -6,6 +6,7 @@ use App\Models\AssessmentAccessLog;
 use App\Models\AssessmentEdit;
 use App\Models\LawEnforcementAssessment;
 use App\Models\LogEntry;
+use App\Models\PrivateAssessment;
 use App\Support\Timezones;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -49,15 +50,20 @@ final class ChangeHistory
     with the submission itself at the bottom. Always openable, since every
     record has a history once anyone has opened it; still purple when edited.
     The Change log page stays edits only (entry() below).
+
+    Civilian assessments use the same "Log" (always $withAccess): views and
+    PDF downloads only, since a civilian assessment is never edited, so the
+    button stays gray.
     */
     public static function action(bool $withAccess = false): Action
     {
         return Action::make('changeLog')
             ->label($withAccess ? 'Log' : 'Change log')
             ->icon(Heroicon::OutlinedClock)
-            ->color(fn (LawEnforcementAssessment $record): string => $record->edits_count ? 'primary' : 'gray')
-            ->disabled(fn (LawEnforcementAssessment $record): bool => ! $withAccess && ! $record->edits_count)
-            ->tooltip(fn (LawEnforcementAssessment $record): string => match (true) {
+            ->color(fn (LawEnforcementAssessment | PrivateAssessment $record): string => $record->edits_count ? 'primary' : 'gray')
+            ->disabled(fn (LawEnforcementAssessment | PrivateAssessment $record): bool => ! $withAccess && ! $record->edits_count)
+            ->tooltip(fn (LawEnforcementAssessment | PrivateAssessment $record): string => match (true) {
+                $record instanceof PrivateAssessment => 'Every view and download since submission',
                 $withAccess => 'Every view, download and edit since submission',
                 (bool) $record->edits_count => 'Every edit since submission',
                 default => 'No edits since submission',
@@ -70,9 +76,10 @@ final class ChangeHistory
             // calls afterFormFilled when there is one. Not in modalContent(),
             // which re-runs on every render. Logged before the content is
             // built, so the Log includes this opening too.
-            ->mountUsing(fn (LawEnforcementAssessment $record) => AssessmentViews::logHistory($record))
-            ->modalContent(function (LawEnforcementAssessment $record) use ($withAccess) {
-                $edits = $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all();
+            ->mountUsing(fn (LawEnforcementAssessment | PrivateAssessment $record) => AssessmentViews::logHistory($record))
+            ->modalContent(function (LawEnforcementAssessment | PrivateAssessment $record) use ($withAccess) {
+                $civilian = $record instanceof PrivateAssessment;
+                $edits = $civilian ? [] : $record->edits()->with(['editor', 'detailChanges', 'answerChanges'])->get()->all();
 
                 if (! $withAccess) {
                     return view(self::VIEW, [
@@ -82,14 +89,16 @@ final class ChangeHistory
                 }
 
                 $access = AssessmentAccessLog::visibleTo(Filament::auth()->user())
-                    ->where('LawEnforcementDocumentID', $record->getKey())
+                    ->where($civilian ? 'PrivateDocumentID' : 'LawEnforcementDocumentID', $record->getKey())
                     ->with('user')
                     ->get();
 
                 return view(self::VIEW, [
                     'header' => [
-                        ...self::header($record, count($edits)),
+                        // A civilian assessment is never edited, so no edit count.
+                        ...self::header($record, $civilian ? null : count($edits)),
                         'title' => 'Log',
+                        'civilian' => $civilian,
                         'views' => $access->count(),
                     ],
                     'events' => self::timeline($record, $edits, $access->all()),
@@ -123,7 +132,7 @@ final class ChangeHistory
      *
      * @return array{victim: string, offender: string, submitted: string, edits: ?int}
      */
-    private static function header(?LawEnforcementAssessment $record, ?int $editCount): array
+    private static function header(LawEnforcementAssessment | PrivateAssessment | null $record, ?int $editCount): array
     {
         $name = fn (string $who): string => trim(
             ($record?->{$who.'FirstName'} ?? '').' '.($record?->{$who.'LastName'} ?? ''),
@@ -149,7 +158,7 @@ final class ChangeHistory
      * @param  list<AssessmentAccessLog>  $access
      * @return list<array<string, mixed>>
      */
-    private static function timeline(LawEnforcementAssessment $record, array $edits, array $access): array
+    private static function timeline(LawEnforcementAssessment | PrivateAssessment $record, array $edits, array $access): array
     {
         $when = fn ($at): string => $at
             ? Carbon::parse($at)->setTimezone(Timezones::DISPLAY)->format('M j, Y g:i a')
@@ -179,14 +188,21 @@ final class ChangeHistory
         // beside the view logged when its pop-up opened.
         usort($events, fn (array $a, array $b): int => Carbon::parse($b['at'])->getTimestamp() <=> Carbon::parse($a['at'])->getTimestamp());
 
-        $record->loadMissing('submitter');
-
-        $events[] = [
-            'kind' => 'submitted',
-            'when' => $when($record->DateCreated),
-            'who' => $record->submitter?->name ?? 'Unknown',
-            'label' => 'Submitted',
-        ];
+        // A civilian assessment comes from the public website, often
+        // anonymously, so no name.
+        $events[] = $record instanceof PrivateAssessment
+            ? [
+                'kind' => 'submitted',
+                'when' => $when($record->DateCreated),
+                'who' => null,
+                'label' => 'Submitted through the website',
+            ]
+            : [
+                'kind' => 'submitted',
+                'when' => $when($record->DateCreated),
+                'who' => $record->loadMissing('submitter')->submitter?->name ?? 'Unknown',
+                'label' => 'Submitted',
+            ];
 
         return array_map(function (array $event): array {
             unset($event['at']);
