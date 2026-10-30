@@ -156,6 +156,7 @@ class LogResource extends Resource
     public static function table(Table $table): Table
     {
         return ChangeLogFilters::apply($table
+            ->searchPlaceholder('Search by Name')
             ->columns([
                 RecordCards::dateAndTime(TextColumn::make('OccurredAt')
                     ->label('When')

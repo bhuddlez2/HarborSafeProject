@@ -126,6 +126,7 @@ class AgencyResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Search by Name')
             ->columns([
                 TextColumn::make('name')
                     ->label('Agency')

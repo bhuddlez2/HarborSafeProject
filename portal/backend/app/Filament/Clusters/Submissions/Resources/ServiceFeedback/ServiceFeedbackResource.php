@@ -193,6 +193,7 @@ class ServiceFeedbackResource extends Resource
         // a small "Staff" tag under the date, shown only on forms staff
         // entered themselves; website forms show nothing.
         return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Comment')
             ->columns([
                 RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('SubmissionDate')
                     ->label('Submitted')

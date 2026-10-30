@@ -290,6 +290,7 @@ class NewsletterResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Search by Title')
             ->columns([
                 TextColumn::make('title')
                     ->searchable()

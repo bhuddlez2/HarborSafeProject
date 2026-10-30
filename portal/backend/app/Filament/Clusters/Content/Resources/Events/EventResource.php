@@ -339,6 +339,7 @@ class EventResource extends Resource
     {
         // Cards on a phone, stacked buttons on narrower screens (B37).
         return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Title')
             ->columns([
                 RecordCards::title(TextColumn::make('title')
                     ->searchable()

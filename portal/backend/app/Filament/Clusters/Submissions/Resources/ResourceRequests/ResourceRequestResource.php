@@ -114,6 +114,7 @@ class ResourceRequestResource extends Resource
         // is a small "Staff" tag under the date, shown only on forms staff
         // entered; website forms show nothing.
         return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Name or Email')
             ->columns([
                 RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
