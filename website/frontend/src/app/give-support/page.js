@@ -38,7 +38,7 @@ export default function GiveSupport() {
 
       {/* Intro, left-aligned on phones where a long centered paragraph is hard to read, centered from sm up */}
       <section className="py-20 px-4 bg-white">
-        <div className="max-w-3xl mx-auto text-left sm:text-center">
+        <div className="max-w-5xl mx-auto text-left sm:text-center">
           <p className="text-gray-700 leading-relaxed text-lg">
             We are so thankful you want to learn more about HSHAC and the ways you and your family can get involved.
             Running a safe house for survivors of domestic violence and sexual assault requires a wide range of items
