@@ -1024,7 +1024,7 @@ authorize themselves with `canAccess()`. `AnalyticsTest`.
 `/police/analytics`, in the Police Admin group after Logs, for an active police admin
 **with an agency** (`User::managedAgencyId()`); everyone else gets no item and a 403. It
 is Harbor Safe's Law-Enforcement Assessments tab (same `AnalyticsPage` base, date range,
-sex filter, tiles, charts and Excel/PDF export) with every number scoped to the police
+victim/offender sex and relationship filters but never agency, tiles, charts and Excel/PDF export) with every number scoped to the police
 admin's own agency — `AssessmentStats::officer(..., viewer:)` narrows the base query to
 `LawEnforcementAssessment::visibleTo()` before anything is read or decrypted (§5 rule 5)
 — and **no By agency chart** (`AssessmentSections::build(..., byAgency: false)`), since it
