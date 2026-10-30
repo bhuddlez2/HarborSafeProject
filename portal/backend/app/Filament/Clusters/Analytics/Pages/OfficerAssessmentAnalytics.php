@@ -24,15 +24,20 @@ class OfficerAssessmentAnalytics extends AnalyticsPage
         return (bool) Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin);
     }
 
-    public function offersSexFilter(): bool
+    public function offersFilters(): bool
+    {
+        return true;
+    }
+
+    public function offersAgencyFilter(): bool
     {
         return true;
     }
 
     protected function sections(DateRange $range): array
     {
-        $stats = app(AssessmentStats::class)->officer($range, ...$this->sexFilter());
+        $stats = app(AssessmentStats::class)->officer($range, ...$this->filters());
 
-        return AssessmentSections::build($stats, $range, isOfficer: true);
+        return AssessmentSections::build($stats, $range, isOfficer: true, filters: $this->filters());
     }
 }

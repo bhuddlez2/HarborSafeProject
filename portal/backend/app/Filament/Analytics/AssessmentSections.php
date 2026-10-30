@@ -31,8 +31,12 @@ final class AssessmentSections
         11 => 'Children at risk',
     ];
 
-    public static function build(array $stats, DateRange $range, bool $isOfficer): array
+    // $filters is AnalyticsPage::filters(): a breakdown chart is left out
+    // while its own filter is set, since it would be one bar (FT32).
+    public static function build(array $stats, DateRange $range, bool $isOfficer, array $filters = []): array
     {
+        $filtered = fn (string $name): bool => ($filters[$name] ?? null) !== null;
+
         $total = $stats['total'];
 
         $tiles = [
@@ -66,15 +70,24 @@ final class AssessmentSections
             ]),
         ];
 
-        if ($isOfficer) {
+        if ($isOfficer && ! $filtered('agency')) {
             $cards[] = Chart::horizontal('By Agency', Chart::items($stats['agencies']), 'assessments', [
                 'note' => 'Counted by each officer’s current agency.',
             ]);
         }
 
-        $cards[] = Chart::horizontal('Relationship to Victim', Chart::items($stats['relationships']), 'assessments', ['wide' => ! $isOfficer]);
-        $cards[] = Chart::horizontal('Victim Sex', Chart::items($stats['victimSex']), 'assessments');
-        $cards[] = Chart::horizontal('Offender Sex', Chart::items($stats['offenderSex']), 'assessments');
+        if (! $filtered('relationship')) {
+            $cards[] = Chart::horizontal('Relationship to Victim', Chart::items($stats['relationships']), 'assessments', ['wide' => ! $isOfficer]);
+        }
+
+        if (! $filtered('victimSex')) {
+            $cards[] = Chart::horizontal('Victim Sex', Chart::items($stats['victimSex']), 'assessments');
+        }
+
+        if (! $filtered('offenderSex')) {
+            $cards[] = Chart::horizontal('Offender Sex', Chart::items($stats['offenderSex']), 'assessments');
+        }
+
         $cards[] = Chart::horizontal('Victim Age', Chart::items($stats['victimAge']), 'assessments', [
             'note' => 'Age on the day the assessment was submitted.',
         ]);
