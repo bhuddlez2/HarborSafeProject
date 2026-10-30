@@ -52,8 +52,9 @@ export default function Home() {
     <div>
       {showHelpModal && (
         <Modal
-          title="Get help now"
-          subtitle={<>Free, confidential support.<br />You don&apos;t have to go through this alone.</>}
+          title="Get Help Now"
+          centered
+          subtitle={<>Free, confidential support. You don&apos;t have to go through this alone.</>}
           onClose={() => setShowHelpModal(false)}
         >
           <div className="p-6 space-y-4">

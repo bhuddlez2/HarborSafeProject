@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-export default function Modal({ title, subtitle, onClose, children, dismissible = true }) {
+export default function Modal({ title, subtitle, onClose, children, dismissible = true, centered = false }) {
+  const centerHeader = centered || !dismissible;
   /*
   closeRef holds the X button so focus can be moved into the dialog when it
   opens, and returnFocusRef remembers whatever was focused beforehand (the card
@@ -59,11 +60,16 @@ export default function Modal({ title, subtitle, onClose, children, dismissible 
       */}
       <div ref={cardRef} tabIndex={-1} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-full lg:max-h-[80vh] flex flex-col focus:outline-none">
 
-        {/* Header: title, optional subtitle, and close button; with no X the title is centred */}
-        <div className="flex items-start justify-between p-6 border-b border-gray-100 shrink-0">
-          <div className={`min-w-0 wrap-anywhere ${dismissible ? "" : "flex-1 text-center"}`}>
-            <h2 className="text-xl font-semibold text-brand leading-snug">{title}</h2>
-            {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+        {/*
+        Header: title, optional subtitle, and close button; centred when asked for or with no X,
+        a spacer as wide as the X keeps a centred title on the card's centre line
+        */}
+        <div className="flex flex-wrap items-start justify-between p-6 border-b border-gray-100 shrink-0">
+          {centered && dismissible && <span className="w-5 mr-4 shrink-0" aria-hidden="true" />}
+          <div className={`min-w-0 wrap-anywhere ${centerHeader ? "flex-1 text-center" : ""}`}>
+            {/* centered headers let the title carry the weight: bigger, bolder title over a smaller subtitle */}
+            <h2 className={`text-brand leading-snug ${centered ? "text-2xl sm:text-3xl font-bold" : "text-xl font-semibold"}`}>{title}</h2>
+            {subtitle && !centered && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
           </div>
           {dismissible && (
             <button
@@ -77,6 +83,8 @@ export default function Modal({ title, subtitle, onClose, children, dismissible 
               </svg>
             </button>
           )}
+          {/* a centred subtitle wraps onto its own full-width line, clear of the X and its spacer */}
+          {subtitle && centered && <p className="w-full text-center text-xs text-gray-600 mt-2">{subtitle}</p>}
         </div>
 
         <div className="overflow-y-auto">
