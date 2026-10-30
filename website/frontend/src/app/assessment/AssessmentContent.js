@@ -318,7 +318,7 @@ export default function AssessmentContent() {
       setPhase("submitted");
     } catch (error) {
       if (error.status === 429) {
-        setSubmitError("Too many submissions just now. Nothing was saved. Please wait a minute and try again. Your answers are still here.");
+        setSubmitError("Too many submissions were received in a short time. Nothing was saved. Please wait a minute and try again. Your answers remain on this page.");
       } else if (error instanceof TypeError) {
         // fetch rejects with a TypeError when the server can't be reached at all
         setSubmitError("We couldn't reach the server. Please check your connection and try again.");
@@ -353,10 +353,11 @@ export default function AssessmentContent() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">Nothing is saved until you submit</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">No information is saved until you submit</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      Nothing in this form is saved or sent to Harbor Safe House until you press
-                      Submit at the end. After you submit, only Harbor Safe House sees your answers.
+                      Information entered in this form is not saved or sent to Harbor Safe House until
+                      you select Submit assessment at the end. Once submitted, your answers are seen
+                      only by Harbor Safe House.
                     </p>
                   </div>
                 </div>
@@ -681,8 +682,9 @@ export default function AssessmentContent() {
             This screen contains {total} yes/no questions. Ask each question exactly as written.
           </p>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            Nothing is sent or saved until you press Submit at the end. If you close or leave
-            this page before then, your answers are gone.
+            Your answers are not sent or saved until you select Submit assessment at the end. If
+            you close this tab or move to another page on this site before then, your answers will
+            be lost.
           </p>
           <button onClick={() => setPhase("questions")} className={PRIMARY}>Begin assessment</button>
         </div>
@@ -705,8 +707,9 @@ export default function AssessmentContent() {
         <div className={CARD}>
           <h1 className={`${HEADING} mb-2 text-center`}>Review &amp; Submit</h1>
           <p className="text-gray-600 mb-6 text-center">
-            Check every detail and answer below. Use Edit or Change to fix anything. Nothing has
-            been sent yet. It is sent only when you press Submit assessment.
+            Please review each detail and answer below, and use Edit or Change to make any
+            corrections. Nothing has been sent yet. Your assessment will be sent only when you
+            select Submit assessment.
           </p>
 
           <div className="flex flex-col gap-4">
@@ -837,7 +840,7 @@ export default function AssessmentContent() {
           <h1 className={`${HEADING} mb-6`}>Assessment Submitted</h1>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
             Your assessment has been sent to Harbor Safe House. Harbor Safe House will follow up
-            at the safe phone number you gave. Your answers have been cleared from this page.
+            at the safe phone number you provided. Your answers have been cleared from this page.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <button onClick={() => { clearEntries(); setPhase("prescreen"); }} className={SECONDARY}>
