@@ -228,6 +228,19 @@
     width: 8rem;
 }
 
+/*
+Date of birth beside Sex: the typed MM/DD/YYYY box (B28) at a set width that
+fits the date and its "Optional" ghost text, and a row that wraps, so on a
+narrow phone Sex drops underneath instead of running off the side.
+*/
+.hs-lap-wizard .hs-lap-dob {
+    width: 10rem;
+}
+
+.hs-lap-wizard .hs-lap-dob-sex {
+    flex-wrap: wrap;
+}
+
 .hs-lap-wizard .hs-lap-sex select.fi-select-input {
     height: 3rem;
     background-image: none;

@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Filament\Assessments\AssessmentInputs;
 use App\Filament\Assessments\RelationshipFields;
 use App\Filament\PoliceAdminNavigation;
-use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
 use App\Enums\FollowUpKind;
@@ -17,7 +16,6 @@ use App\Support\AssessmentDraft;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -233,10 +231,11 @@ class NewAssessment extends Page
                     $this->nameInput('VictimFirstName', 'First name'),
                     $this->nameInput('VictimLastName', 'Last name'),
                 ]),
+                // Wraps (theme.css), so on a narrow phone Sex drops under the date rather than off the side.
                 Flex::make([
                     $this->dateOfBirthInput('VictimDOB', 'Date of birth', required: true),
                     $this->sexSelect('VictimSex'),
-                ]),
+                ])->extraAttributes(['class' => 'hs-lap-dob-sex']),
                 // Required so the organisation can follow up with the victim.
                 // Confirmed as safe on the review (reviewStep()).
                 AssessmentInputs::safePhone('Safe phone number'),
@@ -252,10 +251,11 @@ class NewAssessment extends Page
                     $this->nameInput('OffenderFirstName', 'First name'),
                     $this->nameInput('OffenderLastName', 'Last name'),
                 ]),
+                // Wraps (theme.css), so on a narrow phone Sex drops under the date rather than off the side.
                 Flex::make([
-                    $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth'), required: false),
+                    $this->dateOfBirthInput('OffenderDOB', 'Date of birth', required: false),
                     $this->sexSelect('OffenderSex'),
-                ]),
+                ])->extraAttributes(['class' => 'hs-lap-dob-sex']),
                 // The shared dropdown + "Please specify" for Other.
                 ...RelationshipFields::make(),
             ]);
@@ -324,10 +324,11 @@ class NewAssessment extends Page
         return AssessmentInputs::name($name, $label);
     }
 
-    protected function dateOfBirthInput(string $name, string | Htmlable $label, bool $required): DatePicker
+    protected function dateOfBirthInput(string $name, string | Htmlable $label, bool $required): TextInput
     {
         return AssessmentInputs::dateOfBirth($name, $label, $required)
-            ->grow(false);
+            ->grow(false)
+            ->extraAttributes(['class' => 'hs-lap-dob']);
     }
 
     protected function sexSelect(string $name): Select
