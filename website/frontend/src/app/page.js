@@ -81,34 +81,51 @@ export default function Home() {
 
             <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl">
               {[
-                { name: "National Domestic Violence Hotline", note: "Call 24/7 · Text START to 88788", phone: "1-800-799-7233" },
+                { name: "National Domestic Violence Hotline", note: "Call 24/7 · Text START to 88788", phone: "1-800-799-7233", text: { href: "sms:88788?&body=START", label: "Text START", ariaLabel: "Text START to the National Domestic Violence Hotline at 88788" } },
                 { name: "988 Suicide & Crisis Lifeline", note: "Call or text, 24/7", phone: "988" },
-              ].map(({ name, note, phone }) => (
-                /* stacked on phones so the pill doesn't squeeze the name, side by side from sm up */
+              ].map(({ name, note, phone, text }) => (
+                /* stacked on phones so the pills don't squeeze the name, side by side from sm up */
                 <div key={name} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 px-4 py-3">
                   <div>
                     {/* text-balance splits long names into even lines instead of orphaning the last word */}
                     <p className="text-sm font-semibold text-brand text-balance">{name}</p>
                     <p className="text-xs text-gray-600">{note}</p>
                   </div>
-                  {/* pill with phone icon (feathericons.com) so the number is intuitively tappable */}
-                  <PhoneLink
-                    number={phone}
-                    aria-label={`Call ${name} at ${formatPhone(phone)}`}
-                    className="shrink-0 inline-flex items-center gap-1.5 bg-purple-100 text-brand text-sm font-semibold px-3 py-1.5 rounded-full hover:bg-brand hover:text-white transition-all"
-                  >
-                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 stroke-current stroke-2 fill-none" aria-hidden="true">
-                      <path d="M22 16.92v3a2 2 0 01-2.18 2A19.86 19.86 0 013.09 4.18 2 2 0 015.09 2h3a2 2 0 012 1.72c.13 1 .37 1.97.72 2.9a2 2 0 01-.45 2.11L9.09 10a16 16 0 006.91 6.91l1.27-1.27a2 2 0 012.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0122 16.92z" />
-                    </svg>
-                    <span className="whitespace-nowrap">{formatPhone(phone)}</span>
-                  </PhoneLink>
+                  {/*
+                  pills with phone and message icons (feathericons.com) so the numbers are intuitively tappable,
+                  stacked on the right from sm up so two pills don't squeeze the name
+                  */}
+                  <div className="shrink-0 flex flex-wrap gap-2 sm:flex-col sm:items-end">
+                    <PhoneLink
+                      number={phone}
+                      aria-label={`Call ${name} at ${formatPhone(phone)}`}
+                      className="inline-flex items-center gap-1.5 bg-purple-100 text-brand text-sm font-semibold px-3 py-1.5 rounded-full hover:bg-brand hover:text-white transition-all"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 stroke-current stroke-2 fill-none" aria-hidden="true">
+                        <path d="M22 16.92v3a2 2 0 01-2.18 2A19.86 19.86 0 013.09 4.18 2 2 0 015.09 2h3a2 2 0 012 1.72c.13 1 .37 1.97.72 2.9a2 2 0 01-.45 2.11L9.09 10a16 16 0 006.91 6.91l1.27-1.27a2 2 0 012.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0122 16.92z" />
+                      </svg>
+                      <span className="whitespace-nowrap">{formatPhone(phone)}</span>
+                    </PhoneLink>
+                    {text && (
+                      <a
+                        href={text.href}
+                        aria-label={text.ariaLabel}
+                        className="inline-flex items-center gap-1.5 bg-purple-100 text-brand text-sm font-semibold px-3 py-1.5 rounded-full hover:bg-brand hover:text-white transition-all"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 stroke-current stroke-2 fill-none" aria-hidden="true">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span className="whitespace-nowrap">{text.label}</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
-              <Link href="/get-support" className="tap-target font-semibold text-brand hover:underline">Our services →</Link>
-              <Link href="/resources" className="tap-target font-semibold text-brand hover:underline">More resources →</Link>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <Link href="/get-support" className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">Our Services</Link>
+              <Link href="/resources" className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">More Resources</Link>
             </div>
           </div>
         </Modal>

@@ -64,13 +64,13 @@ export default function ServiceCarousel({ labels, children }) {
   return (
     <section aria-roledescription="carousel" aria-label="Services">
       {/*
-      Below md: one row that snaps each card to the centre, -mx-4 px-4 runs it to the
+      Below md: one row that snaps each card to the centre, -mx-4 runs it to the
       screen edges so the next card peeks in, the scrollbar is hidden since the dots
       show the position. md up: the wrapped, centred grid the page had before.
       */}
       <div
         ref={scrollerRef}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:justify-center md:gap-x-4 md:gap-y-8 md:overflow-visible md:mx-0 md:px-0"
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory -mx-4 px-[7.5vw] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:justify-center md:gap-x-4 md:gap-y-8 md:overflow-visible md:mx-0 md:px-0"
       >
         {children}
       </div>

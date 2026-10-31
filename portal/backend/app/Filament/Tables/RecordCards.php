@@ -2,15 +2,19 @@
 
 namespace App\Filament\Tables;
 
+use App\Support\Timezones;
+use Closure;
 use Filament\Tables\Columns\Column;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
 
 /*
 Tables whose rows become cards on a phone, and whose row buttons stack in a
 compact column between a phone and a full-width monitor (Finishing Touches
 item 9): the three assessment tables (through AssessmentColumns), Service
-feedback, Resource requests and Follow-ups. The layout is theme.css's
+feedback, Resource requests, Follow-ups and Events. The layout is theme.css's
 "Record cards" section.
 
 apply() turns it on for a table. Each column then takes one role, which
@@ -55,6 +59,26 @@ final class RecordCards
     public static function meta(Column $column): Column
     {
         return self::role($column, 'meta');
+    }
+
+    // A date with its time as a grey line under it, like the email under a
+    // name (Burchfield B37). $tag puts something after the time (the Staff
+    // tag) and returns HTML it has already escaped.
+    public static function dateAndTime(TextColumn $column, string $time = 'g:i a', ?Closure $tag = null, string $timezone = Timezones::DISPLAY): TextColumn
+    {
+        return $column
+            ->date('M j, Y')
+            ->timezone($timezone)
+            ->description(function ($state, $record) use ($time, $tag, $timezone): ?HtmlString {
+                if (blank($state)) {
+                    return null;
+                }
+
+                $line = e(Carbon::parse($state)->setTimezone($timezone)->format($time));
+                $after = $tag ? $tag($record) : null;
+
+                return new HtmlString($after ? "{$line} {$after}" : $line);
+            });
     }
 
     // The small "Staff" tag shown under the date of a form staff entered

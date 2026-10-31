@@ -97,6 +97,7 @@ class EventCategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Search by Name')
             ->columns([
                 TextColumn::make('Name')
                     ->label('Category')

@@ -281,7 +281,9 @@ test('a throttled submission says so and keeps the answers for another try', asy
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
   // filter: Next.js renders its own (empty) role="alert" route announcer too
-  await expect(page.getByRole('alert').filter({ hasText: /wait a minute/i })).toBeVisible();
+  await expect(page.getByRole('alert').filter({
+    hasText: 'Too many submissions were received in a short time. Nothing was saved. Please wait a minute and try again. Your answers remain on this page.',
+  })).toBeVisible();
   await expect(page.getByText('Jane Doe')).toBeVisible();
 });
 
@@ -596,8 +598,9 @@ test('an anonymous report for someone else asks the questions with the names, an
   await page.goto('/assessment/');
 
   const notice = page.getByRole('dialog', { name: 'Confidentiality Notice' });
-  await expect(notice.getByText('Nothing is saved until you submit')).toBeVisible();
-  await expect(notice.getByText(/Nothing in this form is saved or sent to Harbor Safe House until you press Submit/)).toBeVisible();
+  await expect(notice.getByText('No information is saved until you submit')).toBeVisible();
+  await expect(notice.getByText(/Information entered in this form is not saved or sent to Harbor Safe House until you select Submit assessment at the end\./)).toBeVisible();
+  await expect(notice.getByText(/Once submitted, your answers are seen only by Harbor Safe House\./)).toBeVisible();
   await acceptNotice(page);
 
   await page.getByRole('button', { name: 'Someone else' }).click();
@@ -606,7 +609,7 @@ test('an anonymous report for someone else asks the questions with the names, an
   await fillVictim(page);
   await fillOffender(page);
 
-  await expect(page.getByText(/Nothing is sent or saved until you press Submit at the end\./)).toBeVisible();
+  await expect(page.getByText(/Your answers are not sent or saved until you select Submit assessment at the end\. If you close this tab or move to another page on this site before then, your answers will be lost\./)).toBeVisible();
   await page.getByRole('button', { name: 'Begin assessment' }).click();
   // First names only: the offender's last name (Roe) is never used in a question.
   await expect(page.getByRole('heading', { name: 'Has John ever used a weapon against Jane or threatened Jane with a weapon?' })).toBeVisible();
@@ -615,13 +618,13 @@ test('an anonymous report for someone else asks the questions with the names, an
     await page.getByRole('button', { name: 'No', exact: true }).first().click();
   }
 
-  await expect(page.getByText(/Nothing has been sent yet\./)).toBeVisible();
+  await expect(page.getByText(/Nothing has been sent yet\. Your assessment will be sent only when you select Submit assessment\./)).toBeVisible();
   await expect(page.getByText('Does Jane have injuries from previous incidents?')).toBeVisible();
   await expectReviewQuestions(page, { victim: 'Jane', offender: 'John' });
 
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
-  await expect(page.getByText(/Your assessment has been sent to Harbor Safe House\./)).toBeVisible();
+  await expect(page.getByText(/Your assessment has been sent to Harbor Safe House\. Harbor Safe House will follow up at the safe phone number you provided\. Your answers have been cleared from this page\./)).toBeVisible();
   expect(api.submissions).toHaveLength(1);
   expect(api.submissions[0].RiskIndicator1).toBe(false);
 });

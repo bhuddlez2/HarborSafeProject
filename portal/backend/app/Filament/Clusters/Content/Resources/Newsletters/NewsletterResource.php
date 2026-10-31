@@ -21,13 +21,13 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -59,10 +59,11 @@ class NewsletterResource extends Resource
 
     /*
     The publish date's range (Finishing Touches item 26), in Eastern days:
-    from the 1st of the month six months back up to today, or, with Schedule
-    post ticked, up to the end of the month six months ahead. On 15 October
-    2026 that is 1 April 2026 to today, or to 30 April 2027 when scheduled.
-    The website hides an issue until its date (Newsletter::scopeOnWebsite()).
+    from the 1st of the month six months back to the end of the month six
+    months ahead. On 15 October 2026 that is 1 April 2026 to 30 April 2027.
+    A future date schedules the issue (Burchfield B52, replacing FT26's
+    Schedule post box): the website hides it until that day
+    (Newsletter::scopeOnWebsite()), and the form says so under the date.
     */
     public const MONTHS_BACK = 6;
 
@@ -73,13 +74,9 @@ class NewsletterResource extends Resource
         return now(Timezones::DISPLAY)->subMonthsNoOverflow(self::MONTHS_BACK)->startOfMonth()->toDateString();
     }
 
-    public static function latestPublishDay(bool $scheduled): string
+    public static function latestPublishDay(): string
     {
-        $today = now(Timezones::DISPLAY);
-
-        return $scheduled
-            ? $today->addMonthsNoOverflow(self::MONTHS_AHEAD)->endOfMonth()->toDateString()
-            : $today->toDateString();
+        return now(Timezones::DISPLAY)->addMonthsNoOverflow(self::MONTHS_AHEAD)->endOfMonth()->toDateString();
     }
 
     private static function tooEarlyMessage(): string
@@ -87,30 +84,23 @@ class NewsletterResource extends Resource
         return "Can't be before ".Carbon::parse(self::earliestPublishDay())->format('F j, Y').'.';
     }
 
-    private static function tooLateMessage(bool $scheduled): string
+    private static function tooLateMessage(): string
     {
-        return $scheduled
-            ? "Can't be after ".Carbon::parse(self::latestPublishDay(true))->format('F j, Y').'.'
-            : "Can't be in the future. Tick Schedule post to choose a later date.";
+        return "Can't be after ".Carbon::parse(self::latestPublishDay())->format('F j, Y').'.';
     }
 
     // An existing issue keeps its saved date unchecked, so an old one can
-    // still be edited - unless that date is in the future and Schedule post
-    // has been unticked.
-    private static function keepsSavedDate(?Newsletter $record, Carbon $picked, bool $scheduled): bool
+    // still be edited.
+    private static function keepsSavedDate(?Newsletter $record, Carbon $picked): bool
     {
-        $day = $picked->toDateString();
-
         return $record?->issue_date !== null
-            && $day === $record->issue_date->toDateString()
-            && ($scheduled || $day <= self::latestPublishDay(false));
+            && $picked->toDateString() === $record->issue_date->toDateString();
     }
 
-    // A saved issue whose date hasn't arrived yet.
-    private static function isScheduled(?Newsletter $record): bool
+    // A date after today (Eastern): the issue is scheduled.
+    private static function isFuture(mixed $date): bool
     {
-        return $record?->issue_date !== null
-            && $record->issue_date->toDateString() > self::latestPublishDay(false);
+        return filled($date) && Carbon::parse($date)->toDateString() > now(Timezones::DISPLAY)->toDateString();
     }
 
     protected static ?string $model = Newsletter::class;
@@ -184,34 +174,34 @@ class NewsletterResource extends Resource
                     DatePicker::make('issue_date')
                         ->label('Publish Date')
                         ->required()
-                        // Six months back to today, or six months ahead
-                        // with Schedule post. The calendar limits apply
-                        // to a new newsletter; an existing one keeps its
-                        // saved date and only a changed date is checked
-                        // (DateWindow).
+                        // Six months back to six months ahead. The calendar
+                        // limits apply to a new newsletter; an existing one
+                        // keeps its saved date and only a changed date is
+                        // checked (DateWindow).
                         ->minDate(fn (?Newsletter $record): ?string => $record ? null : self::earliestPublishDay())
-                        ->maxDate(fn (?Newsletter $record, Get $get): ?string => $record ? null : self::latestPublishDay((bool) $get('schedule_post')))
-                        ->rule(fn (?Newsletter $record, Get $get): Closure => DateWindow::rule(
+                        ->maxDate(fn (?Newsletter $record): ?string => $record ? null : self::latestPublishDay())
+                        ->rule(fn (?Newsletter $record): Closure => DateWindow::rule(
                             self::earliestPublishDay(...),
-                            fn (): string => self::latestPublishDay((bool) $get('schedule_post')),
+                            self::latestPublishDay(...),
                             self::tooEarlyMessage(),
-                            self::tooLateMessage((bool) $get('schedule_post')),
-                            fn (Carbon $picked): bool => self::keepsSavedDate($record, $picked, (bool) $get('schedule_post')),
+                            self::tooLateMessage(),
+                            fn (Carbon $picked): bool => self::keepsSavedDate($record, $picked),
                         ))
                         ->validationMessages([
                             'after_or_equal' => fn (): string => self::tooEarlyMessage(),
-                            'before_or_equal' => fn (Get $get): string => self::tooLateMessage((bool) $get('schedule_post')),
+                            'before_or_equal' => fn (): string => self::tooLateMessage(),
                         ])
+                        // For the Scheduled notice below.
+                        ->live()
                         ->helperText('Orders the list on the website, newest first.'),
 
-                    // Not stored: a future publish date is what makes an
-                    // issue scheduled, so Edit ticks it from the date.
-                    Checkbox::make('schedule_post')
-                        ->label('Schedule post')
-                        ->live()
-                        ->dehydrated(false)
-                        ->afterStateHydrated(fn (Checkbox $component, ?Newsletter $record) => $component->state(self::isScheduled($record)))
-                        ->helperText('Allows a date up to 6 months ahead. The issue stays off the website until that date.')
+                    // Shown only for a future date, where the Schedule post
+                    // box used to be (Burchfield B52).
+                    Callout::make('Scheduled')
+                        ->info()
+                        ->description(fn (Get $get): string => 'This issue will appear on the website on '
+                            .Carbon::parse($get('issue_date'))->format('F j, Y').'.')
+                        ->visible(fn (Get $get): bool => self::isFuture($get('issue_date')))
                         ->columnSpanFull(),
 
                     Textarea::make('summary')
@@ -253,7 +243,7 @@ class NewsletterResource extends Resource
 
                     Toggle::make('is_published')
                         ->label('Published')
-                        ->helperText('Off keeps it off the website, and makes its PDF unreachable.')
+                        ->helperText('Visible on the website.')
                         ->columnSpanFull(),
                 ])
                 ->columns(2),
@@ -289,8 +279,7 @@ class NewsletterResource extends Resource
                                 'fileSizeBytes' => $get('file_size_bytes'),
                                 'filePages'     => $get('file_pages'),
                                 'isPublished'   => (bool) $get('is_published'),
-                                'isScheduled'   => $issueDate !== null
-                                    && $issueDate->toDateString() > self::latestPublishDay(false),
+                                'isScheduled'   => self::isFuture($issueDate),
                             ])->render());
                         })
                         ->columnSpanFull(),
@@ -301,6 +290,7 @@ class NewsletterResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Search by Title')
             ->columns([
                 TextColumn::make('title')
                     ->searchable()

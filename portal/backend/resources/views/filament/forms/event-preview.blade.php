@@ -19,13 +19,11 @@
 
     {{--
         Image section — three possible states:
-          1. $imageUrl is set: the image is already saved in content_files
-             (editing an existing event), so we can show a real <img> tag
-             using the staff file route.
-          2. $hasImage is true but $imageUrl is null: a file was selected in
-             the Image step but not yet saved (creating a new event). Livewire
-             holds it as a temporary upload that has no database row yet, so
-             there is no URL to use — show the placeholder instead.
+          1. $imageUrl is set: a real <img> - a saved image through the staff
+             file route, or one just picked in this pop-up through Livewire's
+             signed preview link (EventResource::previewImageUrl()).
+          2. $hasImage is true but $imageUrl is null: a file Livewire can't
+             preview - show the placeholder instead.
           3. Neither: no image at all, render nothing here.
         The card body's border-radius adjusts based on whether anything sits
         above it, so the corners always look right.
@@ -165,7 +163,8 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
         </svg>
-        This event is set to <strong>Draft</strong> — it won't appear on the website until Published is turned on.
+        {{-- One span, so the flex row doesn't split the sentence into columns on a phone. --}}
+        <span>This event is set to <strong>Draft</strong> — it won't appear on the website until Published is turned on.</span>
     </div>
     @endif
 
