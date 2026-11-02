@@ -11,6 +11,10 @@ use App\Filament\Resources\FollowUps\Pages\ViewFollowUp;
 use App\Filament\Tables\AssessmentFilters;
 use App\Filament\Tables\RecordCards;
 use App\Models\FollowUp;
+use App\Models\LawEnforcementAssessment;
+use App\Models\PrivateAssessment;
+use App\Models\ResourceRequestForm;
+use App\Support\EncryptedSearch;
 use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -35,9 +39,10 @@ officers and police admins nothing at all (canAccess() refuses them, and the
 query would be empty anyway). Never add a column or filter that reaches past
 that scope.
 
-No name search, by design: resource requests live in another database, and
-searching across both would mean copying names into follow_ups. Sorting and
-filtering are by type, date and status.
+The search box finds the Name column (searchByName()): each kind of form's
+encrypted names are matched in PHP, scoped by that form's own visibleTo(), and
+the queue narrowed to follow-ups pointing at the matches - no join, since
+resource requests live in another database, and no names copied here.
 */
 class FollowUpResource extends Resource
 {
@@ -99,7 +104,8 @@ class FollowUpResource extends Resource
                 // assessment. Read from the form itself, never copied.
                 RecordCards::title(TextColumn::make('name')
                     ->label('Name')
-                    ->state(fn (FollowUp $record): string => $record->formName() ?? '-')),
+                    ->state(fn (FollowUp $record): string => $record->formName() ?? '-')
+                    ->searchable(query: fn (Builder $query, string $search): Builder => static::searchByName($query, $search))),
 
                 RecordCards::corner(TextColumn::make('Kind')
                     ->label('Type')
@@ -157,8 +163,22 @@ class FollowUpResource extends Resource
                     ->icon(Heroicon::OutlinedArrowRight)
                     ->url(fn (FollowUp $record): string => static::getUrl('view', ['record' => $record])),
             ])
+            ->searchPlaceholder('Search by Name')
             ->emptyStateHeading('Nothing here')
             ->emptyStateDescription('Forms in this stage of follow-up appear here.');
+    }
+
+    // Follow-ups whose form's name (the victim's, or the requester's) contains
+    // $search. Each form is searched through its own visibleTo(), so a
+    // secretary's search never decrypts an assessment.
+    public static function searchByName(Builder $query, string $search): Builder
+    {
+        $user = Filament::auth()->user();
+
+        return $query->where(fn (Builder $any): Builder => $any
+            ->whereIn('LawEnforcementDocumentID', EncryptedSearch::fullNameKeys(LawEnforcementAssessment::query()->visibleTo($user), 'VictimFirstName', 'VictimLastName', $search))
+            ->orWhereIn('PrivateDocumentID', EncryptedSearch::fullNameKeys(PrivateAssessment::query()->visibleTo($user), 'VictimFirstName', 'VictimLastName', $search))
+            ->orWhereIn('ResourceRequestFormID', EncryptedSearch::fullNameKeys(ResourceRequestForm::query()->visibleTo($user), 'FirstName', 'LastName', $search)));
     }
 
     // The queue's starting order per status tab (Burchfield B42,

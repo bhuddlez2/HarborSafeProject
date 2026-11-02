@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Clusters\Content\Resources\EventCategories\Pages\ManageEventCategories;
 use App\Models\EventCategory;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use App\Rules\DistinctListName;
 use App\Support\ListNames;
@@ -96,12 +97,13 @@ class EventCategoryResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Name')
             ->columns([
-                TextColumn::make('Name')
+                RecordCards::title(TextColumn::make('Name')
                     ->label('Category')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()),
 
                 TableAlignment::symbol(TextColumn::make('events_count')
                     ->label('Events')

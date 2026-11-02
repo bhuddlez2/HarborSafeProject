@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CivilianAssessments;
 
+use App\Filament\Assessments\ChangeHistory;
 use App\Filament\Concerns\AllowsOnlyListedActions;
 use App\Enums\AssessmentAccess;
 use App\Enums\UserRole;
@@ -122,8 +123,12 @@ class CivilianAssessmentResource extends Resource
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('assessmentAnswers'))
             // View only - no edit, no delete, no bulk actions. See the class
             // comment. Opening View and downloading the PDF both show the safe
-            // phone number, so both are recorded (AssessmentAccessLog).
+            // phone number, so both are recorded (AssessmentAccessLog). Log,
+            // as on Assessment review, lists the record's views and downloads
+            // (admins only, like this screen) and records its own opening as
+            // "Viewed Log", so it shows on the Logs page too.
             ->recordActions([
+                ChangeHistory::action(withAccess: true),
                 ViewAction::make()
                     ->modalHeading('View Civilian Assessment')
                     ->afterFormFilled(fn (PrivateAssessment $record) => AssessmentAccessLog::record(

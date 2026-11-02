@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FollowUps\Pages;
 
+use App\Support\PersonName;
 use App\Enums\AssessmentAccess;
 use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
@@ -75,7 +76,7 @@ class ViewFollowUp extends Page
 
     public function getTitle(): string | Htmlable
     {
-        return $this->followUp()->formName() ?? 'Follow-up';
+        return $this->followUp()->formName() ?? 'Follow-Up';
     }
 
     public function getSubheading(): string | Htmlable | null
@@ -113,7 +114,7 @@ class ViewFollowUp extends Page
             // FollowUpPdfController.
             ActionGroup::make([
                 Action::make('download_pdf_with_log')
-                    ->label('Download PDF with log')
+                    ->label('Download PDF with Log')
                     ->icon(Heroicon::OutlinedArrowDownTray)
                     ->url(fn (): string => route('staff.follow-ups.pdf-with-log', $this->followUp()->getKey()))
                     ->openUrlInNewTab(),
@@ -194,8 +195,8 @@ class ViewFollowUp extends Page
     private function newRequestAction(): Action
     {
         $label = fn (): string => $this->followUp()->Kind === FollowUpKind::ResourceRequest
-            ? 'New request from this one'
-            : 'New resource request for this victim';
+            ? 'New Request from This One'
+            : 'New Resource Request for This Victim';
 
         return Action::make('new_request')
             ->label($label)
@@ -207,8 +208,8 @@ class ViewFollowUp extends Page
             ->fillForm(fn (): array => $this->newRequestDefaults())
             ->schema([
                 Grid::make(2)->schema([
-                    TextInput::make('FirstName')->label('First name')->required()->maxLength(50),
-                    TextInput::make('LastName')->label('Last name')->maxLength(50),
+                    PersonName::tidyOnBlur(TextInput::make('FirstName'))->label('First name')->required()->maxLength(50),
+                    PersonName::tidyOnBlur(TextInput::make('LastName'))->label('Last name')->maxLength(50),
                     TextInput::make('EmailAddress')
                         ->label('Email')
                         ->email()

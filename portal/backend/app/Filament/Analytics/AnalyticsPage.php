@@ -3,6 +3,7 @@
 namespace App\Filament\Analytics;
 
 use App\Filament\Clusters\Analytics\AnalyticsCluster;
+use App\Models\Agency;
 use App\Services\Analytics\AnalyticsExport;
 use App\Services\Analytics\AssessmentStats;
 use App\Support\Analytics\DateRange;
@@ -13,6 +14,7 @@ use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -20,11 +22,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 One tab of Analytics (App\Filament\Clusters\Analytics, team plan task 28). Each
 tab says who may open it and what it shows (sections()); this class holds what
 they share: the date range above the charts and, on the assessment tabs, the
-filter by victim and offender sex behind the funnel button. Both are kept in
-the session, so they stay put when someone moves between tabs.
+filters behind the Filters button. Both are kept in the session, so they stay
+put when someone moves between tabs.
 
-The filter: the victim's sex is required to apply it, the offender's is
-optional ("Any"); Reset removes it. Stored codes only (AssessmentStats::SEXES).
+The filters (Finishing Touches 32): victim sex, offender sex, relationship and,
+on the Law-Enforcement tab only, agency. Each is optional ("Any") and works
+alone or with the others; Reset removes them all. Stored codes and agency ids
+only, each checked against its list.
 
 Everything a tab shows is a total. No names, phone numbers, comments or dates
 of birth ever reach the page - the stats services don't select them.
@@ -59,26 +63,45 @@ abstract class AnalyticsPage extends Page
 
     public ?string $customTo = null;
 
-    // The applied sex filter (stored codes), and the filter panel's choices
-    // before Apply.
+    // The applied filters (stored codes, an agency id), and the filter
+    // panel's choices before Apply.
     #[Locked]
     public ?string $victimSex = null;
 
     #[Locked]
     public ?string $offenderSex = null;
 
+    #[Locked]
+    public ?string $relationship = null;
+
+    #[Locked]
+    public ?int $agency = null;
+
     public ?string $draftVictimSex = null;
 
     public ?string $draftOffenderSex = null;
 
+    public ?string $draftRelationship = null;
+
+    public ?string $draftAgency = null;
+
     // [heading?, tiles, cards] for the view; see the stats services.
     abstract protected function sections(DateRange $range): array;
 
-    // The sentence under the heading.
-    abstract public function description(): string;
+    // The sentence under the heading; only Follow-Ups has one (FT33).
+    public function description(): ?string
+    {
+        return null;
+    }
 
-    // Only the assessment tabs record sex, so only they offer the filter.
-    public function offersSexFilter(): bool
+    // Only the assessment tabs offer the filters.
+    public function offersFilters(): bool
+    {
+        return false;
+    }
+
+    // Only officer assessments have an agency.
+    public function offersAgencyFilter(): bool
     {
         return false;
     }
@@ -99,10 +122,17 @@ abstract class AnalyticsPage extends Page
 
         $this->customFrom = $this->from;
         $this->customTo = $this->to;
-        $this->victimSex = $this->validSex($saved['victimSex'] ?? null);
-        $this->offenderSex = $this->victimSex === null ? null : $this->validSex($saved['offenderSex'] ?? null);
+        // Every filter is read back on every tab, so remember() never drops
+        // one that this tab doesn't use.
+        $this->victimSex = $this->validOption($saved['victimSex'] ?? null, $this->sexOptions());
+        $this->offenderSex = $this->validOption($saved['offenderSex'] ?? null, $this->sexOptions());
+        $this->relationship = $this->validOption($saved['relationship'] ?? null, $this->relationshipOptions());
+        $agency = $this->validOption($saved['agency'] ?? null, $this->agencyOptions());
+        $this->agency = $agency === null ? null : (int) $agency;
         $this->draftVictimSex = $this->victimSex;
         $this->draftOffenderSex = $this->offenderSex;
+        $this->draftRelationship = $this->relationship;
+        $this->draftAgency = $agency;
     }
 
     protected function getHeaderActions(): array
@@ -144,8 +174,8 @@ abstract class AnalyticsPage extends Page
 
         $lines = ['Date range: '.($preset === null ? $range->label() : "{$preset} ({$range->label()})").', Eastern time'];
 
-        if ($this->offersSexFilter()) {
-            $lines[] = 'Filter: '.($this->sexFilterLabel() ?? 'None');
+        if ($this->offersFilters()) {
+            $lines[] = 'Filter: '.($this->filterLabel() ?? 'None');
         }
 
         $lines[] = 'Exported '.now(Timezones::DISPLAY)->format('M j, Y');
@@ -223,31 +253,37 @@ abstract class AnalyticsPage extends Page
         $this->remember();
     }
 
-    public function applySexFilter(): void
+    public function applyFilters(): void
     {
-        $codes = implode(',', array_keys(AssessmentStats::SEXES));
-
         $this->validate([
-            'draftVictimSex' => ['required', "in:{$codes}"],
-            'draftOffenderSex' => ['nullable', "in:{$codes}"],
-        ], [
-            'draftVictimSex.required' => 'Choose the victim’s sex.',
-        ], [
+            'draftVictimSex' => ['nullable', Rule::in(array_keys($this->sexOptions()))],
+            'draftOffenderSex' => ['nullable', Rule::in(array_keys($this->sexOptions()))],
+            'draftRelationship' => ['nullable', Rule::in(array_keys($this->relationshipOptions()))],
+            'draftAgency' => ['nullable', Rule::in(array_keys($this->agencyOptions()))],
+        ], [], [
             'draftVictimSex' => 'victim sex',
             'draftOffenderSex' => 'offender sex',
+            'draftRelationship' => 'relationship',
+            'draftAgency' => 'agency',
         ]);
 
-        $this->victimSex = $this->draftVictimSex;
+        $this->victimSex = filled($this->draftVictimSex) ? $this->draftVictimSex : null;
         $this->offenderSex = filled($this->draftOffenderSex) ? $this->draftOffenderSex : null;
+        $this->relationship = filled($this->draftRelationship) ? $this->draftRelationship : null;
+
+        if ($this->offersAgencyFilter()) {
+            $this->agency = filled($this->draftAgency) ? (int) $this->draftAgency : null;
+        }
+
         $this->remember();
         $this->dispatch('analytics-filter-closed');
     }
 
-    public function resetSexFilter(): void
+    public function resetFilters(): void
     {
-        $this->victimSex = $this->offenderSex = null;
-        $this->draftVictimSex = $this->draftOffenderSex = null;
-        $this->resetValidation(['draftVictimSex', 'draftOffenderSex']);
+        $this->victimSex = $this->offenderSex = $this->relationship = $this->agency = null;
+        $this->draftVictimSex = $this->draftOffenderSex = $this->draftRelationship = $this->draftAgency = null;
+        $this->resetValidation(['draftVictimSex', 'draftOffenderSex', 'draftRelationship', 'draftAgency']);
         $this->remember();
         $this->dispatch('analytics-filter-closed');
     }
@@ -271,15 +307,33 @@ abstract class AnalyticsPage extends Page
         return AssessmentStats::SEXES;
     }
 
-    // "Victim: Female · Offender: Male", or null when no filter is applied.
-    public function sexFilterLabel(): ?string
+    public function relationshipOptions(): array
     {
-        if (! $this->offersSexFilter() || $this->victimSex === null) {
+        return AssessmentStats::relationshipOptions();
+    }
+
+    /** @return array<int, string> id => name */
+    public function agencyOptions(): array
+    {
+        return once(fn (): array => Agency::query()->orderBy('name')->pluck('name', 'id')->all());
+    }
+
+    // The filters that are set, e.g. "Victim Sex: Female · Agency: Example PD",
+    // or null when none is.
+    public function filterLabel(): ?string
+    {
+        if (! $this->offersFilters()) {
             return null;
         }
 
-        return 'Victim: '.AssessmentStats::SEXES[$this->victimSex]
-            .' · Offender: '.($this->offenderSex === null ? 'Any' : AssessmentStats::SEXES[$this->offenderSex]);
+        $parts = array_filter([
+            'Victim Sex' => $this->victimSex === null ? null : $this->sexOptions()[$this->victimSex],
+            'Offender Sex' => $this->offenderSex === null ? null : $this->sexOptions()[$this->offenderSex],
+            'Relationship' => $this->relationship === null ? null : $this->relationshipOptions()[$this->relationship],
+            'Agency' => $this->offersAgencyFilter() && $this->agency !== null ? ($this->agencyOptions()[$this->agency] ?? null) : null,
+        ]);
+
+        return $parts === [] ? null : collect($parts)->map(fn (string $value, string $name): string => "{$name}: {$value}")->implode(' · ');
     }
 
     protected function getViewData(): array
@@ -292,11 +346,21 @@ abstract class AnalyticsPage extends Page
         ];
     }
 
-    // The sex filter as the stats services take it: nothing unless this tab
-    // offers it.
-    protected function sexFilter(): array
+    // The applied filters as named arguments for AssessmentStats and
+    // AssessmentSections: nothing unless this tab offers them, and agency
+    // only where it applies.
+    protected function filters(): array
     {
-        return $this->offersSexFilter() ? [$this->victimSex, $this->offenderSex] : [null, null];
+        if (! $this->offersFilters()) {
+            return [];
+        }
+
+        return [
+            'victimSex' => $this->victimSex,
+            'offenderSex' => $this->offenderSex,
+            'relationship' => $this->relationship,
+            ...($this->offersAgencyFilter() ? ['agency' => $this->agency] : []),
+        ];
     }
 
     private function remember(): void
@@ -307,6 +371,8 @@ abstract class AnalyticsPage extends Page
             'to' => $this->to,
             'victimSex' => $this->victimSex,
             'offenderSex' => $this->offenderSex,
+            'relationship' => $this->relationship,
+            'agency' => $this->agency,
         ]]);
     }
 
@@ -323,8 +389,9 @@ abstract class AnalyticsPage extends Page
         }
     }
 
-    private function validSex(mixed $value): ?string
+    // $value as a string when it is one of $options' keys, else null.
+    private function validOption(mixed $value, array $options): ?string
     {
-        return is_string($value) && isset(AssessmentStats::SEXES[$value]) ? $value : null;
+        return (is_string($value) || is_int($value)) && array_key_exists($value, $options) ? (string) $value : null;
     }
 }

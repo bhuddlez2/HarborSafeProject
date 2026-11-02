@@ -8,6 +8,7 @@ use App\Support\ListNames;
 use App\Enums\UserRole;
 use App\Filament\Clusters\FormOptions\FormOptionsCluster;
 use App\Support\Timezones;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -106,19 +107,20 @@ abstract class LookupResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Name')
             ->columns([
-                TextColumn::make('Name')
+                RecordCards::title(TextColumn::make('Name')
                     ->label('Option')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()),
 
-                TextColumn::make('ChangeDate')
+                RecordCards::meta(TextColumn::make('ChangeDate')
                     ->label('Last changed')
                     ->dateTime('M j, Y g:i a')
                     ->timezone(Timezones::DISPLAY)
                     ->placeholder('Never')
-                    ->sortable(),
+                    ->sortable()),
             ])
             ->defaultSort('Name')
             ->recordActions([

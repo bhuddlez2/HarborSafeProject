@@ -39,6 +39,7 @@ class FollowUpReminder extends Notification
             ->actions([
                 Action::make('open')
                     ->label('Open')
+                    ->button()
                     ->url($this->followUp->url())
                     ->markAsRead(),
             ])

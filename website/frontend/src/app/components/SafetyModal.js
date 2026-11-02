@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, startTransition } from "react";
+import PhoneLink from "./PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 
 
 // sessionStorage key marking that the safety notice was dismissed in this tab
@@ -139,7 +141,7 @@ export default function SafetyModal() {
                 <p className="text-sm font-semibold text-brand mb-0.5">Call us confidentially</p>
                 <p className="text-xs text-gray-500 leading-relaxed">
                   If you&apos;re worried about being monitored, call{" "}
-                  <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>{" "}
+                  <PhoneLink number={CRISIS_CALL} className="text-brand font-semibold hover:underline" />{" "}
                   — available 24/7, always free.
                 </p>
               </div>
@@ -153,7 +155,7 @@ export default function SafetyModal() {
               {/* alert-circle icon, feathericons.com */}
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
+            <a href="tel:911" className="tap-target text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
           </div>
 
           {/* Action buttons */}
@@ -165,7 +167,8 @@ export default function SafetyModal() {
               I understand — continue to site
             </button>
             <button
-              onClick={() => window.location.replace("https://www.google.com")}
+              type="button"
+              data-safe-exit
               className="hover:scale-105 w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-red-600 hover:bg-white hover:text-red-600 transition-all cursor-pointer"
             >
               Safe Exit

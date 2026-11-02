@@ -10,7 +10,6 @@ use App\Models\County;
 use App\Models\Resource as ResourceType;
 use App\Models\ResourceRequestForm;
 use App\Support\RecordPdf;
-use App\Support\Timezones;
 use App\Filament\Tables\EncryptedColumnSearch;
 use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
@@ -86,7 +85,11 @@ class ResourceRequestResource extends Resource
     // Never edited: a request is a statement from the public. Delete is for spam. Staff-started requests come from a follow-up page, never a Create button here.
     protected static function allowedActions(): array
     {
-        return ['view', 'delete', 'deleteAny'];
+        // Requests are kept: only admins and super admins may delete one (spam), and its
+        // follow-up and history go with it (Burchfield B56).
+        return Filament::auth()->user()?->hasActiveRole(UserRole::Admin, UserRole::SuperAdmin)
+            ? ['view', 'delete', 'deleteAny']
+            : ['view'];
     }
 
     public static function getNavigationBadge(): ?string
@@ -115,15 +118,13 @@ class ResourceRequestResource extends Resource
         // is a small "Staff" tag under the date, shown only on forms staff
         // entered; website forms show nothing.
         return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Name or Email')
             ->columns([
-                RecordCards::meta(TextColumn::make('SubmissionDate')
+                RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('SubmissionDate')
                     ->label('Submitted')
-                    ->dateTime('M j, Y g:i a')
-                    ->timezone(Timezones::DISPLAY)
-                    ->description(fn (ResourceRequestForm $record): ?HtmlString => $record->Source === ResourceRequestForm::SOURCE_STAFF
+                    ->sortable(), tag: fn (ResourceRequestForm $record): ?HtmlString => $record->Source === ResourceRequestForm::SOURCE_STAFF
                         ? RecordCards::staffTag()
-                        : null)
-                    ->sortable()),
+                        : null)),
 
                 // The email in grey under the name. The search box finds
                 // either.
@@ -207,6 +208,7 @@ class ResourceRequestResource extends Resource
                 // The plain form as a PDF, through its own logged route
                 // (ResourceRequestPdfController), as civilian assessments do.
                 ViewAction::make()
+                    ->modalHeading('View Resource Request')
                     ->extraModalFooterActions(fn (ResourceRequestForm $record): array => [
                         Action::make('download_pdf')
                             ->label('Download PDF')
@@ -219,7 +221,7 @@ class ResourceRequestResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->modalHeading('Delete Selected Resource Requests'),
                 ]),
             ])
             ->emptyStateHeading('No requests yet')

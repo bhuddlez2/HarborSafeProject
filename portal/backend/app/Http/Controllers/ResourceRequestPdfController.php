@@ -31,7 +31,7 @@ class ResourceRequestPdfController extends Controller
         // recorded, once the file exists.
         AssessmentAccessLog::record($record, AssessmentAccess::Download, $request->user());
 
-        $filename = 'resource-request-' . substr($record->FormID, 0, 8) . '.pdf';
+        $filename = 'resource-request-' . substr($record->FormID, -8) . '.pdf';
 
         return response($bytes, 200, [
             'Content-Type'        => 'application/pdf',

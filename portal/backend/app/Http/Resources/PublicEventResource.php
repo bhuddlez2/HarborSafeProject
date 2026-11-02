@@ -117,6 +117,8 @@ class PublicEventResource extends JsonResource
             // but an image without a description is an accessibility problem,
             // and the panel requires alt text whenever a file is attached.
             'alt' => $event->image_alt,
+            // Where the card frame shows it, set by staff: {x, y, zoom}, always complete.
+            'position' => $event->imagePosition(),
         ];
     }
 

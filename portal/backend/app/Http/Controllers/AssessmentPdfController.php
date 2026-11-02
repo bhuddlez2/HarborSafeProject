@@ -36,7 +36,7 @@ class AssessmentPdfController extends Controller
         AssessmentAccessLog::record($record, AssessmentAccess::Download, $request->user());
 
         // Prepare the filename for the PDF download.
-        $filename = 'assessment-' . substr($record->DocumentID, 0, 8) . '.pdf';
+        $filename = 'assessment-' . substr($record->DocumentID, -8) . '.pdf';
 
         // Return the generated PDF as a response with appropriate headers for download.
         return response($bytes, 200, [

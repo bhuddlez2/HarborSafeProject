@@ -144,7 +144,7 @@ test('the page counts only the police admin\'s own agency\'s law-enforcement ass
         ->assertOk()
         ->assertSee('Assessments submitted')
         ->assertSee('2 (67%)')        // high risk: 2 of 3
-        ->assertDontSee('By agency')
+        ->assertDontSee('By Agency')
         ->assertDontSee(staffRunToken().' Agency B');
 
     // Agency B's police admin sees their own two, both high risk.
@@ -161,7 +161,7 @@ test('the Excel export holds the same scoped numbers, its agency, and no by-agen
     expect(pestSheetRow($rows, 'Assessments submitted')[1])->toBe(3)
         ->and(pestSheetRow($rows, 'High risk')[1])->toBe('2 (67%)')
         ->and(pestSheetRow($rows, 'Agency: '.staffRunToken().' Agency A'))->not->toBeNull()
-        ->and(pestSheetRow($rows, 'By agency'))->toBeNull()
+        ->and(pestSheetRow($rows, 'By Agency'))->toBeNull()
         ->and(json_encode($rows))->not->toContain('Agency B');
 });
 
@@ -175,7 +175,7 @@ test('the PDF export holds the same scoped numbers, no by-agency section, in bla
 
     expect($html)->toContain('Agency: '.e(staffRunToken().' Agency A'))
         ->toContain('2 (67%)')
-        ->not->toContain('By agency')
+        ->not->toContain('By Agency')
         ->not->toContain('Agency B');
 
     expectBlackAndWhite($html);
@@ -199,13 +199,13 @@ test('Harbor Safe\'s own tab is unchanged: every agency, with By agency', functi
     $this->actingAs(staffUser(UserRole::Admin));
 
     pestMarch2003(Livewire::test(OfficerAssessmentAnalytics::class))
-        ->assertSee('By agency')
+        ->assertSee('By Agency')
         ->assertSee(staffRunToken().' Agency A')
         ->assertSee(staffRunToken().' Agency B');
 
     $rows = pestAnalyticsSheet(pestMarch2003(Livewire::test(OfficerAssessmentAnalytics::class))->callAction('exportExcel'));
 
-    expect(pestSheetRow($rows, 'By agency'))->not->toBeNull()
+    expect(pestSheetRow($rows, 'By Agency'))->not->toBeNull()
         ->and(pestSheetRow($rows, staffRunToken().' Agency A')[1])->toBe(3)
         ->and(pestSheetRow($rows, staffRunToken().' Agency B')[1])->toBe(2);
 });

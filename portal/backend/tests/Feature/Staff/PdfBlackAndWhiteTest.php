@@ -158,6 +158,20 @@ test('the follow-up PDF with its log is black and white', function () {
     expectBlackAndWhite($html);
 });
 
+test('the record PDFs\' footer - record ID and page number - is drawn in black', function () {
+    $drawn = [];
+    $canvas = Mockery::mock(Canvas::class);
+    $canvas->shouldReceive('get_width')->andReturn(612.0);
+    $canvas->shouldReceive('get_height')->andReturn(792.0);
+    $canvas->shouldReceive('text')->andReturnUsing(function (...$args) use (&$drawn): void {
+        $drawn[$args[2]] = $args[5];
+    });
+
+    (new AssessmentPdf)->footer('abc-123')($canvas, recordingFonts(), 2, 3);
+
+    expect($drawn)->toBe(['Record ID: abc-123' => [0, 0, 0], 'Page 2 of 3' => [0, 0, 0]]);
+});
+
 test('the screens keep their colours', function () {
     $officer = pestAgencyMember(UserRole::LawEnforcement, pestAgency('BW Screen PD'));
     $assessment = pestOfficerAssessment($officer, 'BWScreen');

@@ -38,7 +38,7 @@ function savedDraft(array $data = [], array $extra = []): array
         'data' => [
             'VictimFirstName' => 'Draft',
             'VictimLastName' => 'Victim',
-            'VictimDOB' => '1990-01-01',
+            'VictimDOB' => '01/01/1990',
             'VictimSex' => 'F',
             'VictimSafePhoneNumber' => '(423)555-0150',
             ...$data,

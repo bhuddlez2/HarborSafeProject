@@ -95,7 +95,7 @@ test('an admin opens Logs and sees the access rows, and opening it logs nothing'
         ->assertTableColumnFormattedStateSet('Action', 'Downloaded PDF', $f->adminDownload)
         ->assertTableColumnStateSet('record', 'Officer Assessment', $f->adminDownload)
         ->assertTableColumnStateSet('record', 'Civilian Assessment', $f->civilianView)
-        ->assertTableColumnHasDescription('record', "Submitted {$civilianSubmitted} · ".substr($f->civilian->DocumentID, 0, 8), $f->civilianView)
+        ->assertTableColumnHasDescription('record', "Submitted {$civilianSubmitted} · ".substr($f->civilian->DocumentID, -8), $f->civilianView)
         // Access rows have no change count.
         ->assertTableColumnStateSet('changes_count', null, $f->civilianView);
 
@@ -235,7 +235,7 @@ test('the Show options come from LogAction, with the access log\'s own labels', 
         'view' => 'Viewed',
         'view_log' => 'Viewed Log',
         'download' => 'Downloaded PDF',
-        'download_with_log' => 'Downloaded PDF with log',
+        'download_with_log' => 'Downloaded PDF with Log',
         'edit' => 'Edited',
     ]);
 
@@ -464,6 +464,6 @@ test('only the Who column is searched, never record ids', function () {
 
     expect($searchable)->toBe(['user.name']);
 
-    $list->searchTable(substr($f->request->FormID, 0, 8))
+    $list->searchTable(substr($f->request->FormID, -8))
         ->assertCanNotSeeTableRecords([$f->requestView, $f->adminDownload, $f->civilianView]);
 });

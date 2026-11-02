@@ -30,7 +30,7 @@ class SubmissionPdfController extends Controller
 
         return response($pdf->render($record), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="service-feedback-'.substr((string) $record->getKey(), 0, 8).'.pdf"',
+            'Content-Disposition' => 'attachment; filename="service-feedback-'.substr((string) $record->getKey(), -8).'.pdf"',
         ]);
     }
 }

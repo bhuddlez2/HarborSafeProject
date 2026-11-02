@@ -19,7 +19,7 @@ Realistic ranges for typed dates (dates of birth are DateOfBirthTest):
 
   - event start/end: a year back to two years ahead;
   - newsletter publish date: the 1st of the month six months back to today,
-    or with Schedule post to the end of the month six months ahead;
+    to the end of the month six months ahead (a future date schedules it);
   - a staff-entered feedback form: up to two years back, never ahead;
   - the tables' from/until filters and the Analytics custom range: no future
     day, and the end not before the start.
@@ -79,23 +79,21 @@ test('an older event can still be edited, but not moved to another old date', fu
         ->assertHasActionErrors(['starts_at']);
 });
 
-test('a newsletter publish date runs from six months back to today, or six months ahead when scheduled', function (string $date, bool $scheduled, bool $allowed) {
+test('a newsletter publish date runs from six months back to six months ahead', function (string $date, bool $allowed) {
     $this->actingAs(staffUser(UserRole::Secretary));
 
     $page = Livewire::test(ManageNewsletters::class)
-        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => $date, 'schedule_post' => $scheduled]);
+        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => $date]);
 
     // Only the date is judged here; the test sends no file.
     $allowed ? $page->assertHasNoActionErrors(['issue_date']) : $page->assertHasActionErrors(['issue_date']);
 })->with([
-    '1 April, the 1st of the month six months back' => ['2026-04-01', false, true],
-    'the day before' => ['2026-03-31', false, false],
-    'today' => ['2026-10-26', false, true],
-    'tomorrow, not scheduled' => ['2026-10-27', false, false],
-    'tomorrow, scheduled' => ['2026-10-27', true, true],
-    '30 April 2027, scheduled' => ['2027-04-30', true, true],
-    '1 May 2027, scheduled' => ['2027-05-01', true, false],
-    'six months back, scheduled' => ['2026-04-01', true, true],
+    '1 April, the 1st of the month six months back' => ['2026-04-01', true],
+    'the day before' => ['2026-03-31', false],
+    'today' => ['2026-10-26', true],
+    'tomorrow' => ['2026-10-27', true],
+    '30 April 2027, the end of the month six months ahead' => ['2027-04-30', true],
+    '1 May 2027' => ['2027-05-01', false],
 ]);
 
 test('the publish date explains what went wrong', function () {
@@ -106,16 +104,21 @@ test('the publish date explains what went wrong', function () {
         ->assertHasActionErrors(['issue_date' => "Can't be before April 1, 2026."]);
 
     Livewire::test(ManageNewsletters::class)
-        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => '2026-11-02'])
-        ->assertHasActionErrors(['issue_date' => "Can't be in the future. Tick Schedule post to choose a later date."]);
-
-    Livewire::test(ManageNewsletters::class)
-        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => '2027-05-01', 'schedule_post' => true])
+        ->callAction('create', data: ['title' => staffRunToken().' Issue', 'issue_date' => '2027-05-01'])
         ->assertHasActionErrors(['issue_date' => "Can't be after April 30, 2027."]);
 });
 
-test('a scheduled newsletter opens with Schedule post ticked, and unticking it refuses its future date', function () {
+// Burchfield B52: no Schedule post box. A future date shows a Scheduled
+// notice under the date, where the box used to be, and nothing else does.
+test('a future publish date shows the Scheduled notice', function () {
     $this->actingAs(staffUser(UserRole::Secretary));
+
+    Livewire::test(ManageNewsletters::class)
+        ->mountAction('create')
+        ->fillForm(['issue_date' => '2026-12-01'])
+        ->assertMountedActionModalSee('This issue will appear on the website on December 1, 2026.')
+        ->fillForm(['issue_date' => '2026-10-26'])
+        ->assertMountedActionModalDontSee('This issue will appear on the website');
 
     $newsletter = Newsletter::create([
         'title' => staffRunToken().' Winter issue',
@@ -127,13 +130,9 @@ test('a scheduled newsletter opens with Schedule post ticked, and unticking it r
 
     Livewire::test(ManageNewsletters::class)
         ->mountAction(TestAction::make(EditAction::class)->table($newsletter))
-        ->assertActionDataSet(['schedule_post' => true])
+        ->assertMountedActionModalSee('This issue will appear on the website on December 1, 2026.')
         ->callMountedAction()
         ->assertHasNoActionErrors();
-
-    Livewire::test(ManageNewsletters::class)
-        ->callAction(TestAction::make(EditAction::class)->table($newsletter), data: ['schedule_post' => false])
-        ->assertHasActionErrors(['issue_date']);
 
     expect($newsletter->fresh()->issue_date->toDateString())->toBe('2026-12-01');
 });

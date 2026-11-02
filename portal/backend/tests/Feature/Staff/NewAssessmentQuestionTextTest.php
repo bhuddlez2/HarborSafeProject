@@ -24,7 +24,7 @@ afterEach(fn () => cleanupStaffData());
 const ASKED_WITH_JOHN = [
     1 => 'Has John ever used a weapon against you or threatened you with a weapon?',
     2 => 'Has John threatened to kill you or your children?',
-    3 => 'Has John ever tried to choke (strangle) you?',
+    3 => 'Has John ever tried to choke or strangle you?',
     4 => 'Does John have a gun or can John get one easily?',
     5 => 'Is there an active order of protection against John?',
     6 => 'Is John a sex offender?',
@@ -47,7 +47,7 @@ function questionTextFullForm(array $overrides = []): array
     return [
         'VictimFirstName' => 'Review',
         'VictimLastName' => 'Check',
-        'VictimDOB' => '1990-01-01',
+        'VictimDOB' => '01/01/1990',
         'VictimSex' => 'F',
         'VictimSafePhoneNumber' => '423-555-0150',
         'OffenderFirstName' => 'John',

@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Filament\Assessments\AssessmentInputs;
 use App\Filament\Assessments\RelationshipFields;
 use App\Filament\PoliceAdminNavigation;
-use App\Filament\Forms\RequirementMarkers;
 use App\Models\AssessmentAnswers;
 use App\Models\LawEnforcementAssessment;
 use App\Enums\FollowUpKind;
@@ -17,7 +16,6 @@ use App\Support\AssessmentDraft;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -52,7 +50,7 @@ class NewAssessment extends Page
     public const QUESTIONS = [
         1 => 'Have they ever used a weapon against you or threatened you with a weapon?',
         2 => 'Have they threatened to kill you or your children?',
-        3 => 'Have they ever tried to choke (strangle) you?',
+        3 => 'Have they ever tried to choke or strangle you?',
         4 => 'Do they have a gun or can they get one easily?',
         5 => 'Do they have an active order of protection against them?',
         6 => 'Are they a sex offender?',
@@ -83,7 +81,7 @@ class NewAssessment extends Page
         return match ($id) {
             1 => "Has {$offender} ever used a weapon against you or threatened you with a weapon?",
             2 => "Has {$offender} threatened to kill you or your children?",
-            3 => "Has {$offender} ever tried to choke (strangle) you?",
+            3 => "Has {$offender} ever tried to choke or strangle you?",
             4 => "Does {$offender} have a gun or can {$offender} get one easily?",
             5 => "Is there an active order of protection against {$offender}?",
             6 => "Is {$offender} a sex offender?",
@@ -197,6 +195,13 @@ class NewAssessment extends Page
                         // the root's own bindings, hence the guard.
                         'x-bind:class' => '($refs.stepsData ? getStepIndex(step) : 0) === '.self::QUESTIONS_STEP_INDEX
                             ." ? 'hs-lap-questions pt-8 pb-36 md:pt-10 md:pb-14' : 'py-8 md:py-14'",
+                        // Each new step starts at the top with focus on its heading, so the next
+                        // Tab starts on that step (Filament scrolls to its step bar, hidden here).
+                        'x-init' => "\$watch('step', () => \$nextTick(() => {"
+                            ." window.scrollTo({ top: 0 });"
+                            ." const heading = \$refs['step-' + step]?.querySelector('h1, h2');"
+                            ." if (heading) { heading.tabIndex = -1; heading.style.outline = 'none'; heading.focus({ preventScroll: true }); }"
+                            .' }))',
                     ])
                     ->previousAction(fn (Action $action): Action => $action
                         ->label('Back')
@@ -250,7 +255,7 @@ class NewAssessment extends Page
 
     protected function officerStep(): Step
     {
-        return Step::make('Submitting officer')
+        return Step::make('Submitting Officer')
             ->schema([
                 View::make('filament.pages.new-assessment.officer')
                     ->viewData(fn (): array => ['officer' => Filament::auth()->user()->officerIdentity()]),
@@ -259,17 +264,18 @@ class NewAssessment extends Page
 
     protected function victimStep(): Step
     {
-        return Step::make('About the victim')
+        return Step::make('About the Victim')
             ->schema([
-                $this->heading('About the victim'),
+                $this->heading('About the Victim'),
                 Grid::make(2)->schema([
                     $this->nameInput('VictimFirstName', 'First name'),
                     $this->nameInput('VictimLastName', 'Last name'),
                 ]),
+                // Wraps (theme.css), so on a narrow phone Sex drops under the date rather than off the side.
                 Flex::make([
                     $this->dateOfBirthInput('VictimDOB', 'Date of birth', required: true),
                     $this->sexSelect('VictimSex'),
-                ]),
+                ])->extraAttributes(['class' => 'hs-lap-dob-sex']),
                 // Required so the organisation can follow up with the victim.
                 // Confirmed as safe on the review (reviewStep()).
                 AssessmentInputs::safePhone('Safe phone number'),
@@ -278,17 +284,18 @@ class NewAssessment extends Page
 
     protected function offenderStep(): Step
     {
-        return Step::make('About the offender')
+        return Step::make('About the Offender')
             ->schema([
-                $this->heading('About the offender'),
+                $this->heading('About the Offender'),
                 Grid::make(2)->schema([
                     $this->nameInput('OffenderFirstName', 'First name'),
                     $this->nameInput('OffenderLastName', 'Last name'),
                 ]),
+                // Wraps (theme.css), so on a narrow phone Sex drops under the date rather than off the side.
                 Flex::make([
-                    $this->dateOfBirthInput('OffenderDOB', RequirementMarkers::optionalLabel('Date of birth'), required: false),
+                    $this->dateOfBirthInput('OffenderDOB', 'Date of birth', required: false),
                     $this->sexSelect('OffenderSex'),
-                ]),
+                ])->extraAttributes(['class' => 'hs-lap-dob-sex']),
                 // The shared dropdown + "Please specify" for Other.
                 ...RelationshipFields::make(),
             ]);
@@ -369,10 +376,11 @@ class NewAssessment extends Page
         return AssessmentInputs::name($name, $label);
     }
 
-    protected function dateOfBirthInput(string $name, string | Htmlable $label, bool $required): DatePicker
+    protected function dateOfBirthInput(string $name, string | Htmlable $label, bool $required): TextInput
     {
         return AssessmentInputs::dateOfBirth($name, $label, $required)
-            ->grow(false);
+            ->grow(false)
+            ->extraAttributes(['class' => 'hs-lap-dob']);
     }
 
     protected function sexSelect(string $name): Select

@@ -53,7 +53,7 @@ test('admins and secretaries download a request, and each download is recorded',
         ->get(route('staff.resource-requests.pdf', $request->FormID))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/pdf')
-        ->assertHeader('Content-Disposition', 'attachment; filename="resource-request-'.substr($request->FormID, 0, 8).'.pdf"');
+        ->assertHeader('Content-Disposition', 'attachment; filename="resource-request-'.substr($request->FormID, -8).'.pdf"');
 
     $rows = requestAccess($request);
 

@@ -19,7 +19,7 @@ use Livewire\Livewire;
 No duplicates or sound-alikes on the lists staff add to (Burchfield B55/B60,
 2026-10-28; App\Rules\DistinctListName): event categories, services, resource
 types, counties and agencies. Every name here starts with the run's
-"peststaff..." token, so it can't clash with a real row and is swept up.
+"Peststaff..." token, so it can't clash with a real row and is swept up.
 */
 
 afterEach(function () {

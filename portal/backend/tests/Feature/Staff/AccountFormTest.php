@@ -124,6 +124,26 @@ test('a created account shows the pop-up and leaves an empty form behind it', fu
     ],
 ]);
 
+test('a name box capitalises each word when left, and the account is saved that way', function () {
+    $this->actingAs(staffUser(UserRole::Admin));
+
+    Livewire::test(CreateStaffAccount::class)
+        ->fillForm(accountFormData(['first_name' => 'mary ann', 'last_name' => 'smith-jones']))
+        ->assertFormSet(['first_name' => 'Mary Ann', 'last_name' => 'Smith-Jones'])
+        ->call('create')
+        ->assertHasNoErrors();
+
+    expect(User::where('email', staffRunToken().'-form@pest.test')->value('name'))->toBe('Mary Ann Smith-Jones');
+});
+
+test('a saved account name is capitalised even when it skips the form', function () {
+    $user = staffUser(UserRole::Secretary);
+    $user->update(['first_name' => 'jane', 'last_name' => 'doe']);
+
+    expect($user->fresh()->only(['first_name', 'last_name', 'name']))
+        ->toBe(['first_name' => 'Jane', 'last_name' => 'Doe', 'name' => 'Jane Doe']);
+});
+
 test('a failed save shows no pop-up', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 

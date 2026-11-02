@@ -25,7 +25,7 @@ class Login extends BaseLogin
 
     public function getHeading(): string | Htmlable | null
     {
-        return 'Sign in';
+        return 'Sign In';
     }
 
     // Put a subheading under the main heading, if desired.

@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /*
-"Download PDF with log" on a form's follow-up page (Burchfield B43,
+"Download PDF with Log" on a form's follow-up page (Burchfield B43,
 2026-10-28): the form plus its follow-up Log, for when Harbor Safe has to
 provide the record with its history. The plain "Download PDF" stays the
 form only; this is the one export that carries follow-up notes.
@@ -36,9 +36,9 @@ class FollowUpPdfController extends Controller
         AssessmentAccessLog::record($form, AssessmentAccess::DownloadWithLog, $request->user());
 
         $name = match (true) {
-            $form instanceof LawEnforcementAssessment => 'assessment-'.substr($form->DocumentID, 0, 8),
-            $form instanceof PrivateAssessment => 'civilian-assessment-'.substr($form->DocumentID, 0, 8),
-            default => 'resource-request-'.substr($form->FormID, 0, 8),
+            $form instanceof LawEnforcementAssessment => 'assessment-'.substr($form->DocumentID, -8),
+            $form instanceof PrivateAssessment => 'civilian-assessment-'.substr($form->DocumentID, -8),
+            default => 'resource-request-'.substr($form->FormID, -8),
         };
 
         return response($bytes, 200, [

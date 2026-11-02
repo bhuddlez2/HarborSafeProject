@@ -60,7 +60,7 @@ test('the submitting officer, their police admin and an admin get the PDF', func
         ->get(route('staff.assessments.pdf', $world->assessmentA->DocumentID))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/pdf')
-        ->assertDownload('assessment-'.substr($world->assessmentA->DocumentID, 0, 8).'.pdf');
+        ->assertDownload('assessment-'.substr($world->assessmentA->DocumentID, -8).'.pdf');
 
     expect($response->getContent())->toStartWith('%PDF-');
 })->with(['officerA', 'policeAdminA', 'admin']);

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Agencies;
 
 use App\Enums\UserRole;
 use App\Filament\Resources\Agencies\Pages\ManageAgencies;
+use App\Filament\Tables\RecordCards;
 use App\Models\Agency;
 use App\Rules\DistinctListName;
 use App\Support\ListNames;
@@ -125,12 +126,13 @@ class AgencyResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Name')
             ->columns([
-                TextColumn::make('name')
+                RecordCards::title(TextColumn::make('name')
                     ->label('Agency')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()),
                 TextColumn::make('police_admins_count')
                     ->label('Police admins')
                     ->sortable(),

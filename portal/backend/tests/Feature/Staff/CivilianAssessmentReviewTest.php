@@ -56,14 +56,14 @@ test('the page offers no way to alter or delete a submission', function () {
     /*
     Rule 1: nobody may change a submitted assessment. And unlike the public
     feedback forms, there is no delete either - a danger assessment is a safety
-    record, not something to tidy up.
+    record, not something to tidy up. Log is read-only too (AssessmentLogTest).
     */
     $table = CivilianAssessmentResource::table(
         Filament\Tables\Table::make(new CivilianAssessmentsStub),
     );
 
     expect(collect($table->getRecordActions())->map(fn ($a) => $a->getName())->all())
-        ->toBe(['view'])
+        ->toBe(['changeLog', 'view'])
         ->and($table->getToolbarActions())->toBe([]);
 });
 

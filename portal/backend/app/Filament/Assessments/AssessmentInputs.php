@@ -2,11 +2,11 @@
 
 namespace App\Filament\Assessments;
 
-use App\Filament\Forms\DateOfBirthPicker;
+use App\Support\PersonName;
+use App\Filament\Forms\DateOfBirthInput;
 use App\Support\AssessmentFields;
 use App\Support\PhoneNumber;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
@@ -28,7 +28,7 @@ final class AssessmentInputs
 
     public static function name(string $name, string $label): TextInput
     {
-        return TextInput::make($name)
+        return PersonName::tidyOnBlur(TextInput::make($name))
             ->label($label)
             ->required()
             ->maxLength(50)
@@ -41,9 +41,9 @@ final class AssessmentInputs
     }
 
     // Victim's: required. Offender's: optional.
-    public static function dateOfBirth(string $name, string | Htmlable $label, bool $required): DatePicker
+    public static function dateOfBirth(string $name, string | Htmlable $label, bool $required): TextInput
     {
-        return DateOfBirthPicker::make($name, $label)->required($required);
+        return DateOfBirthInput::make($name, $label)->required($required);
     }
 
     public static function sex(string $name): Select

@@ -59,6 +59,11 @@ class PrivateAssessment extends BaseModel
         return ['VictimSafePhoneNumber'];
     }
 
+    protected function nameFields(): array
+    {
+        return LawEnforcementAssessment::NAME_FIELDS;
+    }
+
     public function uniqueIds(): array
     {
         return [$this->primaryKey];

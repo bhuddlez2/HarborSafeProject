@@ -3,7 +3,7 @@
 export const lethalityQuestions = [
   { id: 1,  text: "Have they ever used a weapon against you or threatened you with a weapon?" },
   { id: 2,  text: "Have they threatened to kill you or your children?" },
-  { id: 3,  text: "Have they ever tried to choke (strangle) you?" },
+  { id: 3,  text: "Have they ever tried to choke or strangle you?" },
   { id: 4,  text: "Do they have a gun or can they get one easily?" },
   { id: 5,  text: "Do they have an active order of protection against them?" },
   { id: 6,  text: "Are they a sex offender?" },
@@ -33,7 +33,7 @@ const personalTemplates = {
   2: ({ victim, offender }) =>
     `${offender ? `Has ${offender}` : "Have they"} threatened to kill ${victim ? `${victim} or ${victim}'s` : "you or your"} children?`,
   3: ({ victim, offender }) =>
-    `${offender ? `Has ${offender}` : "Have they"} ever tried to choke (strangle) ${victim ?? "you"}?`,
+    `${offender ? `Has ${offender}` : "Have they"} ever tried to choke or strangle ${victim ?? "you"}?`,
   4: ({ offender }) =>
     offender
       ? `Does ${offender} have a gun or can ${offender} get one easily?`

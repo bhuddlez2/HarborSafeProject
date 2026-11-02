@@ -23,6 +23,8 @@ class ResourceRequestStoreRequest extends FormRequest
         return true;
     }
 
+    public const MAX_RESOURCE_TYPES = 8;
+
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -32,6 +34,15 @@ class ResourceRequestStoreRequest extends FormRequest
             'SafePhoneNumber' => $this->normalizeText($this->input('SafePhoneNumber')),
             'Message'         => $this->normalizeText($this->input('Message')),
         ]);
+
+        // Every item is checked (distinct, exists) before the list's own
+        // max:8 fails, and distinct compares each item with every other: a
+        // 100,000-item list held the server for 30 seconds. One item past
+        // the limit is enough for max:8 to refuse it.
+        $types = $this->input('ResourceTypeIDs');
+        if (is_array($types) && count($types) > self::MAX_RESOURCE_TYPES) {
+            $this->merge(['ResourceTypeIDs' => array_slice($types, 0, self::MAX_RESOURCE_TYPES + 1)]);
+        }
     }
 
     public function rules(): array
@@ -56,7 +67,7 @@ class ResourceRequestStoreRequest extends FormRequest
             // A full 10-digit number, area code included (App\Support\PhoneNumber).
             'SafePhoneNumber' => ['required_without:EmailAddress', 'nullable', 'string', 'max:20', PhoneNumber::rule()],
 
-            'ResourceTypeIDs'   => ['nullable', 'array', 'max:8'],
+            'ResourceTypeIDs'   => ['nullable', 'array', 'max:'.self::MAX_RESOURCE_TYPES],
             'ResourceTypeIDs.*' => ['integer', 'distinct', 'exists:FeedbackPublic.resources,id'],
 
             'CountyID' => ['nullable', 'integer', 'exists:FeedbackPublic.counties,id'],
@@ -78,10 +89,12 @@ class ResourceRequestStoreRequest extends FormRequest
         });
     }
 
-    public static function normalizeText(?string $value): ?string
+    // Non-strings (a list or object sent where text belongs) are left for the
+    // `string` rule to refuse with a 422, rather than crashing here.
+    public static function normalizeText(mixed $value): mixed
     {
-        if ($value === null) {
-            return null;
+        if (! is_string($value)) {
+            return $value;
         }
 
         $trimmed = trim($value);

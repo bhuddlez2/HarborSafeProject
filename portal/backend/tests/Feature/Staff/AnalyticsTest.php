@@ -4,6 +4,7 @@ use App\Support\SensitiveData;
 use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
 use App\Enums\UserRole;
+use App\Filament\Analytics\AssessmentSections;
 use App\Filament\Clusters\Analytics\AnalyticsCluster;
 use App\Filament\Clusters\Analytics\Pages\CivilianAssessmentAnalytics;
 use App\Filament\Clusters\Analytics\Pages\FeedbackAnalytics;
@@ -23,7 +24,7 @@ use Livewire\Livewire;
 
 /*
 Analytics (team plan task 28): the counting, the date range and its buckets,
-the sex filter, and who may open which tab (the matrix itself is in
+the filters, and who may open which tab (the matrix itself is in
 PanelAccessTest).
 
 The suite runs against the shared local database, so the counting tests put
@@ -124,14 +125,41 @@ test('officer assessments are counted by Eastern day, with the agreed high-risk 
         ->and(end($stats['periods'])['value'])->toBe(1);
 });
 
-test('the sex filter needs the victim and narrows by the offender too', function () {
-    analyticsOfficerFixtures();
+test('each filter narrows on its own or with the others', function () {
+    // One: victim F, offender M, spouse. Two: F, F, other. Three: M, F, none.
+    $fixtures = analyticsOfficerFixtures();
+    $elsewhere = pestAgency('Analytics Elsewhere PD');
+    analyticsOfficerAssessment(pestAgencyMember(UserRole::LawEnforcement, $elsewhere), 'AnalyticsElsewhere', [2], '2003-03-10 17:00:00', [
+        'OffenderVictimRelationship' => 'spouse',
+    ]);
     $stats = app(AssessmentStats::class);
+    $march = analyticsMarch2003();
 
-    expect($stats->officer(analyticsMarch2003(), 'F')['total'])->toBe(2)
-        ->and($stats->officer(analyticsMarch2003(), 'F', 'F')['total'])->toBe(1)
-        ->and($stats->officer(analyticsMarch2003(), 'M', 'M')['total'])->toBe(0)
-        ->and($stats->officer(analyticsMarch2003(), 'M', 'M')['averageYes'])->toBeNull();
+    expect($stats->officer($march, 'F')['total'])->toBe(3)
+        ->and($stats->officer($march, 'F', 'F')['total'])->toBe(1)
+        ->and($stats->officer($march, offenderSex: 'F')['total'])->toBe(2)
+        ->and($stats->officer($march, 'M', 'M')['total'])->toBe(0)
+        ->and($stats->officer($march, 'M', 'M')['averageYes'])->toBeNull()
+        ->and($stats->officer($march, relationship: 'spouse')['total'])->toBe(2)
+        ->and($stats->officer($march, relationship: 'other')['total'])->toBe(1)
+        ->and($stats->officer($march, 'M', relationship: 'spouse')['total'])->toBe(0)
+        // By the submitter's current agency.
+        ->and($stats->officer($march, agency: $fixtures->agency->id)['total'])->toBe(3)
+        ->and($stats->officer($march, agency: $elsewhere->id)['total'])->toBe(1)
+        ->and($stats->officer($march, relationship: 'spouse', agency: $elsewhere->id)['perQuestion'][2])->toBe(1)
+        ->and($stats->officer($march, 'F', 'M', 'spouse', $fixtures->agency->id)['total'])->toBe(1);
+});
+
+test('a breakdown chart is left out while its own filter is set', function () {
+    $stats = app(AssessmentStats::class)->officer(analyticsMarch2003());
+    $titles = fn (array $filters): array => array_column(AssessmentSections::build($stats, analyticsMarch2003(), true, $filters)[0]['cards'], 'title');
+    $breakdowns = ['By Agency', 'Relationship to Victim', 'Victim Sex', 'Offender Sex'];
+
+    expect(array_intersect($breakdowns, $titles([])))->toHaveCount(4)
+        ->and(array_values(array_intersect($breakdowns, $titles(['victimSex' => 'F', 'offenderSex' => null, 'relationship' => null, 'agency' => null]))))
+        ->toBe(['By Agency', 'Relationship to Victim', 'Offender Sex'])
+        ->and(array_values(array_intersect($breakdowns, $titles(['victimSex' => null, 'offenderSex' => 'M', 'relationship' => 'spouse', 'agency' => 1]))))
+        ->toBe(['Victim Sex']);
 });
 
 test('civilian assessments count how many left contact details', function () {
@@ -311,31 +339,63 @@ test('the custom range needs a start on or before its end', function () {
         ->assertHasErrors(['customTo' => 'after_or_equal']);
 });
 
-test('the sex filter needs the victim, carries across tabs and can be reset', function () {
+test('every filter is optional, carries across tabs and can be reset', function () {
+    $this->actingAs(staffUser(UserRole::Admin));
+    $agency = pestAgency('Analytics Filter PD');
+
+    Livewire::test(OfficerAssessmentAnalytics::class)
+        ->assertSeeHtml('aria-controls="analytics-filters"')
+        ->assertSeeHtml('id="analytics-agency"')
+        ->set('draftRelationship', 'spouse')
+        ->call('applyFilters')
+        ->assertHasNoErrors()
+        ->assertSet('relationship', 'spouse')
+        ->assertSet('victimSex', null)
+        // Only what is set is listed.
+        ->assertSee('Relationship: Spouse')
+        ->assertDontSee('Victim Sex:')
+        ->set('draftVictimSex', 'F')
+        ->set('draftAgency', (string) $agency->id)
+        ->call('applyFilters')
+        ->assertSet('agency', $agency->id)
+        ->assertSee('Victim Sex: Female · Relationship: Spouse · Agency: '.$agency->name);
+
+    // Civilian assessments have no agency: no box, not in the summary, but
+    // still remembered for the Law-Enforcement tab.
+    Livewire::test(CivilianAssessmentAnalytics::class)
+        ->assertSet('relationship', 'spouse')
+        ->assertDontSeeHtml('id="analytics-agency"')
+        ->assertDontSee($agency->name)
+        ->set('draftOffenderSex', 'M')
+        ->call('applyFilters')
+        ->assertSee('Victim Sex: Female · Offender Sex: Male · Relationship: Spouse');
+
+    Livewire::test(OfficerAssessmentAnalytics::class)
+        ->assertSet('agency', $agency->id)
+        ->assertSet('offenderSex', 'M')
+        ->call('resetFilters')
+        ->assertSet('victimSex', null)
+        ->assertSet('offenderSex', null)
+        ->assertSet('relationship', null)
+        ->assertSet('agency', null)
+        ->assertDontSee('Victim Sex: Female');
+
+    // Feedback has nothing to filter by.
+    Livewire::test(FeedbackAnalytics::class)->assertDontSeeHtml('aria-controls="analytics-filters"');
+});
+
+test('a filter value not on its list is refused', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
     Livewire::test(OfficerAssessmentAnalytics::class)
-        ->assertSee('Filter by victim and offender sex')
-        ->call('applySexFilter')
-        ->assertHasErrors(['draftVictimSex' => 'required'])
-        ->set('draftVictimSex', 'F')
-        ->call('applySexFilter')
-        ->assertHasNoErrors()
-        ->assertSet('victimSex', 'F')
-        ->assertSet('offenderSex', null)
-        ->assertSee('Victim: Female · Offender: Any');
-
-    Livewire::test(CivilianAssessmentAnalytics::class)
-        ->assertSet('victimSex', 'F')
-        ->set('draftOffenderSex', 'M')
-        ->call('applySexFilter')
-        ->assertSee('Victim: Female · Offender: Male')
-        ->call('resetSexFilter')
+        ->set('draftVictimSex', 'X')
+        ->set('draftRelationship', 'neighbour')
+        ->set('draftAgency', '999999999')
+        ->call('applyFilters')
+        ->assertHasErrors(['draftVictimSex' => 'in', 'draftRelationship' => 'in', 'draftAgency' => 'in'])
         ->assertSet('victimSex', null)
-        ->assertDontSee('Victim: Female');
-
-    // Feedback has no sex to filter by.
-    Livewire::test(FeedbackAnalytics::class)->assertDontSee('Filter by victim and offender sex');
+        ->assertSet('relationship', null)
+        ->assertSet('agency', null);
 });
 
 test('the applied filter can only change through the page', function () {

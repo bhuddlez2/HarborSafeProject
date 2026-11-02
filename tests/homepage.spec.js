@@ -225,7 +225,8 @@ test.describe('About Page', () => {
 
     test('United Way partner is listed with link', async ({ page }) => {
         await page.goto('/about/');
-        await expect(page.getByRole('link', { name: /united way/i })).toBeVisible();
+        // the logo and the heading both link to the partner's site
+        await expect(page.getByRole('link', { name: /united way/i }).first()).toBeVisible();
     });
 
     test('Tennessee Coalition partner is listed with link', async ({ page }) => {
@@ -245,7 +246,7 @@ test.describe('About Page', () => {
 
     test('partner links open in new tab', async ({ page }) => {
         await page.goto('/about/');
-        const unitedWayLink = page.getByRole('link', { name: /united way/i });
+        const unitedWayLink = page.getByRole('link', { name: /united way/i }).first();
         await expect(unitedWayLink).toHaveAttribute('target', '_blank');
     });
 
@@ -359,15 +360,41 @@ test.describe('Resources Page', () => {
         await expect(page.getByText(/hope is not pretending/i)).toBeVisible();
     });
 
-    test('Adult Hope Scale heading is visible in Science of Hope', async ({ page }) => {
+    test('Take the Hope Test opens the Adult Hope Scale in a pop-up', async ({ page }) => {
         await page.goto('/resources/');
         await page.getByRole('button', { name: /science of hope/i }).click();
-        await expect(page.getByText('The Adult Hope Scale', { exact: true })).toBeVisible();
+        await page.getByRole('button', { name: /take the hope test/i }).first().click();
+        await expect(page.getByRole('dialog', { name: 'The Adult Hope Scale' })).toBeVisible();
     });
 
     test('Hope Scale calculate button is disabled until all answered', async ({ page }) => {
         await page.goto('/resources/');
         await page.getByRole('button', { name: /science of hope/i }).click();
+        await page.getByRole('button', { name: /take the hope test/i }).first().click();
+        await expect(page.getByRole('button', { name: /0 of 8 answered/i })).toBeDisabled();
+    });
+
+    test('Hope Scale answers survive closing and reopening the pop-up', async ({ page }) => {
+        await page.goto('/resources/');
+        await page.getByRole('button', { name: /science of hope/i }).click();
+        await page.getByRole('button', { name: /take the hope test/i }).first().click();
+        const dialog = page.getByRole('dialog', { name: 'The Adult Hope Scale' });
+        await dialog.getByRole('button', { name: '5, Slightly True' }).first().click();
+        await dialog.getByRole('button', { name: 'Close' }).click();
+        await page.getByRole('button', { name: /take the hope test/i }).last().click();
+        await expect(page.getByRole('button', { name: /1 of 8 answered/i })).toBeDisabled();
+    });
+
+    test('Hope Scale Retake clears the answers and takes focus back to question 1', async ({ page }) => {
+        await page.goto('/resources/');
+        await page.getByRole('button', { name: /science of hope/i }).click();
+        await page.getByRole('button', { name: /take the hope test/i }).first().click();
+        const dialog = page.getByRole('dialog', { name: 'The Adult Hope Scale' });
+        const fives = dialog.getByRole('button', { name: '5, Slightly True' });
+        for (let i = 0; i < 8; i++) await fives.nth(i).click();
+        await dialog.getByRole('button', { name: 'Calculate My Score' }).click();
+        await dialog.getByRole('button', { name: 'Retake Assessment' }).click();
+        await expect(dialog.getByRole('button', { name: '1, Definitely False' }).first()).toBeFocused();
         await expect(page.getByRole('button', { name: /0 of 8 answered/i })).toBeDisabled();
     });
 

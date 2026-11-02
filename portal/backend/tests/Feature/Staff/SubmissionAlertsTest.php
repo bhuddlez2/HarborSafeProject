@@ -8,6 +8,7 @@ use App\Livewire\StaffNotifications;
 use App\Models\StaffNotification;
 use App\Models\User;
 use App\Notifications\NewSubmissionAlert;
+use Filament\Actions\Action;
 use Illuminate\Notifications\ChannelManager;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Notification;
@@ -133,7 +134,7 @@ test('an officer\'s assessment alerts admins only, not the officer or their poli
             ...collect(range(1, 11))->mapWithKeys(fn (int $n): array => ["RiskIndicator{$n}" => $n === 1])->all(),
             'VictimFirstName' => 'Test',
             'VictimLastName' => 'Victim',
-            'VictimDOB' => '1990-01-01',
+            'VictimDOB' => '01/01/1990',
             'VictimSex' => 'F',
             'VictimSafePhoneNumber' => '(423)555-0100',
             'OffenderFirstName' => 'Test',
@@ -233,4 +234,18 @@ test('read alerts older than 12 hours are pruned, unread ones never', function (
     expect($prunable)->toContain($old->getKey())
         ->not->toContain($recent->getKey())
         ->not->toContain($unread->getKey());
+});
+
+test('each alert\'s View, and the pop-up\'s Mark All as Read and Clear, are buttons rather than text links', function () {
+    $admin = staffUser(UserRole::Admin);
+    $view = (new NewSubmissionAlert(NewSubmission::CivilianAssessment))->toDatabase($admin)['actions'][0];
+
+    expect([$view['label'], $view['view']])->toBe(['View', Action::BUTTON_VIEW]);
+
+    $this->actingAs($admin);
+    $bell = Livewire::test(StaffNotifications::class)->instance();
+    $markAll = $bell->markAllNotificationsAsReadAction();
+
+    expect([$markAll->getLabel(), $markAll->getView()])->toBe(['Mark All as Read', Action::BUTTON_VIEW])
+        ->and($bell->clearNotificationsAction()->getView())->toBe(Action::BUTTON_VIEW);
 });

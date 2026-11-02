@@ -59,7 +59,8 @@ test('tables show stored UTC times in Eastern', function () {
     $this->actingAs($w->officer);
 
     Livewire::test(ListLawEnforcementAssessments::class)
-        ->assertTableColumnFormattedStateSet('DateCreated', 'Mar 9, 2026 11:00 pm', $w->assessment);
+        ->assertTableColumnFormattedStateSet('DateCreated', 'Mar 9, 2026', $w->assessment)
+        ->assertTableColumnHasDescription('DateCreated', '11:00 pm', $w->assessment);
 });
 
 test('date filters count days in Eastern, not UTC', function () {

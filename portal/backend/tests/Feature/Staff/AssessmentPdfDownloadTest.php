@@ -74,7 +74,7 @@ function pdfDownloadFilename(LawEnforcementAssessment | PrivateAssessment $recor
 {
     $prefix = $record instanceof PrivateAssessment ? 'civilian-assessment-' : 'assessment-';
 
-    return $prefix.substr($record->DocumentID, 0, 8).'.pdf';
+    return $prefix.substr($record->DocumentID, -8).'.pdf';
 }
 
 // Every later log write throws, the way a lost database connection would.

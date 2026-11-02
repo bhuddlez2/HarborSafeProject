@@ -278,8 +278,8 @@ test('the newsletter Create pop-up saves only from its last step, with no "creat
         ->and($action->getModalFooterActions())->toBe([])
         ->and($action->canCreateAnother())->toBeFalse();
 
-    $page->assertMountedActionModalSee(['Publish Date', 'Schedule post', '500 Character Limit'])
-        ->assertMountedActionModalDontSee(['create another', 'A line about what is in this issue.']);
+    $page->assertMountedActionModalSee(['Publish Date', '500 Character Limit'])
+        ->assertMountedActionModalDontSee(['create another', 'A line about what is in this issue.', 'Schedule post']);
 });
 
 // Burchfield B53: on the website an issue is its PDF, so none is saved

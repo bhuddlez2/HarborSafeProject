@@ -49,6 +49,11 @@ class SubmitterInfo extends BaseModel
         return ['SubmitterPhoneNumber'];
     }
 
+    protected function nameFields(): array
+    {
+        return ['SubmitterFirstName', 'SubmitterLastName'];
+    }
+
     public function uniqueIds(): array
     {
         return ['SubmissionID'];

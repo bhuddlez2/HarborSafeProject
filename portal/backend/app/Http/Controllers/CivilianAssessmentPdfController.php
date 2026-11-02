@@ -31,7 +31,7 @@ class CivilianAssessmentPdfController extends Controller
         // Recorded once the file exists, as for law-enforcement downloads.
         AssessmentAccessLog::record($record, AssessmentAccess::Download, $request->user());
 
-        $filename = 'civilian-assessment-' . substr($record->DocumentID, 0, 8) . '.pdf';
+        $filename = 'civilian-assessment-' . substr($record->DocumentID, -8) . '.pdf';
 
         return response($bytes, 200, [
             'Content-Type'        => 'application/pdf',

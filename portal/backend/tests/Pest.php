@@ -175,7 +175,9 @@ seeded *@harborsafe.test accounts.
 // rather than on the per-run token, so a run that dies before afterEach - a
 // PHP fatal kills the process outright - does not leave rows behind forever.
 // It also means these tests must not be run in parallel against one database.
-const STAFF_TEST_PREFIX = 'peststaff';
+// Capitalised because saved names are (App\Support\PersonName), and encrypted
+// names are matched on this prefix exactly, in PHP.
+const STAFF_TEST_PREFIX = 'Peststaff';
 
 function staffRunToken(): string
 {

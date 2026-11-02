@@ -117,7 +117,7 @@ export const legalCategory = {
         {
           paragraphs: [
             "You have the right to a meaningful role in the criminal or juvenile justice process, to be treated with dignity and respect, to fair and impartial treatment, and to reasonable protection from the offender.",
-            "Though many rights are automatic, you may need to 'tell' someone you want to receive them. Some rights must be specifically requested. One way to request your rights is to contact the District Attorney's office (423-472-2179). Upon your request, these entities may assert your rights in court.",
+            "Though many rights are automatic, you may need to 'tell' someone you want to receive them. Some rights must be specifically requested. One way to request your rights is to contact the District Attorney's office at 423-472-2179. Upon your request, these entities may assert your rights in court.",
             "All services and activities provided by local and federal government agencies must be in compliance with federal nondiscrimination laws. No person shall, on the basis of race, color, national origin (including limited English proficiency), disability, religion, sex, gender identity, sexual orientation, or age, be excluded from participation in, be denied the benefits of, or be otherwise subjected to discrimination under any of our programs.",
           ],
         },

@@ -5,6 +5,7 @@ namespace App\Filament\Assessments;
 use App\Enums\AssessmentAccess;
 use App\Models\AssessmentAccessLog;
 use App\Models\LawEnforcementAssessment;
+use App\Models\PrivateAssessment;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
@@ -21,7 +22,8 @@ Its history is a 'view_log' ("Viewed Log", 2026-10-28), through logHistory(),
 so checking the log doesn't read as opening the form - though it still
 shows names and each edit's old and new values, so it is still recorded:
 
-  - the per-row Log / Change log (ChangeHistory::action())
+  - the per-row Log / Change log (ChangeHistory::action()), including the
+    Log on Civilian assessments
   - an edit row's View on the Logs page (LogResource)
 
 Each calls log() from a hook Filament runs once, when the pop-up mounts:
@@ -60,9 +62,9 @@ final class AssessmentViews
         AssessmentAccessLog::record($record, AssessmentAccess::View, Filament::auth()->user());
     }
 
-    // One 'view_log' row: the record's history was opened. Fails closed, as
-    // log() does.
-    public static function logHistory(LawEnforcementAssessment $record): void
+    // One 'view_log' row: the record's history was opened (officer or
+    // civilian assessment). Fails closed, as log() does.
+    public static function logHistory(LawEnforcementAssessment | PrivateAssessment $record): void
     {
         AssessmentAccessLog::record($record, AssessmentAccess::ViewLog, Filament::auth()->user());
     }

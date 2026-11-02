@@ -29,11 +29,6 @@ class FeedbackAnalytics extends AnalyticsPage
         );
     }
 
-    public function description(): string
-    {
-        return 'Totals for the website’s feedback and resource request forms, plus forms entered by staff.';
-    }
-
     protected function sections(DateRange $range): array
     {
         $stats = app(FeedbackStats::class);
@@ -44,7 +39,7 @@ class FeedbackAnalytics extends AnalyticsPage
         $online = $total - $feedback['staff'];
 
         $feedbackSection = [
-            'heading' => 'Service feedback',
+            'heading' => 'Service Feedback',
             'tiles' => [
                 ['label' => 'Feedback forms received', 'value' => number_format($total), 'sub' => $range->label()],
                 ['label' => 'Average rating', 'value' => $feedback['averageRating'] === null ? '—' : number_format($feedback['averageRating'], 1).' / 5', 'sub' => 'across every service'],
@@ -55,7 +50,7 @@ class FeedbackAnalytics extends AnalyticsPage
                     'note' => number_format($total).' '.str('form')->plural($total).' in this range',
                     'wide' => true,
                 ]),
-                Chart::horizontal('Average rating per service', array_map(fn (string $name, ?float $average): array => [
+                Chart::horizontal('Average Rating per Service', array_map(fn (string $name, ?float $average): array => [
                     'label' => $name,
                     'value' => $average ?? 0,
                     'display' => $average === null ? '—' : number_format($average, 1).' / 5',
@@ -63,15 +58,15 @@ class FeedbackAnalytics extends AnalyticsPage
                     'note' => 'Out of 5.',
                     'max' => 5,
                 ]),
-                Chart::horizontal('Forms per service', Chart::items($feedback['perService']), 'forms'),
-                Chart::vertical('Ratings given', array_map(fn (int $rating, int $n): array => [
+                Chart::horizontal('Forms per Service', Chart::items($feedback['perService']), 'forms'),
+                Chart::vertical('Ratings Given', array_map(fn (int $rating, int $n): array => [
                     'label' => (string) $rating,
                     'tip' => "Rating {$rating}",
                     'value' => $n,
                 ], array_keys($feedback['ratings']), $feedback['ratings']), 'forms', [
                     'note' => 'From 1 (lowest) to 5 (highest).',
                 ]),
-                Chart::horizontal('Where forms came from', [
+                Chart::horizontal('Where Forms Came From', [
                     ['label' => 'Website', 'value' => $online],
                     ['label' => 'Entered by staff', 'value' => $feedback['staff']],
                 ], 'forms'),
@@ -79,7 +74,7 @@ class FeedbackAnalytics extends AnalyticsPage
         ];
 
         $requestsSection = [
-            'heading' => 'Resource requests',
+            'heading' => 'Resource Requests',
             'tiles' => [
                 ['label' => 'Resource requests received', 'value' => number_format($requests['total']), 'sub' => $range->label()],
                 ['label' => 'Started by staff', 'value' => number_format($requests['staff']), 'sub' => 'from a follow-up page'],
@@ -90,8 +85,8 @@ class FeedbackAnalytics extends AnalyticsPage
                     'note' => number_format($requests['total']).' '.str('request')->plural($requests['total']).' in this range',
                     'wide' => true,
                 ]),
-                Chart::horizontal('By county', Chart::items($requests['perCounty']), 'requests'),
-                Chart::horizontal('By resource type', Chart::items($requests['perType']), 'requests', [
+                Chart::horizontal('By County', Chart::items($requests['perCounty']), 'requests'),
+                Chart::horizontal('By Resource Type', Chart::items($requests['perType']), 'requests', [
                     'footnote' => 'A request can name several types, so these can add up to more than the total.',
                 ]),
             ],

@@ -19,11 +19,11 @@ assessment (website/frontend app/assessment/AssessmentContent.js):
     it off with markAsRequired(false). Don't add that anywhere else.
   - OPTIONAL: faded grey "Optional" ghost text inside the box - the HTML
     placeholder, so it disappears as soon as someone types. Text inputs, text
-    areas and dropdowns get it automatically. A date has no box to hold ghost
-    text (browsers ignore placeholders on native date inputs), so where one
-    needs flagging - the offender's date of birth - the same grey "Optional"
-    goes after its label via optionalLabel(). File uploads and toggles get no
-    optional marker; a toggle always has a value.
+    areas and dropdowns get it automatically, the typed date of birth boxes
+    (DateOfBirthInput) included. A native date picker has no box to hold ghost
+    text (browsers ignore placeholders on it), so where one needs flagging the
+    same grey "Optional" goes after its label via optionalLabel(). File uploads
+    and toggles get no optional marker; a toggle always has a value.
 
 Registered once in AppServiceProvider as a default for every TextInput,
 Textarea and Select, so new fields follow it without anyone remembering to.

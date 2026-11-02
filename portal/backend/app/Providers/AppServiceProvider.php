@@ -9,6 +9,8 @@ use App\Policies\LawEnforcementAssessmentPolicy;
 use App\Rules\KeyboardCharactersOnly;
 use App\Support\SensitiveData;
 use BladeUI\Icons\Factory as IconFactory;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Support\View\Components\ModalComponent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -54,6 +56,12 @@ class AppServiceProvider extends ServiceProvider
         // event or edit. Every action modal and <x-filament::modal> falls back
         // to this unless it says otherwise.
         ModalComponent::closedByClickingAway(false);
+
+        // Button labels are title case: Filament's "Create & create another"
+        // reads "Create & Create Another" in every Create pop-up. Events
+        // replaces it with its own ("Create & Create Another Event").
+        CreateAction::configureUsing(fn (CreateAction $action): CreateAction => $action
+            ->createAnotherAction(fn (Action $another): Action => $another->label('Create & Create Another')));
 
         // The one password rule. Filament's Account page asks for
         // Password::default() itself, and the account forms and

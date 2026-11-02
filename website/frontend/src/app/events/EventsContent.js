@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Modal from "../components/Modal";
+import NewsletterPreview from "./NewsletterPreview";
 import {
   getEvents,
   getNewsletters,
@@ -12,7 +13,10 @@ import {
   formatIssueDate,
   formatFileSize,
 } from "../lib/content";
+import { downloadIcs, googleCalendarUrl, office365CalendarUrl } from "../lib/calendar";
 import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+import PhoneLink from "../components/PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 
 /*
 EventsContent: the Events & News page
@@ -77,28 +81,40 @@ const ICONS = {
   ),
 };
 
-// Renders the card/dialog image inside a fixed 16:9 frame
-function EventImage({ image, className = "" }) {
+/*
+The dialog's image, whole and at its own shape, so a tall flyer can be read in full:
+the dialog grows to fit it and scrolls once it reaches the screen's height
+*/
+function EventImage({ image }) {
   if (!image?.src) {
     return (
-      <div className={`relative aspect-video bg-purple-100 flex items-center justify-center text-brand ${className}`}>
+      <div className="relative aspect-video bg-purple-100 flex items-center justify-center text-brand">
         <span className="opacity-40 scale-[2]" aria-hidden="true">{ICONS.calendar}</span>
       </div>
     );
   }
 
   return (
-    <div className={`relative aspect-video bg-purple-100 overflow-hidden ${className}`}>
-      {/* fill + object-cover crops to the frame instead of distorting */}
-      <Image
-        src={image.src}
-        alt={image.alt ?? ""}
-        fill
-        sizes="(max-width: 768px) 100vw, 33vw"
-        className="object-cover"
-      />
-    </div>
+    <Image
+      src={image.src}
+      alt={image.alt ?? ""}
+      width={0}
+      height={0}
+      sizes="(max-width: 512px) 100vw, 512px"
+      className="w-full h-auto bg-purple-100"
+    />
   );
+}
+
+/*
+The part of the image staff chose for the card (EventResource's Image step): the
+image's x/y point stays at the same point of the frame, and zoom scales around it,
+so the chosen part stays in view however wide or tall the card's frame is
+*/
+function cardImageStyle(position) {
+  const { x = 50, y = 50, zoom = 1 } = position ?? {};
+  const point = `${x}% ${y}%`;
+  return { objectPosition: point, transformOrigin: point, transform: `scale(${zoom})` };
 }
 
 
@@ -134,13 +150,14 @@ function EventCard({ event, onOpen }) {
             fill
             sizes="(max-width: 768px) 100vw, 40vw"
             className="object-cover"
+            style={cardImageStyle(event.image.position)}
           />
         ) : (
           <span className="text-brand opacity-40 scale-[2.5]" aria-hidden="true">{ICONS.calendar}</span>
         )}
       </div>
 
-      <div className="flex-1 p-6 md:p-8 flex flex-col gap-4">
+      <div className="flex-1 min-w-0 wrap-anywhere p-6 md:p-8 flex flex-col gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <CategoryBadge category={event.category} />
           {event.isCancelled && (
@@ -207,10 +224,10 @@ function EventCard({ event, onOpen }) {
 
 function EventModal({ event, onClose }) {
   return (
-    <Modal title={event.title} subtitle={event.category} onClose={onClose}>
+    <Modal title={event.title} centered onClose={onClose}>
       {event.image && <EventImage image={event.image} />}
 
-      <div className="p-6 flex flex-col gap-5">
+      <div className="p-6 flex flex-col gap-5 wrap-anywhere">
 
         {event.isCancelled && (
           <p className="text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
@@ -222,12 +239,23 @@ function EventModal({ event, onClose }) {
         <dl className="flex flex-col gap-3 text-sm">
           <div className="flex items-start gap-3">
             <dt className="text-brand shrink-0 mt-0.5" aria-hidden="true">{ICONS.clock}</dt>
-            <dd className="text-gray-700">
-              <span className="block font-semibold text-gray-900">{formatEventDate(event.startsAt)}</span>
-              <span>{formatEventTimeRange(event)} Eastern</span>
-              {event.recurrence && <span className="block text-gray-500 mt-1">{event.recurrence}</span>}
+            {/* event type right-aligned opposite the date; ml-auto keeps it right if it wraps on a phone */}
+            <dd className="flex-1 flex flex-wrap items-start justify-between gap-2 text-gray-700">
+              <span>
+                <span className="block font-semibold text-gray-900">{formatEventDate(event.startsAt)}</span>
+                <span>{event.allDay ? formatEventTimeRange(event) : `${formatEventTimeRange(event)} Eastern`}</span>
+              </span>
+              {event.category && <span className="ml-auto"><CategoryBadge category={event.category} /></span>}
             </dd>
           </div>
+
+          {/* recurrence on its own row with the repeat icon, matching the card */}
+          {event.recurrence && (
+            <div className="flex items-start gap-3">
+              <dt className="text-brand shrink-0 mt-0.5" aria-hidden="true">{ICONS.repeat}</dt>
+              <dd className="text-gray-700">{event.recurrence}</dd>
+            </div>
+          )}
 
           {event.location && (
             <div className="flex items-start gap-3">
@@ -270,8 +298,92 @@ function EventModal({ event, onClose }) {
             </p>
           </div>
         )}
+
+        {/* Add to Calendar (B22), only while the event is still ahead and going ahead */}
+        {!event.isCancelled && !event.isPast && <AddToCalendar event={event} />}
       </div>
     </Modal>
+  );
+}
+
+/*
+AddToCalendar: a button that opens the calendar choices inline below it rather
+than as a floating menu, so nothing is clipped by the dialog's scroll area.
+No Esc handling on purpose: Esc is the site's Safe Exit.
+*/
+function AddToCalendar({ event }) {
+  const [open, setOpen] = useState(false);
+  const optionsRef = useRef(null);
+  const pageUrl = `${window.location.origin}/events/`;
+
+  // Scrolls the dialog just far enough to show the whole list once it opens
+  useEffect(() => {
+    if (!open) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    optionsRef.current?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "instant" : "smooth" });
+  }, [open]);
+
+  /*
+  No Outlook.com link: tried and dropped, as signed in or not it opened an empty
+  calendar instead of the prefilled event, so personal Outlook users get the .ics
+  file, which every version of Outlook opens. Office 365 (work and school) works.
+  */
+  const webCalendars = [
+    { name: "Google Calendar", href: googleCalendarUrl(event, { pageUrl }) },
+    { name: "Office 365", href: office365CalendarUrl(event, { pageUrl }) },
+  ];
+
+  const itemClass =
+    "w-full flex items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-brand hover:bg-purple-50 transition-all";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        aria-expanded={open}
+        aria-controls="add-to-calendar-options"
+        className="w-full border-2 border-brand text-brand py-3 rounded-lg font-semibold hover:bg-brand hover:text-white transition-all
+        flex items-center justify-center gap-2"
+      >
+        <span className="[&>svg]:w-5 [&>svg]:h-5" aria-hidden="true">{ICONS.calendar}</span>
+        Add to Calendar
+        <span className={`transition-transform ${open ? "-rotate-90" : "rotate-90"}`} aria-hidden="true">
+          {ICONS.chevronRight}
+        </span>
+      </button>
+
+      {open && (
+        <div id="add-to-calendar-options" ref={optionsRef}>
+          <ul className="border border-gray-200 rounded-lg divide-y divide-gray-100 overflow-hidden">
+            {webCalendars.map(({ name, href }) => (
+              <li key={name}>
+                <a href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className={itemClass}>
+                  {name}<span className="sr-only"> (opens in new tab)</span>
+                  <span aria-hidden="true">{ICONS.external}</span>
+                </a>
+              </li>
+            ))}
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  downloadIcs(event);
+                  setOpen(false);
+                }}
+                className={itemClass}
+              >
+                Apple or other (.ics file)
+                <span className="[&>svg]:w-3.5 [&>svg]:h-3.5" aria-hidden="true">{ICONS.download}</span>
+              </button>
+            </li>
+          </ul>
+          <p className="mt-2 text-xs text-gray-500 text-center">
+            Google Calendar and Office 365 open in a new tab; the file opens in Apple Calendar and most other calendar apps.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -348,17 +460,22 @@ function EventsCarousel({ events, onOpen }) {
             {ICONS.chevronLeft}
           </button>
 
-          <div className="flex items-center gap-2">
+          {/* Each dot is a 32px button around the small dot it draws, so it's easy to tap (B1) */}
+          <div className="flex items-center">
             {events.map((event, i) => (
               <button
                 key={event.id}
                 onClick={() => jumpTo(i)}
                 aria-label={`Event ${i + 1} of ${count}`}
                 aria-current={i === index}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  i === index ? "bg-brand scale-125" : "bg-purple-200 hover:bg-purple-300"
-                }`}
-              />
+                className="group w-8 h-8 flex items-center justify-center"
+              >
+                <span
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${
+                    i === index ? "bg-brand scale-125" : "bg-purple-200 group-hover:bg-purple-300"
+                  }`}
+                />
+              </button>
             ))}
           </div>
 
@@ -378,12 +495,16 @@ function EventsCarousel({ events, onOpen }) {
 // ── Newsletters ───────────────────────────────────────────────────────────────
 
 /*
-Inline PDF embeds are poor on phones and worse with a screen reader;
-rather than being put into an embedded PDF viewer, newsletters are shown as
-a list of download links.
+Inline PDF embeds are poor on phones and worse with a screen reader, so each
+issue keeps its Download link; Preview beside it opens the page-by-page
+reader (NewsletterPreview), which draws pages as pictures
 */
 function NewsletterList({ newsletters }) {
+  const [previewIssue, setPreviewIssue] = useState(null);
+
   return (
+    <>
+    {previewIssue && <NewsletterPreview issue={previewIssue} onClose={() => setPreviewIssue(null)} />}
     <ul className="flex flex-col gap-4">
       {newsletters.map((issue) => {
         const size = formatFileSize(issue.file?.sizeBytes);
@@ -391,7 +512,7 @@ function NewsletterList({ newsletters }) {
         return (
           <li key={issue.id} className="border border-gray-200 rounded-xl p-5 hover:border-brand transition-all">
             <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex-1 min-w-[16rem]">
+              <div className="flex-1 min-w-[16rem] wrap-anywhere">
                 <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-1">
                   {formatIssueDate(issue.issueDate)}
                 </p>
@@ -401,17 +522,30 @@ function NewsletterList({ newsletters }) {
                 )}
               </div>
 
+              {/* side by side on a phone, stacked one over the other, the same width, from sm up */}
+              <div className="shrink-0 flex flex-wrap gap-3 sm:flex-col">
+              {issue.file?.url && (
+                <button
+                  type="button"
+                  onClick={() => setPreviewIssue(issue)}
+                  className="bg-white text-brand px-5 py-3 rounded-lg font-semibold border-2 border-brand hover:bg-brand hover:text-white transition-all"
+                  aria-label={`Preview ${issue.title}`}
+                >
+                  Preview
+                </button>
+              )}
               <a
                 href={issue.file?.url ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0 bg-brand text-white px-5 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-all
-                flex items-center gap-2"
+                flex items-center justify-center gap-2"
                 aria-label={`Download ${issue.title}${size ? `, PDF, ${size}` : ", PDF"}`}
               >
                 <span aria-hidden="true">{ICONS.download}</span>
                 Download
               </a>
+              </div>
             </div>
 
             <p className="text-xs text-gray-500 mt-3">
@@ -421,6 +555,7 @@ function NewsletterList({ newsletters }) {
         );
       })}
     </ul>
+    </>
   );
 }
 
@@ -450,7 +585,7 @@ function ErrorState({ onRetry }) {
       <h3 className="text-xl font-semibold text-gray-900 mb-3">We couldn&apos;t load this right now</h3>
       <p className="text-gray-600 leading-relaxed">
         Please try again in a few minutes. If you need help now, our crisis line is answered 24 hours a
-        day at <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>.
+        day at <PhoneLink number={CRISIS_CALL} className="text-brand font-semibold hover:underline" />.
       </p>
       {onRetry ? (
         <button
@@ -582,10 +717,7 @@ export default function EventsContent() {
   return (
     <main>
 
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Events &amp; News</h1>
         <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
           Upcoming events and past newsletters.

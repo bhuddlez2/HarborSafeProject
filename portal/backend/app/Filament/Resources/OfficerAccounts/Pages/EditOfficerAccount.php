@@ -12,6 +12,8 @@ class EditOfficerAccount extends EditRecord
 {
     protected static string $resource = OfficerAccountResource::class;
 
+    protected static ?string $title = 'Edit Officer';
+
     // No Delete button: accounts are deactivated, never deleted.
     protected function getHeaderActions(): array
     {

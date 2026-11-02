@@ -16,6 +16,7 @@ use Illuminate\Notifications\Notifiable;
 
 //FOR DB ERRORS
 use Illuminate\Database\Eloquent\Model;
+use App\Support\PersonName;
 use RuntimeException;
 
 #[Fillable(['name', 'first_name', 'last_name', 'email', 'password', 'role', 'is_active'])]
@@ -58,6 +59,10 @@ class User extends Authenticatable implements FilamentUser
     protected static function booted(): void
     {
         static::saving(function (User $user): void {
+            // Capitalised word by word, like every typed name (App\Support\PersonName).
+            $user->first_name = PersonName::capitalize($user->first_name);
+            $user->last_name = PersonName::capitalize($user->last_name);
+
             if (filled($user->first_name) || filled($user->last_name)) {
                 $user->name = trim($user->first_name.' '.$user->last_name);
             }

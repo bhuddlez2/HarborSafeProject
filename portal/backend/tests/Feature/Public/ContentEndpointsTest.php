@@ -20,7 +20,7 @@ website/frontend/src/app/lib/content.js and its consumers in the same commit.
 
 Reminder on cleanup: no RefreshDatabase, same as the rest of the suite. These
 tests write to the real Content database and sweep up afterwards by the
-`peststaff` prefix (cleanupStaffData()).
+`Peststaff` prefix (cleanupStaffData()).
 */
 
 afterEach(fn () => cleanupStaffData());
@@ -166,7 +166,10 @@ test('an event image is served as an absolute, reachable URL', function () {
     $event = collect($this->getJson('/api/public/events')->json('data'))
         ->firstWhere('title', staffRunToken().' With picture');
 
-    expect($event['image']['alt'])->toBe('A lighthouse at sunset')
+    expect(array_keys($event['image']))->toBe(['src', 'alt', 'position'])
+        ->and($event['image']['alt'])->toBe('A lighthouse at sunset')
+        // Never positioned: centred, no zoom.
+        ->and($event['image']['position'])->toEqual(['x' => 50, 'y' => 50, 'zoom' => 1])
         // Absolute: the website is served from a different origin.
         ->and($event['image']['src'])->toStartWith('http');
 
@@ -174,6 +177,22 @@ test('an event image is served as an absolute, reachable URL', function () {
     $this->get($event['image']['src'])
         ->assertOk()
         ->assertHeader('content-type', 'image/png');
+});
+
+test('an event image carries the position staff chose', function () {
+    Event::create([
+        'title' => staffRunToken().' Positioned',
+        'starts_at' => now()->addMonth(),
+        'image_file_id' => ContentFile::storeUpload(pestPng())->getKey(),
+        'image_alt' => 'A flyer',
+        'image_position' => ['x' => 20, 'y' => 0, 'zoom' => 1.5],
+        'is_published' => true,
+    ]);
+
+    $event = collect($this->getJson('/api/public/events')->json('data'))
+        ->firstWhere('title', staffRunToken().' Positioned');
+
+    expect($event['image']['position'])->toEqual(['x' => 20, 'y' => 0, 'zoom' => 1.5]);
 });
 
 test('events are ordered soonest first', function () {

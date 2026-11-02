@@ -43,7 +43,7 @@ function pa7WizardData(array $overrides = []): array
     return [
         'VictimFirstName' => 'Task',
         'VictimLastName' => 'Seven',
-        'VictimDOB' => '1990-01-01',
+        'VictimDOB' => '01/01/1990',
         'VictimSex' => 'F',
         'VictimSafePhoneNumber' => '423-555-0150',
         'OffenderFirstName' => 'Task',
@@ -157,7 +157,7 @@ test('a police admin with no agency can\'t open New assessment, and it isn\'t of
         ->assertDontSee('Start New Lethality Assessment');
 });
 
-test('the Submitting officer step shows "Police admin" for a police admin\'s badge, and the officer\'s real one', function () {
+test('the Submitting Officer step shows "Police admin" for a police admin\'s badge, and the officer\'s real one', function () {
     $w = pestTwoAgencies();
     $before = pa7AgentRows($w->policeAdminA, $w->officerA);
     $storedBadge = $w->policeAdminA->lawEnforcementAgent->badge_number;
@@ -197,7 +197,7 @@ test('the wizard is the same for officers and police admins: same steps, same st
     $officerSteps = $steps();
 
     expect($officerSteps)->toBe([
-        'Submitting officer', 'About the victim', 'About the offender',
+        'Submitting Officer', 'About the Victim', 'About the Offender',
         'Lethality Assessment', 'Questions', 'Review & Submit',
     ]);
 

@@ -84,12 +84,16 @@ final class AssessmentColumns
 
         $submitted = RecordCards::meta(TextColumn::make('DateCreated'))
             ->label('Submitted')
-            ->dateTime('M j, Y g:i a')
-            ->timezone(Timezones::DISPLAY)
             ->sortable();
 
+        // Assessment review keeps date and time on one line with the officer
+        // under them; the others put the time under the date (AS, B37).
         if ($withOfficer) {
-            $submitted->description(fn (LawEnforcementAssessment $record): string => 'by '.($record->submitter?->name ?? 'Unknown'));
+            $submitted->dateTime('M j, Y g:i a')
+                ->timezone(Timezones::DISPLAY)
+                ->description(fn (LawEnforcementAssessment $record): string => 'by '.($record->submitter?->name ?? 'Unknown'));
+        } else {
+            RecordCards::dateAndTime($submitted);
         }
 
         return [
@@ -99,9 +103,11 @@ final class AssessmentColumns
                 ->label('Victim')
                 ->formatStateUsing($fullName('VictimFirstName'))),
 
+            // Built from the record, not formatted: a civilian offender's last
+            // name may be missing (B29), and Filament skips formatting a null state.
             TextColumn::make('OffenderLastName')
                 ->label('Offender')
-                ->formatStateUsing($fullName('OffenderFirstName'))
+                ->state(fn ($record): string => $fullName('OffenderFirstName')($record->OffenderLastName, $record))
                 ->description(fn ($record): ?string => OffenderRelationship::display(
                     $record->OffenderVictimRelationship,
                     $record->OffenderVictimRelationshipOther,
