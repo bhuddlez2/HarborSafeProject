@@ -225,7 +225,8 @@ test.describe('About Page', () => {
 
     test('United Way partner is listed with link', async ({ page }) => {
         await page.goto('/about/');
-        await expect(page.getByRole('link', { name: /united way/i })).toBeVisible();
+        // the logo and the heading both link to the partner's site
+        await expect(page.getByRole('link', { name: /united way/i }).first()).toBeVisible();
     });
 
     test('Tennessee Coalition partner is listed with link', async ({ page }) => {
@@ -245,7 +246,7 @@ test.describe('About Page', () => {
 
     test('partner links open in new tab', async ({ page }) => {
         await page.goto('/about/');
-        const unitedWayLink = page.getByRole('link', { name: /united way/i });
+        const unitedWayLink = page.getByRole('link', { name: /united way/i }).first();
         await expect(unitedWayLink).toHaveAttribute('target', '_blank');
     });
 
