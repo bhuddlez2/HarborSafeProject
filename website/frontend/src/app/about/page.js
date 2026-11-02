@@ -123,7 +123,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">United Way of the Ocoee Region</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://www.unitedwayocoee.org" target="_blank" rel="noopener noreferrer" aria-label="Visit United Way of the Ocoee Region website (opens in new tab)" className="hover:underline">United Way of the Ocoee Region</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   United Way supports HSHAC through funding, volunteer networks, and community
                   connections. United Way of the Ocoee Region mobilizes communities to address
@@ -148,7 +148,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://tncoalition.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Tennessee Coalition to End Domestic & Sexual Violence website (opens in new tab)" className="hover:underline">Tennessee Coalition to End Domestic &amp; Sexual Violence</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Tennessee Coalition provides statewide advocacy, training, and resources 
                   that strengthen the capacity of local programs like HSHAC to serve survivors with best-practice, trauma-informed approaches.
@@ -170,7 +170,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">Legal Aid of East Tennessee</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://www.laet.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Legal Aid of East Tennessee website (opens in new tab)" className="hover:underline">Legal Aid of East Tennessee</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   Legal Aid of East Tennessee provides free civil legal services to low-income individuals 
                   and families, helping them navigate complex legal issues and access justice. 
@@ -194,7 +194,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">The Caring Place</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://thecaringplaceonline.org" target="_blank" rel="noopener noreferrer" aria-label="Visit The Caring Place website (opens in new tab)" className="hover:underline">The Caring Place</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Caring Place provides comprehensive support services for survivors of domestic violence 
                   and sexual assault, including counseling, advocacy, and emergency shelter. 

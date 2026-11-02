@@ -94,7 +94,7 @@ export default function GetSupport() {
           with a border there so that edge shows
           */}
           <ServiceCarousel labels={["Emergency Shelter", "Crisis Counseling", "Support Groups", "Court Advocacy", "Community Education"]}>
-            <div data-highlight="shelter" className="service-card rounded-2xl p-6 w-[85%] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+            <div data-highlight="shelter" className="service-card rounded-2xl p-6 w-[85vw] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* home icon, feathericons.com */}
@@ -108,7 +108,7 @@ export default function GetSupport() {
               <RequestLink needs={["Emergency Shelter"]} />
             </div>
 
-            <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-[85%] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+            <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-[85vw] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* message-circle icon, feathericons.com */}
@@ -123,7 +123,7 @@ export default function GetSupport() {
             </div>
 
             {/* Support Groups */}
-            <div className="service-card rounded-2xl p-6 w-[85%] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+            <div className="service-card rounded-2xl p-6 w-[85vw] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* users icon, feathericons.com */}
@@ -138,7 +138,7 @@ export default function GetSupport() {
             </div>
 
             {/* Court Advocacy, highlighted along with Crisis Counseling by the home page's Counseling & Advocacy link */}
-            <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-[85%] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+            <div data-highlight="counseling" className="service-card rounded-2xl p-6 w-[85vw] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* briefcase icon, feathericons.com */}
@@ -154,7 +154,7 @@ export default function GetSupport() {
             </div>
 
             {/* Community Education */}
-            <div className="service-card rounded-2xl p-6 w-[85%] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
+            <div className="service-card rounded-2xl p-6 w-[85vw] shrink-0 snap-center max-md:border max-md:border-gray-200 md:w-[calc((100%_-_1rem)/2)] lg:w-[calc((100%_-_2rem)/3)] flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-8">
                 <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                   {/* book-open icon, feathericons.com */}
