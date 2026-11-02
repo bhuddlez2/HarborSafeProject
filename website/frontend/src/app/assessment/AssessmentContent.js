@@ -732,14 +732,8 @@ export default function AssessmentContent() {
           </p>
 
           <div className="flex flex-col gap-4">
-            {/* A report for oneself has nothing to show here, but keeps the way back to "Who is this report for?". */}
-            {forSelf ? (
-              <p>
-                <button type="button" onClick={() => setPhase("prescreen")} className={EDIT_BUTTON}>
-                  Change who this report is for
-                </button>
-              </p>
-            ) : (
+            {/* A report for oneself has nothing to show here. */}
+            {!forSelf && (
               <ReviewSection
                 title="This report"
                 editLabel="Edit who this report is for"

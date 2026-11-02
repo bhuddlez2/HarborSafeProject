@@ -437,6 +437,8 @@ test('the review shows every detail and every answer', async ({ page }) => {
 
   // A report for oneself: no "This report" box, and the victim box is plain "Victim", like "Offender".
   await expect(page.getByRole('heading', { name: 'This report' })).toHaveCount(0);
+  // ...and no way back to "Who is this report for?" from the review.
+  await expect(page.getByRole('button', { name: /who this report is for/ })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Victim', exact: true })).toBeVisible();
 
   for (const text of ['Jane Doe', 'Female', 'Apr 12, 1990', '(423)555-0100', 'John Roe', 'Male', 'Not given', 'Spouse']) {
@@ -529,10 +531,16 @@ test('changing one answer from the review comes straight back to it', async ({ p
 
 test('switching to a named report from the review asks for the name first', async ({ page }) => {
   const api = await stubAssessmentApi(page);
-  await reachReview(page);
-
-  await page.getByRole('button', { name: 'Change who this report is for' }).click();
+  await page.goto('/assessment/');
+  await acceptNotice(page);
   await page.getByRole('button', { name: 'Someone else' }).click();
+  await page.getByRole('button', { name: 'Yes', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fillVictim(page);
+  await fillOffender(page);
+  await answerAll(page);
+
+  await page.getByRole('button', { name: 'Edit who this report is for' }).click();
   await page.getByRole('button', { name: 'No', exact: true }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
 
@@ -544,7 +552,6 @@ test('switching to a named report from the review asks for the name first', asyn
   await expect(page.getByRole('heading', { name: 'Review & Submit' })).toBeVisible();
   await expect(page.getByText('Sam Friend')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'This report' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Change who this report is for' })).toHaveCount(0);
 
   await confirmSafePhone(page);
   await page.getByRole('button', { name: 'Submit assessment' }).click();
