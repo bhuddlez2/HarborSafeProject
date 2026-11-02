@@ -12,6 +12,7 @@ use App\Support\Timezones;
 use Closure;
 use Illuminate\Support\Carbon;
 use App\Models\Newsletter;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -289,12 +290,12 @@ class NewsletterResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return RecordCards::apply($table)
             ->searchPlaceholder('Search by Title')
             ->columns([
-                TextColumn::make('title')
+                RecordCards::title(TextColumn::make('title')
                     ->searchable()
-                    ->weight('semibold'),
+                    ->weight('semibold')),
 
                 TextColumn::make('issue_date')
                     ->label('Issue')

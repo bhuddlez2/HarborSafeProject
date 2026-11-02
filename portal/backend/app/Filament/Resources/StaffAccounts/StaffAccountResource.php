@@ -8,6 +8,7 @@ use App\Filament\Forms\AccountFormSections;
 use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\EditStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use App\Models\Agency;
 use App\Models\User;
@@ -265,22 +266,20 @@ class StaffAccountResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return RecordCards::apply($table)
             ->searchPlaceholder('Search by Name or Email')
             ->columns([
-                TextColumn::make('first_name')
-                    ->label('First name')
+                // "First Last", always rebuilt from the two (User::booted()).
+                RecordCards::title(TextColumn::make('name')
+                    ->label('Name')
                     ->searchable()
-                    ->sortable(),
-                TextColumn::make('last_name')
-                    ->label('Last name')
-                    ->searchable()
-                    ->sortable(),
+                    ->sortable(['last_name', 'first_name'])),
                 TextColumn::make('email')
+                    ->formatStateUsing(fn (?string $state) => RecordCards::email($state))
                     ->searchable(),
-                TableAlignment::symbol(TextColumn::make('role')
+                RecordCards::corner(TableAlignment::symbol(TextColumn::make('role')
                     ->badge()
-                    ->formatStateUsing(fn (UserRole $state): string => $state->label())),
+                    ->formatStateUsing(fn (UserRole $state): string => $state->label()))),
                 // Police admins and officers; a dash for everyone else.
                 TextColumn::make('lawEnforcementAgent.agency.name')
                     ->label('Agency')
@@ -291,11 +290,11 @@ class StaffAccountResource extends Resource
                     ->boolean()),
                 // A moment, not a calendar date: shown as the Eastern day it
                 // happened on (App\Support\Timezones).
-                TextColumn::make('created_at')
+                RecordCards::meta(TextColumn::make('created_at')
                     ->label('Created')
                     ->date()
                     ->timezone(Timezones::DISPLAY)
-                    ->sortable(),
+                    ->sortable()),
             ])
             ->filters([
                 SelectFilter::make('role')

@@ -14,8 +14,9 @@ use Illuminate\Support\HtmlString;
 Tables whose rows become cards on a phone, and whose row buttons stack in a
 compact column between a phone and a full-width monitor (Finishing Touches
 item 9): the three assessment tables (through AssessmentColumns), Service
-feedback, Resource requests, Follow-ups and Events. The layout is theme.css's
-"Record cards" section.
+feedback, Resource requests, Follow-ups, Events, Newsletters, Event
+categories, Form options, Agencies, Accounts and Staff Management. The layout
+is theme.css's "Record cards" section.
 
 apply() turns it on for a table. Each column then takes one role, which
 decides where it sits on the card:

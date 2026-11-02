@@ -9,8 +9,10 @@ use App\Filament\PoliceAdminNavigation;
 use App\Filament\Resources\OfficerAccounts\Pages\CreateOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\EditOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
+use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use App\Models\User;
+use App\Support\Timezones;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
@@ -162,18 +164,16 @@ class OfficerAccountResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return RecordCards::apply($table)
             ->searchPlaceholder('Search by Name, Email or Badge Number')
             ->columns([
-                TextColumn::make('first_name')
-                    ->label('First name')
+                // "First Last", always rebuilt from the two (User::booted()).
+                RecordCards::title(TextColumn::make('name')
+                    ->label('Name')
                     ->searchable()
-                    ->sortable(),
-                TextColumn::make('last_name')
-                    ->label('Last name')
-                    ->searchable()
-                    ->sortable(),
+                    ->sortable(['last_name', 'first_name'])),
                 TextColumn::make('email')
+                    ->formatStateUsing(fn (?string $state) => RecordCards::email($state))
                     ->searchable(),
                 TextColumn::make('lawEnforcementAgent.badge_number')
                     ->label('Badge number')
@@ -181,10 +181,11 @@ class OfficerAccountResource extends Resource
                 TableAlignment::symbol(IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()),
-                TextColumn::make('created_at')
+                RecordCards::meta(TextColumn::make('created_at')
                     ->label('Created')
                     ->date()
-                    ->sortable(),
+                    ->timezone(Timezones::DISPLAY)
+                    ->sortable()),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
@@ -193,8 +194,6 @@ class OfficerAccountResource extends Resource
                     ->falseLabel('Inactive'),
             ])
             ->defaultSort('last_name')
-            // Cards instead of a wide table on phones (team plan task 10).
-            ->stackedOnMobile()
             ->recordActions([
                 EditAction::make(),
             ]);

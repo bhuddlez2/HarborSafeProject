@@ -1120,7 +1120,7 @@ narrow phone Sex drops underneath instead of running off the side.
 
 /*
  * Record cards (App\Filament\Tables\RecordCards, Finishing Touches item 9):
- * the assessment tables, Service feedback, Resource requests and Follow-ups.
+ * every list table except Logs (see RecordCards for the list).
  * On a phone each row is a card:
  *
  *   [ ] Title                     [corner]     (checkbox only with bulk delete)
