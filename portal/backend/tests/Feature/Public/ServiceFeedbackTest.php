@@ -114,3 +114,21 @@ test('the restricted FeedbackPublic user cannot read back submissions', function
     expect(fn () => DB::connection('FeedbackPublic')->table('service_feedback')->count())
         ->toThrow(Illuminate\Database\QueryException::class);
 });
+
+// Security testing (2026-11-02): a list or object where text belongs was a
+// crash (500) in the trimming step; it is now refused like any bad input.
+test('a list or object instead of text is refused, not a crash', function () {
+    $serviceId = publicFormsMakeService();
+
+    $this->postJson('/api/public/service-feedback', [
+        'ServiceID' => $serviceId,
+        'Rating'    => 5,
+        'Comment'   => ['not', 'text'],
+    ])->assertStatus(422)->assertJsonValidationErrors('Comment');
+
+    $this->postJson('/api/public/service-feedback', [
+        'ServiceID' => [$serviceId],
+        'Rating'    => ['x' => 1],
+        'Comment'   => ['x' => 1],
+    ])->assertStatus(422)->assertJsonValidationErrors(['ServiceID', 'Rating', 'Comment']);
+});
