@@ -29,9 +29,16 @@
         above it, so the corners always look right.
     --}}
     @if($imageUrl)
-    {{-- The Image description field, as the website uses it (PublicEventResource: alt ?? ""). --}}
-    <img src="{{ $imageUrl }}" alt="{{ $imageAlt ?? '' }}"
-         style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px 12px 0 0; display: block;">
+    {{-- The Image description field, as the website uses it (PublicEventResource: alt ?? "").
+         Framed and positioned as the website's card draws it (Event::imagePosition()). --}}
+    @php
+        $position = $imagePosition ?? \App\Models\Event::DEFAULT_IMAGE_POSITION;
+        $point = "{$position['x']}% {$position['y']}%";
+    @endphp
+    <div style="position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px 12px 0 0; background: #ede3f5;">
+        <img src="{{ $imageUrl }}" alt="{{ $imageAlt ?? '' }}"
+             style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: {{ $point }}; transform-origin: {{ $point }}; transform: scale({{ $position['zoom'] }}); display: block;">
+    </div>
     @elseif($hasImage)
     <div style="height: 160px; background: #ede3f5; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: #5C0F8B; margin-bottom: 0;">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">

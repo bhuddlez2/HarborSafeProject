@@ -368,6 +368,7 @@ erDiagram
         string location_virtual_note
         string image_path
         string image_alt
+        json image_position
         string registration_url
         string registration_label
         bigint category_id FK

@@ -29,6 +29,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -231,8 +232,20 @@ class EventResource extends Resource
             Step::make('Image')
                 ->icon('heroicon-o-photo')
                 ->schema([
+                    // live so the position box below appears with the new image; a new image starts centred.
                     DatabaseFileUpload::forImage('image_file_id')
                         ->label('Event image')
+                        ->live()
+                        ->afterStateUpdated(fn (Set $set) => $set('image_position', null))
+                        ->columnSpanFull(),
+
+                    ViewField::make('image_position')
+                        ->label('Position on the event card')
+                        ->view('filament.forms.event-image-position')
+                        ->viewData(fn (Get $get): array => ['imageUrl' => self::previewImageUrl($get('image_file_id'))])
+                        ->helperText('Drag the image to choose what the event card shows, and zoom to enlarge it. View Details on the website always shows the whole image.')
+                        ->visible(fn (Get $get): bool => filled($get('image_file_id')))
+                        ->dehydrateStateUsing(fn (mixed $state): array => Event::normalizeImagePosition($state))
                         ->columnSpanFull(),
 
                     TextInput::make('image_alt')
@@ -322,6 +335,7 @@ class EventResource extends Resource
                                 'hasImage'            => filled($get('image_file_id')),
                                 'imageUrl'            => $imageUrl,
                                 'imageAlt'            => $get('image_alt'),
+                                'imagePosition'       => Event::normalizeImagePosition($get('image_position')),
                                 'recurrence'          => $get('recurrence'),
                                 'isPublished'         => (bool) $get('is_published'),
                                 'isCancelled'         => (bool) $get('is_cancelled'),

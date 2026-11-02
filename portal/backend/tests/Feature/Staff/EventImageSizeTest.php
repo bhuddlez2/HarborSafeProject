@@ -13,7 +13,8 @@ use Livewire\Livewire;
 
 /*
 The event image's minimum size (Burchfield B48, 2026-10-28): at least
-1200 x 675 pixels, so it stays sharp in the website's 16:9 frames. Checked on
+1080 x 566 pixels since 2026-10-30, low enough for every social media flyer size,
+so it stays sharp in the website's card frames. Checked on
 new uploads only; an older event keeps a smaller image when edited.
 */
 
@@ -44,12 +45,12 @@ test('an image smaller than the minimum is refused with a clear message', functi
     $this->actingAs(staffUser(UserRole::Secretary));
 
     pestCreateEventWithImage(pestEventImage($width, $height))
-        ->assertHasActionErrors(['image_file_id' => 'The image must be at least 1200 × 675 pixels.']);
+        ->assertHasActionErrors(['image_file_id' => 'The image must be at least 1080 × 566 pixels.']);
 
     expect(Event::where('title', 'like', staffRunToken().'%')->exists())->toBeFalse();
 })->with([
-    'too narrow' => [1199, 675],
-    'too short' => [1200, 674],
+    'too narrow' => [1079, 566],
+    'too short' => [1080, 565],
     'a thumbnail' => [300, 200],
 ]);
 
@@ -61,7 +62,10 @@ test('an image at or above the minimum is accepted', function (int $width, int $
 
     expect(Event::where('title', 'like', staffRunToken().'%')->firstOrFail()->image_file_id)->not->toBeNull();
 })->with([
-    'exactly the minimum' => [1200, 675],
+    'exactly the minimum' => [1080, 566],
+    'an Instagram portrait post' => [1080, 1350],
+    'an Instagram story' => [1080, 1920],
+    'a Facebook post' => [1200, 630],
     'a portrait phone photo' => [1440, 1920],
 ]);
 
@@ -72,7 +76,7 @@ test('the upload box says the minimum', function () {
         ->mountAction('create')
         ->assertFormFieldExists('image_file_id', fn (DatabaseFileUpload $field): bool => str_contains(
             (string) $field->getChildSchema($field::BELOW_CONTENT_SCHEMA_KEY)?->getComponents()[0]?->getContent(),
-            'JPEG, PNG or WebP, at least 1200 × 675 pixels, up to',
+            'JPEG, PNG or WebP, at least 1080 × 566 pixels, up to',
         ));
 });
 

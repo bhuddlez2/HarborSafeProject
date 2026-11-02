@@ -81,6 +81,7 @@ class Event extends BaseModel
         'image_path',
         'image_file_id',
         'image_alt',
+        'image_position',
         'registration_url',
         'registration_label',
         'category_id',
@@ -97,6 +98,7 @@ class Event extends BaseModel
     {
         return [
             'description' => 'array',
+            'image_position' => 'array',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'all_day' => 'boolean',
@@ -159,6 +161,37 @@ class Event extends BaseModel
         return filled($this->image_path)
             ? Storage::disk(config('filesystems.default'))->url($this->image_path)
             : null;
+    }
+
+    /*
+    Where the image sits in the website's card frame: x and y are the point of
+    the image (0-100 %) kept at the same point of the frame, and zoom scales it
+    around that point. The site applies them as object-position and
+    transform: scale(), so the chosen part stays in view whatever the frame's
+    shape. The View Details pop-up always shows the whole image.
+    */
+    public const DEFAULT_IMAGE_POSITION = ['x' => 50, 'y' => 50, 'zoom' => 1];
+
+    public const MAX_IMAGE_ZOOM = 3;
+
+    // Clamps whatever the form sends to the ranges above; anything unreadable is the default.
+    public static function normalizeImagePosition(mixed $position): array
+    {
+        $position = is_array($position) ? $position : [];
+        $number = fn (string $key, float $min, float $max): float => is_numeric($position[$key] ?? null)
+            ? min($max, max($min, (float) $position[$key]))
+            : self::DEFAULT_IMAGE_POSITION[$key];
+
+        return [
+            'x' => round($number('x', 0, 100), 1),
+            'y' => round($number('y', 0, 100), 1),
+            'zoom' => round($number('zoom', 1, self::MAX_IMAGE_ZOOM), 2),
+        ];
+    }
+
+    public function imagePosition(): array
+    {
+        return self::normalizeImagePosition($this->image_position);
     }
 
     public function hasRegistration(): bool

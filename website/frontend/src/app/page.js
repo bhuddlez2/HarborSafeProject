@@ -54,6 +54,7 @@ export default function Home() {
         <Modal
           title="Get Help Now"
           centered
+          prominent
           subtitle={<>Free, confidential support. You don&apos;t have to go through this alone.</>}
           onClose={() => setShowHelpModal(false)}
         >

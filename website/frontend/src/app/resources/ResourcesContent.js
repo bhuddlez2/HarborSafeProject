@@ -433,6 +433,7 @@ function ScienceOfHopeContent() {
       {testOpen && (
         <Modal
           title="The Adult Hope Scale"
+          centered
           subtitle="Read each sentence carefully and select the number that best describes you in most situations. There are no right or wrong answers."
           onClose={() => setTestOpen(false)}
         >

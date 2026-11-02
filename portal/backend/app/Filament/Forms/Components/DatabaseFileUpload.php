@@ -68,14 +68,16 @@ class DatabaseFileUpload extends FileUpload
     public const MAX_DOCUMENT_KB = 8192;
 
     /*
-    The smallest event image accepted, in pixels (Burchfield B48, 2026-10-28).
-    The website crops every event image to a 16:9 frame, the largest about
-    768 wide, so 1200 x 675 stays sharp on high-resolution screens too.
-    Checked on new uploads only: an older event keeps its image on edit.
+    The smallest event image accepted, in pixels (Burchfield B48, 2026-10-28;
+    lowered 2026-10-30 so social media flyers are accepted). 1080 wide takes
+    every Instagram size (square, portrait, story and its shortest landscape,
+    1080 x 566) and Facebook's 1200 x 630; the website's largest card frame
+    is about 768 wide. Checked on new uploads only: an older event keeps its
+    image on edit.
     */
-    public const MIN_IMAGE_WIDTH = 1200;
+    public const MIN_IMAGE_WIDTH = 1080;
 
-    public const MIN_IMAGE_HEIGHT = 675;
+    public const MIN_IMAGE_HEIGHT = 566;
 
     /*
     Where the bytes go and which route previews them. Content files by
