@@ -38,6 +38,7 @@ class NewSubmissionAlert extends Notification
             ->actions([
                 Action::make('view')
                     ->label('View')
+                    ->button()
                     ->url($this->url ?? $this->submission->url())
                     ->markAsRead(),
             ])

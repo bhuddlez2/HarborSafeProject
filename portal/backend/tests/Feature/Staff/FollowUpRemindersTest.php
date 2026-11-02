@@ -126,6 +126,7 @@ test('the reminder links to the form\'s follow-up page and names no one', functi
     expect($message['title'])->toBe('Still needs follow-up')
         ->and($message['body'])->toBe('A civilian assessment submitted 24 hours ago has no follow-up yet.')
         ->and($message['actions'][0]['url'])->toBe($waiting->url())
+        ->and($message['actions'][0]['view'])->toBe(Filament\Actions\Action::BUTTON_VIEW)
         ->and(json_encode($message))->not->toContain(STAFF_TEST_PREFIX);
 });
 

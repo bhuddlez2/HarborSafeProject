@@ -164,6 +164,22 @@
     --tw-ring-shadow: 0 0 #0000;
 }
 
+/*
+ * The bell's pop-up: its purple buttons (Mark All as Read, each alert's View
+ * or Open) in the brand purple with white text. Filament's own contrast pick
+ * makes them pale lilac with dark text.
+ */
+#database-notifications .fi-btn.fi-color-primary {
+    background-color: #5c0f8b;
+    color: #fff;
+}
+
+#database-notifications .fi-btn.fi-color-primary:hover,
+#database-notifications .fi-btn.fi-color-primary:focus-visible {
+    background-color: #45096a;
+    color: #fff;
+}
+
 .fi-sidebar .fi-user-menu-trigger:hover,
 .fi-sidebar .fi-user-menu-trigger:focus-visible {
     background-color: rgb(255 255 255 / 0.1);
