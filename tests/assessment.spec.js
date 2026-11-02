@@ -431,6 +431,35 @@ async function reachReview(page) {
   await answerAll(page);
 }
 
+test('name boxes capitalise each word when left, and the review shows them that way', async ({ page }) => {
+  const api = await stubAssessmentApi(page);
+  await page.goto('/assessment/');
+  await acceptNotice(page);
+  await page.getByRole('button', { name: 'Myself' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByLabel('First Name').fill('jane');
+  await page.getByLabel('Last Name').fill('smith-jones');
+  await page.getByLabel('Last Name').blur();
+  await expect(page.getByLabel('First Name')).toHaveValue('Jane');
+  await expect(page.getByLabel('Last Name')).toHaveValue('Smith-Jones');
+  await page.getByLabel('Date of Birth').fill('04/12/1990');
+  await page.getByLabel('Sex').selectOption('F');
+  await page.getByLabel(/phone number/i).fill('(423) 555-0100');
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await fillOffender(page, 'mcDonald');
+  await answerAll(page);
+
+  await expect(page.getByText('Jane Smith-Jones', { exact: true })).toBeVisible();
+  await expect(page.getByText('John McDonald', { exact: true })).toBeVisible();
+
+  await confirmSafePhone(page);
+  await page.getByRole('button', { name: 'Submit Assessment' }).click();
+  await expect(page.getByRole('heading', { name: 'Assessment Submitted' })).toBeVisible();
+  expect(api.submissions[0]).toMatchObject({ VictimFirstName: 'Jane', VictimLastName: 'Smith-Jones', OffenderLastName: 'McDonald' });
+});
+
 test('the review shows every detail and every answer', async ({ page }) => {
   await stubAssessmentApi(page);
   await reachReview(page);

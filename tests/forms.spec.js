@@ -51,6 +51,19 @@ test('Request Resources: optional fields are announced as optional, required one
   await expect(page.getByRole('textbox', { name: 'Safe phone number', exact: true })).toBeVisible();
 });
 
+test('Request Resources: a name box capitalises each word when left, keeping other capitals', async ({ page }) => {
+  await page.goto('/contact/');
+
+  const firstName = page.getByRole('textbox', { name: 'First name', exact: true });
+  const lastName = page.getByRole('textbox', { name: optionalName('Last name') });
+  await firstName.fill('mary ann');
+  await lastName.fill('mcDonald-smith');
+  await lastName.blur();
+
+  await expect(firstName).toHaveValue('Mary Ann');
+  await expect(lastName).toHaveValue('McDonald-Smith');
+});
+
 // Get Support's "Request this service" links: the named types are ticked by name
 // (any case, unknown names ignored), and the address is cleaned at once so
 // browser history shows only /contact/.

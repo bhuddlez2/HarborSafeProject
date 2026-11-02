@@ -30,7 +30,7 @@ import { lethalityQuestions, questionText } from "../lib/lethality-questions";
 import { submitAssessment, fetchRelationshipOptions } from "../lib/assessment";
 import {
   isValidEmail, isValidPhone, dateOfBirthError, formatDateInput, typedDateToIso, DOB_INPUT_MAX_LENGTH,
-  formatPhoneInput, PHONE_INPUT_MAX_LENGTH,
+  formatPhoneInput, PHONE_INPUT_MAX_LENGTH, capitalizeName,
 } from "../lib/validators";
 
 // pt-22.5 on the layout already clears the fixed navbar (5.625rem), so the grey
@@ -491,11 +491,13 @@ export default function AssessmentContent() {
             <div className="flex-1">
               <Label htmlFor="submitter-first-name" required>First Name</Label>
               <input id="submitter-first-name" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                onBlur={(e) => setFirstName(capitalizeName(e.target.value))}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
               <Label htmlFor="submitter-last-name" required>Last Name</Label>
               <input id="submitter-last-name" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
+                onBlur={(e) => setLastName(capitalizeName(e.target.value))}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
           </div>
@@ -543,11 +545,13 @@ export default function AssessmentContent() {
             <div className="flex-1">
               <Label htmlFor="victim-first-name" required>First Name</Label>
               <input id="victim-first-name" type="text" value={victimFirstName} onChange={(e) => setVictimFirstName(e.target.value)}
+                onBlur={(e) => setVictimFirstName(capitalizeName(e.target.value))}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
               <Label htmlFor="victim-last-name" required>Last Name</Label>
               <input id="victim-last-name" type="text" value={victimLastName} onChange={(e) => setVictimLastName(e.target.value)}
+                onBlur={(e) => setVictimLastName(capitalizeName(e.target.value))}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
           </div>
@@ -607,11 +611,13 @@ export default function AssessmentContent() {
             <div className="flex-1">
               <Label htmlFor="offender-first-name" required>First Name</Label>
               <input id="offender-first-name" type="text" value={offenderFirstName} onChange={(e) => setOffenderFirstName(e.target.value)}
+                onBlur={(e) => setOffenderFirstName(capitalizeName(e.target.value))}
                 maxLength={50} autoComplete="off" aria-required="true" className={INPUT} />
             </div>
             <div className="flex-1">
               <Label htmlFor="offender-last-name">Last Name</Label>
               <input id="offender-last-name" type="text" value={offenderLastName} onChange={(e) => setOffenderLastName(e.target.value)}
+                onBlur={(e) => setOffenderLastName(capitalizeName(e.target.value))}
                 placeholder={OPTIONAL_PLACEHOLDER} maxLength={50} autoComplete="off" className={INPUT} />
             </div>
           </div>

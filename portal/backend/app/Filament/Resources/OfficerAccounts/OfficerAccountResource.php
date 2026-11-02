@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OfficerAccounts;
 
+use App\Support\PersonName;
 use App\Enums\UserRole;
 use App\Filament\Forms\AccountFormSections;
 use App\Filament\PoliceAdminNavigation;
@@ -137,11 +138,11 @@ class OfficerAccountResource extends Resource
                         ->required()
                         ->maxLength(255)
                         ->unique(ignoreRecord: true),
-                    TextInput::make('first_name')
+                    PersonName::tidyOnBlur(TextInput::make('first_name'))
                         ->label('First name')
                         ->required()
                         ->maxLength(User::NAME_PART_MAX),
-                    TextInput::make('last_name')
+                    PersonName::tidyOnBlur(TextInput::make('last_name'))
                         ->label('Last name')
                         ->required()
                         ->maxLength(User::NAME_PART_MAX),

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Assessments;
 
+use App\Support\PersonName;
 use App\Filament\Forms\DateOfBirthInput;
 use App\Support\AssessmentFields;
 use App\Support\PhoneNumber;
@@ -27,7 +28,7 @@ final class AssessmentInputs
 
     public static function name(string $name, string $label): TextInput
     {
-        return TextInput::make($name)
+        return PersonName::tidyOnBlur(TextInput::make($name))
             ->label($label)
             ->required()
             ->maxLength(50)

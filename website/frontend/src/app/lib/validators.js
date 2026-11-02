@@ -33,6 +33,16 @@ export function formatPhoneInput(value) {
   return `(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
+/*
+People's names: the first letter of each word, and of each part after a hyphen,
+made a capital; every other letter left as typed ("McDonald" stays). Applied
+when a name box is left. Mirrors App\Support\PersonName, which applies it
+again on save.
+*/
+export function capitalizeName(value) {
+  return String(value ?? "").replace(/(^|[\s-])(\p{Ll})/gu, (match, before, letter) => before + letter.toUpperCase());
+}
+
 // Room for a pasted number in any common form ("+1 (423) 555-0100"): the
 // browser cuts a paste at maxLength before formatPhoneInput runs, so a tight
 // limit would drop digits. formatPhoneInput itself stops at 10 digits.

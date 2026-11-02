@@ -176,14 +176,14 @@ test('the account page shows first and last name read-only', function () {
     $this->actingAs($secretary);
 
     Livewire::test(EditProfile::class)
-        ->assertSchemaStateSet(['first_name' => 'Pest', 'last_name' => UserRole::Secretary->value])
+        ->assertSchemaStateSet(['first_name' => 'Pest', 'last_name' => 'Secretary'])
         ->assertFormFieldDisabled('first_name')
         ->assertFormFieldDisabled('last_name')
         ->fillForm(['first_name' => 'Casey', 'last_name' => 'Morgan'])
         ->call('save')
         ->assertHasNoFormErrors();
 
-    expect($secretary->refresh()->name)->toBe('Pest '.UserRole::Secretary->value)
+    expect($secretary->refresh()->name)->toBe('Pest Secretary')
         ->and($secretary->role)->toBe(UserRole::Secretary);
 });
 

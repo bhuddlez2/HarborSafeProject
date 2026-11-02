@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { fetchRequestOptions, submitResourceRequest } from "../lib/forms";
-import { formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
+import { capitalizeName, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
 import {
   Field,
   OPTIONAL_PLACEHOLDER,
@@ -106,6 +106,7 @@ function ResourceRequestForm({ resourceTypes, counties, preselected }) {
             maxLength={50}
             value={values.FirstName}
             onChange={update("FirstName")}
+            onBlur={(event) => setValues((current) => ({ ...current, FirstName: capitalizeName(event.target.value) }))}
             aria-describedby={describedBy("first-name", false, errorFor("FirstName"))}
             className={inputClass}
           />
@@ -119,6 +120,7 @@ function ResourceRequestForm({ resourceTypes, counties, preselected }) {
             maxLength={50}
             value={values.LastName}
             onChange={update("LastName")}
+            onBlur={(event) => setValues((current) => ({ ...current, LastName: capitalizeName(event.target.value) }))}
             placeholder={OPTIONAL_PLACEHOLDER}
             aria-describedby={describedBy("last-name", false, errorFor("LastName"))}
             className={inputClass}

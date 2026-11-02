@@ -2,6 +2,7 @@
 
 namespace App\Models\Concerns;
 
+use App\Support\PersonName;
 use App\Support\PhoneNumber;
 
 /*
@@ -29,10 +30,21 @@ trait EncryptsSensitiveFields
         return [];
     }
 
+    // People's names, capitalised word by word before they are encrypted (App\Support\PersonName).
+    /** @return list<string> */
+    protected function nameFields(): array
+    {
+        return [];
+    }
+
     public function setAttribute($key, $value)
     {
         if (in_array($key, $this->phoneNumberFields(), true)) {
             $value = PhoneNumber::format($value === null ? null : (string) $value);
+        }
+
+        if (in_array($key, $this->nameFields(), true)) {
+            $value = PersonName::capitalize($value === null ? null : (string) $value);
         }
 
         return parent::setAttribute($key, $value);

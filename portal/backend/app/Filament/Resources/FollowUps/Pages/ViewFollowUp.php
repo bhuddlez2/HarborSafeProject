@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FollowUps\Pages;
 
+use App\Support\PersonName;
 use App\Enums\AssessmentAccess;
 use App\Enums\FollowUpKind;
 use App\Enums\FollowUpStatus;
@@ -207,8 +208,8 @@ class ViewFollowUp extends Page
             ->fillForm(fn (): array => $this->newRequestDefaults())
             ->schema([
                 Grid::make(2)->schema([
-                    TextInput::make('FirstName')->label('First name')->required()->maxLength(50),
-                    TextInput::make('LastName')->label('Last name')->maxLength(50),
+                    PersonName::tidyOnBlur(TextInput::make('FirstName'))->label('First name')->required()->maxLength(50),
+                    PersonName::tidyOnBlur(TextInput::make('LastName'))->label('Last name')->maxLength(50),
                     TextInput::make('EmailAddress')
                         ->label('Email')
                         ->email()

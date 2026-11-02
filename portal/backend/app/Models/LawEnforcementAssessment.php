@@ -59,11 +59,19 @@ class LawEnforcementAssessment extends BaseModel
         'VictimSafePhoneNumber',
     ];
 
+    // Capitalised word by word on save (App\Support\PersonName); shared with PrivateAssessment.
+    public const NAME_FIELDS = ['OffenderFirstName', 'OffenderLastName', 'VictimFirstName', 'VictimLastName'];
+
     // Stored as (xxx)xxx-xxxx whichever form it arrives in - see
     // App\Support\PhoneNumber, which also validates it.
     protected function phoneNumberFields(): array
     {
         return ['VictimSafePhoneNumber'];
+    }
+
+    protected function nameFields(): array
+    {
+        return self::NAME_FIELDS;
     }
 
     public function uniqueIds(): array

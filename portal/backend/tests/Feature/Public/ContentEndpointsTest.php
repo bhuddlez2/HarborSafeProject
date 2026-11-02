@@ -20,7 +20,7 @@ website/frontend/src/app/lib/content.js and its consumers in the same commit.
 
 Reminder on cleanup: no RefreshDatabase, same as the rest of the suite. These
 tests write to the real Content database and sweep up afterwards by the
-`peststaff` prefix (cleanupStaffData()).
+`Peststaff` prefix (cleanupStaffData()).
 */
 
 afterEach(fn () => cleanupStaffData());

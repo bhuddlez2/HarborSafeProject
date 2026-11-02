@@ -146,7 +146,8 @@ test('SQL in a field is stored as plain text and changes nothing else', function
         'OffenderLastName' => $sql,
     ]))->assertCreated();
 
-    expect(civilianStoredRow(CIVILIAN_TEST_VICTIM."'--")->OffenderLastName)->toBe($sql)
+    // Stored as text; only its words' first letters are capitalised, like any name.
+    expect(civilianStoredRow(CIVILIAN_TEST_VICTIM."'--")->OffenderLastName)->toBe("Robert'); DROP TABLE Users;--")
         ->and(DB::connection('Portal')->table('_private_assessment')->count())->toBe($before + 1)
         ->and(DB::connection('Portal')->getSchemaBuilder()->hasTable('users'))->toBeTrue();
 });
@@ -196,6 +197,25 @@ test('blank optional fields are stored as null, and names are trimmed', function
     $row = civilianStoredRow();
     expect($row->VictimLastName)->toBe('Doe')
         ->and($row->OffenderDOB)->toBeNull();
+});
+
+test('every name is stored capitalised word by word', function () {
+    $this->postJson('/api/public/civilian-assessments', civilianPayload([
+        'ForWhom' => 'other',
+        'Anonymous' => false,
+        'SubmitterFirstName' => 'friend',
+        'SubmitterLastName' => 'de la cruz',
+        'SubmitterEmail' => 'friend@example.com',
+        'VictimLastName' => 'smith-jones',
+        'OffenderFirstName' => 'john',
+        'OffenderLastName' => 'mcDonald',
+    ]))->assertCreated();
+
+    $row = civilianStoredRow();
+    $submitter = App\Models\SubmitterInfo::find($row->SubmissionID);
+
+    expect([$row->VictimLastName, $row->OffenderFirstName, $row->OffenderLastName])->toBe(['Smith-Jones', 'John', 'McDonald'])
+        ->and([$submitter->SubmitterFirstName, $submitter->SubmitterLastName])->toBe(['Friend', 'De La Cruz']);
 });
 
 test('the offender last name may be left out: someone reporting may not know it', function (array $overrides) {

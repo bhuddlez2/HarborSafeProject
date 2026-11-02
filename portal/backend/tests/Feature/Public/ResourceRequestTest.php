@@ -20,6 +20,17 @@ test('a valid request with email only is accepted', function () {
         ->and($stored->SafePhoneNumber)->toBeNull();
 });
 
+test('the name is stored capitalised word by word', function () {
+    $response = $this->postJson('/api/public/resource-requests', [
+        'FirstName'    => publicFormsRunToken().' mary',
+        'LastName'     => 'smith-jones',
+        'EmailAddress' => publicFormsEmail(),
+    ])->assertStatus(201);
+
+    $stored = ResourceRequestForm::find($response->json('FormID'));
+    expect([$stored->FirstName, $stored->LastName])->toBe([publicFormsRunToken().' Mary', 'Smith-Jones']);
+});
+
 test('a valid request with phone only is accepted', function () {
     $response = $this->postJson('/api/public/resource-requests', [
         'FirstName'       => publicFormsRunToken(),

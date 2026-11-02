@@ -52,6 +52,11 @@ class ResourceRequestForm extends BaseModel
         return ['SafePhoneNumber'];
     }
 
+    protected function nameFields(): array
+    {
+        return ['FirstName', 'LastName'];
+    }
+
     public function uniqueIds(): array
     {
         return [$this->primaryKey];
