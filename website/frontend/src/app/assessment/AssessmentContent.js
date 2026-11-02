@@ -368,7 +368,7 @@ export default function AssessmentContent() {
                     <p className="text-sm font-semibold text-gray-900 mb-0.5">No information is saved until you submit</p>
                     <p className="text-xs text-gray-600 leading-relaxed">
                       Information entered in this form is not saved or sent to Harbor Safe House until
-                      you select Submit assessment at the end. Once submitted, your answers are seen
+                      you select Submit Assessment at the end. Once submitted, your answers are seen
                       only by Harbor Safe House.
                     </p>
                   </div>
@@ -701,7 +701,7 @@ export default function AssessmentContent() {
             This screen contains {total} yes/no questions. Ask each question exactly as written.
           </p>
           <p className="text-gray-700 text-lg mb-10 leading-relaxed">
-            Your answers are not sent or saved until you select Submit assessment at the end. If
+            Your answers are not sent or saved until you select Submit Assessment at the end. If
             you close this tab or move to another page on this site before then, your answers will
             be lost.
           </p>
@@ -728,7 +728,7 @@ export default function AssessmentContent() {
           <p className="text-gray-600 mb-6 text-center">
             Please review each detail and answer below, and use Edit or Change to make any
             corrections. Nothing has been sent yet. Your assessment will be sent only when you
-            select Submit assessment.
+            select Submit Assessment.
           </p>
 
           <div className="flex flex-col gap-4">
@@ -837,7 +837,7 @@ export default function AssessmentContent() {
           <div className="flex flex-wrap gap-4 mt-8">
             <button onClick={() => { setIndex(total - 1); setPhase("questions"); }} className={SECONDARY}>Back</button>
             <button onClick={handleSubmit} disabled={submitting || !safePhoneConfirmed} className={PRIMARY}>
-              {submitting ? "Submitting..." : "Submit assessment"}
+              {submitting ? "Submitting..." : "Submit Assessment"}
             </button>
           </div>
         </div>
