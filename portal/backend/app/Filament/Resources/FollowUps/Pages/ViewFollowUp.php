@@ -114,7 +114,7 @@ class ViewFollowUp extends Page
             // FollowUpPdfController.
             ActionGroup::make([
                 Action::make('download_pdf_with_log')
-                    ->label('Download PDF with log')
+                    ->label('Download PDF with Log')
                     ->icon(Heroicon::OutlinedArrowDownTray)
                     ->url(fn (): string => route('staff.follow-ups.pdf-with-log', $this->followUp()->getKey()))
                     ->openUrlInNewTab(),

@@ -235,7 +235,7 @@ test('the Show options come from LogAction, with the access log\'s own labels', 
         'view' => 'Viewed',
         'view_log' => 'Viewed Log',
         'download' => 'Downloaded PDF',
-        'download_with_log' => 'Downloaded PDF with log',
+        'download_with_log' => 'Downloaded PDF with Log',
         'edit' => 'Edited',
     ]);
 

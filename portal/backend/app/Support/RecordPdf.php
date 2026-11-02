@@ -29,7 +29,7 @@ must not travel in an export - for service feedback, who entered it and the
 scan (AS, 2026-10-20: no log information of any kind on an export).
 
 The one exception (Burchfield B43, 2026-10-28): htmlWithLog(), the follow-up
-page's "Download PDF with log", which Harbor Safe may have to provide. The
+page's "Download PDF with Log", which Harbor Safe may have to provide. The
 same printed form, under an "Internal: includes follow-up notes" banner and
 followed by the follow-up Log. Offered only on the follow-up page, to those
 who work that form; the plain html() never carries any of it.

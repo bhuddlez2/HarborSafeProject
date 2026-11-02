@@ -25,7 +25,7 @@ class AssessmentPdf
         return HtmlPdf::render(RecordPdf::html($record), 'A4');
     }
 
-    // The follow-up page's "Download PDF with log" (Burchfield B43): the
+    // The follow-up page's "Download PDF with Log" (Burchfield B43): the
     // same form plus its follow-up Log - see RecordPdf::htmlWithLog().
     public function renderWithLog(FollowUp $followUp): string
     {

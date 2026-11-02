@@ -226,7 +226,7 @@
 </style>
 @isset($followUpLog)
 <style>
-    /* "Download PDF with log" only (Burchfield B43): a banner over the form,
+    /* "Download PDF with Log" only (Burchfield B43): a banner over the form,
        and the follow-up Log after it. Each step is a plain block, never a
        table row: dompdf can't split a row across pages, and a note runs to
        2,000 characters, so a long one simply carries on to the next page. */

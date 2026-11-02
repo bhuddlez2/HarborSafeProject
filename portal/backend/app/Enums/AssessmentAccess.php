@@ -9,7 +9,7 @@ use App\Models\User;
 // as a PDF. Both put the victim's safe phone number in front of someone.
 //
 // DownloadWithLog (Burchfield B43, 2026-10-28) is the follow-up page's
-// "Download PDF with log": the form plus its follow-up Log. Officers and
+// "Download PDF with Log": the form plus its follow-up Log. Officers and
 // police admins never see follow-up information, so to anyone but admins and
 // super admins it is shown as a plain download (shownTo()).
 //
@@ -32,7 +32,7 @@ enum AssessmentAccess: string
             self::View => 'Viewed',
             self::ViewLog => 'Viewed Log',
             self::Download => 'Downloaded PDF',
-            self::DownloadWithLog => 'Downloaded PDF with log',
+            self::DownloadWithLog => 'Downloaded PDF with Log',
         };
     }
 

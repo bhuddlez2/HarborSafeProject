@@ -15,7 +15,7 @@ use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 
 /*
-"Download PDF with log" on a form's follow-up page (Burchfield B43,
+"Download PDF with Log" on a form's follow-up page (Burchfield B43,
 2026-10-28; FollowUpPdfController): the form plus its follow-up Log, for when
 Harbor Safe has to provide the record with its history. The plain "Download
 PDF" stays the form only and stays the main button. Only those who work the
@@ -103,7 +103,7 @@ test('Download PDF is the one-click button; the export with the log is in the ar
 
     $this->get(FollowUpResource::getUrl('view', ['record' => $followUp]))
         ->assertOk()
-        ->assertSeeInOrder(['Download PDF', 'More download options', 'Download PDF with log']);
+        ->assertSeeInOrder(['Download PDF', 'More download options', 'Download PDF with Log']);
 });
 
 test('a police admin sees an admin\'s download with the log as a plain "Downloaded PDF"', function () {
@@ -116,10 +116,10 @@ test('a police admin sees an admin\'s download with the log as a plain "Download
     Livewire::test(ListAssessmentReview::class)
         ->mountAction(TestAction::make('changeLog')->table($w->assessmentA))
         ->assertMountedActionModalSee('Downloaded PDF')
-        ->assertMountedActionModalDontSee('Downloaded PDF with log');
+        ->assertMountedActionModalDontSee('Downloaded PDF with Log');
 
     $this->actingAs(staffUser(UserRole::Admin));
     Livewire::test(ListAssessmentReview::class)
         ->mountAction(TestAction::make('changeLog')->table($w->assessmentA))
-        ->assertMountedActionModalSee('Downloaded PDF with log');
+        ->assertMountedActionModalSee('Downloaded PDF with Log');
 });

@@ -164,7 +164,7 @@ dataset('assessment paths', [
         ->assertActionMounted(TestAction::make('log')->table($w->civilianFollowUp))],
     'Civilian PDF' => ['admin', LogAction::Download, 'civilian', null, fn (object $w) => test()->get(route('staff.civilian-assessments.pdf', $w->civilian->DocumentID))->assertOk()],
 
-    // The follow-up page's "Download PDF with log" (Burchfield B43): its own
+    // The follow-up page's "Download PDF with Log" (Burchfield B43): its own
     // kind of row, which a police admin sees as a plain download.
     'Follow-up PDF with log (officer assessment)' => ['admin', LogAction::DownloadWithLog, 'officer', null, fn (object $w) => test()->get(route('staff.follow-ups.pdf-with-log', $w->officerFollowUp->getKey()))->assertOk()],
     'Follow-up PDF with log (civilian assessment)' => ['admin', LogAction::DownloadWithLog, 'civilian', null, fn (object $w) => test()->get(route('staff.follow-ups.pdf-with-log', $w->civilianFollowUp->getKey()))->assertOk()],
