@@ -399,6 +399,75 @@ The website needs `npm install` first.
 
 ---
 
+## 11. Before going live (the server, not your machine)
+
+Everything above is for a developer's own machine. The live server needs
+these too; each came out of the security testing on 2026-11-02, and the app
+can't set them for you.
+
+**`.env` on the server**
+
+```ini
+APP_ENV=production
+APP_DEBUG=false              # true shows error details (code, file paths) to anyone who triggers an error
+APP_URL=https://...          # the panel's real address, https
+WEBSITE_URL=https://...      # the public website, the only site CORS lets in
+SESSION_SECURE_COOKIE=true   # the sign-in cookie is only ever sent over https
+SESSION_LIFETIME=15
+SESSION_EXPIRE_ON_CLOSE=true
+```
+
+`APP_KEY` and `DATA_ENCRYPTION_KEY` are the server's own (`php artisan
+key:generate`, `php artisan data-key:generate`), never copied from a laptop.
+Keep a copy of `DATA_ENCRYPTION_KEY` somewhere safe and separate from the
+database backups: without it every encrypted record is lost, and with both
+together the records can be read.
+
+**`php.ini` on the server**
+
+```ini
+display_errors = Off         ; On prints PHP warnings, with file paths, into pages
+log_errors = On
+expose_php = Off             ; stops "X-Powered-By: PHP/8.x" (the app drops it too)
+upload_max_filesize = 8M
+post_max_size = 12M
+```
+
+**Database users.** The public website reaches the database through three
+restricted users, each able to do only its one job. Create them with the
+`GRANT`s in [Schema_Reference.md](Schema_Reference.md) (civilian assessments
+and the feedback forms) and
+[Filament_CMS_Design.md](Filament_CMS_Design.md) §6.5 (events and newsletters),
+then put their names and passwords in `DB_USERNAME_PORTAL_PUBLIC`,
+`DB_USERNAME_FEEDBACK_PUBLIC` and `DB_USERNAME_CONTENT_PUBLIC`. Use a long
+generated password for each, and replace `'%'` in the `CREATE USER` with the
+server's own address where the host allows it, so the user can't be used
+from anywhere else. Without `DB_USERNAME_PORTAL_PUBLIC` the server refuses
+civilian assessments rather than saving them with full access - so if the
+host can't create limited users, find that out before launch.
+
+**The web server**
+
+- Point the panel's address at `portal/backend/public`, never at
+  `portal/backend` or the repo: the folder above `public` holds `.env`.
+- Don't run `php artisan storage:link`; nothing uses it.
+- https only, with http redirecting to it. The app then adds HSTS itself.
+- Cron: `php artisan schedule:run` every minute (follow-up reminders and
+  clearing old notifications).
+- Never run the `Local...` seeders here: they create test logins with a
+  known password.
+
+**After it's up, check** (in a browser or with `curl -I`):
+
+- `https://<panel>/.env` and `https://<panel>/storage/logs/laravel.log` are 404.
+- `https://<panel>/login` sends `X-Frame-Options: DENY`,
+  `Strict-Transport-Security` and a `Set-Cookie` marked `secure`, and no
+  `X-Powered-By`.
+- A nonsense request to `https://<panel>/api/public/resource-requests` returns
+  a short JSON error with no file paths or class names in it.
+
+---
+
 ## Where to read next
 
 - [README.md](README.md) — the whole repo, all three apps, tests
