@@ -41,5 +41,8 @@ const nextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  // Next 16.4+ writes an AGENTS.md here for AI tools when one starts `next
+  // dev`. The team uses Claude, which reads CLAUDE.md, so it isn't wanted.
+  agentRules: false,
 };
 export default nextConfig;
