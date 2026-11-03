@@ -228,12 +228,14 @@ php artisan db:seed --class=ServiceSeeder
 php artisan db:seed --class=ResourceSeeder
 php artisan db:seed --class=CountySeeder
 php artisan db:seed --class=EventCategorySeeder
-php artisan db:seed --class=LocalStaffUserSeeder --database=Portal
 ```
 
 `--database=Portal` on `migrate` is not optional — see the README's gotchas for
-why. That last seeder creates the accounts you log in with; without it there is
-no way into the panel, because there is no sign-up screen.
+why.
+
+There is no sign-up screen, so create your first account with
+`php artisan staff:create-super-admin you@example.com`. Other accounts are
+created inside the panel by a super admin.
 
 Build the panel's stylesheet:
 
@@ -368,7 +370,7 @@ If classes are mysteriously not applying, check this first.
 | `The payload is invalid` / `The MAC is invalid` when opening a record | The database was encrypted with a different `DATA_ENCRYPTION_KEY` (for example one copied from another machine) |
 | `SQLSTATE[HY000] [2002]` or connection refused | MySQL isn't running — start it in the XAMPP Control Panel |
 | `Unknown database` | Run `php artisan db:create` |
-| Login rejects every password | You skipped `LocalStaffUserSeeder` |
+| Login rejects every password | No account exists yet; run `php artisan staff:create-super-admin <email>` |
 | Panel loads but looks unstyled | You skipped `npm run build` |
 | Download PDF fails with "Permission denied" on `storage/framework/dompdf` | The web server can't write to `storage/`. dompdf keeps its font files there. Fix the folder's permissions the same way as for the rest of `storage/` |
 | Your new Tailwind classes do nothing | Section 8, the `@source` trap |

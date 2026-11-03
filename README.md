@@ -176,25 +176,15 @@ website's contact forms, event categories for the events page. Without them
 those dropdowns and badges come up empty. All are idempotent, so they're safe
 to re-run.
 
-**Then create accounts, or you cannot get into the staff panel.** There is no
-sign-up screen: `/login` will reject everything until users exist.
+**Then create your first account, or you cannot get into the staff panel.** There is no
+sign-up screen: `/login` will reject everything until a user exists.
 
 ```bash
-php artisan db:seed --class=LocalStaffUserSeeder --database=Portal
+php artisan staff:create-super-admin you@example.com
 ```
 
-That creates one login per role (plus a deactivated account, for checking that
-`is_active` is enforced). It refuses to run unless `APP_ENV=local`. The password
-comes from `LOCAL_SEED_PASSWORD` in `.env`, falling back to `password` when
-that is unset.
-
-| Email | Role | Lands on |
-|---|---|---|
-| `officer@harborsafe.test` | `law_enforcement` | `/police` — **the only role that sees the officer screens and the assessment wizard** |
-| `police-admin@harborsafe.test` | `police_admin` | `/police` |
-| `admin@harborsafe.test` | `admin` | `/content` |
-| `secretary@harborsafe.test` | `secretary` | `/content` |
-| `inactive@harborsafe.test` | `admin`, deactivated | nothing — refused at the login screen |
+That creates a super admin and prompts for the password. Every other role (admin,
+secretary, police admin, officer) is created inside the panel by a super admin.
 
 Build the staff panel's theme (the Filament panel, served from the site root — officer
 screens, the assessment wizard, content management — is styled by a custom
