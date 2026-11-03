@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AppendOnly;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class AssessmentAnswerChangeLog extends BaseModel
 {
-    use HasUuids;
+    use AppendOnly, HasUuids;
 
     protected $connection = 'Portal';
 
@@ -19,6 +20,7 @@ class AssessmentAnswerChangeLog extends BaseModel
     public $timestamps = false;
 
     protected $fillable = [
+        'EditID',
         'AssessmentDocID',
         'ChangeField',
         'PreviousValue',
@@ -34,6 +36,12 @@ class AssessmentAnswerChangeLog extends BaseModel
     public function assessmentAnswers()
     {
         return $this->belongsTo(AssessmentAnswers::class, 'AssessmentDocID');
+    }
+
+    // The save this change belongs to: who, when and why.
+    public function edit()
+    {
+        return $this->belongsTo(AssessmentEdit::class, 'EditID');
     }
 
     public function changedBy()

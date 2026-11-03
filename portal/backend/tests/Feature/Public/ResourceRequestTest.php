@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ResourceRequestForm;
 use Illuminate\Support\Facades\DB;
 
 afterEach(fn () => cleanupPublicFormData());
@@ -13,11 +14,21 @@ test('a valid request with email only is accepted', function () {
     $response->assertStatus(201)->assertJsonStructure(['message', 'FormID']);
     expect(array_keys($response->json()))->toEqualCanonicalizing(['message', 'FormID']);
 
-    $this->assertDatabaseHas('resource_request_form', [
-        'FormID'          => $response->json('FormID'),
-        'FirstName'       => publicFormsRunToken(),
-        'SafePhoneNumber' => null,
-    ], 'Feedback');
+    // Read through the model: the name is encrypted in the database.
+    $stored = ResourceRequestForm::find($response->json('FormID'));
+    expect($stored->FirstName)->toBe(publicFormsRunToken())
+        ->and($stored->SafePhoneNumber)->toBeNull();
+});
+
+test('the name is stored capitalised word by word', function () {
+    $response = $this->postJson('/api/public/resource-requests', [
+        'FirstName'    => publicFormsRunToken().' mary',
+        'LastName'     => 'smith-jones',
+        'EmailAddress' => publicFormsEmail(),
+    ])->assertStatus(201);
+
+    $stored = ResourceRequestForm::find($response->json('FormID'));
+    expect([$stored->FirstName, $stored->LastName])->toBe([publicFormsRunToken().' Mary', 'Smith-Jones']);
 });
 
 test('a valid request with phone only is accepted', function () {
@@ -182,4 +193,48 @@ test('the restricted FeedbackPublic user cannot read back submissions', function
 
     expect(fn () => DB::connection('FeedbackPublic')->table('resource_request_form')->count())
         ->toThrow(Illuminate\Database\QueryException::class);
+});
+
+test('a phone number needs all 10 digits, and is stored as (xxx)xxx-xxxx', function () {
+    $this->postJson('/api/public/resource-requests', [
+        'FirstName'       => publicFormsRunToken(),
+        'SafePhoneNumber' => '555-0100',
+    ])->assertStatus(422)->assertJsonValidationErrors(['SafePhoneNumber' => 'area code']);
+
+    $response = $this->postJson('/api/public/resource-requests', [
+        'FirstName'       => publicFormsRunToken(),
+        'SafePhoneNumber' => '423.555.0100',
+    ])->assertStatus(201);
+
+    expect(ResourceRequestForm::find($response->json('FormID'))->SafePhoneNumber)->toBe('(423)555-0100');
+});
+
+// Security testing (2026-11-02): a list or object where text belongs was a
+// crash (500) in the trimming step; it is now refused like any bad input.
+test('a list or object instead of text is refused, not a crash', function () {
+    $this->postJson('/api/public/resource-requests', [
+        'FirstName'       => ['a'],
+        'LastName'        => ['b' => 1],
+        'EmailAddress'    => ['x' => 1],
+        'SafePhoneNumber' => ['423'],
+        'Message'         => ['m'],
+        'ResourceTypeIDs' => 'not a list',
+    ])->assertStatus(422)->assertJsonValidationErrors(['FirstName', 'LastName', 'EmailAddress', 'Message', 'ResourceTypeIDs']);
+});
+
+// A 100,000-item list used to hold the server for 30 seconds: every item was
+// checked (each against every other, for duplicates) before the 8-item cap.
+test('a huge list of resource types is refused at once', function () {
+    $started = microtime(true);
+
+    $response = $this->postJson('/api/public/resource-requests', [
+        'FirstName'       => publicFormsRunToken(),
+        'EmailAddress'    => publicFormsEmail(),
+        'ResourceTypeIDs' => range(1, 100000),
+    ]);
+
+    $response->assertStatus(422)->assertJsonValidationErrors(['ResourceTypeIDs' => 'not have more than 8 items']);
+    expect(microtime(true) - $started)->toBeLessThan(3)
+        // Only the cap and the first few items are reported, never 100,000 errors.
+        ->and(count($response->json('errors')))->toBeLessThan(15);
 });

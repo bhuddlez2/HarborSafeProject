@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Filament\Clusters\FormOptions\Resources\Counties;
+
+use App\Filament\Clusters\FormOptions\Resources\Counties\Pages\ManageCounties;
+use App\Filament\Clusters\FormOptions\Resources\LookupResource;
+use App\Models\County;
+use BackedEnum;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
+
+// The county dropdown on the resource-request form.
+class CountyResource extends LookupResource
+{
+    protected static ?string $model = County::class;
+
+    protected static ?string $slug = 'counties';
+
+    protected static ?string $title = 'Counties';
+
+    protected static ?string $navigationLabel = 'Counties';
+
+    protected static ?string $modelLabel = 'county';
+
+    protected static ?string $pluralModelLabel = 'counties';
+
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedMapPin;
+
+    protected static ?int $navigationSort = 3;
+
+    protected static function formDescription(): string
+    {
+        return 'These are the choices in the county dropdown on the resource request form.';
+    }
+
+    protected static function isInUse(Model $record): bool
+    {
+        return $record->requests()->exists();
+    }
+
+    // The built-in "Other" (County): always on the form, so never renamed
+    // or deleted. Its buttons stay, greyed out with this on hover. Any other
+    // county follows the shared in-use rule.
+    protected static function recordRefusal(string $action, Model $record): ?string
+    {
+        return $record instanceof County && $record->isOther() && in_array($action, ['update', 'delete'], true)
+            ? 'Built in: "Other" is always offered on the form, so it can\'t be renamed or deleted.'
+            : parent::recordRefusal($action, $record);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ManageCounties::route('/'),
+        ];
+    }
+}

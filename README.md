@@ -1,12 +1,17 @@
 # HarborSafe
 
-Three applications in one repository, backing Harbor Safe House & Advocacy Center:
+Two applications in one repository, backing Harbor Safe House & Advocacy Center:
 
 | Path | What it is | Dev URL |
 |---|---|---|
-| `portal/backend/` | Laravel 13 JSON API. Backs **both** other apps. | http://127.0.0.1:8000 |
-| `website/frontend/` | Next.js 16, static export. The public informational site. | http://localhost:3000 |
-| `portal/frontend/` | Next.js 16, server mode. The staff/law-enforcement portal. | http://localhost:3001 |
+| `portal/backend/` | Laravel 13 JSON API, **and** the Filament staff panel — every officer, admin and secretary screen. | http://127.0.0.1:8000 · sign-in at [/login](http://127.0.0.1:8000/login) |
+| `website/frontend/` | Next.js 16, static export. The public informational site, including the civilian lethality assessment at `/assessment/`. Calls the API from the browser for the contact forms, the events page and the assessment. | http://localhost:3000 |
+
+If you are here to work on the staff portal, the code is in `portal/backend`
+(PHP, Blade and Tailwind) — every officer and staff screen is in the Filament
+panel. (A third app, `portal/frontend`, used to hold the civilian assessment;
+it moved to the website and is gone.) See [PORTAL_SETUP.md](PORTAL_SETUP.md) if you have not
+run PHP before.
 
 Nothing but the backend talks to the database. The website reaches only a
 narrow `/api/public/*` slice of the API and can never read anything back —
@@ -18,10 +23,62 @@ see [Schema_Reference.md](Schema_Reference.md).
 
 | Tool | Version | Notes |
 |---|---|---|
-| PHP | 8.3+ | Comes with XAMPP; `php -v` to check |
+| PHP | 8.4.1+ | **Not from XAMPP on Windows** — it ships 8.2 at most, and the locked packages need 8.4.1. See [PORTAL_SETUP.md](PORTAL_SETUP.md) |
 | Composer | 2.x | |
-| Node.js | 20+ | Next.js 16 requires it |
-| MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running** |
+| Node.js | 20+ | Next.js 16 and the staff panel's stylesheet build need it. Build time only: the running backend never calls Node (PDFs are pure PHP) |
+| MariaDB or MySQL | 10.4+ / 8.0+ | **See the note below — you may already have this running.** On Windows, XAMPP is a fine way to get just this |
+
+### PHP's `intl` extension
+
+The Filament staff panel needs PHP's `intl` extension. Without it, `composer
+install` refuses to resolve with:
+
+```
+- filament/support[v5.7.6, ..., v5.8.4] require ext-intl * -> it is missing from
+  your system. Install or enable PHP's intl extension.
+```
+
+**It's a one-line fix, not a dependency problem.** Enable it for your platform:
+
+- **Fedora/RHEL** — it's a separate package: `sudo dnf install php-intl`
+- **Windows** — XAMPP's PHP is too old for this project, so PHP gets
+  installed separately, and it arrives with *no* `php.ini` and every extension
+  switched off. `intl` is one of eight lines to uncomment, not one. Full Windows
+  setup is in [PORTAL_SETUP.md](PORTAL_SETUP.md).
+- **Debian/Ubuntu** — `sudo apt install php-intl` (or `php8.x-intl` to match
+  your PHP version)
+
+Verify (must print `bool(true)`):
+
+```bash
+php -r "var_dump(extension_loaded('intl'));"
+```
+
+If it still prints `false`, run `php --ini` to see which `php.ini` the CLI
+actually loads — it isn't always the one Apache uses.
+
+### File uploads
+
+Event images and newsletter PDFs are stored **in the database** (a `content_files` table
+on the `Content` connection), not on a disk and not in cloud storage. No account, no
+credentials, and nothing to re-run after a deploy — a database dump is a complete
+backup. See `Filament_CMS_Design.md` §4 for why.
+
+**You must raise two php.ini limits or uploads fail confusingly.** The defaults are
+smaller than the panel allows, and PHP discards an oversized file *before* Laravel runs
+— so you get an opaque error rather than the panel's own "file too large" message:
+
+```ini
+upload_max_filesize = 8M   ; default is 2M
+post_max_size = 12M        ; default is 8M, and must stay above the line above
+```
+
+Caps are 4 MB for an image and 8 MB for a PDF. Both sit under MariaDB's
+`max_allowed_packet` (16 MB by default), which bounds a single row in *both* directions
+— a blob that squeezes in past it can still fail to read back out.
+
+`php artisan storage:link` is no longer required by this feature. It is still worth
+running on a new environment, since Laravel's own tooling assumes it.
 
 ### Is my database already running?
 
@@ -58,13 +115,27 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Then edit `.env` and fill in the database section. Two physical databases are
-needed — create them if they don't exist:
+Then edit `.env` and fill in the database section. **Three** physical databases
+are needed — create them if they don't exist:
+
+These are the names `.env.example` ships with and the ones every other
+document here uses, so this works unedited:
 
 ```sql
 CREATE DATABASE assessment_app_db;   -- the Portal connection
 CREATE DATABASE feedback_app_db;     -- the Feedback + FeedbackPublic connections
+CREATE DATABASE content_app_db;      -- the Content + ContentPublic connections
 ```
+
+Or skip the SQL entirely: `php artisan db:create` reads those three
+`DB_DATABASE_*` values and creates whichever are missing. On Linux, where
+MariaDB authenticates root over a unix socket and the passwordless root in
+`.env` fails, use [docs/local-db-setup.sql](docs/local-db-setup.sql) instead —
+it creates the databases and a dedicated dev user.
+
+Nothing in the application reads a database name — only `.env` does — so you
+*can* call them something else. Don't: every doc and GRANT block here assumes
+these names, and a teammate reading your `.env` should recognise it.
 
 The `.env` keys that matter:
 
@@ -72,6 +143,8 @@ The `.env` keys that matter:
 DB_HOST_PORTAL / DB_PORT_PORTAL / DB_DATABASE_PORTAL / DB_USERNAME_PORTAL / DB_PASSWORD_PORTAL
 DB_HOST_FEEDBACK / DB_PORT_FEEDBACK / DB_DATABASE_FEEDBACK / DB_USERNAME_FEEDBACK / DB_PASSWORD_FEEDBACK
 DB_USERNAME_FEEDBACK_PUBLIC / DB_PASSWORD_FEEDBACK_PUBLIC
+DB_HOST_CONTENT / DB_PORT_CONTENT / DB_DATABASE_CONTENT / DB_USERNAME_CONTENT / DB_PASSWORD_CONTENT
+DB_USERNAME_CONTENT_PUBLIC / DB_PASSWORD_CONTENT_PUBLIC
 ```
 
 `FeedbackPublic` points at the *same database* as `Feedback` but with a
@@ -81,6 +154,13 @@ forms will not work until that user exists.** Create it with the `GRANT` block
 in [Schema_Reference.md](Schema_Reference.md#two-connections-one-database--how-write-only-is-enforced),
 then put its credentials in `DB_USERNAME_FEEDBACK_PUBLIC` / `DB_PASSWORD_FEEDBACK_PUBLIC`.
 
+`ContentPublic` works the same way for the events/newsletters database — a
+SELECT-only user, so the website can read published content but never change
+it. That user **does not exist in any environment yet**; until it does, leave
+`DB_USERNAME_CONTENT_PUBLIC` / `DB_PASSWORD_CONTENT_PUBLIC` pointing at the
+same credentials as `DB_*_CONTENT` and nothing breaks locally. The `GRANT`
+block is in [Schema_Reference.md](Schema_Reference.md#contentpublic--the-read-only-half).
+
 Migrate and seed:
 
 ```bash
@@ -88,16 +168,44 @@ php artisan migrate --database=Portal     # ALWAYS --database=Portal - see gotch
 php artisan db:seed --class=ServiceSeeder
 php artisan db:seed --class=ResourceSeeder
 php artisan db:seed --class=CountySeeder
+php artisan db:seed --class=EventCategorySeeder
 ```
 
-Those three seeders fill the lookup tables (services / resources / counties)
-that the website's contact forms read their dropdowns from. Without them the
-forms load empty. They're idempotent — safe to re-run.
+Those seeders fill the lookup tables — services / resources / counties for the
+website's contact forms, event categories for the events page. Without them
+those dropdowns and badges come up empty. All are idempotent, so they're safe
+to re-run.
+
+**Then create your first account, or you cannot get into the staff panel.** There is no
+sign-up screen: `/login` will reject everything until a user exists.
+
+```bash
+php artisan staff:create-super-admin you@example.com
+```
+
+That creates a super admin and prompts for the password. Every other role (admin,
+secretary, police admin, officer) is created inside the panel by a super admin.
+
+Build the staff panel's theme (the Filament panel, served from the site root — officer
+screens, the assessment wizard, content management — is styled by a custom
+Tailwind theme in `resources/css/filament/staff/theme.css`, compiled by Vite):
+
+```bash
+npm install
+npm run build            # re-run after changing theme.css or the panel's Blade views
+```
+
+Without this build the panel fails to load its stylesheet. Use `npm run dev`
+instead while editing styles, so changes recompile live.
+
+The Download PDF buttons need nothing from npm. They print in pure PHP through
+dompdf (a Composer package), because the production host is shared hosting
+that can't run Node or Chrome.
 
 Start it:
 
 ```bash
-php artisan serve        # http://127.0.0.1:8000
+php artisan serve        # http://127.0.0.1:8000, sign-in at /login
 ```
 
 ---
@@ -113,12 +221,30 @@ npm install
 npm run dev              # http://localhost:3000
 ```
 
-The contact forms need the backend running (step 2). They read their option
-lists from `GET /api/public/{services,resources,counties}` and submit to
-`POST /api/public/{resource-requests,service-feedback}`.
+**Three parts of this site need the backend running (step 2).** All fetch from
+the visitor's browser — it is a static export, so there is no server to fetch
+on its behalf:
+
+| Page | Reads | Writes |
+|---|---|---|
+| Contact (the two forms) | `GET /api/public/{services,resources,counties}` | `POST /api/public/{resource-requests,service-feedback}` |
+| Events & News | `GET /api/public/{events,newsletters}` and `/api/public/content-files/{id}` for images | — |
+| The civilian assessment (§4) | `GET /api/public/relationships` | `POST /api/public/civilian-assessments` |
+
+Without the backend up, the contact forms and the assessment cannot load their
+dropdowns and the events page shows its error state with the crisis line after
+a 12-second timeout. That is the intended behaviour, not a bug — but it does mean
+`npm run dev` alone is not enough to see those pages working.
+
+Events and newsletters come from the staff panel, so the page is empty until
+someone publishes something there. Empty is a normal state and the page says so.
+A published newsletter with a future Publish Date is scheduled: it stays off the
+page, PDF included, until that day (Eastern), with no rebuild needed.
 
 The API base URL defaults to `http://127.0.0.1:8000`, so nothing to configure
-locally. To point at a different backend, create `website/frontend/.env.local`:
+locally. It is inlined at build time, so on a deploy target it must be set
+**before** `npm run build`. To point at a different backend, create
+`website/frontend/.env.local`:
 
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
@@ -126,47 +252,35 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 
 ---
 
-## 4. Portal (`portal/frontend/`)
+## 4. The civilian assessment
 
-**There is a landing page** — `/` lists the two assessment flows. (It arrived
-with the frontend merge; earlier there wasn't one.)
+The public lethality assessment is a page of the website, at
+[/assessment/](http://localhost:3000/assessment/), linked from Get Support. It
+submits in one request to `POST /api/public/civilian-assessments`, which writes
+through the restricted `PortalPublic` database user (INSERT-only, see
+[Schema_Reference.md](Schema_Reference.md)). Locally that user is optional: with
+`DB_USERNAME_PORTAL_PUBLIC` unset and `APP_ENV=local`, the backend uses the
+Portal credentials. On any other server it must be set.
 
-| Route | What it is |
-|---|---|
-| `/` | Landing page, links to both flows |
-| `/civilian` | Civilian (anonymous) assessment |
-| `/law-enforcement` | Law-enforcement assessment |
-
-```bash
-cd portal/frontend
-npm install
-npm run dev -- -p 3001   # http://localhost:3001
-```
-
-**Use `-p 3001`.** Both frontends default to port 3000, so without it the
-second one you start either fails or silently picks another port. The backend's
-CORS config allows 3000 and 3001 in local dev, so 3001 works out of the box;
-any other port needs adding to `PORTAL_URL` in the backend's `.env`.
+The backend's CORS config allows `http://localhost:3000` in local dev; set
+`WEBSITE_URL` in the backend's `.env` for anything else.
 
 ---
 
 ## 5. Running everything at once
 
-Three terminals:
+Two terminals:
 
 ```bash
 # 1 - API
 cd portal/backend && php artisan serve
 
-# 2 - website
+# 2 - website (including the civilian assessment)
 cd website/frontend && npm run dev
-
-# 3 - portal
-cd portal/frontend && npm run dev -- -p 3001
 ```
 
-Then: website http://localhost:3000, portal http://localhost:3001,
-API http://127.0.0.1:8000/api.
+Then: website http://localhost:3000 (assessment at /assessment/),
+API http://127.0.0.1:8000/api, staff panel http://127.0.0.1:8000 (sign-in at /login).
 
 ---
 
@@ -192,16 +306,16 @@ but the database does have to be running and migrated.
 Playwright boots `website/frontend` only — it doesn't exercise the portal or
 the backend.
 
-Neither frontend has a test runner configured.
+The website has no test runner of its own; Playwright is its test suite.
 
 ---
 
 ## 7. Gotchas worth knowing before they bite
 
-**`php artisan test` fails exactly one test, on purpose.**
-`tests/Feature/ExampleTest.php` is Pest's stock scaffold test asserting
-`GET /` returns 200; `routes/web.php` is empty so it genuinely 404s. Expected
-until it's rewritten against a real route. Anything *else* failing is real.
+**`php artisan test` should pass in full; any failure is real.**
+`tests/Feature/ExampleTest.php` checks Laravel's `/up` health route, not `/`: `/` is the
+staff panel root, which redirects an anonymous visitor to `/login` (302), so the stock
+scaffold's `GET /` → 200 assertion failed for months before it was repointed.
 
 **Always migrate with `--database=Portal`,** whatever connection the migration
 actually targets. Portal's `migrations` table is this project's single
@@ -218,8 +332,14 @@ migration that has already run, that environment needs a deliberate
 **The root `package.json` is not a runnable app.** Its `dev`/`build`/`start`
 scripts are leftovers from before the repo was split; there's no `app/` at the
 root. The root exists to host the shared ESLint config and the Playwright
-setup. `npm run lint` at the root lints both frontends and the specs together —
-but it needs `npm install` at the root first.
+setup. `npm run lint` at the root lints the website and the specs together — but it
+needs `npm install` at the root first.
+
+**Saving an unfinished officer assessment needs a secure address.** The wizard
+keeps an unfinished form in the browser tab, encrypted with the browser's Web
+Crypto, which browsers only allow over https or on `localhost` / `127.0.0.1`.
+Opened over plain http on a network address (another device on your Wi-Fi, say),
+nothing is saved and the wizard behaves as it did before. Production must be https.
 
 **Granting a new table to the restricted user is manual.** Migrations can't
 issue MySQL `GRANT`s. If you add a table the public forms write to, add the

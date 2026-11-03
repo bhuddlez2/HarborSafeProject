@@ -7,14 +7,47 @@ Field wraps a label, its control and any server-side error for that field.
 htmlFor/id tie the label to the control, and aria-describedby points at the
 hint and the error so a screen reader reads them as part of the field rather
 than as loose text nearby.
+
+Required and optional markers - the same rule as the staff panel
+(portal/backend App\Filament\Forms\RequirementMarkers) and the civilian
+assessment:
+  - requirement="required": a red asterisk after the label, plus the
+    control's own `required` attribute.
+  - requirement="optional" (the default): nothing visible on the label. The
+    control itself shows OPTIONAL_PLACEHOLDER as faded grey ghost text - a text
+    box's placeholder, or a dropdown's empty choice. Text boxes and dropdowns
+    only; checkboxes and radio buttons get no optional marker. Screen readers
+    can't rely on ghost text (it goes once something is typed), so the label
+    also carries ", optional" for them only: "Last name, optional".
+  - requirement="none": neither. For fields in a one-of-several group, where
+    the group's legend says which is needed (see the email/phone fieldset in
+    contact/ContactContent.js).
+A form with any asterisk shows RequiredNote just above its submit button.
 */
+import { useEffect, useRef } from "react";
+import PhoneLink from "./PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
+
+// Moves to a new step of a form: back to the top, with focus on the step's first
+// heading (made focusable, without an outline), so the next Tab starts on that step.
+export function focusPageHeading() {
+  window.scrollTo({ top: 0 });
+  const heading = document.querySelector("main h1, main h2");
+  if (!heading) return;
+  heading.tabIndex = -1;
+  heading.classList.add("outline-none");
+  heading.focus({ preventScroll: true });
+}
+
+export const OPTIONAL_PLACEHOLDER = "Optional";
+
 export function Field({ id, label, hint, error, requirement = "optional", children }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="font-semibold text-gray-900">
         {label}
         {requirement === "required" && <span className="text-red-700 ml-1" aria-hidden="true">*</span>}
-        {requirement === "optional" && <span className="text-gray-500 font-normal ml-2 text-sm">Optional</span>}
+        {requirement === "optional" && <span className="sr-only">, optional</span>}
       </label>
 
       {hint && <p id={`${id}-hint`} className="text-sm text-gray-600">{hint}</p>}
@@ -28,12 +61,34 @@ export function Field({ id, label, hint, error, requirement = "optional", childr
   );
 }
 
-export const inputClass =
-  "w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 " +
+const controlClass =
+  "w-full border border-gray-300 rounded-lg px-4 py-2.5 placeholder:text-gray-400 " +
   "focus:outline-none focus:border-brand focus:ring-2 focus:ring-purple-200 transition-all";
+
+export const inputClass = `${controlClass} text-gray-900`;
+
+// A dropdown shows its empty choice in the same faded grey as a placeholder
+// while that choice is selected. The options in the open list stay full
+// colour. One text colour at a time: two in one class list would leave the
+// winner to stylesheet order.
+export const selectClass = (value) =>
+  `${controlClass} ${value === "" ? "text-gray-400" : "text-gray-900"} [&>option]:text-gray-900`;
 
 export const describedBy = (id, hint, error) =>
   [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+
+/*
+The key to the red asterisk, just above the submit button of any form or step
+that has one (the staff panel shows the same note). Hidden from screen readers,
+which already hear "required" on each required control.
+*/
+export function RequiredNote({ className = "" }) {
+  return (
+    <p className={`text-sm text-gray-600 ${className}`} aria-hidden="true">
+      <span className="text-red-700">*</span> Required
+    </p>
+  );
+}
 
 export function SubmitButton({ status, children }) {
   return (
@@ -49,14 +104,29 @@ export function SubmitButton({ status, children }) {
   );
 }
 
-export function FormMessage({ tone, children }) {
+// takeFocus: for a message that replaces a form or answers its Submit, so the
+// visitor is taken to it (centred, clear of the fixed navbar) instead of being
+// left where the button was.
+export function FormMessage({ tone, children, takeFocus = false }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!takeFocus) return;
+    ref.current?.focus({ preventScroll: true });
+    ref.current?.scrollIntoView({ block: "center" });
+  }, [takeFocus]);
+
   const styles =
     tone === "success"
       ? "bg-purple-50 border-purple-200 text-brand"
       : "bg-red-50 border-red-200 text-red-800";
 
   return (
-    <p role="alert" className={`border rounded-lg px-4 py-3 font-semibold ${styles}`}>
+    <p
+      ref={ref}
+      role="alert"
+      tabIndex={takeFocus ? -1 : undefined}
+      className={`border rounded-lg px-4 py-3 font-semibold outline-none ${styles}`}
+    >
       {children}
     </p>
   );
@@ -70,8 +140,8 @@ export function FormSection({ status, children }) {
   if (status === "error") {
     return (
       <FormMessage tone="error">
-        We could not load this form just now. Please call or text our crisis line at
-        (423) 476-3886, or try again in a few minutes.
+        We could not load this form just now. Please call or text our crisis line at{" "}
+        <PhoneLink number={CRISIS_CALL} className="underline" />, or try again in a few minutes.
       </FormMessage>
     );
   }
@@ -79,16 +149,4 @@ export function FormSection({ status, children }) {
   return children;
 }
 
-export function CrisisHotlineStrip() {
-  return (
-    <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
-      <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
-      <div className="flex items-center gap-5">
-        <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
-        <span className="text-purple-300">|</span>
-        <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
-      </div>
-      <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
-    </div>
-  );
-}
+

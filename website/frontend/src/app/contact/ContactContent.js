@@ -1,17 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { fetchRequestOptions, submitResourceRequest } from "../lib/forms";
+import { capitalizeName, formatPhoneInput, PHONE_INPUT_MAX_LENGTH } from "../lib/validators";
 import {
   Field,
+  OPTIONAL_PLACEHOLDER,
   inputClass,
+  selectClass,
   describedBy,
   SubmitButton,
+  RequiredNote,
   FormMessage,
   FormSection,
-  CrisisHotlineStrip,
 } from "../components/FormControls";
+import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+import PhoneLink from "../components/PhoneLink";
+import { CRISIS_CALL } from "../lib/phone";
 
 const EMPTY_REQUEST = {
   FirstName: "",
@@ -23,8 +29,8 @@ const EMPTY_REQUEST = {
   Message: "",
 };
 
-function ResourceRequestForm({ resourceTypes, counties }) {
-  const [values, setValues] = useState(EMPTY_REQUEST);
+function ResourceRequestForm({ resourceTypes, counties, preselected }) {
+  const [values, setValues] = useState({ ...EMPTY_REQUEST, ResourceTypeIDs: preselected });
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const [message, setMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -78,16 +84,17 @@ function ResourceRequestForm({ resourceTypes, counties }) {
 
   if (status === "success") {
     return (
-      <FormMessage tone="success">
+      <FormMessage takeFocus tone="success">
         Thank you — your request has been received. If you need help before we reach you,
-        our crisis line is answered 24 hours a day at (423) 476-3886.
+        our crisis line is answered 24 hours a day at{" "}
+        <PhoneLink number={CRISIS_CALL} className="underline" />.
       </FormMessage>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
-      {status === "error" && <FormMessage tone="error">{message}</FormMessage>}
+      {status === "error" && <FormMessage takeFocus tone="error">{message}</FormMessage>}
 
       <div className="grid md:grid-cols-2 gap-6">
         <Field id="first-name" label="First name" requirement="required" error={errorFor("FirstName")}>
@@ -99,6 +106,7 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             maxLength={50}
             value={values.FirstName}
             onChange={update("FirstName")}
+            onBlur={(event) => setValues((current) => ({ ...current, FirstName: capitalizeName(event.target.value) }))}
             aria-describedby={describedBy("first-name", false, errorFor("FirstName"))}
             className={inputClass}
           />
@@ -112,6 +120,8 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             maxLength={50}
             value={values.LastName}
             onChange={update("LastName")}
+            onBlur={(event) => setValues((current) => ({ ...current, LastName: capitalizeName(event.target.value) }))}
+            placeholder={OPTIONAL_PLACEHOLDER}
             aria-describedby={describedBy("last-name", false, errorFor("LastName"))}
             className={inputClass}
           />
@@ -122,7 +132,7 @@ function ResourceRequestForm({ resourceTypes, counties }) {
         <legend className="font-semibold text-gray-900 px-2">
           How can we reach you?
           <span className="text-red-700 ml-1" aria-hidden="true">*</span>
-          <span className="sr-only">(at least one of the two is required)</span>
+          <span className="text-sm font-normal text-gray-600 ml-2">At least one of these is required</span>
         </legend>
 
         <p id="contact-hint" className="text-sm text-gray-600 -mt-1">
@@ -157,10 +167,10 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             id="phone"
             name="SafePhoneNumber"
             type="tel"
-            maxLength={20}
+            maxLength={PHONE_INPUT_MAX_LENGTH}
             value={values.SafePhoneNumber}
-            onChange={update("SafePhoneNumber")}
-            aria-describedby={describedBy("phone", true, errorFor("SafePhoneNumber"))}
+            onChange={(event) => setValues((current) => ({ ...current, SafePhoneNumber: formatPhoneInput(event.target.value) }))}
+            aria-describedby={describedBy("phone", false, errorFor("SafePhoneNumber"))}
             className={inputClass}
           />
         </Field>
@@ -169,7 +179,6 @@ function ResourceRequestForm({ resourceTypes, counties }) {
       <fieldset className="flex flex-col gap-3">
         <legend className="font-semibold text-gray-900 mb-1">
           Resources of interest
-          <span className="text-gray-500 font-normal ml-2 text-sm">Optional</span>
         </legend>
 
         <p className="text-sm text-gray-600 -mt-1">Select any that apply.</p>
@@ -213,9 +222,9 @@ function ResourceRequestForm({ resourceTypes, counties }) {
             name="CountyID"
             value={values.CountyID}
             onChange={update("CountyID")}
-            className={inputClass}
+            className={selectClass(values.CountyID)}
           >
-            <option value="">Please choose…</option>
+            <option value="">{OPTIONAL_PLACEHOLDER}</option>
             {counties.map((county) => (
               <option key={county.id} value={county.id}>{county.Name}</option>
             ))}
@@ -235,11 +244,13 @@ function ResourceRequestForm({ resourceTypes, counties }) {
           maxLength={1000}
           value={values.Message}
           onChange={update("Message")}
-          aria-describedby={describedBy("message", true, errorFor("Message"))}
+          placeholder={OPTIONAL_PLACEHOLDER}
+          aria-describedby={describedBy("message", false, errorFor("Message"))}
           className={inputClass}
         />
       </Field>
 
+      <RequiredNote className="-mb-3" />
       <SubmitButton status={status}>Send request</SubmitButton>
     </form>
   );
@@ -250,13 +261,28 @@ function ResourceRequestForm({ resourceTypes, counties }) {
 export default function ContactContent() {
   const [options, setOptions] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | ready | error
+  const needsRef = useRef(null);
 
   useEffect(() => {
     let active = true;
 
+    // Get Support's service cards link here as /contact?need=<resource type name>
+    // to tick that box. Matched by name, since staff manage the list; a name
+    // that no longer matches just ticks nothing. The address is cleaned at once
+    // so browser history never shows what someone asked for. Read once (a ref),
+    // since a re-run would find the address already cleaned.
+    if (needsRef.current === null) {
+      needsRef.current = new URLSearchParams(window.location.search).getAll("need").map((n) => n.toLowerCase());
+      if (needsRef.current.length) window.history.replaceState(null, "", window.location.pathname);
+    }
+    const needs = needsRef.current;
+
     fetchRequestOptions()
       .then((loaded) => {
         if (!active) return;
+        loaded.preselected = loaded.resourceTypes
+          .filter((type) => needs.includes(type.Name.toLowerCase()))
+          .map((type) => type.id);
         setOptions(loaded);
         setStatus("ready");
       })
@@ -272,10 +298,7 @@ export default function ContactContent() {
   return (
     <main>
 
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Contact Us</h1>
         <p className="text-white/80 text-lg max-w-xl mx-auto leading-relaxed">
           Tell us what you need and an advocate will get back to you.
@@ -284,7 +307,7 @@ export default function ContactContent() {
 
       <CrisisHotlineStrip />
 
-      <section className="py-16 px-4 bg-white">
+      <section className="pt-12 md:pt-16 pb-16 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
           <p className="text-gray-700 leading-relaxed text-center mb-10">
             If you need help right now, please call or text our crisis hotline — it is answered
@@ -295,6 +318,7 @@ export default function ContactContent() {
             <ResourceRequestForm
               resourceTypes={options?.resourceTypes ?? []}
               counties={options?.counties ?? []}
+              preselected={options?.preselected ?? []}
             />
           </FormSection>
         </div>

@@ -107,6 +107,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Data Encryption Key
+    |--------------------------------------------------------------------------
+    |
+    | Encrypts the sensitive columns (victim, offender and requester details)
+    | before they reach the database - see App\Support\SensitiveData. Separate
+    | from APP_KEY on purpose, so regenerating or rotating APP_KEY never makes
+    | stored records unreadable. Losing this key loses those records for good:
+    | back it up. No fallback: without it, sensitive records can't be read or
+    | written at all.
+    |
+    */
+
+    'data_key' => env('DATA_ENCRYPTION_KEY'),
+
+    'previous_data_keys' => [
+        ...array_filter(
+            explode(',', (string) env('DATA_ENCRYPTION_PREVIOUS_KEYS', ''))
+        ),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
     |

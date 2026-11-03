@@ -5,19 +5,23 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 //FOR DB ERRORS
 use Illuminate\Database\Eloquent\Model;
+use App\Support\PersonName;
 use RuntimeException;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'first_name', 'last_name', 'email', 'password', 'role', 'is_active'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -27,6 +31,44 @@ class User extends Authenticatable
     // this model would otherwise fall back to.
     protected $connection = 'Portal';
 
+    public const NAME_PART_MAX = 50;
+
+    // The longest password anyone may set or type at sign-in. Every password
+    // box (account forms, Account page, sign-in, staff:create-super-admin)
+    // uses it, so a password that could be set can always be typed back in.
+    public const PASSWORD_MAX = 64;
+
+    // The shortest new password (Password::defaults() in AppServiceProvider).
+    public const PASSWORD_MIN = 15;
+
+    public const EMAIL_MAX = 255;
+
+    /*
+    first_name and last_name are the source of truth for a person's name;
+    every screen that creates or edits an account (Accounts, Officers, the
+    Account/profile page) edits those two. `name` is derived: rebuilt as
+    "First Last" on every save, so nothing should write it directly - a direct
+    write is simply overwritten. It is kept as a real column, rather than an
+    accessor, because the assessment tables search and sort on submitter.name
+    in SQL, and it is what the sidebar and officer screens display.
+
+    The one exception is an account with neither part, which the
+    add_first_and_last_name migration's backfill makes impossible for existing
+    rows; its `name` is left as it is rather than blanked.
+    */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            // Capitalised word by word, like every typed name (App\Support\PersonName).
+            $user->first_name = PersonName::capitalize($user->first_name);
+            $user->last_name = PersonName::capitalize($user->last_name);
+
+            if (filled($user->first_name) || filled($user->last_name)) {
+                $user->name = trim($user->first_name.' '.$user->last_name);
+            }
+        });
+    }
+
     public function lawEnforcementAgent()
     {
         return $this->hasOne(LawEnforcementAgent::class);
@@ -35,6 +77,99 @@ class User extends Authenticatable
     public function submittedAssessments()
     {
         return $this->hasMany(LawEnforcementAssessment::class, 'submitted_by');
+    }
+
+    // The staff panel's bell (App\Enums\NewSubmission). Overrides Notifiable's
+    // relation so alerts are stored on Portal through StaffNotification, not
+    // on the default connection Laravel's own model would use.
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(StaffNotification::class, 'notifiable')->latest();
+    }
+
+    // Name, badge and agency as the officer screens display them (the
+    // sidebar identity block, the wizard's Submitting officer step). The
+    // badge is displayBadge(). Badge and agency are null for accounts with no
+    // law_enforcement_agents row (secretaries, admins, and officers not yet
+    // provisioned).
+    public function officerIdentity(): array
+    {
+        $agent = $this->lawEnforcementAgent()->with('agency')->first();
+
+        return [
+            'name' => $this->name,
+            'badge' => $this->displayBadge($agent),
+            'agency' => $agent?->agency?->name,
+        ];
+    }
+
+    // What a police admin's badge reads as, wherever a badge is shown.
+    public const POLICE_ADMIN_BADGE = 'Police admin';
+
+    // The one rule for the badge any screen shows for a submitter: an
+    // officer's real badge_number, and "Police admin" for a police admin -
+    // their law_enforcement_agents row carries a badge_number only because
+    // the column is NOT NULL, never a real badge. Display only: it never
+    // changes the stored value. $agent saves a query when the caller already
+    // has the row. Reads the raw role string, like agencyId().
+    public function displayBadge(?LawEnforcementAgent $agent = null): ?string
+    {
+        if (UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? '')) === UserRole::PoliceAdmin) {
+            return self::POLICE_ADMIN_BADGE;
+        }
+
+        return ($agent ?? $this->lawEnforcementAgent)?->badge_number;
+    }
+
+    // The agency this account belongs to, from its law_enforcement_agents row.
+    // Officers and police admins only - a police admin's row exists purely to
+    // carry this link. Null for every other role, and for an officer or
+    // police admin with no row or no agency on it. Reads the raw role string
+    // for the same reason canAccessPanel() does.
+    public function agencyId(): ?int
+    {
+        $role = UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? ''));
+
+        if (! in_array($role, [UserRole::LawEnforcement, UserRole::PoliceAdmin], true)) {
+            return null;
+        }
+
+        $agencyId = $this->lawEnforcementAgent?->agency_id;
+
+        return $agencyId === null ? null : (int) $agencyId;
+    }
+
+    // The agency whose officers this account may manage: an active police
+    // admin's own agency, and null for everyone else. Fails closed - a police
+    // admin with no agency manages nothing.
+    public function managedAgencyId(): ?int
+    {
+        return $this->hasActiveRole(UserRole::PoliceAdmin) ? $this->agencyId() : null;
+    }
+
+    // Checked by Filament at login and on every panel request. Reads the raw
+    // role string so an unrecognised value is refused rather than throwing
+    // from the enum cast.
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->is_active
+            && UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? '')) !== null;
+    }
+
+    // The single role check every panel page's canAccess() goes through, so
+    // deactivating an account closes everything at once rather than relying on
+    // canAccessPanel() being the only gate. Reads the raw role string for the
+    // same reason canAccessPanel() does: an unrecognised value is refused
+    // rather than throwing from the enum cast.
+    public function hasActiveRole(UserRole ...$roles): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        $role = UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? ''));
+
+        return $role !== null && in_array($role, $roles, true);
     }
 
     /**

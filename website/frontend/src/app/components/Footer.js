@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import PhoneLink from "./PhoneLink";
+import { CRISIS_CALL, CRISIS_TEXT, formatPhone } from "../lib/phone";
 
 /*
 Footer component,
@@ -12,18 +14,21 @@ export default function Footer() {
     Footer,
     bg-brand for brand purple background,
     text-white for all text inside,
-    py-12 px-4 for vertical padding and horizontal gutters,
+    pt-12 px-4 for top padding and horizontal gutters,
+    pb-32 on every screen leaves room for the fixed Safe Exit button (bottom-right, about 92px
+    from the bottom of the window), which would otherwise sit on top of the nondiscrimination notice,
     aria-label describes the footer region to screen readers
     */
-    <footer className="bg-brand text-white py-12 px-4" aria-label="Site footer with contact information and social media links">
+    <footer className="on-dark bg-brand text-white pt-12 pb-32 px-4" aria-label="Site footer with contact information, social media links and nondiscrimination notice">
 
       {/*
       Two-column layout: hotline info on the left, social links on the right,
       max-w-7xl mx-auto to match the width of the sections above,
-      grid md:grid-cols-2 for two columns on medium screens and up,
+      grid md:grid-cols-[1fr_auto] for two columns on medium screens and up, the social column only
+      as wide as it needs so the left column has room for the two form buttons side by side,
       gap-8 for spacing between columns
       */}
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_auto] gap-8">
 
         {/* Left column: crisis hotline heading and phone link */}
         <div>
@@ -36,46 +41,67 @@ export default function Footer() {
             hover:text-purple-200 for a lighter purple on hover,
             transition-colors for a smooth color change
             */}
-            <a href="tel:423-476-3886" className="flex items-center gap-3 hover:text-purple-200 transition-colors">
+            <PhoneLink number={CRISIS_CALL} className="tap-target flex items-center gap-3 hover:text-purple-200 transition-colors">
               {/* Phone icon */}
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12 19.79 19.79 0 0 1 1.06 3.38 2 2 0 0 1 3.04 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
-              <span>(423) 476-3886</span>
-            </a>
+              <span>Call <span className="whitespace-nowrap">{formatPhone(CRISIS_CALL)}</span></span>
+            </PhoneLink>
 
-            <Link href="/contact" className="block hover:text-purple-200 transition-colors underline">
-              Request resources
-            </Link>
-            <Link href="/feedback" className="block hover:text-purple-200 transition-colors underline">
-              Share feedback on a service
-            </Link>
+            {/* Text link, same layout as the phone link, message-square icon from feathericons.com */}
+            <PhoneLink number={CRISIS_TEXT} sms className="tap-target flex items-center gap-3 hover:text-purple-200 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>Text <span className="whitespace-nowrap">{formatPhone(CRISIS_TEXT)}</span></span>
+            </PhoneLink>
+
+            {/*
+            Form buttons, styled like the outlined "Call (423) 476-3886" button on Get Support
+            but filled light purple so they stand out on the footer's brand purple,
+            hover turns white rather than filling brand purple, which would vanish here,
+            side by side wherever they fit, flex-wrap only stacks them on phones too narrow for both
+            */}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link href="/contact" className="text-center whitespace-nowrap bg-purple-100 border-2 border-brand text-brand px-8 py-3 rounded-lg font-semibold hover:bg-white transition-all">
+                Request Resources
+              </Link>
+              <Link href="/feedback" className="text-center whitespace-nowrap bg-purple-100 border-2 border-brand text-brand px-8 py-3 rounded-lg font-semibold hover:bg-white transition-all">
+                Share Feedback on a Service
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Right column: social media links */}
-        <div>
+        {/*
+        Right column: social media links,
+        right-aligned from md up (when the columns sit side by side) so the footer is balanced,
+        its edge lines up with the max-w-7xl content above; stacked on phones it stays left-aligned
+        */}
+        <div className="md:text-right">
           {/* mb-4 for spacing between heading and icons below */}
           <h3 className="font-semibold mb-4">Connect With Us</h3>
           {/*
           flex gap-4 to lay the icons out in a row with spacing,
+          md:justify-end pushes the row to the right edge,
           hover:text-purple-200 on each link for consistent hover color
           */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 md:justify-end">
             {/* Facebook */}
-            <a href="https://www.facebook.com/HarborSafeHouse/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Facebook (opens in new tab)">
+            <a href="https://www.facebook.com/HarborSafeHouse/" target="_blank" rel="noopener noreferrer" className="tap-target hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Facebook (opens in new tab)">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                 <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
               </svg>
             </a>
             {/* TikTok */}
-            <a href="https://www.tiktok.com/@harborsafehouse" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on TikTok (opens in new tab)">
+            <a href="https://www.tiktok.com/@harborsafehouse" target="_blank" rel="noopener noreferrer" className="tap-target hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on TikTok (opens in new tab)">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                 <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
               </svg>
             </a>
             {/* Instagram */}
-            <a href="https://www.instagram.com/harborsafehouse/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Instagram (opens in new tab)">
+            <a href="https://www.instagram.com/harborsafehouse/" target="_blank" rel="noopener noreferrer" className="tap-target hover:text-purple-200 transition-colors" aria-label="Visit Harbor Safe House on Instagram (opens in new tab)">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
                 <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
@@ -102,6 +128,34 @@ export default function Footer() {
           height={100}
           className="h-40 w-auto rounded-2xl shadow-2xl"
         />
+      </div>
+
+      <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-purple-700 text-xs leading-relaxed text-purple-100">
+        {/* Full footer width; the footer's pb-32 keeps it clear of the fixed Safe Exit button */}
+        <div className="space-y-2">
+          <p>
+            <strong className="font-semibold text-white">Nondiscrimination notice.</strong>{" "}
+            Harbor Safe House &amp; Advocacy Center, a program of Family Resource Agency, Inc., does not
+            discriminate in employment or in the delivery of services on the basis of race, color, national
+            origin, sex, religion, disability, age, sexual orientation, or gender identity, and does not
+            retaliate against anyone who opposes discrimination or files or takes part in a complaint. Free
+            language assistance and disability aids and services are available on request.
+          </p>
+          <p>
+            If you believe you have been discriminated against, you may file a complaint within 180 days with
+            the Tennessee Department of Finance and Administration&apos;s Civil Rights Coordinator
+            (<a href="mailto:FA.CivilRights@tn.gov" className="underline hover:text-white transition-colors">FA.CivilRights@tn.gov</a>)
+            or the U.S. Department of Justice Office for Civil Rights.{" "}
+            <a
+              href="https://www.tn.gov/finance/office-of-criminal-justice-programs/ocjp/fa-ocjp-grants/fa-ocjp-civil-rights-compliance/f-a-civil-rights-complaint-form-documentation.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold text-white hover:text-purple-200 transition-colors"
+            >
+              Complaint form and filing instructions<span className="sr-only"> (opens in new tab)</span>
+            </a>
+          </p>
+        </div>
       </div>
 
     </footer>

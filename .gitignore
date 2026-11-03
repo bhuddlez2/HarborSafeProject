@@ -1,5 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-# Single consolidated .gitignore for the whole repo (website/frontend, portal/frontend,
+# Single consolidated .gitignore for the whole repo (website/frontend and
 # portal/backend). Per-app rules are grouped and path-prefixed below.
 
 # --- Global: dependencies, OS files, logs, misc ---
@@ -18,13 +18,17 @@ yarn-error.log*
 *.sqlite*
 
 # --- Global: env files ---
+# Catch-all rather than a list of known names: real credentials live in .env,
+# and the dangerous case is an ad-hoc copy nobody thought to add here -
+# .env.bak, .env.save, .env.2026-09-24, an editor's .env~. Those carry the
+# same secrets as .env and were previously committable.
+#
+# .env.example is the one that must stay tracked, hence the negation. Keep it
+# free of real values: it is the only file in this group that ships.
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.backup
-.env.production
+.env.*
+.env~
+!.env.example
 
 # --- website/frontend (Next.js) ---
 website/frontend/.yarn/*
@@ -39,20 +43,6 @@ website/frontend/build/
 website/frontend/.vercel
 website/frontend/*.tsbuildinfo
 website/frontend/next-env.d.ts
-
-# --- portal/frontend (Next.js) ---
-portal/frontend/.yarn/*
-!portal/frontend/.yarn/patches
-!portal/frontend/.yarn/plugins
-!portal/frontend/.yarn/releases
-!portal/frontend/.yarn/versions
-portal/frontend/coverage/
-portal/frontend/.next/
-portal/frontend/out/
-portal/frontend/build/
-portal/frontend/.vercel
-portal/frontend/*.tsbuildinfo
-portal/frontend/next-env.d.ts
 
 # --- portal/backend (Laravel) ---
 portal/backend/.phpactor.json

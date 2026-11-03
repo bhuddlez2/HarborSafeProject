@@ -1,0 +1,535 @@
+<?php
+
+namespace App\Filament\Clusters\Content\Resources\Events;
+
+use App\Filament\Concerns\AllowsOnlyListedActions;
+use App\Enums\UserRole;
+use App\Filament\Clusters\Content\ContentCluster;
+use App\Filament\Clusters\Content\Resources\Events\Pages\ManageEvents;
+use App\Filament\Forms\Components\DatabaseFileUpload;
+use App\Filament\Forms\DateWindow;
+use Closure;
+use Illuminate\Support\Carbon;
+use App\Models\ContentFile;
+use App\Models\Event;
+use App\Models\EventCategory;
+use App\Filament\Tables\RecordCards;
+use App\Filament\Tables\TableAlignment;
+use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
+use App\Filament\Forms\EventDateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Arr;
+use Illuminate\Support\HtmlString;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
+
+/*
+Events on the public website's Events & News page.
+
+Three things here are not obvious and will cause visible bugs if changed
+carelessly:
+
+  1. TIMEZONE. starts_at/ends_at are stored UTC; staff think in Eastern. Both
+     pickers declare ->timezone(Event::DISPLAY_TIMEZONE) so Filament converts
+     on the way in and out. Drop that and every event is entered four or five
+     hours off, differently either side of a DST boundary.
+
+  2. DESCRIPTION IS AN ARRAY, NOT HTML. The site does description.map(...) over
+     paragraph strings, so a rich-text editor here would render visible escaped
+     markup on the live page. It is a plain textarea, split on blank lines
+     going in and rejoined coming out.
+
+  3. PUBLISHED AND CANCELLED ARE INDEPENDENT. A published event can also be
+     cancelled - the site renders that as a badge with the registration link
+     suppressed. They are not one status field, so they stay two toggles.
+*/
+class EventResource extends Resource
+{
+    use AllowsOnlyListedActions;
+
+    protected static ?string $model = Event::class;
+
+    protected static ?string $cluster = ContentCluster::class;
+
+    protected static ?string $slug = 'events';
+
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedCalendarDays;
+
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'title';
+
+    public static function canAccess(): bool
+    {
+        return (bool) Filament::auth()->user()?->hasActiveRole(
+            UserRole::Admin,
+            UserRole::SuperAdmin,
+            UserRole::Secretary,
+        );
+    }
+
+    // Add, edit and delete events, one or several at a time. Nothing else.
+    protected static function allowedActions(): array
+    {
+        return ['create', 'update', 'delete', 'deleteAny'];
+    }
+
+    // The Edit pop-up. Create gives the same steps as action steps instead
+    // (createAction()).
+    public static function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Wizard::make(self::steps())->columnSpanFull(),
+            ]);
+    }
+
+    /** @return list<Step> */
+    public static function steps(): array
+    {
+        return [
+            Step::make('Details')
+                ->icon('heroicon-o-document-text')
+                ->schema([
+                    TextInput::make('title')
+                        ->required()
+                        ->maxLength(200)
+                        ->columnSpanFull(),
+
+                    TextInput::make('summary')
+                        ->maxLength(500)
+                        ->helperText('One or two lines, shown in the event list.')
+                        ->columnSpanFull(),
+
+                    Textarea::make('description')
+                        ->rows(6)
+                        // Counts the whole box, blank lines between
+                        // paragraphs included.
+                        ->maxLength(500)
+                        ->columnSpanFull()
+                        ->helperText('Leave a blank line between paragraphs. Each paragraph is rendered separately on the website.')
+                        // The column is a json array of paragraphs; the
+                        // textarea is a single string. Convert both ways.
+                        ->afterStateHydrated(fn (Textarea $component, mixed $state) => $component->state(
+                            is_array($state) ? implode("\n\n", $state) : (string) ($state ?? ''),
+                        ))
+                        ->dehydrateStateUsing(fn (?string $state): ?array => self::toParagraphs($state)),
+
+                    Select::make('category_id')
+                        ->label('Category')
+                        // Not ->relationship(): the relation crosses to the
+                        // Content connection and Filament would resolve the
+                        // option query on the default one.
+                        ->options(fn (): array => EventCategory::query()
+                            ->orderBy('Name')
+                            ->pluck('Name', 'id')
+                            ->all())
+                        ->searchable()
+                        ->helperText('Leave empty for no category.'),
+
+                    // Optional fields keep their box for the "Optional"
+                    // ghost text (App\Filament\Forms\RequirementMarkers),
+                    // so examples go in the helper text instead.
+                    TextInput::make('recurrence')
+                        ->maxLength(120)
+                        ->helperText('e.g. Annually in September. Free text, shown as-is. Leave empty for a one-off event.'),
+                ])
+                ->columns(2),
+
+            Step::make('Date & Time')
+                ->icon('heroicon-o-calendar')
+                ->schema([
+                    // Set first: it decides whether Starts and Ends ask for a time.
+                    Toggle::make('all_day')
+                        ->label('All-day event')
+                        ->live()
+                        // Re-enter Starts in its new shape (date only, or the
+                        // date at midnight), keeping the Eastern day; $get and
+                        // $set use the saved UTC form. Ends is cleared.
+                        ->afterStateUpdated(function (Get $get, Set $set): void {
+                            if (filled($value = $get('starts_at'))) {
+                                $set('starts_at', Carbon::parse($value)->timezone(Event::DISPLAY_TIMEZONE)->startOfDay());
+                            }
+                            $set('ends_at', null);
+                            $set('multiple_days', false);
+                        })
+                        ->columnSpanFull(),
+
+                    // Not stored: an all-day event with an end runs over
+                    // several days, so Edit turns it on from the saved end.
+                    Toggle::make('multiple_days')
+                        ->label('Multiple days')
+                        ->live()
+                        ->dehydrated(false)
+                        ->visible(fn (Get $get): bool => (bool) $get('all_day'))
+                        ->afterStateHydrated(fn (Toggle $component, ?Event $record) => $component->state($record?->all_day && $record->ends_at !== null))
+                        ->afterStateUpdated(fn (Set $set) => $set('ends_at', null))
+                        ->columnSpanFull(),
+
+                    self::eventDateTime('starts_at', 'Starts')
+                        ->required(),
+
+                    // A one-day all-day event has no end: Ends is greyed out
+                    // with the reason on hover, like a refused Delete button,
+                    // and saved empty (a greyed-out field otherwise isn't
+                    // saved, which would keep an old end).
+                    self::eventDateTime('ends_at', 'Ends')
+                        ->after('starts_at')
+                        ->helperText('Optional.')
+                        ->disabled(fn (Get $get): bool => self::isOneDay($get))
+                        ->dehydrated()
+                        ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => self::isOneDay($get) ? null : $state)
+                        ->extraAttributes(fn (Get $get): array => self::isOneDay($get)
+                            ? ['x-tooltip' => "{ content: 'All-day event', theme: \$store.theme }"]
+                            : []),
+
+                    Toggle::make('location_is_virtual')
+                        ->label('Virtual event')
+                        ->live(),
+
+                    TextInput::make('location_name')
+                        ->label('Venue name')
+                        ->maxLength(150)
+                        ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
+
+                    TextInput::make('location_address')
+                        ->label('Address')
+                        ->maxLength(255)
+                        ->visible(fn (callable $get): bool => ! $get('location_is_virtual')),
+
+                    TextInput::make('location_virtual_note')
+                        ->label('Joining note')
+                        ->maxLength(255)
+                        ->helperText('e.g. A link will be emailed to registrants')
+                        ->visible(fn (callable $get): bool => (bool) $get('location_is_virtual'))
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
+
+            Step::make('Image')
+                ->icon('heroicon-o-photo')
+                ->schema([
+                    // live so the position box below appears with the new image; a new image starts centred.
+                    DatabaseFileUpload::forImage('image_file_id')
+                        ->label('Event image')
+                        ->live()
+                        ->afterStateUpdated(fn (Set $set) => $set('image_position', null))
+                        ->columnSpanFull(),
+
+                    ViewField::make('image_position')
+                        ->label('Position on the event card')
+                        ->view('filament.forms.event-image-position')
+                        ->viewData(fn (Get $get): array => ['imageUrl' => self::previewImageUrl($get('image_file_id'))])
+                        ->helperText('Drag the image to choose what the event card shows, and zoom to enlarge it. View Details on the website always shows the whole image.')
+                        ->visible(fn (Get $get): bool => filled($get('image_file_id')))
+                        ->dehydrateStateUsing(fn (mixed $state): array => Event::normalizeImagePosition($state))
+                        ->columnSpanFull(),
+
+                    TextInput::make('image_alt')
+                        ->label('Image description')
+                        ->maxLength(255)
+                        ->helperText('Describes the image for screen readers. Required whenever an image is set.')
+                        ->required(fn (callable $get): bool => filled($get('image_file_id')))
+                        ->columnSpanFull(),
+                ]),
+
+            Step::make('Registration & Visibility')
+                ->icon('heroicon-o-eye')
+                ->schema([
+                    TextInput::make('registration_url')
+                        ->label('Registration link')
+                        ->url()
+                        ->maxLength(255),
+
+                    TextInput::make('registration_label')
+                        ->label('Button text')
+                        ->maxLength(100)
+                        ->helperText('e.g. Register now'),
+
+                    Toggle::make('is_published')
+                        ->label('Published')
+                        ->helperText('Visible on the website.')
+                        ->columnSpanFull(),
+
+                    Toggle::make('is_cancelled')
+                        ->label('Cancelled')
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
+
+            Step::make('Preview')
+                ->icon('heroicon-o-sparkles')
+                ->schema([
+                    /*
+                    Placeholder renders arbitrary HTML inside a form step.
+                    The ->content() closure runs when the step is first
+                    displayed and receives $get, a callable that reads any
+                    field's current value from the Livewire form state —
+                    so all the earlier steps' input is accessible here
+                    without the form needing to be saved first.
+                    */
+                    Placeholder::make('event_preview')
+                        ->label('')
+                        ->content(function (Get $get): HtmlString {
+                            // category_id is an integer FK; look up the
+                            // display name so the preview can show the badge.
+                            $categoryName = null;
+                            if ($categoryId = $get('category_id')) {
+                                $categoryName = EventCategory::find($categoryId)?->Name;
+                            }
+
+                            // The DateTimePicker stores times in UTC internally.
+                            // Carbon::parse() turns the raw string into a Carbon
+                            // object, and ->timezone() converts it to Eastern so
+                            // the preview shows the same wall-clock time the
+                            // website will display.
+                            $startsAt = filled($get('starts_at'))
+                                ? \Carbon\Carbon::parse($get('starts_at'))->timezone(Event::DISPLAY_TIMEZONE)
+                                : null;
+                            $endsAt = filled($get('ends_at'))
+                                ? \Carbon\Carbon::parse($get('ends_at'))->timezone(Event::DISPLAY_TIMEZONE)
+                                : null;
+
+                            $imageUrl = self::previewImageUrl($get('image_file_id'));
+
+                            // Render the Blade template with all the form values
+                            // and wrap the resulting HTML in HtmlString so
+                            // Filament doesn't escape it as plain text.
+                            return new HtmlString(view('filament.forms.event-preview', [
+                                'title'               => $get('title'),
+                                'summary'             => $get('summary'),
+                                'description'         => $get('description'),
+                                'categoryName'        => $categoryName,
+                                'startsAt'            => $startsAt,
+                                'endsAt'              => $endsAt,
+                                'allDay'              => (bool) $get('all_day'),
+                                'locationIsVirtual'   => (bool) $get('location_is_virtual'),
+                                'locationName'        => $get('location_name'),
+                                'locationAddress'     => $get('location_address'),
+                                'locationVirtualNote' => $get('location_virtual_note'),
+                                'registrationUrl'     => $get('registration_url'),
+                                'registrationLabel'   => $get('registration_label'),
+                                'hasImage'            => filled($get('image_file_id')),
+                                'imageUrl'            => $imageUrl,
+                                'imageAlt'            => $get('image_alt'),
+                                'imagePosition'       => Event::normalizeImagePosition($get('image_position')),
+                                'recurrence'          => $get('recurrence'),
+                                'isPublished'         => (bool) $get('is_published'),
+                                'isCancelled'         => (bool) $get('is_cancelled'),
+                            ])->render());
+                        })
+                        ->columnSpanFull(),
+                ]),
+        ];
+    }
+
+    public static function table(Table $table): Table
+    {
+        // Cards on a phone, stacked buttons on narrower screens (B37).
+        return RecordCards::apply($table)
+            ->searchPlaceholder('Search by Title')
+            ->columns([
+                RecordCards::title(TextColumn::make('title')
+                    ->searchable()
+                    ->limit(40)
+                    ->weight('semibold')),
+
+                RecordCards::meta(RecordCards::dateAndTime(TextColumn::make('starts_at')
+                    ->label('Starts')
+                    ->sortable(), timezone: Event::DISPLAY_TIMEZONE)),
+
+                TableAlignment::symbol(TextColumn::make('category.Name')
+                    ->label('Category')
+                    ->badge()
+                    ->placeholder('None')),
+
+                TableAlignment::symbol(IconColumn::make('is_published')
+                    ->label('Published')
+                    ->boolean()
+                    ->sortable()),
+
+                TableAlignment::symbol(IconColumn::make('is_cancelled')
+                    ->label('Cancelled')
+                    ->boolean()
+                    ->falseColor('gray')
+                    ->trueColor('danger')
+                    ->sortable()),
+            ])
+            ->defaultSort('starts_at', 'desc')
+            ->filters([
+                TernaryFilter::make('is_published')->label('Published'),
+                TernaryFilter::make('is_cancelled')->label('Cancelled'),
+                SelectFilter::make('category_id')
+                    ->label('Category')
+                    ->options(fn (): array => EventCategory::query()
+                        ->orderBy('Name')
+                        ->pluck('Name', 'id')
+                        ->all()),
+            ])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()->modalHeading('Delete Selected Events'),
+                ]),
+            ])
+            ->emptyStateHeading('No events yet')
+            ->emptyStateDescription('Events created here appear on the website once published.')
+            ->emptyStateActions([
+                self::createAction()->label('Add an Event'),
+            ]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ManageEvents::route('/'),
+        ];
+    }
+
+    // How far back and ahead an event's start or end may be.
+    public const YEARS_BACK = 1;
+
+    public const YEARS_AHEAD = 2;
+
+    /*
+    The Create pop-up, used by the page header and the table's empty state.
+    Given as action steps rather than the resource form, like newsletters, so
+    both Create buttons show only on the last step (Preview): Filament drops
+    the footer in steps mode and puts the submit button in the wizard, and
+    Create & Create Another Event is added beside it here. Filament draws an
+    action's wizard uncontained; contained() keeps the Edit pop-up's look.
+    */
+    public static function createAction(): CreateAction
+    {
+        return CreateAction::make()
+            ->steps(self::steps())
+            ->createAnotherAction(fn (Action $action): Action => $action->label('Create & Create Another Event'))
+            ->modifyWizardUsing(fn (Wizard $wizard, CreateAction $action): Wizard => $wizard
+                ->contained()
+                ->submitAction(new HtmlString(
+                    '<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem;">'
+                    .$action->getModalSubmitAction()?->toHtml()
+                    .collect($action->getExtraModalFooterActions())->map->toHtml()->implode('')
+                    .'</div>',
+                )));
+    }
+
+    /*
+    The image as the Preview step can show it. A file picked in this pop-up is
+    still a Livewire temporary upload with no content_files row, so it goes
+    through Livewire's own signed preview link; a saved one (Edit) through the
+    staff file route. The field holds [uuid => file] while the form is open.
+    */
+    private static function previewImageUrl(mixed $state): ?string
+    {
+        $file = is_array($state) ? Arr::first($state) : $state;
+
+        if ($file instanceof TemporaryUploadedFile) {
+            return $file->isPreviewable() ? $file->temporaryUrl() : null;
+        }
+
+        return is_string($file) && ContentFile::whereKey($file)->exists()
+            ? route('staff.content-files.show', ['file' => $file])
+            : null;
+    }
+
+    public static function earliestDay(): string
+    {
+        return now(Event::DISPLAY_TIMEZONE)->subYearsNoOverflow(self::YEARS_BACK)->toDateString();
+    }
+
+    public static function latestDay(): string
+    {
+        return now(Event::DISPLAY_TIMEZONE)->addYearsNoOverflow(self::YEARS_AHEAD)->toDateString();
+    }
+
+    /*
+    Starts and Ends: from a year ago to two years ahead, in Eastern days
+    (App\Filament\Forms\DateWindow). A new event's calendar offers only that
+    range; an existing event keeps its saved dates even once they are older,
+    and only a changed date is checked.
+    */
+    private static function eventDateTime(string $name, string $label): EventDateTimePicker
+    {
+        $tooEarly = "Can't be more than a year ago.";
+        $tooLate = "Can't be more than 2 years from now.";
+
+        return EventDateTimePicker::make($name)
+            ->label($label)
+            ->seconds(false)
+            // Date only for an all-day event, saved at midnight Eastern.
+            ->time(fn (Get $get): bool => ! $get('all_day'))
+            ->format('Y-m-d H:i:s')
+            ->timezone(Event::DISPLAY_TIMEZONE)
+            // Calendar limits for a new event only. Written as Eastern clock
+            // time, because Filament compares them with the value as typed.
+            ->minDate(fn (?Event $record): ?string => $record ? null : self::earliestDay().' 00:00:00')
+            ->maxDate(fn (?Event $record): ?string => $record ? null : self::latestDay().' 23:59:59')
+            ->rule(fn (?Event $record, Get $get): Closure => DateWindow::rule(
+                self::earliestDay(...),
+                self::latestDay(...),
+                $tooEarly,
+                $tooLate,
+                // An all-day event's picker has no time, so its day alone is compared.
+                fn (Carbon $picked): bool => $record?->{$name} !== null
+                    && $picked->format($get('all_day') ? 'Y-m-d' : 'Y-m-d H:i') === $record->{$name}->copy()->timezone(Event::DISPLAY_TIMEZONE)->format($get('all_day') ? 'Y-m-d' : 'Y-m-d H:i'),
+            ))
+            ->validationMessages([
+                'after_or_equal' => $tooEarly,
+                'before_or_equal' => $tooLate,
+            ]);
+    }
+
+    // An all-day event on a single day: no end.
+    private static function isOneDay(Get $get): bool
+    {
+        return $get('all_day') && ! $get('multiple_days');
+    }
+
+    /*
+    Splits the textarea into the paragraph array the column stores and the
+    website maps over. Blank-line separated, inner single newlines preserved
+    within a paragraph, and an empty box becomes null rather than [''] - the
+    site guards on truthiness, and a one-empty-string array is truthy.
+    */
+    private static function toParagraphs(?string $state): ?array
+    {
+        if (blank($state)) {
+            return null;
+        }
+
+        $paragraphs = collect(preg_split('/\R{2,}/', trim($state)))
+            ->map(fn (string $paragraph): string => trim($paragraph))
+            ->filter()
+            ->values()
+            ->all();
+
+        return $paragraphs === [] ? null : $paragraphs;
+    }
+}

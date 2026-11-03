@@ -1,16 +1,20 @@
 import Image from "next/image";
+import CrisisHotlineStrip from "../components/CrisisHotlineStrip";
+
+// Browser tab title and search description for this page (overrides the default in layout.js)
+export const metadata = {
+  title: "Who We Are | Harbor Safe House & Advocacy Center",
+  description:
+    "Learn about Harbor Safe House & Advocacy Center, a program of Family Resource Agency serving survivors in Bradley and Polk counties since 1987, and the partners we work with.",
+};
 
 export default function About() {
   return (
     <main>
 
       {/* PAGE TITLE BAND */}
-      {/* brand purple banner matching the navbar, mt-32 offsets the fixed navbar */}
-      <section className="bg-purple-950 px-4 pt-20 pb-16 text-center">
-        {/* Eyebrow kicker */}
-        <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-3">
-          Harbor Safe House &amp; Advocacy Center
-        </p>
+      {/* brand purple banner matching the navbar, padded like every page's hero */}
+      <section className="bg-purple-950 px-4 pt-12 pb-10 md:pt-16 md:pb-12 text-center">
         {/* Page title */}
         <h1 className="text-5xl md:text-6xl font-semibold text-white mb-4">Who We Are</h1>
         {/* Short tagline */}
@@ -19,18 +23,10 @@ export default function About() {
         </p>
       </section>
 
-      <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
-        <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
-        <div className="flex items-center gap-5">
-          <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
-          <span className="text-purple-300">|</span>
-          <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
-        </div>
-        <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
-      </div>
+      <CrisisHotlineStrip />
 
       {/* MISSION  */}
-      <section className="py-20 px-4 bg-white">
+      <section className="pt-12 md:pt-16 pb-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
 
           {/* Two-column: photo left, vision + mission text right */}
@@ -127,7 +123,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">United Way of the Ocoee Region</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://www.unitedwayocoee.org" target="_blank" rel="noopener noreferrer" aria-label="Visit United Way of the Ocoee Region website (opens in new tab)" className="hover:underline">United Way of the Ocoee Region</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   United Way supports HSHAC through funding, volunteer networks, and community
                   connections. United Way of the Ocoee Region mobilizes communities to address
@@ -152,7 +148,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">Tennessee Coalition to End Domestic &amp; Sexual Violence</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://tncoalition.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Tennessee Coalition to End Domestic & Sexual Violence website (opens in new tab)" className="hover:underline">Tennessee Coalition to End Domestic &amp; Sexual Violence</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Tennessee Coalition provides statewide advocacy, training, and resources 
                   that strengthen the capacity of local programs like HSHAC to serve survivors with best-practice, trauma-informed approaches.
@@ -174,7 +170,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">Legal Aid of East Tennessee</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://www.laet.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Legal Aid of East Tennessee website (opens in new tab)" className="hover:underline">Legal Aid of East Tennessee</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   Legal Aid of East Tennessee provides free civil legal services to low-income individuals 
                   and families, helping them navigate complex legal issues and access justice. 
@@ -198,7 +194,7 @@ export default function About() {
                 </a>
               </div>
               <div>
-                <h3 className="text-2xl font-semibold text-brand mb-3">The Caring Place</h3>
+                <h3 className="text-2xl font-semibold text-brand mb-3"><a href="https://thecaringplaceonline.org" target="_blank" rel="noopener noreferrer" aria-label="Visit The Caring Place website (opens in new tab)" className="hover:underline">The Caring Place</a></h3>
                 <p className="text-gray-700 leading-relaxed">
                   The Caring Place provides comprehensive support services for survivors of domestic violence 
                   and sexual assault, including counseling, advocacy, and emergency shelter. 

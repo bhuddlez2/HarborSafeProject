@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,13 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
         // Feedback-connection lookup tables backing the website's two public
         // forms. Safe to run on their own:
         //   php artisan db:seed --class=ServiceSeeder
@@ -29,6 +21,11 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             ResourceSeeder::class,
             CountySeeder::class,
+        ]);
+
+        // Content-connection lookup backing the events page's category badge.
+        $this->call([
+            EventCategorySeeder::class,
         ]);
     }
 }

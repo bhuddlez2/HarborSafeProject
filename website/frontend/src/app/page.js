@@ -1,178 +1,150 @@
 // necessary for useState and client-side interactivity in this component, server components cannot use state or event handlers
 "use client";
 
-import { useState, useEffect, startTransition } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Modal from "./components/Modal";
+import CrisisHotlineStrip from "./components/CrisisHotlineStrip";
+import PhoneLink from "./components/PhoneLink";
+import { CRISIS_CALL, CRISIS_TEXT, formatPhone } from "./lib/phone";
+
+const TESTIMONIALS = [
+  {
+    heading: "A Survivor’s Story",
+    pullQuote: "I’m a better mom and a better person. Today, I am alive.",
+    author: "Anonymous Survivor",
+    story: [
+      "It was at the point that I was gathering the things I needed for me and my children to live in the car that I reached out to Harbor Safe House. I was just done with the abuse. I was struggling with day to day living and overwhelmed with the constant fear of what was going to happen next. I felt hopeless and numb.",
+      "I’m not sure I would still be around without asking for the help I needed. I did the work, but without the support of Harbor Safe House, I’m not sure I would have been able to do it. They helped me find the right steps into stability and my new and improved life that I am creating. Having a safe place and supportive people helping me and my little ones, while going through the most difficult time in my life, has meant the world to me. I’m a better mom and a better person.",
+      "Today, I am alive. The feeling of waking up every morning having purpose and being happy is new to me. I am confident that I hold a bright future for myself and my family.",
+    ],
+  },
+  {
+    heading: "Finding Safety & Support",
+    pullQuote: "For the first time in a long time I did not feel alone.",
+    author: "C",
+    story: [
+      "I was really struggling and was worried for our safety. I didn’t know where my child and I would stay. I had nothing and I didn’t know where to go for help. I wanted a better and safer life for my family.",
+      "With the help of Harbor Safe House, I was finally in a safe place. My child and I received help with food, basic personal needs, and most importantly safety. The staff were kind and supportive and helped me connect to resources.",
+      "For the first time in a long time I did not feel alone. I needed someone to listen to me and give me hope and this program did that for me.",
+      "I feel hopeful about the future. I feel more stable and confident that I can provide a better life for me and my child.",
+      "To the donors who support Harbor Safe House, your support has given us safety, hope, and the chance for a better future.",
+      "Thank you for making this possible.",
+    ],
+  },
+];
 
 export default function Home() {
   /*
-  showSafetyModal controls whether the security alert popup is visible,
-  modal - a dialog that blocks all other interactions until dismissed,
-  initialized to false so the server-rendered HTML and the first client render match,
-  this prevents the React hydration mismatch error that occurs when server and client
-  produce different HTML — the server runs without a browser so it must start as false,
-  the useEffect below sets it to true after hydration so it shows on every page load,
-  intentionally not stored in localStorage — the warning should appear every visit
-  so that any person using the browser sees it, not just the first user ever
+  showHelpModal controls the "Get Help Now" contact list opened from the hero button
   */
-  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   /*
-  Shows the security alert modal after the component hydrates on the client,
-  always shows regardless of previous visits — no localStorage check,
-  runs once on mount after the first render so server and client HTML match first
+  openTestimonial is the testimonial whose full story is showing in the dialog,
+  null when the dialog is closed
   */
-  useEffect(() => {
-    startTransition(() => setShowSafetyModal(true));
-  }, []);
+  const [openTestimonial, setOpenTestimonial] = useState(null);
 
-
-  /*
-  handleDismissSafetyModal is called when the user clicks OK on the security alert modal,
-  hides the modal by setting showSafetyModal to false,
-  intentionally does not store anything — the modal will show again on the next page load
-  */
-  const handleDismissSafetyModal = () => {
-    setShowSafetyModal(false);
-  };
-
-  useEffect(() => {
-    document.body.classList.toggle("safety-modal-open", showSafetyModal);
-    return () => document.body.classList.remove("safety-modal-open");
-  }, [showSafetyModal]);
 
   return (
     <div>
-      {/*
-      Safety modal — shown on every visit, icons from Feather Icons (https://feathericons.com) MIT License,
-      z-200 places it above the navbar (z-50) and exit button (z-100)
-      */}
-      {showSafetyModal && (
-        <div
-          className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="safety-modal-heading"
+      {showHelpModal && (
+        <Modal
+          title="Get Help Now"
+          centered
+          prominent
+          subtitle={<>Free, confidential support. You don&apos;t have to go through this alone.</>}
+          onClose={() => setShowHelpModal(false)}
         >
-          {/* Modal card */}
-          <div className="bg-white rounded-4xl shadow-xl max-w-md w-full overflow-hidden">
+          <div className="p-6 space-y-4">
 
-            {/* Brand header with shield icon and title */}
-            <div className="bg-brand px-6 py-5 flex items-center gap-4">
-              {/*
-              bg-white/15 creates a subtle semi-transparent circle behind the shield icon
-              */}
-              <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-white/85 stroke-5 fill-none">
-                  {/* shield icon, feathericons.com */}
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-              <div>
-                {/* Eyebrow label */}
-                <p className="text-xs font-semibold tracking-widest uppercase text-purple-300 mb-0.5">Your safety matters</p>
-                {/* Modal heading */}
-                <h2 id="safety-modal-heading" className="text-xl font-bold text-white">Browse safely &amp; privately</h2>
+            {/* 911 danger callout, alert-circle icon from feathericons.com */}
+            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex gap-2 items-start">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 mt-0.5 stroke-red-700 stroke-2 fill-none" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <a href="tel:911" className="tap-target text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
+            </div>
+
+            {/*
+            Harbor Safe crisis line, soft fill instead of a border so the buttons carry the emphasis,
+            buttons stack on narrow phones so the numbers can't wrap
+            */}
+            <div className="bg-purple-50 rounded-xl p-4">
+              <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-1">24/7 Crisis Line</p>
+              <p className="text-sm font-semibold text-brand mb-3">Harbor Safe House &amp; Advocacy Center</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <PhoneLink number={CRISIS_CALL} prefix="Call " className="text-center bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all" />
+                <PhoneLink number={CRISIS_TEXT} sms prefix="Text " className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all" />
               </div>
             </div>
 
-            {/* Modal body */}
-            <div className="px-6 py-5">
-              {/* Introductory paragraph */}
-              <p className="text-sm text-gray-600 leading-relaxed mb-5">
-                Internet usage can be monitored and is difficult to erase completely. If you&apos;re
-                concerned your activity is being watched, here are some ways to stay safer.
-              </p>
-
-              {/* Safety tips */}
-              <div className="space-y-4 mb-5">
-
-                {/* Exit quickly tip */}
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
-                      {/* log-out icon, feathericons.com */}
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                  </div>
+            <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl">
+              {[
+                { name: "National Domestic Violence Hotline", note: "Call 24/7 · Text START to 88788", phone: "1-800-799-7233", text: { href: "sms:88788?&body=START", label: "Text START", ariaLabel: "Text START to the National Domestic Violence Hotline at 88788" } },
+                { name: "988 Suicide & Crisis Lifeline", note: "Call or text, 24/7", phone: "988" },
+              ].map(({ name, note, phone, text }) => (
+                /* stacked on phones so the pills don't squeeze the name, side by side from sm up */
+                <div key={name} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 px-4 py-3">
                   <div>
-                    <p className="text-sm font-semibold text-brand mb-0.5">Exit quickly anytime</p>
-                    {/*
-                    kbd is styled to look like a physical keyboard key,
-                    */}
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Use the red &ldquo;Safe Exit&rdquo; button or press{" "}
-                      <kbd className="bg-gray-100 border border-gray-500 rounded px-1 text-xs">Esc</kbd>{" "}
-                      to leave this site immediately.
-                    </p>
+                    {/* text-balance splits long names into even lines instead of orphaning the last word */}
+                    <p className="text-sm font-semibold text-brand text-balance">{name}</p>
+                    <p className="text-xs text-gray-600">{note}</p>
+                  </div>
+                  {/*
+                  pills with phone and message icons (feathericons.com) so the numbers are intuitively tappable,
+                  stacked on the right from sm up so two pills don't squeeze the name
+                  */}
+                  <div className="shrink-0 flex flex-wrap gap-2 sm:flex-col sm:items-end">
+                    <PhoneLink
+                      number={phone}
+                      aria-label={`Call ${name} at ${formatPhone(phone)}`}
+                      className="inline-flex items-center gap-1.5 bg-purple-100 text-brand text-sm font-semibold px-3 py-1.5 rounded-full hover:bg-brand hover:text-white transition-all"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 stroke-current stroke-2 fill-none" aria-hidden="true">
+                        <path d="M22 16.92v3a2 2 0 01-2.18 2A19.86 19.86 0 013.09 4.18 2 2 0 015.09 2h3a2 2 0 012 1.72c.13 1 .37 1.97.72 2.9a2 2 0 01-.45 2.11L9.09 10a16 16 0 006.91 6.91l1.27-1.27a2 2 0 012.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0122 16.92z" />
+                      </svg>
+                      <span className="whitespace-nowrap">{formatPhone(phone)}</span>
+                    </PhoneLink>
+                    {text && (
+                      <a
+                        href={text.href}
+                        aria-label={text.ariaLabel}
+                        className="inline-flex items-center gap-1.5 bg-purple-100 text-brand text-sm font-semibold px-3 py-1.5 rounded-full hover:bg-brand hover:text-white transition-all"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 stroke-current stroke-2 fill-none" aria-hidden="true">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span className="whitespace-nowrap">{text.label}</span>
+                      </a>
+                    )}
                   </div>
                 </div>
-
-                {/* Clear history tip */}
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
-                      {/* trash icon, feathericons.com */}
-                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-brand mb-0.5">Clear your history after visiting</p>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Delete your browser history or use a private / incognito window before you start.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Call confidentially tip */}
-                <div className="flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
-                      {/* phone icon, feathericons.com */}
-                      <path d="M22 16.92v3a2 2 0 01-2.18 2A19.86 19.86 0 013.09 4.18 2 2 0 015.09 2h3a2 2 0 012 1.72c.13 1 .37 1.97.72 2.9a2 2 0 01-.45 2.11L9.09 10a16 16 0 006.91 6.91l1.27-1.27a2 2 0 012.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0122 16.92z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-brand mb-0.5">Call us confidentially</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      If you&apos;re worried about being monitored, call{" "}
-                      <a href="tel:423-476-3886" className="text-brand font-semibold hover:underline">(423) 476-3886</a>{" "}
-                      — available 24/7, always free.
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* 911 danger callout */}
-              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-5 flex gap-2 items-start">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 mt-0.5 stroke-red-700 stroke-2 fill-none">
-                  {/* alert-circle icon, feathericons.com */}
-                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <a href="tel:911" className="text-sm font-semibold text-red-700 hover:underline">If you are in immediate danger, call 911.</a>
-              </div>
-
-              {/* Action buttons */}
-              <div className="space-y-2">
-                <button
-                  onClick={handleDismissSafetyModal}
-                  className="hover:scale-105 w-full bg-brand text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-white hover:text-brand cursor-pointer transition-all"
-                >
-                  I understand — continue to site
-                </button>
-                <button
-                  onClick={() => window.location.replace("https://www.google.com")}
-                  className="hover:scale-105 w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm border-2 border-red-600 hover:bg-white hover:text-red-600 transition-all cursor-pointer"
-                >
-                  Safe Exit
-                </button>
-              </div>
+              ))}
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <Link href="/get-support" className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">Our Services</Link>
+              <Link href="/resources" className="text-center bg-white text-brand py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">More Resources</Link>
+            </div>
           </div>
-        </div>
+        </Modal>
+      )}
+
+      {openTestimonial && (
+        <Modal
+          title={openTestimonial.heading}
+          subtitle={`— ${openTestimonial.author}`}
+          onClose={() => setOpenTestimonial(null)}
+        >
+          <div className="p-6 space-y-4 text-gray-700 leading-relaxed">
+            {openTestimonial.story.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+        </Modal>
       )}
       {/*
       Page content,
@@ -188,7 +160,7 @@ export default function Home() {
         h-[70vh] for 70% of the viewport height,
         flex items-center justify-center to center content both vertically and horizontally
         */}
-        <section id="home" className="relative h-[70vh] flex items-center justify-center">
+        <section id="home" className="on-dark relative h-[70vh] flex items-center justify-center">
           {/*
           Background image,
           "White lighthouse on rocky seashore" — Unsplash license (free to use),
@@ -227,40 +199,26 @@ export default function Home() {
               You are not alone.
             </p>
             {/*
-            Call-to-action button,
+            Call-to-action button, made to stand out more in the same spot,
             bg-white text-black for high contrast against the dark background,
-            px-10 py-4 for generous padding,
+            px-12 py-5 and text-xl (larger on md) so it's bigger than the old px-10 py-4,
             rounded-full for pill shape,
+            ring-4 ring-white/40 for a soft halo that sets it apart from the photo,
             hover:bg-gray-200 and hover:scale-105 for subtle hover feedback,
-            shadow-lg for depth,
-            font-semibold for emphasis
+            shadow-xl for depth,
+            font-bold for emphasis
             */}
-            <button className="bg-white text-black px-10 py-4 rounded-full hover:bg-gray-200 hover:scale-105 transition-all shadow-lg font-semibold">
+            <button
+              onClick={() => setShowHelpModal(true)}
+              className="bg-white text-black px-12 py-5 md:px-14 md:py-6 text-xl md:text-2xl rounded-full ring-4 ring-white/40 hover:bg-gray-200 hover:scale-105 transition-all shadow-xl font-bold cursor-pointer"
+            >
               Get Help Now
             </button>
           </div>
         </section>
 
-        {/*
-        Hotline strip,
-        sits directly below the hero,
-        bg-purple-50 for a light tinted background,
-        border-b border-purple-100 for a subtle separator below,
-        flex items-center justify-center gap-8 to lay out the three elements centered with spacing,
-        flex-wrap so it stacks gracefully on small screens
-        */}
-        <div className="flex items-center justify-center gap-8 px-8 py-5 bg-purple-50 border-b border-purple-100 flex-wrap">
-          {/* Label */}
-          <span className="text-sm tracking-widest text-purple-700">24/7 Confidential Crisis Hotline</span>
-          {/* Call and text numbers with a divider between them */}
-          <div className="flex items-center gap-5">
-            <a href="tel:423-476-3886" className="text-lg font-semibold text-brand hover:underline transition-all">Call (423) 476-3886</a>
-            <span className="text-purple-300">|</span>
-            <a href="sms:423-715-9614" className="text-lg font-semibold text-brand hover:underline transition-all">Text (423) 715-9614</a>
-          </div>
-          {/* Supporting note */}
-          <span className="text-sm text-purple-700">Free &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; 24 hours a day</span>
-        </div>
+        {/* Hotline strip */}
+        <CrisisHotlineStrip />
         {/*
         About section,
         id="about" so the About nav link anchor scrolls here,
@@ -270,67 +228,61 @@ export default function Home() {
         <section className="py-20 px-4 bg-white">
           <div className="max-w-7xl mx-auto">
 
+            <h1 className="text-center text-brand text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-12">We Are Here to Help You.</h1>
+
             {/*
-            Two-column row: WeAreHere image left, text content right,
+            Two-column row: WeAreHere image left, testimonial cards right,
             grid md:grid-cols-2 for two columns on medium screens and up,
-            gap-12 for spacing between columns,
-            items-start so both columns align to the top
+            gap-8 lg:gap-12 for spacing between columns,
+            items-stretch makes the image column as tall as the cards
             */}
-            <div className="grid md:grid-cols-2 gap-12 items-start">
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-stretch">
 
               {/*
               Left column: WeAreHere image,
-              w-full stretches the image to fill the column width,
-              rounded-lg for rounded corners,
-              shadow-lg for a drop shadow,
-              NOTE: if white padding appears around the image it is baked into the png itself,
-              to fix it the png will need to be cropped or exported without padding
+              aspect-video on phones gives a wide strip above the cards rather than the
+              png's near-square shape, md:aspect-auto then lets the stretched grid row set
+              the height so the image matches the cards beside it,
+              object-cover crops rather than squashes, object-[50%_40%] keeps the hands in
+              frame since they sit a little above the middle of the png,
+              rounded-lg overflow-hidden rounds the cropped corners,
+              shadow-lg for a drop shadow
               */}
-              <div>
+              <div className="relative aspect-video md:aspect-auto rounded-lg overflow-hidden shadow-lg">
                 <Image
                   src="/WeAreHere.png"
                   alt="Supportive hands"
-                  width={0}
-                  height={0}
-                  sizes="100vw"
-                  className="w-full h-auto rounded-lg shadow-lg"
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover object-[50%_40%]"
                 />
               </div>
 
-              {/*
-              Right column: heading, body copy, and hotline info,
-              space-y-6 for consistent vertical spacing between children
-              */}
-              <div className="space-y-6">
-
-                {/* Section heading above the testimonials */}
-                <h1 className="text-center text-brand text-4xl font-semibold">We Are Here to Help You.</h1>
-
-                {/* First testimonial header and block */}
-                <h2 className="text-brand text-xl font-semibold mt-8">A Survivor&apos;s Story</h2>
-                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
-                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
-                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
-                    They were there for me when I had nowhere else to turn. I came in with nothing and
-                    left with the strength to rebuild my life. I will never forget what they did for
-                    me and my children.
-                  </p>
-                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
-                </div>
-
-                {/* Second testimonial header and block */}
-                <h2 className="text-brand text-xl font-semibold mt-8">Finding Safety &amp; Support</h2>
-                <div className="mt-3 border-l-4 border-brand pl-6 py-4 bg-purple-50 rounded-r-lg">
-                  <span className="text-5xl text-brand leading-none">&ldquo;</span>
-                  <p className="text-gray-700 leading-relaxed text-lg mb-4 -mt-2">
-                    The advocates here never made me feel judged. They listened, they helped me find
-                    housing, and they stood by me through the entire legal process. I finally felt safe
-                    for the first time in years.
-                  </p>
-                  <p className="text-sm font-semibold text-brand">— Anonymous Survivor</p>
-                </div>
-
+              {/* Right column: stacked testimonial cards */}
+              <div className="flex flex-col gap-6">
+                {TESTIMONIALS.map((testimonial) => (
+                  <figure
+                    key={testimonial.heading}
+                    className="flex flex-col border-l-4 border-brand pl-6 pr-4 py-5 bg-purple-50 rounded-r-lg"
+                  >
+                    <h2 className="text-brand text-xl font-semibold mb-2">{testimonial.heading}</h2>
+                    <span className="text-5xl text-brand leading-none" aria-hidden="true">&ldquo;</span>
+                    <blockquote className="text-gray-800 text-xl font-medium leading-snug -mt-2 mb-4">
+                      {testimonial.pullQuote}
+                    </blockquote>
+                    <figcaption className="text-sm font-semibold text-brand mb-4">— {testimonial.author}</figcaption>
+                    <button
+                      onClick={() => setOpenTestimonial(testimonial)}
+                      aria-haspopup="dialog"
+                      aria-label={`Read the full story from ${testimonial.author}`}
+                      className="tap-target mt-auto self-start font-semibold text-brand hover:underline cursor-pointer"
+                    >
+                      Read full story →
+                    </button>
+                  </figure>
+                ))}
               </div>
+
             </div>
 
             {/*
@@ -350,48 +302,59 @@ export default function Home() {
               {/*
               Service cards grid,
               grid-cols-1 on mobile, md:grid-cols-3 on medium screens and up,
-              gap-5 for spacing between cards
+              gap-5 for spacing between cards,
+              each card is sized like the Get Support service cards (B8): 80px round icon,
+              text-lg title, body text-base from md up, centered, with the buttons pinned to
+              the bottom (mt-auto) so all three line up whatever the text length
               */}
               <div className="grid md:grid-cols-3 gap-5">
 
                 {/* Emergency Shelter card */}
-                <div className="border border-gray-200 rounded-xl p-6">
-                  {/* Icon box */}
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                <div className="border border-gray-200 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center">
+                  {/* Icon circle */}
+                  <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                       {/* home icon, feathericons.com */}
                       <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9,22 9,12 15,12 15,22" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-brand mb-2">Emergency Shelter</p>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
-                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
+                  <p className="text-lg md:text-xl font-semibold text-brand mb-3">Emergency Shelter</p>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Safe, confidential housing for individuals and families escaping dangerous situations.</p>
+                  <div className="mt-auto pt-6">
+                    <a href="/get-support/#shelter" className="inline-block bg-brand text-white px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">Learn more →</a>
+                  </div>
                 </div>
 
                 {/* Counseling & Advocacy card */}
-                <div className="border border-gray-200 rounded-xl p-6">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                <div className="border border-gray-200 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                       {/* message-square icon, feathericons.com */}
                       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-brand mb-2">Counseling &amp; Advocacy</p>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Individual and group counseling, legal advocacy, and court support for survivors.</p>
-                  <Link replace href="#" className="text-xs font-semibold text-brand hover:underline transition-all">Learn more →</Link>
+                  <p className="text-lg md:text-xl font-semibold text-brand mb-3">Counseling &amp; Advocacy</p>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Individual and group counseling, legal advocacy, and court support for survivors.</p>
+                  <div className="mt-auto pt-6">
+                    <a href="/get-support/#counseling" className="inline-block bg-brand text-white px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">Learn more →</a>
+                  </div>
                 </div>
 
                 {/* 24/7 Crisis Line card */}
-                <div className="border border-gray-200 rounded-xl p-6">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center mb-5">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-brand stroke-2 fill-none">
+                <div className="border border-gray-200 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 stroke-brand stroke-2 fill-none" aria-hidden="true">
                       {/* clock icon, feathericons.com */}
                       <circle cx="12" cy="12" r="10" /><polyline points="12,6 12,12 16,14" />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-brand mb-2">24/7 Crisis Line</p>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">Trained advocates available any time — call or text, day or night, always free.</p>
-                  <a href="tel:423-476-3886" className="text-xs font-semibold text-brand hover:underline transition-all">Call now →</a>
+                  <p className="text-lg md:text-xl font-semibold text-brand mb-3">24/7 Crisis Line</p>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Trained advocates available any time — call or text, day or night, always free.</p>
+                  {/* Call and text, matching the card copy and the hotline strip */}
+                  <div className="mt-auto pt-6 grid grid-cols-2 gap-3">
+                    <PhoneLink number={CRISIS_CALL} className="block text-center bg-brand text-white px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-purple-800 hover:border-purple-800 transition-all">Call</PhoneLink>
+                    <PhoneLink number={CRISIS_TEXT} sms className="block text-center bg-white text-brand px-5 py-2.5 rounded-lg font-semibold text-sm border-2 border-brand hover:bg-brand hover:text-white transition-all">Text</PhoneLink>
+                  </div>
                 </div>
 
               </div>
