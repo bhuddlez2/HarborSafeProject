@@ -294,8 +294,7 @@ function getHopeLevel(score) {
 }
 
 /*
-"Take the Hope Test" button, shown above and below the reading (B20); both open
-the same pop-up
+"Take the Hope Test" button, shown below the reading; opens the test pop-up
 */
 function HopeTestButton({ onClick }) {
   return (
@@ -388,8 +387,6 @@ function ScienceOfHopeContent() {
 
   return (
     <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
-
-      <HopeTestButton onClick={() => setTestOpen(true)} />
 
       {/* Gentle Reminder */}
       <div className="bg-purple-50 border border-purple-100 rounded-xl p-5 text-center">
