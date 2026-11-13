@@ -4,8 +4,8 @@ use App\Enums\UserRole;
 use App\Filament\Concerns\CapsTableSearch;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
-use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
-use App\Filament\Resources\StaffAccounts\Pages\EditStaffAccount;
+use App\Filament\Pages\Auth\ResetPassword;
+use App\Filament\Pages\Auth\SetUpPassword;
 use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
 use App\Filament\Tables\TableSearch;
 use App\Models\User;
@@ -55,16 +55,12 @@ test('sign-in refuses an over-long password before checking it', function () {
     expect(auth()->check())->toBeFalse();
 });
 
-test('both password boxes on the account forms are capped', function () use ($capped) {
-    $this->actingAs(staffUser(UserRole::Admin));
-
-    Livewire::test(CreateStaffAccount::class)
-        ->assertSchemaComponentExists('password', checkComponentUsing: $capped(User::PASSWORD_MAX))
-        ->assertSchemaComponentExists('passwordConfirmation', checkComponentUsing: $capped(User::PASSWORD_MAX));
-
-    Livewire::test(EditStaffAccount::class, ['record' => staffUser(UserRole::Secretary)->getKey()])
-        ->assertSchemaComponentExists('password', checkComponentUsing: $capped(User::PASSWORD_MAX))
-        ->assertSchemaComponentExists('passwordConfirmation', checkComponentUsing: $capped(User::PASSWORD_MAX));
+test('both password boxes on the reset and set-up pages are capped', function () use ($capped) {
+    foreach ([ResetPassword::class, SetUpPassword::class] as $page) {
+        Livewire::test($page, ['email' => 'x@pest.test', 'token' => 'x'])
+            ->assertSchemaComponentExists('password', checkComponentUsing: $capped(User::PASSWORD_MAX))
+            ->assertSchemaComponentExists('passwordConfirmation', checkComponentUsing: $capped(User::PASSWORD_MAX));
+    }
 });
 
 test('the Account page cannot set a password sign-in would refuse', function () use ($capped) {

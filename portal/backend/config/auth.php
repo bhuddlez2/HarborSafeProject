@@ -92,11 +92,25 @@ return [
     |
     */
 
+    // Both on Portal, where users and the token tables live (without
+    // 'connection' the broker would use the default, unreachable one).
+    // Separate tables, so a 15-minute reset link can never be used on the
+    // set-up page, which accepts links for 24 hours.
     'passwords' => [
+        // "Forgot password?" on the sign-in page.
         'users' => [
             'provider' => 'users',
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
+            'connection' => 'Portal',
+            'table' => 'password_reset_tokens',
+            'expire' => 15,
+            'throttle' => 60,
+        ],
+        // The link emailed to a new account (App\Filament\Accounts\SetupLink).
+        'staff_setup' => [
+            'provider' => 'users',
+            'connection' => 'Portal',
+            'table' => 'password_setup_tokens',
+            'expire' => 24 * 60,
             'throttle' => 60,
         ],
     ],

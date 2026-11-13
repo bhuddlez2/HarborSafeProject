@@ -8,6 +8,9 @@ use App\Livewire\StaffNotifications;
 use Filament\Enums\DatabaseNotificationsPosition;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Auth\RequestPasswordReset;
+use App\Filament\Pages\Auth\ResetPassword;
+use App\Filament\Pages\Auth\SetUpPassword;
 use App\Filament\PoliceAdminNavigation;
 use App\Http\Middleware\RedirectStaffHome;
 use App\Http\Responses\StaffLoginResponse;
@@ -28,6 +31,7 @@ use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
@@ -46,6 +50,12 @@ class StaffPanelProvider extends PanelProvider
             ->path('')
             ->viteTheme('resources/css/filament/staff/theme.css')
             ->login(Login::class)
+            // "Forgot password?" emails a 15-minute link; a new account's
+            // 24-hour set-up link lands on /set-password (App\Filament\Accounts\SetupLink).
+            ->passwordReset(RequestPasswordReset::class, ResetPassword::class)
+            ->routes(fn () => Route::get('/set-password', SetUpPassword::class)
+                ->middleware('signed')
+                ->name('auth.password-setup'))
             // Account page. Filament's EditProfile only edits the signed-in
             // user's own name, email and password - never role or is_active.
             // Ours swaps its Name field for first and last name.

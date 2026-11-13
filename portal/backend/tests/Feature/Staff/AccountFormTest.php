@@ -5,7 +5,6 @@ use App\Filament\Resources\OfficerAccounts\Pages\CreateOfficerAccount;
 use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
 use App\Models\User;
 use Filament\Schemas\Components\Section;
-use Illuminate\Support\Facades\Http;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 
@@ -14,7 +13,7 @@ How every create-account page looks and finishes (AccountFormSections,
 ConfirmsAccountCreated), on Accounts and Officers alike:
 
 - a full-width Details section - Role | Email, then First name | Last name,
-  then anything role-specific - and a full-width Password section under it;
+  then anything role-specific - and no password (SetupLinkTest);
 - one Create button, no "Create & create another";
 - on success an "Account Created Successfully" pop-up, and an empty form
   behind it for the next account. A failed save shows no pop-up.
@@ -22,19 +21,12 @@ ConfirmsAccountCreated), on Accounts and Officers alike:
 
 afterEach(fn () => cleanupStaffData());
 
-// The password rule checks Have I Been Pwned; never call it from a test.
-beforeEach(fn () => Http::fake(['api.pwnedpasswords.com/*' => Http::response('')]));
-
-const ACCOUNT_FORM_PASSWORD = 'A-long-enough-test-passphrase-7';
-
 function accountFormData(array $overrides = []): array
 {
     return [
         'first_name' => 'Jordan',
         'last_name' => 'Rivera',
         'email' => staffRunToken().'-form@pest.test',
-        'password' => ACCOUNT_FORM_PASSWORD,
-        'passwordConfirmation' => ACCOUNT_FORM_PASSWORD,
         ...$overrides,
     ];
 }
@@ -61,7 +53,6 @@ test('every create-account page has the same full-width layout', function (Closu
 
     expect(accountFormLayout($form))->toBe([
         'Details' => $details,
-        'Password' => ['password', 'passwordConfirmation'],
     ]);
 
     foreach ($form->instance()->form->getComponents() as $section) {
