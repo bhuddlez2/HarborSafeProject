@@ -419,6 +419,29 @@ SESSION_LIFETIME=15
 SESSION_EXPIRE_ON_CLOSE=true
 ```
 
+**Email (Resend).** The panel emails new accounts their set-up link and
+"Forgot password?" reset links, through Resend's SMTP server:
+
+```ini
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtps
+MAIL_HOST=smtp.resend.com
+MAIL_PORT=465
+MAIL_USERNAME=resend
+MAIL_PASSWORD=re_...         # a Resend API key with sending access; never commit it
+MAIL_FROM_ADDRESS="donotreply@hshac.org"
+MAIL_FROM_NAME="Harbor Safe House"
+APP_NAME="Harbor Safe House" # shown at the top and bottom of every email
+```
+
+`hshac.org` must be verified in Resend first (Domains: add the DNS records it
+lists), or emails from it are refused or land in spam. If the host blocks
+port 465, try `MAIL_SCHEME=smtp` with `MAIL_PORT=587` (or 2465/2587, which
+Resend also accepts). To check, create a test account on Accounts: the pop-up
+says whether its set-up email went, and `storage/logs/laravel.log` has the
+reason if it didn't. On a developer machine, `MAIL_MAILER=log` writes every
+email into that log instead, link included.
+
 `APP_KEY` and `DATA_ENCRYPTION_KEY` are the server's own (`php artisan
 key:generate`, `php artisan data-key:generate`), never copied from a laptop.
 Keep a copy of `DATA_ENCRYPTION_KEY` somewhere safe and separate from the

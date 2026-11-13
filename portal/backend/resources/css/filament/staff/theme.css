@@ -330,6 +330,19 @@ narrow phone Sex drops underneath instead of running off the side.
     box-shadow: 0 0 0 4px rgb(92 15 139 / 0.4);
 }
 
+/* "Forgot password?" on sign-in, and "Back to sign in" on the reset pages. */
+.hs-forgot-password,
+.hs-login .fi-link {
+    color: #5c0f8b;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.hs-forgot-password:hover,
+.hs-forgot-password:focus-visible {
+    text-decoration: underline;
+}
+
 /*
  * Assessment record view (custom Blade infolist)
  * Used by both LawEnforcementAssessmentResource and AssessmentReviewResource.
@@ -1502,6 +1515,9 @@ button.fi-ta-col:is(:hover, :focus-visible) .hs-record-link .fi-ta-text-item {
     font-size: 0.8125rem;
     font-weight: 600;
     text-decoration: none;
+    /* The column is sized to the buttons only if their labels can't wrap;
+       otherwise a long one ("Resend Set-Up Link") spilled over the date. */
+    white-space: nowrap;
 }
 
 .fi-ta-row .fi-ta-actions .fi-link:hover,

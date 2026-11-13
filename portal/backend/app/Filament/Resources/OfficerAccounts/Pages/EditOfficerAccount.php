@@ -20,7 +20,8 @@ class EditOfficerAccount extends EditRecord
         return [];
     }
 
-    // Only what the form shows. The password is never sent to the browser.
+    // Only what the form shows. Nobody sets another person's password: they
+    // use "Forgot password?" or, until set, the emailed set-up link.
     protected function mutateFormDataBeforeFill(array $data): array
     {
         return [
@@ -33,8 +34,7 @@ class EditOfficerAccount extends EditRecord
     }
 
     // Both rows in one Portal transaction. Role and agency are never
-    // written, whatever the request carries; a blank password is absent from
-    // $data and leaves the current one in place.
+    // written, whatever the request carries.
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         return DB::connection('Portal')->transaction(function () use ($record, $data): Model {
@@ -44,10 +44,6 @@ class EditOfficerAccount extends EditRecord
                 'email' => $data['email'],
                 'is_active' => (bool) $data['is_active'],
             ];
-
-            if (filled($data['password'] ?? null)) {
-                $attributes['password'] = $data['password'];
-            }
 
             $record->update($attributes);
 

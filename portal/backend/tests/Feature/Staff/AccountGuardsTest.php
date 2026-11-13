@@ -3,11 +3,12 @@
 use App\Enums\UserRole;
 use App\Filament\Forms\AccountFormSections;
 use App\Filament\Pages\Auth\EditProfile;
+use App\Filament\Pages\Auth\ResetPassword;
+use App\Filament\Pages\Auth\SetUpPassword;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Resources\OfficerAccounts\OfficerAccountResource;
 use App\Filament\Resources\OfficerAccounts\Pages\CreateOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\EditOfficerAccount;
-use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
 use App\Filament\Resources\StaffAccounts\Pages\EditStaffAccount;
 use App\Filament\Resources\StaffAccounts\StaffAccountResource;
 use App\Models\LawEnforcementAgent;
@@ -53,8 +54,6 @@ function newOfficerForm(array $overrides = []): array
         'last_name' => 'Rivera',
         'email' => staffRunToken().'-officer@pest.test',
         'badge_number' => 'B-100',
-        'password' => ACCOUNT_GUARD_PASSWORD,
-        'passwordConfirmation' => ACCOUNT_GUARD_PASSWORD,
         ...$overrides,
     ];
 }
@@ -235,12 +234,10 @@ test('every new-password box says what the rule is', function () {
 
     Livewire::test(EditProfile::class)->assertSee(AccountFormSections::PASSWORD_HINT);
 
-    $this->actingAs(staffUser(UserRole::Admin));
+    auth()->logout();
 
-    Livewire::test(CreateStaffAccount::class)->assertSee(AccountFormSections::PASSWORD_HINT);
-
-    Livewire::test(EditStaffAccount::class, ['record' => staffUser(UserRole::Secretary)->getKey()])
-        ->assertSee('Leave blank to keep the current password. '.AccountFormSections::PASSWORD_HINT);
+    Livewire::test(ResetPassword::class, ['email' => 'x@pest.test', 'token' => 'x'])->assertSee(AccountFormSections::PASSWORD_HINT);
+    Livewire::test(SetUpPassword::class, ['email' => 'x@pest.test', 'token' => 'x'])->assertSee(AccountFormSections::PASSWORD_HINT);
 
     expect(AccountFormSections::PASSWORD_HINT)->toContain('15 to 64 characters', 'capital letter', 'lowercase letter', 'number', 'symbol', 'breaches');
 });
@@ -362,7 +359,7 @@ test('editing a secretary never changes its role', function () {
     $this->actingAs(staffUser(UserRole::Admin));
 
     Livewire::test(EditStaffAccount::class, ['record' => $secretary->getRouteKey()])
-        ->fillForm(['role' => UserRole::Admin->value, 'password' => '', 'passwordConfirmation' => ''])
+        ->fillForm(['role' => UserRole::Admin->value])
         ->call('save')
         ->assertHasNoFormErrors();
 
@@ -399,8 +396,6 @@ test('a police admin deactivates and reactivates an officer, and nothing else ch
             'is_active' => $active,
             'role' => UserRole::PoliceAdmin->value,
             'agency_id' => $w->officerB->agencyId(),
-            'password' => '',
-            'passwordConfirmation' => '',
         ])
         ->call('save')
         ->assertHasNoFormErrors();

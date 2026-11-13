@@ -156,6 +156,13 @@ class User extends Authenticatable implements FilamentUser
             && UserRole::tryFrom((string) ($this->getAttributes()['role'] ?? '')) !== null;
     }
 
+    // A new account that hasn't set its password from the emailed link yet
+    // (App\Filament\Accounts\SetupLink). Nobody can sign in to it.
+    public function hasPendingPassword(): bool
+    {
+        return blank($this->getAttributes()['password'] ?? null);
+    }
+
     // The single role check every panel page's canAccess() goes through, so
     // deactivating an account closes everything at once rather than relying on
     // canAccessPanel() being the only gate. Reads the raw role string for the
