@@ -11,6 +11,7 @@ use App\Filament\Resources\StaffAccounts\Pages\ListStaffAccounts;
 use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
 use App\Models\Agency;
+use App\Filament\Accounts\SetupLink;
 use App\Models\User;
 use App\Support\Timezones;
 use BackedEnum;
@@ -203,7 +204,7 @@ class StaffAccountResource extends Resource
     }
 
     // Laid out by AccountFormSections: Role | Email, First name | Last name,
-    // then agency and badge as the role needs them, then Password. The role
+    // then agency and badge as the role needs them. The role
     // is a dropdown only for a creator with several to pick from (super
     // admin) on create; otherwise it is the read-only fixedRole() box - the
     // forced role, or the account's own on edit - which is never sent.
@@ -260,7 +261,6 @@ class StaffAccountResource extends Resource
                         ->visibleOn('edit')
                         ->columnSpanFull(),
                 ]),
-                AccountFormSections::password(),
             ]);
     }
 
@@ -273,7 +273,8 @@ class StaffAccountResource extends Resource
                 RecordCards::title(TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
-                    ->sortable(['last_name', 'first_name'])),
+                    ->sortable(['last_name', 'first_name'])
+                    ->description(fn (User $record) => SetupLink::pendingTag($record))),
                 TextColumn::make('email')
                     ->formatStateUsing(fn (?string $state) => RecordCards::email($state))
                     ->searchable(),
@@ -316,6 +317,7 @@ class StaffAccountResource extends Resource
             ->defaultSort('last_name')
             ->recordActions([
                 EditAction::make(),
+                SetupLink::resendAction(static::class),
             ])
             ->emptyStateHeading('No accounts yet');
     }

@@ -14,7 +14,7 @@ erDiagram
         string first_name "max 50, source of truth"
         string last_name "max 50, source of truth"
         string email
-        string password
+        string password "null = pending: set-up link not used yet"
         string role "law_enforcement / secretary / admin / police_admin"
         bool is_active
         text two_factor_secret
@@ -176,7 +176,7 @@ erDiagram
 
 **Encrypted columns** (since 2026-10-27, Finishing Touches item 14): every victim and offender detail on `law_enforcement_assessment` and `_private_assessment` (names, sex, both dates of birth, relationship and its "Other" text, the safe phone number), all four `_submitter_info` contact columns, `resource_request_form`'s `FirstName`, `LastName`, `EmailAddress`, `SafePhoneNumber` and `Message`, `assessment_change_log`'s `PreviousValue`/`NewValue`, and `follow_up_entries.Note`. They are `TEXT` holding Laravel ciphertext under `DATA_ENCRYPTION_KEY` (`App\Support\SensitiveData`), whatever type the diagram shows for the value inside; the models decrypt them, and the database can't search, sort or group them. Not encrypted: the eleven answers, ids, times, `submitted_by`, edit reasons, service feedback and staff accounts. Migration `2026_10_27_120000_encrypt_sensitive_columns`.
 
-Framework tables also present but not shown above (no app-specific structure worth diagramming): `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`, `password_reset_tokens`. Sanctum's `personal_access_tokens` was dropped by `2026_10_22_120000_drop_personal_access_tokens_table` when Sanctum was removed. The five spatie/laravel-permission tables (`permissions`, `roles`, `model_has_permissions`, `model_has_roles`, `role_has_permissions`), never used, were dropped by `2026_10_24_120000_drop_permission_tables` when Filament Shield was removed; access is decided in code by `users.role`.
+Framework tables also present but not shown above (no app-specific structure worth diagramming): `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`, `password_reset_tokens` ("Forgot password?" links, 15 minutes) and `password_setup_tokens` (a new account's set-up link, 24 hours; same shape, its own table so neither link works on the other's page — `2026_11_13_120000_add_password_setup_links`, which also made `users.password` nullable). Sanctum's `personal_access_tokens` was dropped by `2026_10_22_120000_drop_personal_access_tokens_table` when Sanctum was removed. The five spatie/laravel-permission tables (`permissions`, `roles`, `model_has_permissions`, `model_has_roles`, `role_has_permissions`), never used, were dropped by `2026_10_24_120000_drop_permission_tables` when Filament Shield was removed; access is decided in code by `users.role`.
 
 ### Table detail
 

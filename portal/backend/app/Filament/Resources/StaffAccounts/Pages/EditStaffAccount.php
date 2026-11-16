@@ -21,7 +21,8 @@ class EditStaffAccount extends EditRecord
         return [];
     }
 
-    // Only what the form shows. The password is never sent to the browser.
+    // Only what the form shows. Nobody sets another person's password: they
+    // use "Forgot password?" or, until set, the emailed set-up link.
     // The role shows read-only from the record itself (fixedRole()); the
     // agency shows read-only for police admins and officers.
     protected function mutateFormDataBeforeFill(array $data): array
@@ -39,9 +40,8 @@ class EditStaffAccount extends EditRecord
         ];
     }
 
-    // Role and agency are never written, whatever the request carries; a
-    // blank password is absent from $data and leaves the current one in
-    // place. An officer's badge number is saved with the account, in one
+    // Role and agency are never written, whatever the request carries. An
+    // officer's badge number is saved with the account, in one
     // Portal transaction.
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
@@ -52,10 +52,6 @@ class EditStaffAccount extends EditRecord
                 'email' => $data['email'],
                 'is_active' => (bool) $data['is_active'],
             ];
-
-            if (filled($data['password'] ?? null)) {
-                $attributes['password'] = $data['password'];
-            }
 
             $record->update($attributes);
 

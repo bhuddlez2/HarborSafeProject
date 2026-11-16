@@ -222,6 +222,10 @@ function cleanupStaffData(): void
 
     $portal = Illuminate\Support\Facades\DB::connection('Portal');
 
+    // Password set-up and reset links sent to test accounts.
+    $portal->table('password_setup_tokens')->where('email', 'like', $token . '%')->delete();
+    $portal->table('password_reset_tokens')->where('email', 'like', $token . '%')->delete();
+
     // Views and downloads first: they point at assessments and users.
     cleanupAssessmentAccessLog();
 

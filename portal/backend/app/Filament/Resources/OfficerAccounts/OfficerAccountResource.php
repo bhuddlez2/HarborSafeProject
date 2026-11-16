@@ -11,6 +11,7 @@ use App\Filament\Resources\OfficerAccounts\Pages\EditOfficerAccount;
 use App\Filament\Resources\OfficerAccounts\Pages\ListOfficerAccounts;
 use App\Filament\Tables\RecordCards;
 use App\Filament\Tables\TableAlignment;
+use App\Filament\Accounts\SetupLink;
 use App\Models\User;
 use App\Support\Timezones;
 use BackedEnum;
@@ -158,7 +159,6 @@ class OfficerAccountResource extends Resource
                         ->visibleOn('edit')
                         ->columnSpanFull(),
                 ]),
-                AccountFormSections::password(),
             ]);
     }
 
@@ -171,7 +171,8 @@ class OfficerAccountResource extends Resource
                 RecordCards::title(TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
-                    ->sortable(['last_name', 'first_name'])),
+                    ->sortable(['last_name', 'first_name'])
+                    ->description(fn (User $record) => SetupLink::pendingTag($record))),
                 TextColumn::make('email')
                     ->formatStateUsing(fn (?string $state) => RecordCards::email($state))
                     ->searchable(),
@@ -196,6 +197,7 @@ class OfficerAccountResource extends Resource
             ->defaultSort('last_name')
             ->recordActions([
                 EditAction::make(),
+                SetupLink::resendAction(static::class),
             ]);
     }
 

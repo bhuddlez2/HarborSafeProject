@@ -51,7 +51,12 @@ class Login extends BaseLogin
                     // nobody is locked out by it.
                     ->maxLength(User::PASSWORD_MAX)
                     ->markAsRequired(false)
-                    ->revealable(false),
+                    ->revealable(false)
+                    // No "Forgot password?" hint here: Filament's is out of a
+                    // keyboard's reach (tabindex="-1"), and a reachable one
+                    // would sit between Email and Password. The view puts it
+                    // under the Sign in button instead.
+                    ->hint(null),
             ]);
     }
 }

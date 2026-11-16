@@ -32,7 +32,6 @@ class CreateOfficerAccount extends CreateRecord
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'email' => $data['email'],
-                'password' => $data['password'],
                 'role' => UserRole::LawEnforcement,
                 'is_active' => true,
             ]);

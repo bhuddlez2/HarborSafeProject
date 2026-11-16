@@ -53,8 +53,6 @@ function superAdminAccountForm(UserRole $role, array $overrides = []): array
         'first_name' => 'Jordan',
         'last_name' => 'Rivera',
         'email' => staffRunToken().'-'.$role->value.'@pest.test',
-        'password' => SUPER_ADMIN_TEST_PASSWORD,
-        'passwordConfirmation' => SUPER_ADMIN_TEST_PASSWORD,
         ...$overrides,
     ];
 }
@@ -110,7 +108,7 @@ test('a super admin deactivates another super admin, but never itself', function
     $this->actingAs($superAdmin);
 
     Livewire::test(EditStaffAccount::class, ['record' => $other->getRouteKey()])
-        ->fillForm(['is_active' => false, 'password' => '', 'passwordConfirmation' => ''])
+        ->fillForm(['is_active' => false])
         ->call('save')
         ->assertHasNoFormErrors();
 
@@ -209,8 +207,6 @@ test('editing an officer saves its badge but never its role or agency', function
             'role' => UserRole::Admin->value,
             'agency_id' => $agencyB,
             'badge_number' => 'NEW-77',
-            'password' => '',
-            'passwordConfirmation' => '',
         ])
         ->call('save')
         ->assertHasNoFormErrors();
