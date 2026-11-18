@@ -233,8 +233,13 @@ class EventResource extends Resource
                 ->icon('heroicon-o-photo')
                 ->schema([
                     // live so the position box below appears with the new image; a new image starts centred.
+                    // The pencil on the preview opens Filament's built-in editor (Cropper.js) to crop,
+                    // rotate or flip the image before it is saved. A crop replaces the file: what is cut
+                    // away is gone, including from View Details. The minimum size is checked on the result.
                     DatabaseFileUpload::forImage('image_file_id')
                         ->label('Event image')
+                        ->imageEditor()
+                        ->imageEditorAspectRatioOptions([null, '16:9', '1:1', '4:5'])
                         ->live()
                         ->afterStateUpdated(fn (Set $set) => $set('image_position', null))
                         ->columnSpanFull(),
