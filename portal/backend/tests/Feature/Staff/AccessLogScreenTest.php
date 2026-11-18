@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
 /*
-The views and PDF downloads on the Logs page (LogResource, /logs): rows of
-assessment_access_log, read-only, naming each record by its kind, submitted
+The views and PDF downloads on the Logs page (LogResource, /assessment-logs):
+rows of assessment_access_log, read-only, naming each record by its kind, submitted
 time and id alone - never by anything in it. Officer and civilian assessments
 only: resource request views and downloads are recorded in the same table but
 never listed (Finishing Touches item 28). Admins see every row; a police
@@ -284,11 +284,11 @@ test('Show sits above the table, outside the Filters card', function (string $wh
 
 test('Logs can only be read: no create, edit or view pages, and no action on access rows', function () {
     expect(array_keys(LogResource::getPages()))->toBe(['index'])
-        ->and(Route::has('filament.staff.resources.logs.index'))->toBeTrue()
-        ->and(Route::has('filament.staff.resources.logs.create'))->toBeFalse()
-        ->and(Route::has('filament.staff.resources.logs.edit'))->toBeFalse()
-        ->and(Route::has('filament.staff.resources.logs.view'))->toBeFalse()
-        ->and(LogResource::getUrl('index'))->toEndWith('/logs');
+        ->and(Route::has('filament.staff.resources.assessment-logs.index'))->toBeTrue()
+        ->and(Route::has('filament.staff.resources.assessment-logs.create'))->toBeFalse()
+        ->and(Route::has('filament.staff.resources.assessment-logs.edit'))->toBeFalse()
+        ->and(Route::has('filament.staff.resources.assessment-logs.view'))->toBeFalse()
+        ->and(LogResource::getUrl('index'))->toEndWith('/assessment-logs');
 
     $f = accessLogFixture();
     $this->actingAs($f->admin);
