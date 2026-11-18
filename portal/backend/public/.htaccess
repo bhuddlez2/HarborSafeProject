@@ -27,3 +27,5 @@ Require all granted
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+AddType application/manifest+json .webmanifest

@@ -71,6 +71,9 @@ class StaffPanelProvider extends PanelProvider
             // body text, Montserrat headings, a dark full-height sidebar. The
             // rest of it lives in resources/css/filament/staff/theme.css.
             ->brandName('Harbor Safe')
+            // Browser-tab icon; the larger icons, the home-screen icon and the
+            // web app manifest are linked from the HEAD_END hook below.
+            ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::hex('#5C0F8B'),
                 // Tailwind's own gray, which the original pages used; Filament
@@ -88,6 +91,12 @@ class StaffPanelProvider extends PanelProvider
             ->topbar(false)
             ->sidebarWidth('248px')
             ->collapsibleNavigationGroups(false)
+            // Icons for the browser tab and a phone's home screen, and the
+            // manifest, on every page, sign-in included (AppIconsTest).
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => view('filament.partials.app-icons')->render(),
+            )
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_NAV_END,
                 fn (): string => view('filament.partials.officer-identity')->render(),
