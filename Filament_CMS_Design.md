@@ -622,7 +622,7 @@ updates and deletes.
   export with history mixed in, or one that looks as though something was left out, is
   exactly what this avoids.
 - Each list shows an **Amended** badge.
-- **Logs** (`/logs`, §13) lists every edit, one row per save, alongside views and PDF
+- **Logs** (`/assessment-logs`, §13) lists every edit, one row per save, alongside views and PDF
   downloads, for admins, super admins and police admins with an agency.
 
 All of these come from `App\Filament\Assessments\ChangeHistory` and one Blade view.
@@ -956,7 +956,7 @@ Content management                              roles
 Assessments                                     admin
   Assessment review      /assessment-review     all agencies
   Civilian assessments   /civilian-assessments
-  Logs                   /logs                  one list: views, downloads, edits; all rows
+  Logs                   /assessment-logs       one list: views, downloads, edits; all rows
 
 Reports                                         admin, super admin, secretary
   Analytics              /analytics             tabs across the top; totals only
@@ -975,7 +975,7 @@ Police Admin                                    police_admin - its ONLY group
   Home               /police                    sort 10
   New assessment     /police/new-assessment     20  their own; needs an agency
   Assessment review  /assessment-review         30  own agency; Edit
-  Logs               /logs                      40  own agency's officer assessments; needs an agency
+  Logs               /assessment-logs           40  own agency's officer assessments; needs an agency
   Analytics          /police/analytics          50  own agency's LE assessments, no By agency; needs an agency
   Officers           /police/officers           60  own agency's officers; needs an agency
   Account            (Filament's profile page)  70
@@ -1033,7 +1033,7 @@ would name other agencies. Law-enforcement assessments only: no civilian assessm
 feedback, resource requests or follow-ups. Its export adds an "Agency: …" line. Harbor
 Safe's own Analytics is unchanged. `PoliceAdminAnalyticsTest`.
 
-**Logs** (`/logs`, `App\Filament\Resources\Logs\LogResource`, list page `ListLogs`): one
+**Logs** (`/assessment-logs`, `App\Filament\Resources\Logs\LogResource`, list page `ListLogs`): one
 sidebar item and **one list** of every view, PDF download and edit of an officer or
 civilian assessment, newest first. Decided 2026-10-26; resource request rows dropped
 2026-10-27 (Finishing Touches item 28: they are still recorded in `assessment_access_log`,
@@ -1089,7 +1089,7 @@ All, then one per `LogAction` case, whose view and download labels come from
 match, any case) — within the viewer's scoped rows, never record ids or anything in the
 forms. **Behind the Filters button:** the card below ("Logs filters").
 
-The old addresses redirect to `/logs`, keeping the query string (`routes/web.php`):
+The old addresses redirect to `/assessment-logs`, keeping the query string (`routes/web.php`):
 `/logs/access`, `/logs/changes`, `/access-log` and `/assessment-changes`, each with any
 sub-path. `LogsPageTest`, `AccessLogScreenTest`.
 
@@ -1139,7 +1139,7 @@ so the two cannot drift apart. **Any future assessment table must use it too.**
 
 ### Logs filters
 
-The Logs page (`/logs`, `LogResource`) gets its filters from
+The Logs page (`/assessment-logs`, `LogResource`) gets its filters from
 `App\Filament\Tables\ChangeLogFilters::apply($table)`, built from `AssessmentFilters`'
 public helpers (`layout()`, `dateRange()`, `textContains()`, `nameFilters()`,
 `visibleAssessments()`, `showsAgency()`), so the card is the same one: behind the Filters

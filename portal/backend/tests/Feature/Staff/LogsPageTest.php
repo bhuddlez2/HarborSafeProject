@@ -20,8 +20,8 @@ use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 /*
-The Logs page (App\Filament\Resources\Logs\LogResource, /logs): one list of
-views, PDF downloads and edits, newest first, built by LogEntry::visibleTo()
+The Logs page (App\Filament\Resources\Logs\LogResource, /assessment-logs): one
+list of views, PDF downloads and edits, newest first, built by LogEntry::visibleTo()
 from assessment_access_log and assessment_edits, each scoped before the
 union. Officer and civilian assessments only: resource request rows are
 recorded in the access log but never listed (Finishing Touches item 28).
@@ -106,11 +106,11 @@ function logsWorld(): object
 
 // --- The page ----------------------------------------------------------
 
-test('/logs is one list with no tabs, for an admin and a police admin with an agency', function (string $who) {
+test('/assessment-logs is one list with no tabs, for an admin and a police admin with an agency', function (string $who) {
     $w = pestTwoAgencies();
     $this->actingAs($who === 'admin' ? staffUser(UserRole::Admin) : $w->policeAdminA);
 
-    expect(LogResource::getUrl('index'))->toEndWith('/logs');
+    expect(LogResource::getUrl('index'))->toEndWith('/assessment-logs');
 
     $this->get(LogResource::getUrl('index'))
         ->assertOk()
@@ -388,17 +388,17 @@ test('LogEntry is read-only, and has no unscoped way in', function () {
 
 // --- Old addresses -----------------------------------------------------
 
-test('the old addresses redirect to /logs, keeping the query', function (string $old, string $new) {
+test('the old addresses redirect to /assessment-logs, keeping the query', function (string $old, string $new) {
     $this->get($old)->assertRedirect($new);
 })->with([
-    'access log tab' => ['/logs/access', '/logs'],
-    'access log tab sub-path' => ['/logs/access/anything', '/logs'],
-    'change log tab' => ['/logs/changes', '/logs'],
-    'change log tab with query' => ['/logs/changes?page=2', '/logs?page=2'],
-    'old access log' => ['/access-log', '/logs'],
-    'old access log sub-path and query' => ['/access-log/anything?page=2', '/logs?page=2'],
-    'old change log' => ['/assessment-changes', '/logs'],
-    'old change log sub-path' => ['/assessment-changes/x/y', '/logs'],
+    'access log tab' => ['/logs/access', '/assessment-logs'],
+    'access log tab sub-path' => ['/logs/access/anything', '/assessment-logs'],
+    'change log tab' => ['/logs/changes', '/assessment-logs'],
+    'change log tab with query' => ['/logs/changes?page=2', '/assessment-logs?page=2'],
+    'old access log' => ['/access-log', '/assessment-logs'],
+    'old access log sub-path and query' => ['/access-log/anything?page=2', '/assessment-logs?page=2'],
+    'old change log' => ['/assessment-changes', '/assessment-logs'],
+    'old change log sub-path' => ['/assessment-changes/x/y', '/assessment-logs'],
 ]);
 
 test('an admin following an old link lands on Logs', function () {

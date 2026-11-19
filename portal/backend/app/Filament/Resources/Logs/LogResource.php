@@ -33,8 +33,8 @@ use Illuminate\Support\Carbon;
 use UnitEnum;
 
 /*
-Logs (/logs): one list of every view, PDF download and edit of an officer or
-civilian assessment, newest first. Views and downloads come from
+Logs (/assessment-logs): one list of every view, PDF download and edit of an
+officer or civilian assessment, newest first. Views and downloads come from
 assessment_access_log, edits (one row per save) from assessment_edits;
 App\Models\LogEntry reads both together, each scoped before they are
 combined. Resource request rows are recorded in assessment_access_log too, but
@@ -70,7 +70,7 @@ class LogResource extends Resource
 
     protected static ?string $model = LogEntry::class;
 
-    protected static ?string $slug = 'logs';
+    protected static ?string $slug = 'assessment-logs';
 
     protected static ?string $navigationLabel = 'Logs';
 

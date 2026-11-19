@@ -27,3 +27,27 @@ Require all granted
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+AddType application/manifest+json .webmanifest
+
+# Compress static text files; IONOS sends them uncompressed otherwise. HTML and
+# JSON are deliberately left out (BREACH: pages carry CSRF tokens and Livewire
+# state), and woff2 fonts and PNG/ICO icons are compressed already.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/css text/javascript application/javascript image/svg+xml
+</IfModule>
+
+# Browser caching for real files in public/ only - never HTML or anything PHP
+# answers (the -f check keeps a missing file that falls through to Laravel out).
+<IfModule mod_headers.c>
+    # Vite's build files carry a content hash in their name, so a file never
+    # changes under the same name: cache it for a year.
+    <If "%{REQUEST_URI} =~ m#^/build/assets/[^/]+-[A-Za-z0-9_-]{8}\.(css|js)$# && -f %{REQUEST_FILENAME}">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+    # Filament's published assets and our images keep their names across
+    # versions: 30 days.
+    <ElseIf "%{REQUEST_URI} =~ m#^/(css|js|fonts|images)/.+\.(css|js|png|ico|svg|woff2)$# && -f %{REQUEST_FILENAME}">
+        Header set Cache-Control "public, max-age=2592000"
+    </ElseIf>
+</IfModule>

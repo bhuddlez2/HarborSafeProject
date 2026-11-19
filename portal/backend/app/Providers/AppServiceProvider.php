@@ -5,12 +5,14 @@ namespace App\Providers;
 use App\Filament\Forms\RequirementMarkers;
 use App\Models\LawEnforcementAssessment;
 use App\Models\User;
+use App\Notifications\StaffPasswordLink;
 use App\Policies\LawEnforcementAssessmentPolicy;
 use App\Rules\KeyboardCharactersOnly;
 use App\Support\SensitiveData;
 use BladeUI\Icons\Factory as IconFactory;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
+use Filament\Auth\Notifications\ResetPassword as FilamentResetPassword;
 use Filament\Support\View\Components\ModalComponent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -32,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
                 'prefix' => 'hs',
             ]);
         });
+
+        // "Forgot password?" emails through our notification: Filament's is
+        // queued, and nothing runs a queue worker, so it would never be sent.
+        $this->app->bind(FilamentResetPassword::class, fn (): StaffPasswordLink => new StaffPasswordLink);
     }
 
     /**

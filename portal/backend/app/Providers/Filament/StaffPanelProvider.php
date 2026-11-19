@@ -8,6 +8,9 @@ use App\Livewire\StaffNotifications;
 use Filament\Enums\DatabaseNotificationsPosition;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Auth\RequestPasswordReset;
+use App\Filament\Pages\Auth\ResetPassword;
+use App\Filament\Pages\Auth\SetUpPassword;
 use App\Filament\PoliceAdminNavigation;
 use App\Http\Middleware\RedirectStaffHome;
 use App\Http\Responses\StaffLoginResponse;
@@ -28,6 +31,7 @@ use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
@@ -46,6 +50,12 @@ class StaffPanelProvider extends PanelProvider
             ->path('')
             ->viteTheme('resources/css/filament/staff/theme.css')
             ->login(Login::class)
+            // "Forgot password?" emails a 15-minute link; a new account's
+            // 24-hour set-up link lands on /set-password (App\Filament\Accounts\SetupLink).
+            ->passwordReset(RequestPasswordReset::class, ResetPassword::class)
+            ->routes(fn () => Route::get('/set-password', SetUpPassword::class)
+                ->middleware('signed')
+                ->name('auth.password-setup'))
             // Account page. Filament's EditProfile only edits the signed-in
             // user's own name, email and password - never role or is_active.
             // Ours swaps its Name field for first and last name.
@@ -61,6 +71,9 @@ class StaffPanelProvider extends PanelProvider
             // body text, Montserrat headings, a dark full-height sidebar. The
             // rest of it lives in resources/css/filament/staff/theme.css.
             ->brandName('Harbor Safe')
+            // Browser-tab icon; the larger icons, the home-screen icon and the
+            // web app manifest are linked from the HEAD_END hook below.
+            ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::hex('#5C0F8B'),
                 // Tailwind's own gray, which the original pages used; Filament
@@ -78,6 +91,12 @@ class StaffPanelProvider extends PanelProvider
             ->topbar(false)
             ->sidebarWidth('248px')
             ->collapsibleNavigationGroups(false)
+            // Icons for the browser tab and a phone's home screen, and the
+            // manifest, on every page, sign-in included (AppIconsTest).
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => view('filament.partials.app-icons')->render(),
+            )
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_NAV_END,
                 fn (): string => view('filament.partials.officer-identity')->render(),

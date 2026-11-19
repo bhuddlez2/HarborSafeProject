@@ -25,16 +25,12 @@ afterEach(fn () => cleanupStaffData());
 // The password rule checks Have I Been Pwned; never call it from a test.
 beforeEach(fn () => Http::fake(['api.pwnedpasswords.com/*' => Http::response('')]));
 
-const STAFF_ACCOUNT_PASSWORD = 'A-long-enough-test-passphrase-7';
-
 function newSecretaryForm(array $overrides = []): array
 {
     return [
         'first_name' => 'Jordan',
         'last_name' => 'Rivera',
         'email' => staffRunToken().'-new@pest.test',
-        'password' => STAFF_ACCOUNT_PASSWORD,
-        'passwordConfirmation' => STAFF_ACCOUNT_PASSWORD,
         ...$overrides,
     ];
 }
@@ -142,8 +138,6 @@ test('editing renames and deactivates, and a blank password keeps the old one', 
             'first_name' => 'Casey',
             'last_name' => 'Morgan',
             'is_active' => false,
-            'password' => '',
-            'passwordConfirmation' => '',
         ])
         ->call('save')
         ->assertHasNoFormErrors();

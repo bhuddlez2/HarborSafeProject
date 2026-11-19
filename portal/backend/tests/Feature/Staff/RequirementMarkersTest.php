@@ -7,8 +7,6 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\NewAssessment;
 use App\Filament\Resources\AssessmentReview\Pages\ListAssessmentReview;
 use App\Filament\Resources\LawEnforcementAssessments\Pages\ListLawEnforcementAssessments;
-use App\Filament\Resources\StaffAccounts\Pages\CreateStaffAccount;
-use App\Filament\Resources\StaffAccounts\Pages\EditStaffAccount;
 use Filament\Actions\EditAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Forms\Components\Field;
@@ -105,18 +103,4 @@ test('filter cards never say "Optional"', function () {
 
     expect($inputs)->not->toBeEmpty()
         ->and($inputs->filter(fn (Field $field): bool => $field->getPlaceholder() === RequirementMarkers::OPTIONAL))->toBeEmpty();
-});
-
-test('confirm password is required on create and never "Optional" on edit', function () use ($required) {
-    $this->actingAs(staffUser(UserRole::Admin));
-
-    Livewire::test(CreateStaffAccount::class)
-        ->assertSchemaComponentExists('passwordConfirmation', checkComponentUsing: $required);
-
-    Livewire::test(EditStaffAccount::class, ['record' => staffUser(UserRole::Secretary)->getKey()])
-        // Optional to change the password at all...
-        ->assertSchemaComponentExists('password', checkComponentUsing: fn (Field $field): bool => $field->getPlaceholder() === RequirementMarkers::OPTIONAL)
-        // ...but confirming one you typed is not optional.
-        ->assertSchemaComponentExists('passwordConfirmation', checkComponentUsing: fn (Field $field): bool => $field->getPlaceholder() === null
-            && ! $field->isMarkedAsRequired());
 });
